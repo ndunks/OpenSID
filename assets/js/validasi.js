@@ -45,7 +45,7 @@ $(document).ready(function() {
 			},
 		},
     success: function() {
-	    csrf_semua_form();
+	    window['csrf_semua_form'] && csrf_semua_form();
     }
 	});
 
@@ -89,7 +89,7 @@ $(document).ready(function() {
 			},
 		},
     success: function() {
-	    csrf_semua_form();
+	    window['csrf_semua_form'] && csrf_semua_form();
     }
 	});
 
