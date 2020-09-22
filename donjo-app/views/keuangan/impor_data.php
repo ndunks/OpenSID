@@ -157,7 +157,7 @@
 				success: function(response) {
 					if (response == 0)
 					{
-						addCsrfField($('#validasi')[0]);
+						window['addCsrfField'] && addCsrfField($('#validasi')[0]);
 						$('#validasi').submit();
 					}
 					else if (response == 1)
@@ -189,7 +189,7 @@
 	function simpanDataUpdate()
 	{
 		$("#jenis_impor").val('update');
-		addCsrfField($('#validasi')[0]);
+		window['addCsrfField'] && addCsrfField($('#validasi')[0]);
 		$('#validasi').submit();
 	}
 </script>
