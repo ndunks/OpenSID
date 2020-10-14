@@ -690,6 +690,20 @@ class Penduduk_model extends MY_Model {
 		$outp = $this->db->insert('tweb_penduduk', $data);
 		$idku = $this->db->insert_id();
 
+		if (!$idku)
+		{
+			$_SESSION['error_msg'] = ': ' . $this->db->error() . '\n';
+			$_SESSION['error_msg'] .= ': ' . $this->db->last_query();
+			
+			// Form menggunakan kolom id_sex = sex
+			$_POST['id_sex'] = $_POST['sex'];
+			// Tampilkan tanda kutip dalam nama
+			$_POST['nama'] =  str_replace ( "\"", "&quot;", $_POST['nama'] ) ;
+			$_SESSION['post'] = $_POST;
+			$_SESSION['success']=-1;
+			return;
+		}
+
 		$satuan = $_POST['tanggallahir'];
 		$blnlahir = substr($satuan, 3, 2);
 		$thnlahir= substr($satuan, 6, 4);
