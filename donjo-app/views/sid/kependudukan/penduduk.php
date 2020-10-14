@@ -55,13 +55,16 @@
 							<a class="btn btn-social btn-flat btn-info btn-sm" data-toggle="dropdown"><i class='fa fa-arrow-circle-down'></i> Pilih Aksi Lainnya</a>
 							<ul class="dropdown-menu" role="menu">
 								<li>
-									<a href="<?= site_url("penduduk/cetak")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Cetak Data" target="_blank"><i class="fa fa-print"></i> Cetak</a>
+									<a href="<?= site_url("penduduk/ajax_cetak/$o/cetak")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Cetak Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Cetak Data"><i class="fa fa-print"></i> Cetak</a>
 								</li>
 								<li>
-									<a href="<?= site_url("penduduk/excel/$o")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Unduh Data" target="_blank"><i class="fa fa-download"></i> Unduh</a>
+									<a href="<?= site_url("penduduk/ajax_cetak/$o/unduh")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Unduh Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Unduh Data"><i class="fa fa-download"></i> Unduh</a>
 								</li>
 								<li>
 									<a href="<?= site_url("penduduk/ajax_adv_search")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Pencarian Spesifik" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Pencarian Spesifik"><i class="fa fa-search"></i> Pencarian Spesifik</a>
+								</li>
+								<li>
+									<a href="<?= site_url("penduduk/search_kumpulan_nik")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Pilihan Kumpulan NIK" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Pilihan Kumpulan NIK"><i class="fa fa-users"></i> Pilihan Kumpulan NIK</a>
 								</li>
 								<li>
 									<a href="<?= site_url("penduduk_log/clear")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Log Data Penduduk"><i class="fa fa-book"></i> Log Penduduk</a>

@@ -89,7 +89,8 @@ class Database_model extends CI_Model {
 		'20.06' => array('migrate' => 'migrasi_2006_ke_2007', 'nextVersion' => '20.07'),
 		'20.07' => array('migrate' => 'migrasi_2007_ke_2008', 'nextVersion' => '20.08'),
 		'20.08' => array('migrate' => 'migrasi_2008_ke_2009', 'nextVersion' => '20.09'),
-		'20.09' => array('migrate' => NULL, 'nextVersion' => NULL)
+		'20.09' => array('migrate' => 'migrasi_2009_ke_2010', 'nextVersion' => '20.10'),
+		'20.10' => array('migrate' => NULL, 'nextVersion' => NULL)
 	);
 
 	public function __construct()
@@ -145,6 +146,7 @@ class Database_model extends CI_Model {
 
 	public function migrasi_db_cri()
 	{
+	 	$_SESSION['success'] = 1;
 		$versi = $this->getCurrentVersion();
 		$nextVersion = $versi;
 		$versionMigrate = $this->versionMigrate;
@@ -181,7 +183,6 @@ class Database_model extends CI_Model {
 		$this->load->model('track_model');
 		$this->track_model->kirim_data();
 		$this->catat_versi_database();
-	 	$_SESSION['success'] = 1;
   }
 
   private function catat_versi_database()
@@ -288,6 +289,8 @@ class Database_model extends CI_Model {
 		$this->jalankan_migrasi('migrasi_2005_ke_2006');
 		$this->jalankan_migrasi('migrasi_2006_ke_2007');
 		$this->jalankan_migrasi('migrasi_2007_ke_2008');
+		$this->jalankan_migrasi('migrasi_2008_ke_2009');
+		$this->jalankan_migrasi('migrasi_2009_ke_2010');
   }
 
   private function jalankan_migrasi($migrasi)

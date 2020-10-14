@@ -97,6 +97,18 @@
 		}
 	}
 
+	private function kumpulan_kk_sql()
+	{
+		if (empty($this->session->kumpulan_kk)) return;
+
+		$kumpulan_kk = preg_replace('/[^0-9\,]/', '', $this->session->kumpulan_kk);
+		$kumpulan_kk = array_filter(array_slice(explode(",", $kumpulan_kk), 0, 20)); // ambil 20 saja
+		$kumpulan_kk = implode(',', $kumpulan_kk);
+		$this->session->kumpulan_kk = $kumpulan_kk;
+		$sql = " AND u.no_kk in ($kumpulan_kk)";
+		return $sql;
+	}
+
 	public function paging($p = 1)
 	{
 		$sql = "SELECT COUNT(*) AS jml ".$this->list_data_sql();
@@ -121,6 +133,7 @@
 
 		$sql .= " WHERE 1 ";
 		$sql .=	$this->search_sql();
+		$sql .=	$this->kumpulan_kk_sql();
 		$sql .=	$this->status_dasar_sql();
 
 		$kolom_kode = [
@@ -598,7 +611,7 @@
 		$sql = "SELECT u.id, u.nik, u.nama, u.alamat_sekarang as alamat, w.rt, w.rw, w.dusun
 			FROM tweb_penduduk u
 			LEFT JOIN tweb_wil_clusterdesa w ON u.id_cluster = w.id
-			WHERE (status = 1 OR status = 3) AND id_kk = 0";
+			WHERE (status = 1 ) AND id_kk = 0";
 		$query = $this->db->query($sql);
 		$data = $query->result_array();
 

@@ -45,11 +45,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @link 	https://github.com/OpenSID/OpenSID
  */
 
-define("VERSION", '20.09');
+define("VERSION", '20.10');
 /* Untuk migrasi database. Simpan nilai ini di tabel migrasi untuk menandakan sudah migrasi ke versi ini.
    Versi database = [yyyymmdd][nomor urut dua digit]. Ubah setiap kali mengubah struktur database.
 */
-define('VERSI_DATABASE', '2020090101');
+define('VERSI_DATABASE', '2020100101');
 define("LOKASI_LOGO_DESA", 'desa/logo/');
 define("LOKASI_ARSIP", 'desa/arsip/');
 define("LOKASI_CONFIG_DESA", 'desa/config/');
@@ -465,7 +465,7 @@ function httpPost($url, $params)
 		if ($output === false)
 		{
 			log_message('error', 'Curl error: ' . curl_error($ch));
-			log_message('error', var_dump(curl_getinfo($ch)));
+			log_message('error', print_r(curl_getinfo($ch), true));
 		}
 		curl_close($ch);
 		return $output;
