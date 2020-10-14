@@ -646,7 +646,7 @@ class Penduduk_model extends MY_Model {
 			// Form menggunakan kolom id_sex = sex
 			$_POST['id_sex'] = $_POST['sex'];
 			// Tampilkan tanda kutip dalam nama
-			$_POST['nama'] =  str_replace ( "\"", "&quot;", $_POST['nama'] ) ;
+			$_POST['nama'] =  htmlentities ( $_POST['nama'] ) ;
 			$_SESSION['post'] = $_POST;
 			$_SESSION['success']=-1;
 			return;
@@ -692,13 +692,13 @@ class Penduduk_model extends MY_Model {
 
 		if (!$idku)
 		{
-			$_SESSION['error_msg'] = ': ' . $this->db->error() . '\n';
-			$_SESSION['error_msg'] .= ': ' . $this->db->last_query();
+			$_SESSION['error_msg'] = 'GAGAL INSERT DATA!\n' . print_r( $this->db->error(), true ) . '\n';
+			$_SESSION['error_msg'] .= '\n' . $this->db->last_query();
 			
 			// Form menggunakan kolom id_sex = sex
 			$_POST['id_sex'] = $_POST['sex'];
 			// Tampilkan tanda kutip dalam nama
-			$_POST['nama'] =  str_replace ( "\"", "&quot;", $_POST['nama'] ) ;
+			$_POST['nama'] =  htmlentities( $_POST['nama'] ) ;
 			$_SESSION['post'] = $_POST;
 			$_SESSION['success']=-1;
 			return;
