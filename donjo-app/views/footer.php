@@ -85,7 +85,7 @@
 				else if ($('#success-code').val() == -1)
 				{
 					notify = 'error';
-					notify_msg = 'Data gagal disimpan <?= $_SESSION["error_msg"]?>';
+					notify_msg = 'Data gagal disimpan' + (<?= json_encode($_SESSION["error_msg"]) ?> || '');
 				}
 				else if ($('#success-code').val() == -2)
 				{

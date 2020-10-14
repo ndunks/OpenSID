@@ -692,9 +692,7 @@ class Penduduk_model extends MY_Model {
 
 		if (!$idku)
 		{
-			$_SESSION['error_msg'] = 'GAGAL INSERT DATA!\n' . print_r( $this->db->error(), true ) . '\n';
-			$_SESSION['error_msg'] .= '\n' . $this->db->last_query();
-			
+			$_SESSION['error_msg'] = print_r( $this->db->error(), true );
 			// Form menggunakan kolom id_sex = sex
 			$_POST['id_sex'] = $_POST['sex'];
 			// Tampilkan tanda kutip dalam nama
