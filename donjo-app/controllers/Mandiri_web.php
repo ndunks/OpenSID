@@ -61,7 +61,10 @@ class Mandiri_web extends Mandiri_Controller
 
 	public function index()
 	{
-// pre_print_r($_SESSION); die();
+		// hardcoded but not break other. klampok theme is single page mode login
+		if( 'klampok' == @$this->theme ){
+			redirect('/');
+		}
 		if (isset($_SESSION['mandiri']) and 1 == $_SESSION['mandiri'])
 		{
 			redirect('mandiri_web/mandiri/1/1');
