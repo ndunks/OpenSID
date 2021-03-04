@@ -45,11 +45,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @link 	https://github.com/OpenSID/OpenSID
  */
 
-define("VERSION", '20.10');
-/* Untuk migrasi database. Simpan nilai ini di tabel migrasi untuk menandakan sudah migrasi ke versi ini.
-   Versi database = [yyyymmdd][nomor urut dua digit]. Ubah setiap kali mengubah struktur database.
-*/
-define('VERSI_DATABASE', '2020100101');
+define("VERSION", '21.03');
+/**
+ * Untuk migrasi database. Simpan nilai ini di tabel migrasi untuk menandakan sudah migrasi ke versi ini
+ * Versi database = [yyyymmdd][nomor urut dua digit]. Ubah setiap kali mengubah struktur database.
+ */
+define('VERSI_DATABASE', '2021030101');
 define("LOKASI_LOGO_DESA", 'desa/logo/');
 define("LOKASI_ARSIP", 'desa/arsip/');
 define("LOKASI_CONFIG_DESA", 'desa/config/');
@@ -138,6 +139,7 @@ define("KODE_HUBUNGAN", serialize(array(
 )));
 define("KODE_PENDIDIKAN", serialize(array(
 	strtolower("Tidak/Belum Sekolah") => "1",
+	strtolower("Tidak/Blm Sekolah") => "1",
 	strtolower("Belum Tamat SD/Sederajat") => "2",
 	strtolower("Tidak Tamat SD/Sederajat") => "2",
 	strtolower("Tamat SD/Sederajat") => "3",
@@ -146,8 +148,10 @@ define("KODE_PENDIDIKAN", serialize(array(
 	strtolower("SLTA/Sederajat") => "5",
 	strtolower("Diploma I/II") => "6",
 	strtolower("Akademi/Diploma III/S. Muda") => "7",
+	strtolower("Akademi/Diploma III/Sarjana Muda") => "7",
 	strtolower("Diploma IV/Strata I") => "8",
 	strtolower("Strata II") => "9",
+	strtolower("Strata-II") => "9",
 	strtolower("Strata III") => "10"
 )));
 define("KODE_PEKERJAAN", serialize(array(
@@ -156,8 +160,11 @@ define("KODE_PEKERJAAN", serialize(array(
 	strtolower("PELAJAR/MAHASISWA") => "3",
 	strtolower("PENSIUNAN") => "4",
 	strtolower("PEGAWAI NEGERI SIPIL") => "5",
+	strtolower("PEGAWAI NEGERI SIPIL (PNS)") => "5",
 	strtolower("TENTARA NASIONAL INDONESIA") => "6",
+	strtolower("TENTARA NASIONAL INDONESIA (TNI)") => "6",
 	strtolower("KEPOLISIAN RI") => "7",
+	strtolower("KEPOLISIAN RI (POLRI)") => "7",
 	strtolower("PERDAGANGAN") => "8",
 	strtolower("PETANI/PEKEBUN") => "9",
 	strtolower("PETERNAK") => "10",
@@ -239,6 +246,7 @@ define("KODE_PEKERJAAN", serialize(array(
 	strtolower("KEPALA DESA") => "86",
 	strtolower("BIARAWATI") => "87",
 	strtolower("WIRASWASTA") => "88",
+	strtolower("PEKERJAAN LAINNYA") => "89",
 	strtolower("LAINNYA") => "89"
 )));
 define("KODE_GOLONGAN_DARAH", serialize(array(
@@ -922,6 +930,13 @@ function buat_slug($data_slug)
 	return $slug;
 }
 
+function namafile($str)
+{
+	$tgl =  date('d_m_Y');
+	$filename = urlencode(underscore(strtolower($str))."_".$tgl);
+	return $filename;
+}
+
 function luas($int=0, $satuan="meter")
 {
 	if (($int / 10000) >= 1)
@@ -969,9 +984,10 @@ function ket_mutasi_persil($id=0)
 	return $ket;
 }
 
-function status_sukses($outp, $gagal_saja=false)
+function status_sukses($outp, $gagal_saja=false, $msg='')
 {
 	$CI =& get_instance();
+	if ($msg) $CI->session->error_msg = $msg;
 	if ($gagal_saja)
 	{
 		if (!$outp) $CI->session->success = -1;
@@ -1062,4 +1078,19 @@ function crawler()
 	}
 
 	return FALSE;
+}
+
+// Kode Wilayah Dengan Titik
+// Dari 5201142005 --> 52.01.14.2005
+function kode_wilayah($kode_wilayah)
+{
+	$kode_prov_kab_kec = str_split(substr($kode_wilayah, 0, 6), 2);
+	$kode_desa = (strlen($kode_wilayah) > 6) ? '.' . substr($kode_wilayah, 6) : '';
+	$kode_standar = implode('.', $kode_prov_kab_kec) . $kode_desa;
+	return $kode_standar;
+}
+
+function pre_print_r($data)
+{
+	print("<pre>".print_r($data, true)."</pre>");
 }

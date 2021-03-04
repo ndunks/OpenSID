@@ -153,21 +153,24 @@
 		return $sql;
 	}
 
-	protected function get_sql_kolom_kode($kode_session, $kode_kolom)
+	protected function get_sql_kolom_kode($session, $kolom)
 	{
-		$value = $this->session->$kode_session;
-
-		if (isset($value))
+		$kf = $this->session->$session;
+		if ( ! empty($kf))
 		{
-			if ($value == BELUM_MENGISI)
-				$sql = " AND (".$kode_kolom." IS NULL OR ".$kode_kolom." = '')";
+			if ($kf == JUMLAH)
+				$sql = " AND (" . $kolom . " IS NOT NULL OR " . $kolom . " != '')";
+			else if ($kf == BELUM_MENGISI)
+				$sql = " AND (" . $kolom . " IS NULL OR " . $kolom . " = '')";
 			else
-				$sql = " AND ".$kode_kolom." = '$value'";
+				$sql = " AND " . $kolom . " = '$kf'";
+
 			return $sql;
 		}
 	}
 
-	public function list_data($o = 0, $offset = 0, $limit = 500)
+	// $limit = 0 mengambil semua
+	public function list_data($o = 0, $offset = 0, $limit = 0)
 	{
 		//Ordering SQL
 		switch ($o)
@@ -182,7 +185,7 @@
 		}
 
 		//Paging SQL
-		$paging_sql = ' LIMIT ' .$offset. ',' .$limit;
+		$paging_sql = $limit > 0 ? ' LIMIT ' . $offset . ',' . $limit : '';
 
 		$sql = "SELECT u.*, t.nama AS kepala_kk, t.nik, t.tag_id_card, t.sex, t.status_dasar, t.foto, t.id as id_pend,
 			(SELECT COUNT(id) FROM tweb_penduduk WHERE id_kk = u.id AND status_dasar = 1) AS jumlah_anggota,
@@ -678,7 +681,7 @@
 		}
 
 		$this->db
-			->select('nik, u.id, u.nama, u.tanggalperkawinan, u.status_kawin as status_kawin_id, tempatlahir, tanggallahir')
+			->select('nik, u.id, u.nama, u.tanggalperkawinan, u.status_kawin as status_kawin_id, u.sex as sex_id, tempatlahir, tanggallahir')
 			->select('('.$umur.') AS umur')
 			->select('a.nama as agama, d.nama as pendidikan, j.nama as pekerjaan, x.nama as sex, w.nama as status_kawin')
 			->select('h.nama as hubungan, f.nama as warganegara, warganegara_id, nama_ayah, nama_ibu, g.nama as golongan_darah')
@@ -882,7 +885,9 @@
 
 	public function get_judul_statistik($tipe = 0, $nomor = 1, $sex = 0)
 	{
-		if ($nomor == BELUM_MENGISI)
+		if ($nomor == JUMLAH)
+			$judul = array("nama" => "JUMLAH");
+		else if ($nomor == BELUM_MENGISI)
 			$judul = array("nama" => "BELUM MENGISI");
 		else
 		{
@@ -991,6 +996,7 @@
 			$nama_ibu .= $ranggota['nama_ibu']."\line ";
 			$golongan_darah .= $ranggota['golongan_darah']."\line ";
 			$tanggalperkawinan .= isset($ranggota['tanggalperkawinan']) ? tgl_indo($ranggota['tanggalperkawinan'])."\line " : "- \line ";
+			$tanggalperceraian .= isset($ranggota['tanggalperceraian']) ? tgl_indo($ranggota['tanggalperceraian'])."\line " : "- \line ";
 		}
 
 		$buffer = str_replace("[no]","$no", $buffer);
@@ -1011,6 +1017,7 @@
 		$buffer = str_replace("[ibu]","\caps $nama_ibu", $buffer);
 		$buffer = str_replace("[darah]","\caps $golongan_darah", $buffer);
 		$buffer = str_replace("[tanggalperkawinan]","\caps $tanggalperkawinan", $buffer);
+		$buffer = str_replace("[tanggalperceraian]","\caps $tanggalperceraian", $buffer);
 
 		$h = $data['desa'];
 		$k = $data['kepala_kk'];

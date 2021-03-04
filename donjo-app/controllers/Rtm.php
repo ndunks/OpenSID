@@ -51,7 +51,7 @@ class Rtm extends Admin_Controller {
 	public function __construct()
 	{
 		parent::__construct();
-		$this->load->model(['header_model', 'rtm_model', 'config_model', 'wilayah_model', 'program_bantuan_model']);
+		$this->load->model(['rtm_model', 'config_model', 'wilayah_model', 'program_bantuan_model']);
 
 		$this->_set_page = ['50', '100', '200'];
 		$this->_list_session = ['cari', 'dusun', 'rw', 'rt', 'order_by', 'id_bos', 'kelas']; // Session id_bos
@@ -118,7 +118,7 @@ class Rtm extends Admin_Controller {
 	*/
 	public function daftar($aksi = '', $privasi_nik = 0)
 	{
-		$data['main'] = $this->rtm_model->list_data($this->session->order_by, 0, 10000);
+		$data['main'] = $this->rtm_model->list_data($this->session->order_by, 0);
 		if ($privasi_nik == 1) $data['privasi_nik'] = true;
 		$this->load->view("sid/kependudukan/rtm_$aksi", $data);
 	}
@@ -325,15 +325,6 @@ class Rtm extends Admin_Controller {
 		$this->redirect_hak_akses('h', "rtm/anggota/$kk");
 		$this->rtm_model->rem_all_anggota($kk);
 		redirect("rtm/anggota/$kk");
-	}
-
-	/*
-		TODO: aktifkan di menu. Kalau tidak diperlukan lagi, hapus
-	*/
-	public function cetak_statistik($tipe = 0)
-	{
-		$data['main'] = $this->rtm_model->list_data_statistik($tipe);
-		$this->load->view('sid/kependudukan/rtm_print', $data);
 	}
 
 	public function ajax_cetak($aksi = '')

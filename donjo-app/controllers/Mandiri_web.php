@@ -45,15 +45,102 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @link 	https://github.com/OpenSID/OpenSID
  */
 
-class Mandiri_web extends Web_Controller
+class Mandiri_web extends Mandiri_Controller
 {
+	private $cek_anjungan;
+
 	public function __construct()
 	{
 		parent::__construct();
-		$this->load->model(['web_dokumen_model', 'surat_model', 'penduduk_model', 'keluar_model', 'permohonan_surat_model', 'mailbox_model', 'penduduk_model', 'lapor_model', 'keluarga_model']);
+		mandiri_timeout();
+		$this->load->model(['web_dokumen_model', 'surat_model', 'penduduk_model', 'keluar_model', 'permohonan_surat_model', 'mailbox_model', 'penduduk_model', 'lapor_model', 'keluarga_model', 'mandiri_model', 'anjungan_model']);
 		$this->load->helper('download');
 
-		if ($this->session->mandiri != 1) redirect('first');
+		$this->cek_anjungan = $this->anjungan_model->cek_anjungan();
+	}
+
+	public function index()
+	{
+// pre_print_r($_SESSION); die();
+		if (isset($_SESSION['mandiri']) and 1 == $_SESSION['mandiri'])
+		{
+			redirect('mandiri_web/mandiri/1/1');
+		}
+		unset($_SESSION['balik_ke']);
+		$data['header'] = $this->config_model->get_data();
+		//Initialize Session ------------
+		if (!isset($_SESSION['mandiri']))
+		{
+			// Belum ada session variable
+			$this->session->set_userdata('mandiri', 0);
+			$this->session->set_userdata('mandiri_try', 4);
+			$this->session->set_userdata('mandiri_wait', 0);
+		}
+		$_SESSION['success'] = 0;
+		//-------------------------------
+
+		$data['cek_anjungan'] = $this->cek_anjungan;
+
+		$this->load->view('mandiri_login', $data);
+	}
+
+	public function auth()
+	{
+		if ($this->session->mandiri_wait != 1)
+		{
+			$this->mandiri_model->siteman();
+		}
+
+		if ($this->session->lg == 1)
+		{
+			redirect('mandiri_web/ganti_pin');
+		}
+
+		if ($this->session->mandiri == 1)
+		{
+			redirect('mandiri_web/mandiri/1/1');
+		}
+		else
+		{
+			redirect('mandiri_web');
+		}
+
+	}
+
+	public function logout()
+	{
+		$this->mandiri_model->logout();
+		redirect('mandiri_web');
+	}
+
+	public function update_pin($nik = '')
+	{
+		$this->mandiri_model->update_pin($nik);
+		if ($this->session->success == -1)
+		{
+			redirect($_SERVER['HTTP_REFERER']);
+		}
+		else redirect('mandiri_web/logout');
+	}
+
+	public function ganti_pin()
+	{
+		if ($this->session->nik)
+		{
+			$nik = $this->session->nik;
+			$data['main'] = $this->mandiri_model->get_penduduk($nik, TRUE);
+			$data['header'] = $this->config_model->get_data();
+			$data['cek_anjungan'] = $this->cek_anjungan;
+
+			$this->load->view('mandiri_pin', $data);
+		}
+		else redirect('mandiri_web');
+	}
+
+	public function balik_first()
+	{
+		$this->mandiri_model->logout();
+		redirect('first');
 	}
 
 	public function mandiri($p=1, $m=0, $kat=1)
@@ -101,7 +188,7 @@ class Mandiri_web extends Web_Controller
 				break;
 		}
 
-		$data['desa'] = $this->config_model->get_data();
+		$data['desa'] = $this->header['desa'];
 		$data['penduduk'] = $this->penduduk_model->get_penduduk($_SESSION['id']);
 		$this->load->view('web/mandiri/layout.mandiri.php', $data);
 	}
@@ -123,27 +210,22 @@ class Mandiri_web extends Web_Controller
 		}
 
 		$data['desa'] = $this->config_model->get_data();
+		$data['cek_anjungan'] = $this->cek_anjungan;
 
 		$this->load->view('web/mandiri/layout.mandiri.php', $data);
 	}
 
-	public function cetak_biodata($id='')
+	public function cetak_biodata($id = '')
 	{
-		// Hanya boleh mencetak data pengguna yang login
-		$id = $_SESSION['id'];
+		$data['desa'] = $this->header['desa'];
+		$data['penduduk'] = $this->penduduk_model->get_penduduk($this->session->id);
 
-		$data['desa'] = $this->config_model->get_data();
-		$data['penduduk'] = $this->penduduk_model->get_penduduk($id);
-		$this->load->view('sid/kependudukan/cetak_biodata',$data);
+		$this->load->view('sid/kependudukan/cetak_biodata', $data);
 	}
 
 	public function cetak_kk($id='')
 	{
-		// Hanya boleh mencetak data pengguna yang login
-		$id = $_SESSION['id'];
-
-		// $id adalah id penduduk. Cari id_kk dulu
-		$id_kk = $this->penduduk_model->get_id_kk($id);
+		$id_kk = $this->penduduk_model->get_id_kk($this->session->id);
 		$data = $this->keluarga_model->get_data_cetak_kk($id_kk);
 
 		$this->load->view("sid/kependudukan/cetak_kk_all", $data);
@@ -207,12 +289,14 @@ class Mandiri_web extends Web_Controller
 	public function ajax_table_surat_permohonan()
 	{
 		$data = $this->penduduk_model->list_dokumen($_SESSION['id']);
+		$jenis_syarat_surat = $this->referensi_model->list_by_id('ref_syarat_surat', 'ref_syarat_id');
 		for ($i=0; $i < count($data); $i++)
 		{
 			$berkas = $data[$i]['satuan'];
 			$list_dokumen[$i][] = $data[$i]['no'];
 			$list_dokumen[$i][] = $data[$i]['id'];
 			$list_dokumen[$i][] = "<a href='".site_url("mandiri_web/unduh_berkas/".$data[$i][id])."/{$data[$i][id_pend]}"."'>".$data[$i]["nama"].'</a>';
+			$list_dokumen[$i][] = $jenis_syarat_surat[$data[$i]['id_syarat']]['ref_syarat_nama'];
 			$list_dokumen[$i][] = tgl_indo2($data[$i]['tgl_upload']);
 			$list_dokumen[$i][] = $data[$i]['nama'];
 			$list_dokumen[$i][] = $data[$i]['dok_warga'];

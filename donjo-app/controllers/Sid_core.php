@@ -51,12 +51,11 @@ class Sid_Core extends Admin_Controller {
 	public function __construct()
 	{
 		parent::__construct();
-		$this->load->model(['wilayah_model', 'config_model', 'header_model']);
+		$this->load->model(['wilayah_model', 'config_model', 'pamong_model']);
 		$this->load->library('form_validation');
 		$this->modul_ini = 200;
 		$this->sub_modul_ini = 20;
 		$this->_set_page = ['20', '50', '100'];
-		// TODO: Hapus header_model jika sudah dibuatkan librari tempalte admin
 	}
 
 	public function clear()
@@ -87,25 +86,37 @@ class Sid_Core extends Admin_Controller {
 		$this->render('sid/wilayah/wilayah', $data);
 	}
 
-	public function cetak()
+	/*
+	 * $aksi = cetak/unduh
+	 */
+	public function dialog($aksi = 'cetak')
 	{
-		$this->header = $this->header_model->get_data();
-		$data['desa'] = $this->header;
-		$data['main'] = $this->wilayah_model->list_data(0, 0, 1000);
-		$data['total'] = $this->wilayah_model->total();
+		$data['aksi'] = $aksi;
+		$data['pamong'] = $this->pamong_model->list_data();
+		$data['form_action'] = site_url("sid_core/daftar/$aksi");
+		$this->load->view('global/ttd_pamong', $data);
 
-		$this->load->view('sid/wilayah/wilayah_print', $data);
+		// $data['header'] = $this->header['desa'];
+		// $data['main'] = $this->wilayah_model->list_data(0, 0, 1000);
+		// $data['total'] = $this->wilayah_model->total();
+
+		// $this->load->view('sid/wilayah/wilayah_print', $data);
 	}
 
-	public function excel()
+	/*
+	 * $aksi = cetak/unduh
+	 */
+	public function daftar($aksi = 'cetak')
 	{
-		$this->header = $this->header_model->get_data();
-		$data['desa'] = $this->header;
-		$data['main'] = $this->wilayah_model->list_data(0, 0, 1000);
+		$data['pamong_ttd'] = $this->pamong_model->get_data($this->input->post('pamong_ttd'));
+		$data['pamong_ketahui'] = $this->pamong_model->get_data($this->input->post('pamong_ketahui'));
+		$data['desa'] = $this->_header;
+		$data['main'] = $this->wilayah_model->list_semua_wilayah();
 		$data['total'] = $this->wilayah_model->total();
 
-		$this->load->view('sid/wilayah/wilayah_excel', $data);
+		$this->load->view("sid/wilayah/wilayah_$aksi", $data);
 	}
+
 
 	public function form($id = '')
 	{
@@ -381,6 +392,7 @@ class Sid_Core extends Admin_Controller {
 		);
 		$data['form_action'] = site_url("sid_core/update_kantor_dusun_map/$id");
 		$namadesa =  $data['wil_atas']['nama_desa'];
+		$data['logo'] = $this->config_model->get_data();
 
 		if (!empty($data['wil_atas']['lat'] && !empty($data['wil_atas']['lng'] && !empty($data['wil_atas']['path']))))
 		{
@@ -409,6 +421,7 @@ class Sid_Core extends Admin_Controller {
 		);
 		$data['form_action'] = site_url("sid_core/update_wilayah_dusun_map/$id");
 		$namadesa =  $data['wil_atas']['nama_desa'];
+		$data['logo'] = $this->config_model->get_data();
 		if (!empty($data['wil_atas']['lat'] && !empty($data['wil_atas']['lng'] && !empty($data['wil_atas']['path']))))
 		{
 			$this->render("sid/wilayah/maps_wilayah", $data);
@@ -463,6 +476,7 @@ class Sid_Core extends Admin_Controller {
 		);
 		$data['wilayah'] = 'RW';
 		$data['form_action'] = site_url("sid_core/update_kantor_rw_map/$id_dusun/$id_rw");
+		$data['logo'] = $this->config_model->get_data();
 
 		if (!empty($data['wil_atas']['path'] && !empty($data['wil_atas']['lat'] && !empty($data['wil_atas']['lng']))))
 		{
@@ -498,6 +512,7 @@ class Sid_Core extends Admin_Controller {
 		);
 		$data['wilayah'] = 'RW';
 		$data['form_action'] = site_url("sid_core/update_wilayah_rw_map/$id_dusun/$id_rw");
+		$data['logo'] = $this->config_model->get_data();
 
 		if (!empty($data['wil_atas']['path'] && !empty($data['wil_atas']['lat'] && !empty($data['wil_atas']['lng']))))
 		{
@@ -546,6 +561,7 @@ class Sid_Core extends Admin_Controller {
 		);
 		$data['wilayah'] = 'RT';
 		$data['form_action'] = site_url("sid_core/update_wilayah_rt_map/$id_dusun/$id_rw/$id");
+		$data['logo'] = $this->config_model->get_data();
 
 		if (!empty($data['wil_atas']['path'] && !empty($data['wil_atas']['lat'] && !empty($data['wil_atas']['lng']))))
 		{
@@ -580,6 +596,7 @@ class Sid_Core extends Admin_Controller {
 		);
 		$data['wilayah'] = 'RT';
 		$data['form_action'] = site_url("sid_core/update_wilayah_rt_map/$id_dusun/$id_rw/$id");
+		$data['logo'] = $this->config_model->get_data();
 
 		if (!empty($data['wil_atas']['path'] && !empty($data['wil_atas']['lat'] && !empty($data['wil_atas']['lng']))))
 		{

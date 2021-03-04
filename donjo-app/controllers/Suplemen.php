@@ -48,7 +48,7 @@ class Suplemen extends Admin_Controller {
 	public function __construct()
 	{
 		parent::__construct();
-		$this->load->model(['config_model', 'suplemen_model', 'pamong_model']);
+		$this->load->model(['suplemen_model', 'pamong_model']);
 		$this->modul_ini = 2;
 		$this->sub_modul_ini = 25;
 	}
@@ -109,7 +109,30 @@ class Suplemen extends Admin_Controller {
 		$this->render('suplemen/panduan');
 	}
 
-	public function rincian($id, $p = 1)
+	public function filter($filter)
+	{
+		## untuk filter pada data rincian suplemen
+		$value = $this->input->post($filter);
+		$id_rincian = $this->session->id_rincian;
+		if ($value != '')
+			$this->session->$filter = $value;
+		else
+			$this->session->unset_userdata($filter);
+		redirect("suplemen/rincian/$id_rincian");
+	}
+
+	public function clear($id)
+	{
+		## untuk filter pada data rincian suplemen
+		if ($id)
+		{
+			$this->session->id_rincian = $id;
+			$this->session->unset_userdata('cari');
+			redirect("suplemen/rincian/$id");
+		}
+	}
+
+	public function rincian($id = '', $p = 1)
 	{
 		$per_page = $this->input->post('per_page');
 		if (isset($per_page))
@@ -120,6 +143,7 @@ class Suplemen extends Admin_Controller {
 		$data['func'] = "rincian/$id";
 		$data['per_page'] = $this->session->per_page;
 		$data['set_page'] = ['20', '50', '100'];
+		$data['cari'] = $this->session->cari;
 		$this->set_minsidebar(1);
 
 		$this->render('suplemen/suplemen_anggota', $data);
@@ -152,7 +176,7 @@ class Suplemen extends Admin_Controller {
 		$this->render('suplemen/terdata', $data);
 	}
 
-	public function data_terdata($id)
+	public function data_terdata($id = 0)
 	{
 		$data['terdata'] = $this->suplemen_model->get_suplemen_terdata_by_id($id);
 		$data['suplemen'] = $this->suplemen_model->get_suplemen($data['terdata']['id_suplemen']);
@@ -165,6 +189,7 @@ class Suplemen extends Admin_Controller {
 	{
 		$data = $this->suplemen_model->get_suplemen_terdata_by_id($id);
 		$data['form_action'] = site_url("suplemen/edit_terdata/$id");
+
 		$this->load->view('suplemen/edit_terdata', $data);
 	}
 
@@ -193,9 +218,10 @@ class Suplemen extends Admin_Controller {
 	*/
 	public function dialog_daftar($id = 0, $aksi = '')
 	{
-		$data['aksi'] = ucwords($aksi);
+		$data['aksi'] = $aksi;
 		$data['pamong'] = $this->pamong_model->list_data();
 		$data['form_action'] = site_url("suplemen/daftar/$id/$aksi");
+
 		$this->load->view('global/ttd_pamong', $data);
 	}
 
@@ -211,13 +237,19 @@ class Suplemen extends Admin_Controller {
 			$this->session->per_page = 1000000000; // Angka besar supaya semua data terunduh
 			$data = $this->suplemen_model->get_rincian(1, $id);
 			$data['sasaran'] = unserialize(SASARAN);
-			$data['config'] = $this->config_model->get_data();
+			$data['config'] = $this->header['desa'];
 			$data['pamong_ttd'] = $this->pamong_model->get_data($post['pamong_ttd']);
 			$data['pamong_ketahui'] = $this->pamong_model->get_data($post['pamong_ketahui']);
 			$data['aksi'] = $aksi;
 			$this->session->per_page = $temp;
 
-			$this->load->view('suplemen/cetak', $data);
+			//pengaturan data untuk format cetak/ unduh
+			$data['file'] = "Laporan Suplemen ".$data['suplemen']['nama'];
+			$data['isi'] = "suplemen/cetak";
+			$data['letak_ttd'] = ['2', '2', '3'];
+
+			$this->load->view('global/format_cetak', $data);
 		}
 	}
+
 }
