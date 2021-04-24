@@ -6,6 +6,7 @@ class Notif_model extends CI_Model {
 	{
 		$this->load->library('data_publik');
 		$tracker_host = (ENVIRONMENT == 'development') ? $this->setting->dev_tracker : $this->setting->tracker;
+		if ( empty($this->setting->api_key_opensid) ) return;
 		if ( ! $this->data_publik->has_internet_connection()) return;
 
 		$this->data_publik->set_api_url($tracker_host . '/index.php/api/pelanggan/customer?token=' . $this->setting->api_key_opensid, 'status_pelanggan')
