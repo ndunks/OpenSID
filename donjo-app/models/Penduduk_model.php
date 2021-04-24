@@ -378,7 +378,7 @@ class Penduduk_model extends MY_Model {
 				when u.status_kawin IS NULL then ''
 				when u.status_kawin <> 2 then k.nama
 				else
-					case when u.tanggalperkawinan = ''
+					case when u.tanggalperkawinan = NULL
 						then 'KAWIN BELUM TERCATAT'
 						else 'KAWIN TERCATAT'
 					end
@@ -414,6 +414,16 @@ class Penduduk_model extends MY_Model {
 		$sql .= $paging_sql;
 
 		$query = $this->db->query($sql);
+		if( !$query ){
+			if(ENVIRONMENT == 'development'){
+				header('Content-Type: text/plain');
+				echo $sql . "\n";
+				print_r($this->db->error());
+				die();
+			}
+			$this->db->display_error();
+
+		}
 		$data = $query->result_array();
 
 		//Formating Output
