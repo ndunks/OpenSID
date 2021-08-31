@@ -1099,11 +1099,6 @@ function kode_wilayah($kode_wilayah)
 	return $kode_standar;
 }
 
-function pre_print_r($data)
-{
-	print("<pre>".print_r($data, true)."</pre>");
-}
-
 function opensid_nama_bulan($no){
 	switch ( intval($no) )
 		{
