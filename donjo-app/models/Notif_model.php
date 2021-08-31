@@ -1,21 +1,32 @@
 <?php
 
+use Esyede\Curly;
+
+require_once APPPATH . '/libraries/Curly.php';
+
 class Notif_model extends CI_Model {
 
-	public function status_langganan()
+	/** @var Esyede\Curly */
+	protected $client;
+
+	public function __construct()
 	{
 		$this->load->library('data_publik');
 		$tracker_host = (ENVIRONMENT == 'development') ? $this->setting->dev_tracker : $this->setting->tracker;
 		if ( empty($this->setting->api_key_opensid) ) return;
 		if ( ! $this->data_publik->has_internet_connection()) return;
+		$this->client = new Curly();
+		$this->load->driver('cache');
+	}
 
-		$this->data_publik->set_api_url($tracker_host . '/index.php/api/pelanggan/customer?token=' . $this->setting->api_key_opensid, 'status_pelanggan')
-				->set_interval(1)
-				->set_cache_folder(FCPATH.'desa');
-		$status = $this->data_publik->get_url_content();
-		if (empty($status->body->PELANGGAN_PREMIUM)) return; // Tidak ada info pelanggan
+	public function status_langganan()
+	{
+		if (empty($response = $this->api_pelanggan_pemesanan()))
+		{
+			return null;
+		}
 
-		$tgl_akhir = $status->body->PELANGGAN_PREMIUM[0]->tgl_akhir;
+		$tgl_akhir = $response->body->tanggal_berlangganan->akhir;
 		$tgl_akhir = strtotime($tgl_akhir);
 		$masa_berlaku = round(($tgl_akhir - time()) / (60 * 60 * 24));
 		switch (true)
@@ -62,6 +73,17 @@ class Notif_model extends CI_Model {
 			->where('tipe', $tipe)
 			->where('is_archived', 0)
 			->get('komentar')->num_rows();
+		return $num_rows;
+	}
+
+	public function surat_perlu_perhatian($nik='')
+	{
+		$num_rows = $this->db
+			->from('permohonan_surat s')
+			->join('tweb_penduduk p', 's.id_pemohon = p.id')
+			->where("p.nik", $nik)
+			->where('s.status in (1, 3)')
+			->get()->num_rows();
 		return $num_rows;
 	}
 
@@ -146,6 +168,45 @@ class Notif_model extends CI_Model {
 		$this->db->query($sql);
 	}
 
-}
+	/**
+	 * Ambil data pemesanan dari api layanan.opendeda.id
+	 * 
+	 * @return mixed
+	 */
+	public function api_pelanggan_pemesanan()
+	{
+		if (empty($token = $this->setting->layanan_opendesa_token))
+		{
+			$this->session->set_userdata('error_status_langganan', "Token Pelanggan Kosong.");
 
-?>
+			return null;
+		}
+
+		$host = $this->setting->layanan_opendesa_server;
+
+		// simpan cache
+		$response = $this->cache->pakai_cache(function () use ($host, $token) {
+			// request ke api layanan.opendesa.id
+			return $this->client->get(
+				"{$host}/api/v1/pelanggan/pemesanan",
+				[],
+				[
+					CURLOPT_HTTPHEADER => [
+						"X-Requested-With: XMLHttpRequest",
+						"Authorization: Bearer {$token}",
+					],
+				]
+			);
+		}, 'status_langganan', 24 * 60 * 60);
+
+		if ($response->header->http_code != 200)
+		{
+			$this->cache->hapus_cache_untuk_semua('status_langganan');
+			$this->session->set_userdata('error_status_langganan', "{$response->header->http_code} {$response->body->messages->error}");
+
+			return null;
+		}
+
+		return $response;
+	}
+}
