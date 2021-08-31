@@ -46,13 +46,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Identitas_desa extends Admin_Controller {
 
-	private $_header;
-
 	public function __construct()
 	{
 		parent::__construct();
-		$this->load->model(['header_model', 'config_model', 'wilayah_model', 'provinsi_model']);
-		$this->_header = $this->header_model->get_data();
+		$this->load->model(['config_model', 'wilayah_model', 'provinsi_model']);
+
 		$this->modul_ini = 200;
 		$this->sub_modul_ini = 17;
 	}
@@ -64,10 +62,7 @@ class Identitas_desa extends Admin_Controller {
 		$data['kecamatan'] = ucwords($this->setting->sebutan_kecamatan);
 		$data['kabupaten'] = ucwords($this->setting->sebutan_kabupaten);
 
-		$this->load->view('header', $this->_header);
-		$this->load->view('nav');
-		$this->load->view('identitas_desa/index', $data);
-		$this->load->view('footer');
+		$this->render('identitas_desa/index', $data);
 	}
 
 	public function form()
@@ -84,10 +79,7 @@ class Identitas_desa extends Admin_Controller {
 		else
 			$data['form_action'] = site_url('identitas_desa/insert');
 
-		$this->load->view('header', $this->_header);
-		$this->load->view('nav');
-		$this->load->view('identitas_desa/form', $data);
-		$this->load->view('footer');
+		$this->render('identitas_desa/form', $data);
 	}
 
 	public function insert()
@@ -105,7 +97,7 @@ class Identitas_desa extends Admin_Controller {
 	public function maps($tipe = 'kantor')
 	{
 		$data_desa = $this->config_model->get_data();
-		$data['desa'] = ucwords($this->setting->sebutan_desa);
+		$data['desa'] = $this->config_model->get_data();
 		$data['wil_ini'] = $data_desa;
 		$data['wil_atas']['lat'] = -1.0546279422758742;
 		$data['wil_atas']['lng'] = 116.71875000000001;
@@ -114,18 +106,15 @@ class Identitas_desa extends Admin_Controller {
 		$data['dusun_gis'] = $this->wilayah_model->list_dusun();
 		$data['rw_gis'] = $this->wilayah_model->list_rw_gis();
 		$data['rt_gis'] = $this->wilayah_model->list_rt_gis();
-		$data['nama_wilayah'] = ucwords($desa . " " . $data_desa['nama_desa']);
-		$data['wilayah'] = ucwords($desa . " " . $data_desa['nama_desa']);
+		$data['nama_wilayah'] = ucwords($this->setting->sebutan_desa . " " . $data_desa['nama_desa']);
+		$data['wilayah'] = ucwords($this->setting->sebutan_desa . " " . $data_desa['nama_desa']);
 		$data['breadcrumb'] = array(
-			array('link' => site_url("identitas_desa"), 'judul' => "Identitas " . ucwords($desa)),
+			array('link' => site_url("identitas_desa"), 'judul' => "Identitas " . ucwords($this->setting->sebutan_desa)),
 		);
 
 		$data['form_action'] = site_url("identitas_desa/update_maps/$tipe");
 
-		$this->load->view('header', $this->_header);
-		$this->load->view('nav');
-		$this->load->view('sid/wilayah/maps_' . $tipe, $data);
-		$this->load->view('footer');
+		$this->render('sid/wilayah/maps_' . $tipe, $data);
 	}
 
 	public function update_maps($tipe = 'kantor')
@@ -137,5 +126,4 @@ class Identitas_desa extends Admin_Controller {
 
 		redirect("identitas_desa");
 	}
-
 }

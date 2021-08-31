@@ -26,49 +26,44 @@
 
 	private function search_sql()
 	{
-		if (isset($_SESSION['cari']))
+		if ($cari = $this->session->cari)
 		{
-			$cari = $_SESSION['cari'];
-			$kw = $this->db->escape_like_str($cari);
-			$kw = '%' .$kw. '%';
-			$search_sql= " AND (u.tujuan LIKE '$kw' OR u.isi_singkat LIKE '$kw')";
-			return $search_sql;
+			$cari = $this->db->escape_like_str($cari);
+			$this->db
+				->group_start()
+					->like('u.tujuan', $cari)
+					->or_like('u.isi_singkat', $cari)
+				->group_end();
 		}
 	}
 
 	private function filter_sql()
 	{
-		if (isset($_SESSION['filter']))
+		if ($filter = $this->session->filter)
 		{
-			$kf = $_SESSION['filter'];
-			if (!empty($kf))
-			{
-				$filter_sql= " AND YEAR(u.tanggal_surat) = $kf";
-			}
-		return $filter_sql;
+			$this->db->where('YEAR(u.tanggal_surat)', $filter);
 		}
 	}
 
 	// Digunakan untuk paging dan query utama supaya jumlah data selalu sama
 	private function list_data_sql()
 	{
-		$sql = "
-			FROM surat_keluar u WHERE 1 ";
-		$sql .= $this->search_sql();
-		$sql .= $this->filter_sql();
-		return $sql;
+		$this->db->from('surat_keluar u');
+		$this->search_sql();
+		$this->filter_sql();
 	}
 
 	public function paging($p=1, $o=0)
 	{
-		$sql = "SELECT COUNT(id) AS id ".$this->list_data_sql();
-		$query = $this->db->query($sql);
-		$row = $query->row_array();
-		$jml_data = $row['id'];
+		$this->list_data_sql();
+		$jml_data = $this->db
+			->select('COUNT(id) AS jml')
+			->get()
+			->row()->jml;
 
 		$this->load->library('paging');
 		$cfg['page'] = $p;
-		$cfg['per_page'] = $_SESSION['per_page'];
+		$cfg['per_page'] = $this->session->per_page;
 		$cfg['num_rows'] = $jml_data;
 		$this->paging->init($cfg);
 
@@ -77,28 +72,26 @@
 
 	public function list_data($o=0, $offset=0, $limit=500)
 	{
-		//Ordering SQL
+		$this->list_data_sql();
+		//Ordering
 		switch ($o)
 		{
-			case 1: $order_sql = ' ORDER BY YEAR(u.tanggal_surat) ASC, u.nomor_urut ASC'; break;
-			case 2: $order_sql = ' ORDER BY YEAR(u.tanggal_surat) DESC, u.nomor_urut DESC'; break;
-			case 3: $order_sql = ' ORDER BY u.tanggal_surat'; break;
-			case 4: $order_sql = ' ORDER BY u.tanggal_surat DESC'; break;
-			case 5: $order_sql = ' ORDER BY u.tujuan'; break;
-			case 6: $order_sql = ' ORDER BY u.tujuan DESC'; break;
-			default:$order_sql = ' ORDER BY u.id';
+			case 1: $order = ' YEAR(u.tanggal_surat) ASC, u.nomor_urut ASC'; break;
+			case 2: $order = ' YEAR(u.tanggal_surat) DESC, u.nomor_urut DESC'; break;
+			case 3: $order = ' u.tanggal_surat'; break;
+			case 4: $order = ' u.tanggal_surat DESC'; break;
+			case 5: $order = ' u.tujuan'; break;
+			case 6: $order = ' u.tujuan DESC'; break;
+			case 7: $order = ' u.tanggal_pengiriman'; break;
+			case 8: $order = ' u.tanggal_pengiriman DESC'; break;
+			default:$order = ' u.id';
 		}
-
-		//Paging SQL
-		$paging_sql = ' LIMIT ' .$offset. ',' .$limit;
-
-		//Main Query
-		$sql = "SELECT u.* ".$this->list_data_sql();
-		$sql .= $order_sql;
-		$sql .= $paging_sql;
-
-		$query = $this->db->query($sql);
-		$data = $query->result_array();
+		$data = $this->db
+			->select('u.*')
+			->order_by($order)
+			->limit($limit, $offset)
+			->get()
+			->result_array();
 		return $data;
 	}
 
@@ -122,6 +115,7 @@
 		unset($data['url_remote']);
 		unset($data['nomor_urut_lama']);
 		$this->validasi($data);
+		$data['created_by'] = $data['updated_by'] = $this->session->user;
 
 		// Adakah lampiran yang disertakan?
 		$adaLampiran = !empty($_FILES['satuan']['name']);
@@ -143,8 +137,8 @@
 		{
 			// Tes tidak berisi script PHP
 			if(isPHP($_FILES['foto']['tmp_name'], $_FILES['foto']['name'])){
-				$_SESSION['error_msg'].= " -> Jenis file ini tidak diperbolehkan ";
-				$_SESSION['success']=-1;
+				$_SESSION['error_msg'] .= " -> Jenis file ini tidak diperbolehkan ";
+				$_SESSION['success'] = -1;
 				redirect('man_user');
 			}
 			// Inisialisasi library 'upload'
@@ -173,7 +167,8 @@
 		// Berkas lampiran
 		$data['berkas_scan'] = $adaLampiran && !is_null($uploadData)
 			? $uploadData['file_name'] : NULL;
-
+		$data['created_by'] = $this->session->user;
+		$data['updated_by'] = $this->session->user;
 		// penerapan transcation karena insert ke 2 tabel
 		$this->db->trans_start();
 
@@ -194,7 +189,7 @@
 		// Normalkan tanggal
 		$data['tanggal_surat'] = tgl_indo_in($data['tanggal_surat']);
 		// Bersihkan data
-		$data['nomor_surat'] = preg_replace('/[^a-zA-Z0-9-\/\s]/', '', strip_tags($data['nomor_surat']));
+		$data['nomor_surat'] = nomor_surat_keputusan(strip_tags($data['nomor_surat']));
 		$data['tujuan'] = strip_tags($data['tujuan']);
 		$data['isi_singkat'] = strip_tags($data['isi_singkat']);
 	}
@@ -211,6 +206,7 @@
 		unset($data['url_remote']);
 		unset($data['nomor_urut_lama']);
 		$this->validasi($data);
+		$data['updated_by'] = $this->session->user;
 
 		$_SESSION['error_msg'] = NULL;
 
@@ -243,7 +239,7 @@
 			if(isPHP($_FILES['foto']['tmp_name'], $_FILES['satuan']['name'])){
 				$_SESSION['error_msg'].= " -> Jenis file ini tidak diperbolehkan ";
 				$_SESSION['success']=-1;
-				redirect('man_user');
+				redirect('surat_keluar');
 			}
 			// Cek nama berkas tidak boleh lebih dari 80 karakter (+20 untuk unique id) karena -
 			// karakter maksimal yang bisa ditampung kolom surat_keluar.berkas_scan hanya 100 karakter
@@ -275,6 +271,8 @@
 				$uploadData['file_name'] = ($uploadedFileRenamed === FALSE) ?: $namaFileUnik;
 
 				$data['berkas_scan'] = $uploadData['file_name'];
+				$data['updated_by'] = $this->session->user;
+				$data['updated_at'] = date('Y-m-d H:i:s');
 				// Update database dengan `berkas_scan` berisi nama unik
 				$this->db->where('id', $idSuratMasuk);
 				$databaseUpdated = $this->db->update('surat_keluar', $data);
@@ -403,6 +401,14 @@
 		$namaBerkas = $query->row();
 		$namaBerkas = is_object($namaBerkas) ? $namaBerkas->berkas_scan : NULL;
 		return $namaBerkas;
+	}
+
+	public function untuk_ekspedisi($id, $masuk = 0)
+	{
+		$this->db
+			->where('id', $id)
+			->set('ekspedisi', $masuk)
+			->update('surat_keluar');
 	}
 
 }

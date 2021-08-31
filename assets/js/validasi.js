@@ -113,6 +113,26 @@ $(document).ready(function() {
 		}
 	});
 
+	$(".form-validasi").validate({
+		errorElement: "label",
+		errorClass: "error",
+		highlight:function (element){
+			$(element).closest(".form-group").addClass("has-error");
+		},
+		unhighlight:function (element){
+			$(element).closest(".form-group").removeClass("has-error");
+		},
+		errorPlacement: function (error, element) {
+			if (element.parent('.input-group').length) {
+				error.insertAfter(element.parent());
+			} else if (element.hasClass('select2')) {
+				error.insertAfter(element.next('span'));
+			} else {
+				error.insertAfter(element);
+			}
+		}
+	});
+
 	$("#mainform").validate({
 		errorElement: "label",
 		errorClass: "error",
@@ -249,5 +269,15 @@ $(document).ready(function() {
 		valid = /^[a-zA-Z0-9\.\_]{4,30}$/.test(value);
 		return this.optional(element) || valid;
 	}, "Username hanya boleh berisi karakter alpha, numerik, titik, dan garis bawah dan terdiri dari 4 hingga 30 karakter");
+
+	jQuery.validator.addMethod("pin_mandiri", function(value, element) {
+		angka_valid = /^(?=.*\d).{6,6}$/.test(value);
+		return this.optional(element) || angka_valid;
+	}, "Hanya boleh berisi 6 angka numerik");
+
+	jQuery.validator.addMethod("ip_address", function(value, element) {
+		valid = /^(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))$/.test(value);
+		return this.optional(element) || valid;
+	}, "Isi IP address yang valid");
 
 })

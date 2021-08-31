@@ -24,21 +24,15 @@ class Setting_model extends CI_Model {
 		$pre = array();
 		$CI = &get_instance();
 
-		if ($this->setting)
+		if ($this->setting or ! $this->db->table_exists('setting_aplikasi'))
 		{
 			return;
 		}
+
 		if ($this->config->item("useDatabaseConfig"))
 		{
-			// Paksa menjalankan migrasi kalau tabel setting_aplikasi
-			// belum ada
-			if (!$this->db->table_exists('setting_aplikasi'))
-			{
-				$this->load->model('database_model');
-				$this->database_model->migrasi_db_cri();
-			}
 			$pr = $this->db
-				->where("kategori is null or kategori <> 'sistem' and kategori <> 'conf_web' ")
+				->where("kategori is null or kategori <> 'sistem' and kategori <> 'conf_web' and kategori <> 'setting_mandiri' ")
 				->order_by('key')->get("setting_aplikasi")->result();
 			foreach ($pr as $p)
 			{
@@ -58,15 +52,48 @@ class Setting_model extends CI_Model {
 			{
 				$pre[addslashes($p->key)] = addslashes($p->value);
 			}
+			$setting_bagan = $this->db
+				->where('kategori', 'conf_bagan')
+				->order_by('key')->get("setting_aplikasi")->result();
+			foreach ($setting_bagan as $p)
+			$setting_mandiri = $this->db
+				->where('kategori', 'setting_mandiri')
+				->order_by('key')->get("setting_aplikasi")->result();
+			foreach ($setting_mandiri as $p)
+			{
+				$pre[addslashes($p->key)] = addslashes($p->value);
+			}
+
+			$setting_bagan = $this->db
+				->where('kategori', 'conf_bagan')
+				->order_by('key')->get("setting_aplikasi")->result();
+			foreach ($setting_bagan as $p)
+			{
+				$pre[addslashes($p->key)] = addslashes($p->value);
+			}
 		}
 		else
 		{
 			$pre = (object) $CI->config->config;
 		}
 		$CI->setting = (object) $pre;
-		$CI->list_setting = $pr; // Untuk tampilan daftar setting
+		$CI->list_setting = $this->sterilkan_setting_demo($pr); // Untuk tampilan daftar setting
 		$CI->list_setting_web = $setting_web; // Untuk tampilan daftar setting web
+		$CI->list_setting_bagan = $setting_bagan; // Untuk tampilan bagan
+		$CI->list_setting_mandiri = $setting_mandiri; // Untuk tampilan daftar setting layanan mandiri
+		$CI->list_setting_bagan = $setting_bagan; // Untuk tampilan bagan
 		$this->apply_setting();
+	}
+
+	// Sembunyikan setting yg tidak untuk ditampilkan di demo, seperti token layanan
+	private function sterilkan_setting_demo($pr)
+	{
+		if ( ! config_item('demo_mode')) return $pr;
+		foreach ($pr as $key => $setting)
+		{
+			if ($setting->key == 'layanan_opendesa_token') $pr[$key]->value = '';
+		}
+		return $pr;
 	}
 
 	// Setting untuk PHP
@@ -79,11 +106,18 @@ class Setting_model extends CI_Model {
 		{
 			$this->setting->google_key = config_item('google_key');
 		}
-		// Ambil dev_tracker dari desa/config/config.php kalau tidak ada di database
-		if (empty($this->setting->dev_tracker))
+		// Ambil token tracksid dari desa/config/config.php kalau tidak ada di database
+		if (empty($this->setting->token_opensid))
 		{
-			$this->setting->dev_tracker = config_item('dev_tracker');
+			$this->setting->token_opensid = config_item('token_opensid');
 		}
+
+		// Server Pantau
+		$this->setting->tracker = (ENVIRONMENT == 'development' && ! empty(config_item('dev_tracker'))) ? config_item('dev_tracker') : "https://pantau.opensid.my.id";
+		
+		// Server Layanan
+		$this->setting->layanan_opendesa_server = (ENVIRONMENT == 'development' || ! empty(config_item('layanan_opendesa_dev_server'))) ? config_item('layanan_opendesa_dev_server') : "https://layanan.opendesa.id/";
+		
 		$this->setting->user_admin = config_item('user_admin');
 		// Kalau folder tema ubahan tidak ditemukan, ganti dengan tema default
 		$pos = strpos($this->setting->web_theme, 'desa/');

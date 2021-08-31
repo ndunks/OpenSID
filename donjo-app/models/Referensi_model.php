@@ -47,6 +47,25 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 // Model ini digunakan untuk data referensi statis yg tidak disimpan pd database atau sebagai referensi global
 
+define("JENIS_PERATURAN_DESA", serialize([
+	"Peraturan Desa (Perdes)",
+	"Peraturan Kepala Desa (Perkades)",
+	"Peraturan Bersama Kepala Desa"
+]));
+
+define("MASA_BERLAKU", serialize([
+	"d" => "Hari",
+	"w" => "Minggu",
+	"M" => "Bulan",
+	"y" => "Tahun"
+]));
+
+define("JENIS_PERATURAN_DESA", serialize([
+	"Peraturan Desa (Perdes)",
+	"Peraturan Kepala Desa (Perkades)",
+	"Peraturan Bersama Kepala Desa"
+]));
+
 define("KATEGORI_PUBLIK", serialize([
 	"Informasi Berkala" => "1",
 	"Informasi Serta-merta" => "2",
@@ -58,18 +77,21 @@ define("STATUS_PERMOHONAN", serialize([
 	"Sedang diperiksa" => "0",
 	"Belum lengkap" => "1",
 	"Menunggu tandatangan" => "2",
-	"Siap diambil" => "3",
+	"Siap diambil/diantar" => "3",
 	"Sudah diambil" => "4",
 	"Dibatalkan" => "9"
 ]));
 
 define("LINK_TIPE", serialize([
 	'1' => 'Artikel Statis',
+	'8' => 'Kategori Artikel',
 	'2' => 'Statistik Penduduk',
 	'3' => 'Statistik Keluarga',
 	'4' => 'Statistik Program Bantuan',
 	'5' => 'Halaman Statis Lainnya',
 	'6' => 'Artikel Keuangan',
+	'7' => 'Kelompok',
+	'9' => 'Data Suplemen',
 	'99' => 'Eksternal'
 ]));
 
@@ -101,21 +123,47 @@ define("STAT_KELUARGA", serialize([
 	'kelas_sosial' => 'Kelas Sosial'
 ]));
 
-// Statistik Keluarga
+// Statistik Bantuan
 define("STAT_BANTUAN", serialize([
 	'bantuan_penduduk' => 'Penerima Bantuan Penduduk',
 	'bantuan_keluarga' => 'Penerima Bantuan Keluarga'
 ]));
 
-// Statistik Keluarga
+// Statistik Lainnya
 define("STAT_LAINNYA", serialize([
 	'dpt' => 'Calon Pemilih',
 	'wilayah' => 'Wilayah Administratif',
 	'peraturan_desa' => 'Produk Hukum',
 	'informasi_publik' => 'Informasi Publik',
-	'peta' => 'Peta'
+	'peta' => 'Peta',
+	'status_idm' => 'Status IDM',
+	'data_analisis' => 'Data Analisis'
 ]));
 
+// Jabatan Kelompok
+define("JABATAN_KELOMPOK", serialize([
+	1 => 'KETUA',
+	2 => 'WAKIL KETUA',
+	3 => 'SEKRETARIS',
+	4 => 'BENDAHARA',
+	90 => 'ANGGOTA'
+]));
+
+// API Server
+define("STATUS_AKTIF", serialize([
+	'0' => 'Tidak Aktif',
+	'1' => 'Aktif'
+]));
+
+define("JENIS_NOTIF", serialize([
+	'pemberitahuan',
+	'pengumuman',
+	'peringatan'
+]));
+
+define("SERVER_NOTIF", serialize([
+	'TrackSID'
+]));
 
 class Referensi_model extends CI_Model {
 
@@ -135,10 +183,12 @@ class Referensi_model extends CI_Model {
 		return $list;
 	}
 
-	public function list_data($tabel, $kecuali='')
+	public function list_data($tabel, $kecuali='', $termasuk=null)
 	{
-		if (!empty($kecuali))
-			$this->db->where("id NOT IN ($kecuali)");
+		if ($kecuali) $this->db->where("id NOT IN ($kecuali)");
+
+		if ($termasuk) $this->db->where("id IN ($termasuk)");
+
 		$data = $this->db->select('*')->order_by('id')->get($tabel)->result_array();
 		return $data;
 	}
@@ -161,12 +211,12 @@ class Referensi_model extends CI_Model {
 		return $status_rekam;
 	}
 
-	public function list_by_id($tabel)
+	public function list_by_id($tabel, $id = 'id')
 	{
-		$data = $this->db->order_by('id')
+		$data = $this->db->order_by($id)
 			->get($tabel)
 			->result_array();
-		$data = array_combine(array_column($data, 'id'), $data);
+		$data = array_combine(array_column($data, $id), $data);
 		return $data;
 	}
 
@@ -181,6 +231,5 @@ class Referensi_model extends CI_Model {
 		$list = array_flip(unserialize($s_array));
 		return $list;
 	}
-
 }
 ?>

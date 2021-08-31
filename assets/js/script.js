@@ -20,7 +20,19 @@ $( window ).on( "load", function() {
 
 $(document).ready(function()
 {
+	// Fungsi untuk tombol kembali ke atas
+	$(window).on('scroll', function() {
+		if ($(this).scrollTop() > 100) {
+			$(".scrollToTop").fadeIn();
+		} else {
+			$(".scrollToTop").fadeOut();
+		}
+	});
 
+	$(".scrollToTop").on('click', function(e) {
+		$("html, body").animate({scrollTop: 0}, 500);
+		return false;
+	});
 
 	//CheckBox All Selected
 	checkAll();
@@ -62,7 +74,34 @@ $(document).ready(function()
 	}, 2000);
 
 	// Select2 dengan fitur pencarian
-	$('.select2').select2();
+	$('.select2').select2({
+		width: '100%',
+		dropdownAutoWidth : true
+	});
+
+	// Select2 - Cari Nama Desa di API Server
+	$('.select-nama-desa').select2({
+		ajax: {
+			url: function () {
+				return $(this).data('tracker') + '/index.php/api/wilayah/caridesa?&token=' + $(this).data('token');
+			},
+			dataType: 'json',
+			data: function (params) {
+				return {
+					q: params.term || '',
+					page: params.page || 1,
+				};
+			},
+			processResults: function (data) {
+					return {
+						results: data.results,
+						pagination: data.pagination,
+					}
+				}
+			},
+			placeholder: '--  Cari Nama Desa --',
+			minimumInputLength: 0,
+	});
 
 	$('.select2-nik-ajax').select2({
 	  ajax: {
@@ -246,18 +285,19 @@ $(document).ready(function()
 		useCurrent: false,
 		date: moment(new Date())
 	});
+
 	$('#tgl_akhir').datetimepicker({
 		locale:'id',
 		format: 'DD-MM-YYYY',
 		useCurrent: false,
 		minDate: moment(new Date()).add(-1, 'day'), // Todo: mengapa harus dikurangi -- bug?
-		date: moment(new Date()).add(1, 'M')
+		date: moment(new Date()).add($('#tgl_akhir').data('masa-berlaku'), $('#tgl_akhir').data('satuan-masa-berlaku'))
 	});
 	$('#tgl_mulai').datetimepicker().on('dp.change', function (e) {
 		$('#tgl_akhir').data('DateTimePicker').minDate(moment(new Date(e.date)));
 		$(this).data("DateTimePicker").hide();
 		var tglAkhir = moment(new Date(e.date));
-		tglAkhir.add(1, 'M');
+		tglAkhir.add($('#tgl_akhir').data('masa-berlaku'), $('#tgl_akhir').data('satuan-masa-berlaku'));
 		$('#tgl_akhir').data('DateTimePicker').date(tglAkhir);
 	});
 
@@ -738,3 +778,31 @@ $('document').ready(function()
   })
 });
 
+// Notifikasi
+function tampil_badge(elem, url)
+{
+  elem.load(url);
+  setTimeout(function()
+  {
+    if ( elem.text().trim().length )
+      elem.show();
+    else
+      elem.hide();
+  }, 500);
+}
+
+// Setiap lima menit
+function refresh_badge(elem, url)
+{
+  if ( ! elem.length) return;
+
+  tampil_badge(elem, url);
+  var refreshInbox = setInterval(function()
+  {
+    tampil_badge(elem, url);
+  }, 5*60*1000);
+}
+
+function huruf_awal_besar(str) {
+	return str.replace(/\S+/g, str => str.charAt(0).toUpperCase() + str.substr(1).toLowerCase());
+}

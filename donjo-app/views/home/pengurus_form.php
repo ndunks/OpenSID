@@ -1,5 +1,9 @@
 <style type="text/css">
 	.kiri { padding-left: 0px; }
+	.bagan {
+		font-weight: bold;
+		color: red;
+	}
 </style>
 <div class="content-wrapper">
 	<section class="content-header">
@@ -84,19 +88,19 @@
 								<label class="col-sm-4 control-label" for="pamong_nik">Nomor Induk Kependudukan</label>
 								<div class="col-sm-7">
 									<input class="form-control input-sm pengurus-desa" type="text" placeholder="Nomor Induk Kependudukan" value="<?=$individu['nik']?>" disabled="disabled"></input>
-									<input id="pamong_nik" name="pamong_nik" class="form-control input-sm pengurus-luar-desa digits" type="text" placeholder="Nomor Induk Kependudukan" value="<?=$pamong['pamong_nik']?>" style="display: none;"></input>
+									<input id="pamong_nik" name="pamong_nik" class="form-control input-sm pengurus-luar-desa nik" type="text" maxlength="16" placeholder="Nomor Induk Kependudukan" value="<?=$pamong['pamong_nik']?>" style="display: none;"></input>
 								</div>
 							</div>
 							<div class="form-group">
-								<label class="col-sm-4 control-label" for="pamong_niap">NIAP</label>
+								<label class="col-sm-4 control-label" for="pamong_niap"><?= $this->setting->sebutan_nip_desa ?></label>
 								<div class="col-sm-7">
-									<input id="pamong_niap" name="pamong_niap" class="form-control input-sm digits" type="text" placeholder="NIAP" value="<?=$pamong['pamong_niap']?>" ></input>
+									<input id="pamong_niap" name="pamong_niap" class="form-control input-sm digits" type="text" maxlength="25" placeholder="<?= $this->setting->sebutan_nip_desa ?>" value="<?=$pamong['pamong_niap']?>" ></input>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-4 control-label" for="pamong_nip">NIP</label>
 								<div class="col-sm-7">
-									<input id="pamong_nip" name="pamong_nip" class="form-control input-sm digits" type="text" placeholder="NIP" value="<?=$pamong['pamong_nip']?>" ></input>
+									<input id="pamong_nip" name="pamong_nip" class="form-control input-sm digits" type="text" maxlength="20" placeholder="NIP" value="<?=$pamong['pamong_nip']?>" ></input>
 								</div>
 							</div>
 							<div class="form-group">
@@ -203,6 +207,49 @@
 								<label class="col-sm-4 control-label" for="jabatan">Jabatan</label>
 								<div class="col-sm-7">
 									<input id="jabatan" name="jabatan" class="form-control input-sm required" type="text" placeholder="Jabatan" value="<?= $pamong['jabatan']?>" ></input>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-4 control-label bagan" for="atasan">Atasan</label>
+								<div class="col-sm-7">
+									<select class="form-control select2 input-sm" name="atasan">
+										<option value="">Pilih Atasan</option>
+										<?php foreach ($atasan as $data): ?>
+											<option value="<?= $data['id']?>" <?php selected($pamong['atasan'], $data['id']); ?>><?= $data['nama']?> (<?= $data['jabatan']?>)</option>
+										<?php endforeach;?>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-4 control-label bagan" for="jabatan">Bagan - Tingkat</label>
+								<div class="col-sm-7">
+									<input name="bagan_tingkat" class="form-control input-sm number" type="text" placeholder="Angka menunjukkan tingkat di bagan organisasi. Contoh: 2" value="<?= $pamong['bagan_tingkat']?>" ></input>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-4 control-label bagan" for="jabatan">Bagan - Offset</label>
+								<div class="col-sm-7">
+									<input name="bagan_offset" class="form-control input-sm number" type="text" placeholder="Angka menunjukkan persentase geser kiri (-n) atau kanan (+n). Contoh: 75%" value="<?= $pamong['bagan_offset']?>" ></input>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-4 control-label bagan" for="jabatan">Bagan - Layout</label>
+								<div class="col-sm-7">
+									<select class="form-control input-sm" name="bagan_layout">
+										<option value="">Tidak Ada Layout</option>
+										<option value="hanging" <?php selected($pamong['bagan_layout'], 'hanging'); ?>>Hanging</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="control-label col-sm-4 bagan">Bagan - Warna</label>
+								<div class="col-sm-7">
+									<div class="input-group my-colorpicker2">
+										<input type="text" name="bagan_warna" class="form-control input-sm" placeholder="#FFFFFF" value="<?=  $pamong['bagan_warna']?>">
+										<div class="input-group-addon input-sm">
+											<i></i>
+										</div>
+									</div>
 								</div>
 							</div>
 							<div class="form-group">

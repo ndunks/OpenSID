@@ -18,47 +18,49 @@
 		</ol>
 	</section>
 	<section class="content" id="maincontent">
-		<div class="box box-info">
-			<div class="box-header with-border">
-				<?php if ($detail["status"] == 1): ?>
-					<div class="btn-group btn-group-vertical">
-						<a class="btn btn-social btn-flat btn-success btn-sm" data-toggle="dropdown"><i class='fa fa-plus'></i> Tambah Peserta Baru</a>
-						<ul class="dropdown-menu" role="menu">
-							<li>
-								<a href="<?= site_url("program_bantuan/aksi/1/".$detail['id'])?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Satu Peserta Baru "><i class="fa fa-plus"></i> Tambah Satu Peserta Baru</a>
-							</li>
-							<li>
-								<a href="<?= site_url("program_bantuan/aksi/2/".$detail['id'])?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Beberapa Peserta Baru"><i class="fa fa-plus"></i> Tambah Beberapa Peserta Baru</a>
-							</li>
-						</ul>
-					</div>
-				<?php endif; ?>
-				<a href="#confirm-delete" title="Hapus Data Terpilih" onclick="deleteAllBox('mainform', '<?=site_url("program_bantuan/delete_all/$detail[id]")?>')" class="btn btn-social btn-flat btn-danger btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block hapus-terpilih"><i class='fa fa-trash-o'></i> Hapus Data Terpilih</a>
-				<a href="<?= site_url("program_bantuan/daftar/$detail[id]/cetak")?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak" target="_blank"><i class="fa fa-print"></i> Cetak
-				</a>
-				<a href="<?= site_url("program_bantuan/daftar/$detail[id]/unduh")?>" class="btn btn-social btn-flat bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Unduh" target="_blank"><i class="fa fa-download"></i> Unduh
-				</a>
-				<a href="<?= site_url('program_bantuan')?>" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Program Bantuan"><i class="fa fa-arrow-circle-o-left"></i> Kembali Ke Daftar Program Bantuan
-				</a>
-			</div>
-			<div class="box-body">
-				<div class="row">
-					<div class="col-sm-12">
-						<input type="hidden" id="program_id" name="program_id" value="<?= $detail['id']?>">
-						<?php include('donjo-app/views/program_bantuan/rincian.php'); ?>
-						<div class="dataTables_wrapper form-inline dt-bootstrap no-footer">
-							<form id="mainform" name="mainform" action="" method="post">
+		<form id="mainform" name="mainform" method="post">
+			<div class="box box-info">
+				<div class="box-header with-border">
+					<?php if ($detail["status"] == 1): ?>
+						<div class="btn-group btn-group-vertical">
+							<a class="btn btn-social btn-flat btn-success btn-sm" data-toggle="dropdown"><i class='fa fa-plus'></i> Tambah Peserta Baru</a>
+							<ul class="dropdown-menu" role="menu">
+								<li>
+									<a href="<?= site_url("program_bantuan/aksi/1/".$detail['id'])?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Satu Peserta Baru "><i class="fa fa-plus"></i> Tambah Satu Peserta Baru</a>
+								</li>
+								<li>
+									<a href="<?= site_url("program_bantuan/aksi/2/".$detail['id'])?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Beberapa Peserta Baru"><i class="fa fa-plus"></i> Tambah Beberapa Peserta Baru</a>
+								</li>
+							</ul>
+						</div>
+					<?php endif; ?>
+					<a href="#confirm-delete" title="Hapus Data Terpilih" onclick="deleteAllBox('mainform', '<?=site_url("program_bantuan/delete_all/$detail[id]")?>')" class="btn btn-social btn-flat btn-danger btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block hapus-terpilih"><i class='fa fa-trash-o'></i> Hapus Data Terpilih</a>
+					<a href="<?= site_url("program_bantuan/daftar/$detail[id]/cetak")?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak" target="_blank"><i class="fa fa-print"></i> Cetak
+					</a>
+					<a href="<?= site_url("program_bantuan/daftar/$detail[id]/unduh")?>" class="btn btn-social btn-flat bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Unduh" target="_blank"><i class="fa fa-download"></i> Unduh
+					</a>
+					<a href="<?= site_url('program_bantuan')?>" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Program Bantuan"><i class="fa fa-arrow-circle-o-left"></i> Kembali Ke Daftar Program Bantuan
+					</a>
+				</div>
+				<div class="box-body">
+					<div class="row">
+						<div class="col-sm-12">
+							<input type="hidden" id="program_id" name="program_id" value="<?= $detail['id']?>">
+							<?php include('donjo-app/views/program_bantuan/rincian.php'); ?>
+							<div class="dataTables_wrapper form-inline dt-bootstrap no-footer">
 								<div class="row">
 									<div class="col-sm-9">
-										<h5><b>Daftar Peserta <?php $cari and print("[ Cari : <b>$cari</b> ]") ?></b></h5>
+										<h5><b>Daftar Peserta</b></h5>
 									</div>
 									<div class="col-sm-3">
-										<div class="input-group input-group-sm pull-right with-border">
-											<input name="cari" id="cari" class="form-control" placeholder="Cari..." type="text" value="<?=html_escape($cari)?>" onkeypress="if (event.keyCode == 13){$('#'+'mainform').attr('action', '<?=site_url("program_bantuan/search/$detail[id]")?>');$('#'+'mainform').submit();}">
-											<div class="input-group-btn">
-												<button type="submit" class="btn btn-default" onclick="$('#'+'mainform').attr('action', '<?=site_url("program_bantuan/search/$detail[id]")?>');$('#'+'mainform').submit();"><i class="fa fa-search"></i></button>
+										<form id="mainform" name="mainform" action="" method="post">
+											<div class="input-group input-group-sm pull-right with-border">
+												<input name="cari" id="cari" class="form-control" placeholder="Cari..." type="text" value="<?=html_escape($cari)?>" onkeypress="if (event.keyCode == 13){$('#'+'mainform').attr('action', '<?=site_url("program_bantuan/search/$detail[id]")?>');$('#'+'mainform').submit();}">
+												<div class="input-group-btn">
+													<button type="submit" class="btn btn-default" onclick="$('#'+'mainform').attr('action', '<?=site_url("program_bantuan/search/$detail[id]")?>');$('#'+'mainform').submit();"><i class="fa fa-search"></i></button>
+												</div>
 											</div>
-										</div>
+										</form>
 									</div>
 									<div class="col-sm-12">
 										<?php $peserta = $program[1];?>
@@ -111,6 +113,10 @@
 																<td nowrap><?= $item["kartu_alamat"];?></td>
 															</tr>
 														<?php endforeach; ?>
+													<?php else: ?>
+														<tr>
+															<td class="text-center" colspan="13">Data Tidak Tersedia</td>
+														</tr>
 													<?php endif; ?>
 												</tbody>
 											</table>
@@ -118,12 +124,56 @@
 										<?php $this->load->view('global/paging');?>
 									</div>
 								</div>
-							</form>
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-		</div>
+		</form>
 	</section>
 </div>
 <?php $this->load->view('global/confirm_delete');?>
+
+<?php if ($this->session->flashdata('notif')): ?>
+	<div class='modal fade' id='notif-box' tabindex='-1' role='dialog' aria-labelledby='myModalLabel' aria-hidden='true'>
+		<div class='modal-dialog'>
+			<div class='modal-content'>
+				<div class='modal-header'>
+					<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>
+						<h4 class='modal-title' id='myModalLabel'> Informasi</h4>
+				</div>
+				<div class='modal-body'>
+					<?php $data = $this->session->flashdata('notif'); ?>
+					<div class="table-responsive">
+						<table class="table table-bordered table-striped table-hover tabel-rincian">
+							<tbody>
+								<tr>
+									<td width="30%">Data Peserta Gagal</td>
+									<td width="1">:</td>
+									<td><?= $data['gagal']; ?></td>
+								</tr>
+								<tr>
+									<td>Data Peserta Sukses</td>
+									<td> : </td>
+									<td><?= $data['sukses']; ?></td>
+								</tr>
+								<?php if ($data['pesan']): ?>
+									<tr>
+										<td>Informasi Tambahan </td>
+										<td> : </td>
+										<td><?= $data['pesan']; ?></td>
+									</tr>
+								<?php endif; ?>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(window).on('load', function() {
+			$('#notif-box').modal('show');
+		});
+	</script>
+<?php endif; ?>

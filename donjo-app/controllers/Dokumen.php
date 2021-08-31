@@ -1,12 +1,55 @@
-<?php  if(!defined('BASEPATH')) exit('No direct script access allowed');
+<?php
+
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+/**
+ * File ini:
+ *
+ * Controller untuk modul Sekretariat > Informasi Publik
+ *
+ * donjo-app/controllers/Dokumen.php,
+ *
+ */
+
+/**
+ *
+ * File ini bagian dari:
+ *
+ * OpenSID
+ *
+ * Sistem informasi desa sumber terbuka untuk memajukan desa
+ *
+ * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
+ *
+ * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ *
+ * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
+ * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
+ * tanpa batasan, termasuk hak untuk menggunakan, menyalin, mengubah dan/atau mendistribusikan,
+ * asal tunduk pada syarat berikut:
+ *
+ * Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan dalam
+ * setiap salinan atau bagian penting Aplikasi Ini. Barang siapa yang menghapus atau menghilangkan
+ * pemberitahuan ini melanggar ketentuan lisensi Aplikasi Ini.
+ *
+ * PERANGKAT LUNAK INI DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN, BAIK TERSURAT MAUPUN
+ * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
+ * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
+ *
+ * @package	OpenSID
+ * @author	Tim Pengembang OpenDesa
+ * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
+ * @link 	https://github.com/OpenSID/OpenSID
+ */
 
 class Dokumen extends Admin_Controller {
 
 	public function __construct()
 	{
 		parent::__construct();
-		session_start();
-		$this->load->model('header_model');
 		$this->load->model('web_dokumen_model');
 		$this->load->model('config_model');
 		$this->load->model('pamong_model');
@@ -45,12 +88,8 @@ class Dokumen extends Admin_Controller {
 		$data['paging'] = $this->web_dokumen_model->paging($kat, $p, $o);
 		$data['main'] = $this->web_dokumen_model->list_data($kat, $o, $data['paging']->offset, $data['paging']->per_page);
 		$data['keyword'] = $this->web_dokumen_model->autocomplete();
-		$header = $this->header_model->get_data();
 
-		$this->load->view('header', $header);
-		$this->load->view('nav',$nav);
-		$this->load->view('dokumen/table', $data);
-		$this->load->view('footer');
+		$this->render('dokumen/table_dokumen', $data);
 	}
 
 	public function form($kat=1, $p=1, $o=0, $id='')
@@ -71,12 +110,8 @@ class Dokumen extends Admin_Controller {
 		}
 		$data['kat_nama'] = $this->web_dokumen_model->kat_nama($kat);
 		$data['list_kategori_publik'] = $this->referensi_model->list_ref_flip(KATEGORI_PUBLIK);
-		$header = $this->header_model->get_data();
 
-		$this->load->view('header', $header);
-		$this->load->view('nav', $nav);
-		$this->load->view('dokumen/form', $data);
-		$this->load->view('footer');
+		$this->render('dokumen/form', $data);
 	}
 
 	public function search()
@@ -145,18 +180,28 @@ class Dokumen extends Admin_Controller {
 	public function dialog_cetak($kat=1)
 	{
 		$data['form_action'] = site_url("dokumen/cetak/$kat");
-		$data['pamong'] = $this->pamong_model->list_data(true);
+		$data['kat'] = $kat;
+		$data['jenis_peraturan'] = $this->referensi_model->list_ref(JENIS_PERATURAN_DESA);
+		$data['pamong'] = $this->pamong_model->list_data();
 		$data['tahun_laporan'] = $this->web_dokumen_model->list_tahun($kat);
 		$this->load->view('dokumen/dialog_cetak', $data);
 	}
 
 	public function cetak($kat=1)
 	{
-		$data['main'] = $this->web_dokumen_model->data_cetak($kat, $this->input->post('tahun'));
-		$data['input'] = $this->input->post();
-		$data['pamong'] = $this->pamong_model->list_data(true);
+		$data = $this->data_cetak($kat);
+		$template = $data['template'];
+		$this->load->view("dokumen/$template", $data);
+	}
+
+	private function data_cetak($kat)
+	{
+		$post = $this->input->post();
+		$data['main'] = $this->web_dokumen_model->data_cetak($kat, $post['tahun'], $post['jenis_peraturan']);
+		$data['input'] = $post;
+		$data['pamong'] = $this->pamong_model->list_data();
 		$data['kat'] = $kat;
-		$data['tahun'] = $this->input->post('tahun');
+		$data['tahun'] = $post['tahun'];
 		if ($kat == 1)
 			$data['kategori'] = 'Informasi Publik';
 		else
@@ -165,38 +210,25 @@ class Dokumen extends Admin_Controller {
 			$list_kategori = $this->web_dokumen_model->list_kategori();
 			$data['kategori'] = $list_kategori[$kat];
 		}
-		if ($kat == 2) $template = 'sk_kades_print';
-		elseif ($kat == 3) $template = 'perdes_print';
-		else $template = 'dokumen_print';
-		$this->load->view("dokumen/$template",$data);
+		if ($kat == 2) $data['template'] = 'sk_kades_print';
+		elseif ($kat == 3) $data['template'] = 'perdes_print';
+		else $data['template'] = 'dokumen_print';
+		return $data;
 	}
 
 	public function dialog_excel($kat=1)
 	{
 		$data['form_action'] = site_url("dokumen/excel/$kat");
-		$data['pamong'] = $this->pamong_model->list_data(true);
+		$data['kat'] = $kat;
+		$data['jenis_peraturan'] = $this->referensi_model->list_ref(JENIS_PERATURAN_DESA);
+		$data['pamong'] = $this->pamong_model->list_data();
 		$data['tahun_laporan'] = $this->web_dokumen_model->list_tahun($kat);
 		$this->load->view('dokumen/dialog_cetak', $data);
 	}
 
 	public function excel($kat=1)
 	{
-		$data['main'] = $this->web_dokumen_model->data_cetak($kat, $this->input->post('tahun'));
-		$data['input'] = $this->input->post();
-		$data['pamong'] = $this->pamong_model->list_data(true);
-		$data['kat'] = $kat;
-		$data['tahun'] = $this->input->post('tahun');
-		if ($kat == 1)
-			$data['kategori'] = 'Informasi Publik';
-		else
-		{
-			$data['desa'] = $this->config_model->get_data();
-			$list_kategori = $this->web_dokumen_model->list_kategori();
-			$data['kategori'] = $list_kategori[$kat];
-		}
-		if ($kat == 2) $data['template'] = 'sk_kades_print.php';
-		elseif ($kat == 3) $data['template'] = 'perdes_print.php';
-		else $data['template'] = 'dokumen_print.php';
+		$data = $this->data_cetak($kat);
 		$this->load->view("dokumen/dokumen_excel", $data);
 	}
 
@@ -214,5 +246,4 @@ class Dokumen extends Admin_Controller {
 		else
 			$this->output->set_status_header('404');
 	}
-
 }

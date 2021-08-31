@@ -1,6 +1,46 @@
 <?php if(!defined('BASEPATH')) exit('No direct script access allowed');
+/*
+ *  File ini:
+ *
+ * Controller untuk modul Layanan Mandiri
+ *
+ * donjo-app/controllers/Permohonan_surat.php
+ *
+ */
+/*
+ *  File ini bagian dari:
+ *
+ * OpenSID
+ *
+ * Sistem informasi desa sumber terbuka untuk memajukan desa
+ *
+ * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
+ *
+ * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ *
+ * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
+ * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
+ * tanpa batasan, termasuk hak untuk menggunakan, menyalin, mengubah dan/atau mendistribusikan,
+ * asal tunduk pada syarat berikut:
+ *
+ * Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan dalam
+ * setiap salinan atau bagian penting Aplikasi Ini. Barang siapa yang menghapus atau menghilangkan
+ * pemberitahuan ini melanggar ketentuan lisensi Aplikasi Ini.
+ *
+ * PERANGKAT LUNAK INI DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN, BAIK TERSURAT MAUPUN
+ * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
+ * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
+ *
+ * @package	OpenSID
+ * @author	Tim Pengembang OpenDesa
+ * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
+ * @link 	https://github.com/OpenSID/OpenSID
+ */
 
-class Permohonan_surat extends Web_Controller {
+class Permohonan_surat extends Mandiri_Controller {
 
 	public function __construct()
 	{
@@ -9,7 +49,6 @@ class Permohonan_surat extends Web_Controller {
 		$this->load->model('keluarga_model');
 		$this->load->model('surat_model');
 		$this->load->model('keluar_model');
-		$this->load->model('config_model');
 		$this->load->model('referensi_model');
 		$this->load->model('penomoran_surat_model');
 		$this->load->model('permohonan_surat_model');
@@ -41,11 +80,15 @@ class Permohonan_surat extends Web_Controller {
 		$data['anggota'] = $this->keluarga_model->list_anggota($data['individu']['id_kk']);
 		$data['penduduk'] = $this->penduduk_model->get_penduduk($_SESSION['id']);
 		$this->get_data_untuk_form($url, $data);
+		$data['desa'] = $this->header['desa'];
 
 		$data['surat_url'] = rtrim($_SERVER['REQUEST_URI'], "/clear");
 		$data['form_action'] = site_url("surat/cetak/$url");
+		$data['masa_berlaku'] = $this->surat_model->masa_berlaku_surat($url);
 		$data['views_partial_layout'] = "surat/form_surat.php";
 		$data['data'] = $data;
+		$data['cek_anjungan'] = $this->cek_anjungan;
+
 		$this->load->view('web/mandiri/layout.mandiri.php', $data);
 	}
 
@@ -78,7 +121,7 @@ class Permohonan_surat extends Web_Controller {
 		$data['input'] = $this->input->post();
 		$data['input']['nomor'] = $data['surat_terakhir']['no_surat_berikutnya'];
 		$data['format_nomor_surat'] = $this->penomoran_surat_model->format_penomoran_surat($data);
-		$data['lokasi'] = $this->config_model->get_data();
+		$data['lokasi'] = $this->header['desa'];
 		$data['pamong'] = $this->surat_model->list_pamong();
 		$pamong_ttd = $this->pamong_model->get_ttd();
 		$pamong_ub = $this->pamong_model->get_ub();
@@ -92,5 +135,4 @@ class Permohonan_surat extends Web_Controller {
 		$this->permohonan_surat_model->update_status($id, array('status' => 9));
 		redirect('mandiri_web/mandiri/1/21');
 	}
-
 }

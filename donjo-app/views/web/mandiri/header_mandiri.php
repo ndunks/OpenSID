@@ -40,9 +40,16 @@
 		<link rel="stylesheet" href="<?= base_url()?>assets/css/skins/_all-skins.min.css">
 		<!-- Jquery Confirm -->
 		<link rel="stylesheet" href="<?= base_url()?>assets/front/css/jquery-confirm.min.css">
-
 		<!-- Style Admin Modification Css -->
 		<link rel="stylesheet" href="<?= base_url()?>assets/css/admin-style.css">
+		<!-- Jquery UI -->
+		<link rel="stylesheet" href="<?= base_url()?>assets/bootstrap/css/jquery-ui.min.css">
+		<?php if ($cek_anjungan): ?>
+			<!-- Keyboard Default (Ganti dengan keyboard-dark.min.css untuk tampilan lain)-->
+			<link rel="stylesheet" href="<?= base_url("assets/css/keyboard.min.css")?>">
+			<link rel="stylesheet" href="<?= base_url("assets/front/css/mandiri-keyboard.css")?>">
+		<?php endif; ?>
+
 		<!-- Diperlukan untuk global automatic base_url oleh external js file -->
 		<script type="text/javascript">
 			const BASE_URL = "<?= base_url(); ?>";
@@ -116,7 +123,7 @@
 				<nav class="navbar navbar-default">
 					<div class="container-fluid">
 						<div class="navbar-header">
-							<a class="navbar-brand" href="<?= site_url(); ?>first/">
+							<a class="navbar-brand" href="<?= site_url(); ?>">
 								<img src="<?= gambar_desa($desa['logo']);?>" alt="<?= $desa['nama_desa']?>" width="30px" style="margin:-7px"/>
 							</a>
 							<p class="navbar-brand">

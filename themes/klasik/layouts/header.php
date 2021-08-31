@@ -25,11 +25,9 @@
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
  * tanpa batasan, termasuk hak untuk menggunakan, menyalin, mengubah dan/atau mendistribusikan,
  * asal tunduk pada syarat berikut:
-
  * Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan dalam
  * setiap salinan atau bagian penting Aplikasi Ini. Barang siapa yang menghapus atau menghilangkan
  * pemberitahuan ini melanggar ketentuan lisensi Aplikasi Ini.
-
  * PERANGKAT LUNAK INI DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN, BAIK TERSURAT MAUPUN
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
@@ -47,12 +45,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<title>
-			<?=
-				$this->setting->website_title
-				. ' ' . ucwords($this->setting->sebutan_desa)
-				. (($desa['nama_desa']) ? ' ' . $desa['nama_desa'] : '')
-				. get_dynamic_title_page_from_path();
-			?>
+			<?php if ($title):?>
+				<?= $title; ?>
+			<?php else:?>
+				<?=
+					get_dynamic_title_page_from_path()
+					. ' ' . $this->setting->website_title
+					. ' ' . ucwords($this->setting->sebutan_desa)
+					. (($desa['nama_desa']) ? ' ' . $desa['nama_desa'] : '')
+				?>
+			<?php endif?>
 		</title>
 		<meta content="utf-8" http-equiv="encoding">
 		<meta name="keywords" content="OpenSID,opensid,sid,SID,SID CRI,SID-CRI,sid cri,sid-cri,Sistem Informasi Desa,sistem informasi desa, desa <?= $desa['nama_desa'];?>">
@@ -88,6 +90,10 @@
 		<?php if ($single_artikel OR $gallery): ?>
 			<link type='text/css' href="<?= base_url()?>assets/front/css/colorbox.css" rel='Stylesheet' />
 		<?php endif ?>
+		<!-- Ionicons -->
+		<link rel="stylesheet" href="<?= base_url()?>assets/bootstrap/css/ionicons.min.css">
+		
+		<!-- DataTables -->
 		<link rel="stylesheet" href="<?= base_url()?>assets/css/leaflet.css" />
 		<link rel="stylesheet" href="<?= base_url()?>assets/css/mapbox-gl.css" />
 		<link rel="stylesheet" href="<?= base_url()?>assets/css/peta.css">
@@ -110,9 +116,16 @@
 		<script src="<?= base_url()?>assets/js/highcharts/highcharts-3d.js"></script>
 		<script src="<?= base_url()?>assets/js/highcharts/exporting.js"></script>
 		<script src="<?= base_url()?>assets/js/highcharts/highcharts-more.js"></script>
+		<script src="<?= base_url()?>assets/js/highcharts/sankey.js"></script>
+		<script src="<?= base_url()?>assets/js/highcharts/organization.js"></script>
+		<script src="<?= base_url()?>assets/js/highcharts/accessibility.js"></script>
 		<!-- Untuk carousel, slider, teks_berjalan dan widget aparatur_desa -->
-		<script src="<?php echo base_url()?>assets/front/js/jquery.cycle2.min.js"></script>
-		<script src="<?php echo base_url()?>assets/front/js/jquery.cycle2.carousel.js"></script>
+		<script src="<?= base_url()?>assets/front/js/jquery.cycle2.min.js"></script>
+		<script src="<?= base_url()?>assets/front/js/jquery.cycle2.carousel.js"></script>
+		<?php $this->load->view('global/validasi_form'); ?>
+		<!-- Script-->
+		<script src="<?= base_url(); ?>assets/js/script.js"></script>
+
 		<!-- Diperlukan untuk javascript yg mengakses resources -->
 		<script type="text/javascript">
 			var BASE_URL = "<?= base_url(); ?>";
@@ -157,7 +170,7 @@
 							</div>
 							<div id="divlogo-img">
 								<div class="intube">
-									<a href="<?= site_url(); ?>first/">
+									<a href="<?= site_url(); ?>">
 									<img src="<?= gambar_desa($desa['logo']);?>" alt="<?= $desa['nama_desa']?>"/>
 									</a>
 								</div>
