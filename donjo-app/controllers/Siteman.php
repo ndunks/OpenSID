@@ -52,6 +52,7 @@ class Siteman extends CI_Controller
 		// siteman_timeout();
 		$this->load->model('config_model');
 		$this->load->model('user_model');
+		$this->load->model('theme_model');
 	}
 
 	public function index()
@@ -66,6 +67,7 @@ class Siteman extends CI_Controller
 		}
 		unset($_SESSION['balik_ke']);
 		$data['header'] = $this->config_model->get_data();
+		$data['latar_login'] = $this->theme_model->latar_login();
 		//Initialize Session ------------
 		if (!isset($_SESSION['siteman']))
 		{
