@@ -65,8 +65,8 @@ class MY_Controller extends CI_Controller {
 	{
 		parent::__construct();
 
-		// Tampilkan profiler untuk development
-		if (defined('ENVIRONMENT') && ENVIRONMENT == 'development')	$this->output->enable_profiler(TRUE);
+		// Tampilkan profiler berdasarkan konfigurasi desa
+		if ($this->config->config['profiler'])	$this->output->enable_profiler(TRUE);
 
 		$this->load->model('database_model');
 		$this->database_model->cek_migrasi();
