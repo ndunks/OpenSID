@@ -116,7 +116,7 @@ class Beranda extends Mandiri_Controller
     public function keluar()
     {
         $this->mandiri_model->logout();
-        redirect('layanan-mandiri');
+        redirect(site_url());
     }
 
     /**
