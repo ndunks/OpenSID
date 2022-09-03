@@ -69,6 +69,14 @@ class Release
      * @var string
      */
     protected $version;
+    
+    /**
+     * Cached response, pengecekan terjadi berkali2 males cek dari mana asalnya,
+     * optimisasi aja tradeof ke memory
+     *
+     * @var string
+     */
+    protected $cacheResponse;
 
     /**
      * Konstruktor
@@ -250,6 +258,10 @@ class Release
      */
     public function resync()
     {
+        if( $this->cacheResponse ){
+            return $this->cacheResponse;
+        }
+
         if (! $this->api) {
             throw new \Exception('Please specify the API endpoint URL.');
         }
@@ -276,7 +288,7 @@ class Release
             }
         }
 
-        return json_decode($this->read($this->cache));
+        return $this->cacheResponse = json_decode($this->read($this->cache));
     }
 
     /**
