@@ -505,9 +505,7 @@ if ( ! is_php('5.4'))
  *  Is there a "pre_controller" hook?
  * ------------------------------------------------------
  */
-	error_log('pre_controller START');
- 	$EXT->call_hook('pre_controller');
-	 error_log('pre_controller END');
+	$EXT->call_hook('pre_controller');
 
 /*
  * ------------------------------------------------------
@@ -524,9 +522,7 @@ if ( ! is_php('5.4'))
  *  Is there a "post_controller_constructor" hook?
  * ------------------------------------------------------
  */
-	error_log('post_controller_constructor START');
- 	$EXT->call_hook('post_controller_constructor');
-	 error_log('post_controller_constructor END');
+	$EXT->call_hook('post_controller_constructor');
 
 /*
  * ------------------------------------------------------
@@ -543,9 +539,7 @@ if ( ! is_php('5.4'))
  *  Is there a "post_controller" hook?
  * ------------------------------------------------------
  */
-	error_log('post_controller START');
- 	$EXT->call_hook('post_controller');
-	 error_log('post_controller END');
+	$EXT->call_hook('post_controller');
 
 /*
  * ------------------------------------------------------
@@ -554,9 +548,7 @@ if ( ! is_php('5.4'))
  */
 	if ($EXT->call_hook('display_override') === FALSE)
 	{
-		error_log('display_override START');
 		$OUT->_display();
-		error_log('display_override END');
 	}
 
 /*
@@ -564,6 +556,4 @@ if ( ! is_php('5.4'))
  *  Is there a "post_system" hook?
  * ------------------------------------------------------
  */
-	error_log('post_system START');
 	$EXT->call_hook('post_system');
-	error_log('post_system DONE');
