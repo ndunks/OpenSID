@@ -56,7 +56,7 @@ class Hom_sid extends Admin_Controller
             $url_rilis = config_item('rilis_umum');
 
             $this->release->set_api_url($url_rilis)
-                ->set_interval(0)
+                ->set_interval(60 * 60 * 24)
                 ->set_current_version($this->versi_setara)
                 ->set_cache_folder($this->config->item('cache_path'));
 

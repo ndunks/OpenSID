@@ -330,7 +330,6 @@ class Release
     public function write($cache)
     {
         $file     = $this->cache;
-        $interval = $this->interval;
 
         if ($this->cache_is_outdated()) {
             if (is_file($file)) {
