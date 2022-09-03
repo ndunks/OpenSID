@@ -97,6 +97,9 @@ class Masuk extends Web_Controller
     public function cek()
     {
         $this->mandiri_model->siteman();
+		if( $this->input->is_ajax_request() ){
+			die(json_encode(["sukses" => $this->session->mandiri]));
+		}
         redirect('layanan-mandiri');
     }
 

@@ -90,13 +90,15 @@ class Siteman extends MY_Controller
         $this->user_model->siteman();
 
         if ($_SESSION['siteman'] != 1) {
+            if( $this->input->is_ajax_request() ){
+                die(json_encode(['sukses' => 0 ]));
+            }
             // Gagal otentifikasi
             redirect('siteman');
         }
-
         if (! $this->user_model->syarat_sandi() && ! ($this->session->user == 1 && config_item('demo_mode'))) {
             // Password tidak memenuhi syarat kecuali di website demo
-            redirect('user_setting/change_pwd');
+            $redirectTo = 'user_setting/change_pwd';
         }
 
         $_SESSION['dari_login'] = '1';
@@ -105,10 +107,15 @@ class Siteman extends MY_Controller
             // Lengkapi url supaya tidak diubah oleh redirect
             $request_awal = $_SERVER['HTTP_ORIGIN'] . $_SESSION['request_uri'];
             unset($_SESSION['request_uri']);
-            redirect($request_awal);
+            $redirectTo = $request_awal;
         } else {
             unset($_SESSION['request_uri']);
-            redirect('main');
+            $redirectTo = 'main';
+        }
+        if( $this->input->is_ajax_request() ){
+            die(json_encode([ 'sukses' => 1, 'redirect' => site_url($redirectTo) ]));
+        }else {
+            redirect($redirectTo);
         }
     }
 
