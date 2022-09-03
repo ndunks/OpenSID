@@ -54,9 +54,16 @@ class MY_Exceptions extends CI_Exceptions
     public function __construct()
     {
         parent::__construct();
-
-        $this->ci = get_instance();
-        $this->ci->session->unset_userdata(['db_error', 'message', 'message_query', 'heading', 'message_exception']);
+        if( class_exists('CI_Controller') ) {
+            $this->ci = get_instance();
+            if( $this->ci && $this->ci->session ){
+                $this->ci->session->unset_userdata(['db_error', 'message', 'message_query', 'heading', 'message_exception']);
+            }
+        }else {
+            if(!defined('VERSION')){
+                include __DIR__ . "/../helpers/opensid_helper.php";
+            }
+        }
     }
 
     /**
@@ -68,7 +75,7 @@ class MY_Exceptions extends CI_Exceptions
             return parent::show_error($heading, $message, $template, $status_code);
         }
 
-        if (! empty($error = $this->ci->db->error()) && in_array($error['code'], $this->db_error_codes)) {
+        if ( $this->ci && ! empty($error = $this->ci->db->error()) && in_array($error['code'], $this->db_error_codes)) {
             $this->ci->session->db_error          = $error;
             $this->ci->session->message           = '<p>' . (is_array($error) ? implode('</p><p>', $error) : $error) . '</p>';
             $this->ci->session->heading           = $heading;

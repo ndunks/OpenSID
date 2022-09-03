@@ -1,9 +1,14 @@
 <?php defined('BASEPATH') || exit('No direct script access allowed'); ?>
 <?php
-    $CI = &get_instance();
-    if (! isset($CI)) {
-        $CI = new CI_Controller();
-    }
+	$CI = null;
+	if( class_exists('CI_Controller') ) {
+		$CI = &get_instance();
+		if (! isset($CI)) {
+			$CI = new CI_Controller();
+		}
+	}
+	global $base_url;
+	$base_url = $base_url ?? "/";
 ?>
 
 <!DOCTYPE html>
