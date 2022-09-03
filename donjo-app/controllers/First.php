@@ -84,43 +84,43 @@ class First extends Web_Controller
 
     public function index($p = 1)
     {
-        $data = $this->includes;
+         $data = $this->includes;
 
-        $data['p']            = $p;
-        $data['paging']       = $this->first_artikel_m->paging($p);
-        $data['paging_page']  = 'index';
-        $data['paging_range'] = 3;
-        $data['start_paging'] = max($data['paging']->start_link, $p - $data['paging_range']);
-        $data['end_paging']   = min($data['paging']->end_link, $p + $data['paging_range']);
-        $data['pages']        = range($data['start_paging'], $data['end_paging']);
-        $data['artikel']      = $this->first_artikel_m->artikel_show($data['paging']->offset, $data['paging']->per_page);
+        // $data['p']            = $p;
+        // $data['paging']       = $this->first_artikel_m->paging($p);
+        // $data['paging_page']  = 'index';
+        // $data['paging_range'] = 3;
+        // $data['start_paging'] = max($data['paging']->start_link, $p - $data['paging_range']);
+        // $data['end_paging']   = min($data['paging']->end_link, $p + $data['paging_range']);
+        // $data['pages']        = range($data['start_paging'], $data['end_paging']);
+        // $data['artikel']      = $this->first_artikel_m->artikel_show($data['paging']->offset, $data['paging']->per_page);
 
-        $data['headline'] = $this->first_artikel_m->get_headline();
-        $data['cari']     = htmlentities($this->input->get('cari'));
-        if ($this->setting->covid_rss) {
-            $data['feed'] = [
-                'items' => $this->first_artikel_m->get_feed(),
-                'title' => 'BERITA COVID19.GO.ID',
-                'url'   => 'https://www.covid19.go.id',
-            ];
-        }
+        // $data['headline'] = $this->first_artikel_m->get_headline();
+        // $data['cari']     = htmlentities($this->input->get('cari'));
+        // if ($this->setting->covid_rss) {
+        //     $data['feed'] = [
+        //         'items' => $this->first_artikel_m->get_feed(),
+        //         'title' => 'BERITA COVID19.GO.ID',
+        //         'url'   => 'https://www.covid19.go.id',
+        //     ];
+        // }
 
-        if ($this->setting->apbdes_footer) {
-            $data['transparansi'] = $this->setting->apbdes_manual_input
-                ? $this->keuangan_grafik_manual_model->grafik_keuangan_tema()
-                : $this->keuangan_grafik_model->grafik_keuangan_tema();
-        }
+        // if ($this->setting->apbdes_footer) {
+        //     $data['transparansi'] = $this->setting->apbdes_manual_input
+        //         ? $this->keuangan_grafik_manual_model->grafik_keuangan_tema()
+        //         : $this->keuangan_grafik_model->grafik_keuangan_tema();
+        // }
 
-        $data['covid'] = $this->laporan_penduduk_model->list_data('covid');
+        // $data['covid'] = $this->laporan_penduduk_model->list_data('covid');
 
-        $cari = trim($this->input->get('cari'));
-        if (! empty($cari)) {
-            // Judul artikel bisa digunakan untuk serangan XSS
-            $data['judul_kategori'] = htmlentities('Hasil pencarian : ' . substr($cari, 0, 50));
-        }
+        // $cari = trim($this->input->get('cari'));
+        // if (! empty($cari)) {
+        //     // Judul artikel bisa digunakan untuk serangan XSS
+        //     $data['judul_kategori'] = htmlentities('Hasil pencarian : ' . substr($cari, 0, 50));
+        // }
 
         $this->_get_common_data($data);
-        $this->track_model->track_desa('first');
+        // $this->track_model->track_desa('first');
         $this->load->view($this->template, $data);
     }
 
