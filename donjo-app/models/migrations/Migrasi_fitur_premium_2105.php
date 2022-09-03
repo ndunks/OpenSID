@@ -504,10 +504,7 @@ class Migrasi_fitur_premium_2105 extends MY_model
         $this->dbforge->add_key('id_modul');
         $hasil = $hasil && $this->dbforge->create_table('grup_akses', true);
 
-        return $hasil && $this->dbforge->add_column('grup_akses', [
-            'CONSTRAINT fk_id_grup FOREIGN KEY(id_grup) REFERENCES user_grup(id) ON DELETE CASCADE ON UPDATE CASCADE',
-            'CONSTRAINT fk_id_modul FOREIGN KEY(id_modul) REFERENCES setting_modul(id) ON DELETE CASCADE ON UPDATE CASCADE',
-        ]);
+        return $hasil;
     }
 
     private function urut_modul($hasil)
@@ -697,6 +694,7 @@ class Migrasi_fitur_premium_2105 extends MY_model
 			(4,50,3),
 			(4,51,3),
 			(4,54,3)
+            ON DUPLICATE KEY UPDATE id_grup=VALUES(id_grup), id_modul=VALUES(id_modul), akses=VALUES(akses);
 		';
         $hasil = $hasil && $this->db->query($query);
 
@@ -717,7 +715,10 @@ class Migrasi_fitur_premium_2105 extends MY_model
 
         $this->cache->hapus_cache_untuk_semua('_cache_modul');
 
-        return $hasil;
+        return $hasil && $this->dbforge->add_column('grup_akses', [
+            'CONSTRAINT fk_id_grup FOREIGN KEY IF NOT EXISTS (id_grup) REFERENCES user_grup(id) ON DELETE CASCADE ON UPDATE CASCADE',
+            'CONSTRAINT fk_id_modul FOREIGN KEY IF NOT EXISTS (id_modul) REFERENCES setting_modul(id) ON DELETE CASCADE ON UPDATE CASCADE',
+        ]);
     }
 
     // Kosongkan url modul yg mempunyai sub modul

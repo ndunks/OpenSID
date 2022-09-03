@@ -419,6 +419,18 @@ class Migrasi_fitur_premium_2112 extends MY_Model
             $hasil = $hasil && $this->dbforge->add_column('kelompok', $fields);
         }
 
+        if (! $this->db->field_exists('tipe', 'kelompok')) {
+            $fields = [
+                'tipe' => [
+                    'type'       => 'VARCHAR',
+                    'constraint' => 100,
+                    'default'     => 'kelompok',
+                    'after'      => 'kode',
+                ],
+            ];
+            $hasil = $hasil && $this->dbforge->add_column('kelompok', $fields);
+        }
+
         $this->load->model('kelompok_model');
 
         if ($data_kelompok = $this->kelompok_model->list_data()) {
