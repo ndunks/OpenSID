@@ -1,18 +1,16 @@
 <?php
 
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') || exit('No direct script access allowed');
 
-/**
+/*
  * File ini:
  *
  * View form untuk modul Anjungan
  *
  * donjo-app/views/anjungan/form.php
- *
  */
 
-/**
- *
+/*
  * File ini bagian dari:
  *
  * OpenSID
@@ -37,12 +35,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
  *
- * @package	OpenSID
- * @author	Tim Pengembang OpenDesa
- * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright	  Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright	  Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
- * @link 	https://github.com/OpenSID/OpenSID
+ *
+ * @see 	https://github.com/OpenSID/OpenSID
  */
 ?>
 
@@ -69,6 +66,24 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 						</div>
 					</div>
 					<div class="form-group">
+						<label class="col-sm-3 control-label" for="ip_address">IP Address Printer</label>
+						<div class="col-sm-7">
+							<input class="form-control input-sm ip_address" type="text" placeholder="IP address statis untuk printer anjungan" name="printer_ip" value="<?= $anjungan['printer_ip']?>">
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" for="ip_address">Port Address Printer</label>
+						<div class="col-sm-7">
+							<input class="form-control input-sm" type="text" placeholder="Port address statis untuk printer anjungan" name="printer_port" value="<?= $anjungan['printer_port']?>">
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="col-sm-3 control-label" for="ip_address">Mac Address</label>
+						<div class="col-sm-7">
+							<input class="form-control input-sm mac_address" type="text" placeholder="00:1B:44:11:3A:B7" name="mac_address" value="<?= $anjungan['mac_address']?>">
+						</div>
+					</div>
+					<div class="form-group">
 						<label class="col-sm-3 control-label" for="keterangan">Keterangan</label>
 						<div class="col-sm-7">
 							 <textarea name="keterangan" class="form-control input-sm" maxlength="300" placeholder="Keterangan" rows="3" style="resize:none;"><?= $anjungan['keterangan']?></textarea>
@@ -80,8 +95,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 							<label id="sx1" class="btn btn-info btn-flat btn-sm col-xs-6 col-sm-5 col-lg-3 form-check-label <?= jecho($anjungan['keyboard'], '1', 'active') ?>">
 								<input type="radio" name="keyboard" class="form-check-input" type="radio" value="1" <?= jecho($anjungan['keyboard'], '1', 'checked') ?>> Aktif
 							</label>
-							<label id="sx2" class="btn btn-info btn-flat btn-sm col-xs-6 col-sm-5 col-lg-3 form-check-label <?= jecho($anjungan['keyboard'] != '1', TRUE, 'active') ?>">
-								<input type="radio" name="keyboard" class="form-check-input" type="radio" value="0" <?= jecho($anjungan['keyboard'] != '1', TRUE, 'checked') ?>> Tidak Aktif
+							<label id="sx2" class="btn btn-info btn-flat btn-sm col-xs-6 col-sm-5 col-lg-3 form-check-label <?= jecho($anjungan['keyboard'] != '1', true, 'active') ?>">
+								<input type="radio" name="keyboard" class="form-check-input" type="radio" value="0" <?= jecho($anjungan['keyboard'] != '1', true, 'checked') ?>> Tidak Aktif
 							</label>
 						</div>
 					</div>

@@ -21,7 +21,7 @@
 				<option value="">-- Pilih Jenis Kelamin --</option>
 				<?php foreach ($jenis_kelamin as $data): ?>
 					<option <?php selected($penduduk['id_sex'], $data['id']); ?> value="<?= $data['id']?>"> <?= strtoupper($data['nama'])?> </option>
-				<?php endforeach;?>
+				<?php endforeach; ?>
 			</select>
 		</div>
 	</div>
@@ -33,7 +33,7 @@
 				<option value="">-- Pilih Agama --</option>
 				<?php foreach ($agama as $data): ?>
 					<option <?php selected($penduduk['agama_id'], $data['id']); ?> value="<?= $data['id']?>"> <?= strtoupper($data['nama'])?> </option>
-				<?php endforeach;?>
+				<?php endforeach; ?>
 			</select>
 		</div>
 	</div>
@@ -52,7 +52,7 @@
 				<div class="input-group-addon">
 					<i class="fa fa-calendar"></i>
 				</div>
-				<input class="form-control input-sm pull-right" id="tanggallahir" name="tanggallahir" type="text" value="<?= $penduduk['tanggallahir']?>">
+				<input class="form-control input-sm pull-right tgl-datepicker" name="tanggallahir" type="text" value="<?= $penduduk['tanggallahir']?>">
 			</div>
 		</div>
 	</div>
@@ -64,7 +64,7 @@
 				<option value="">Pilih Golongan Darah</option>
 				<?php foreach ($golongan_darah as $data): ?>
 					<option <?php selected($penduduk['golongan_darah_id'], $data['id']); ?> value="<?= $data['id']?>"> <?= strtoupper($data['nama'])?> </option>
-				<?php endforeach;?>
+				<?php endforeach; ?>
 			</select>
 		</div>
 	</div>
@@ -76,8 +76,8 @@
 				<?php foreach ($status_penduduk as $data): ?>
 					<?php if ($data['id'] != '1'): ?>
 						<option <?php selected($penduduk['id_status'], $data['id']); ?> value="<?= $data['id']?>"> <?= strtoupper($data['nama'])?> </option>
-					<?php endif;?>
-				<?php endforeach;?>
+					<?php endif; ?>
+				<?php endforeach; ?>
 			</select>
 		</div>
 	</div>
@@ -100,17 +100,10 @@
 			</select>
 		</div>
 	</div>
-
 	<div class="col-sm-4">
 		<div class="form-group">
 			<label>RW</label>
-			<select
-			id="rw"
-			class="form-control input-sm required"
-			name="rw"
-			data-source="<?= site_url()?>wilayah/list_rw/"
-			data-valueKey="rw"
-			data-displayKey="rw" >
+			<select id="rw" class="form-control input-sm required" name="rw" data-source="<?= site_url()?>wilayah/list_rw/" data-valueKey="rw" data-displayKey="rw" >
 				<option class="placeholder" value="">Pilih RW</option>
 				<?php foreach ($rw as $data): ?>
 					<option <?php selected($penduduk['rw'], $data['rw']) ?> value="<?= $data['rw']?>"> <?= $data['rw']?> </option>
@@ -118,17 +111,11 @@
 			</select>
 		</div>
 	</div>
-
 	<div class="col-sm-4">
 		<div id='isi_rt' class="form-group">
 			<label>RT</label>
-			<select
-			id="id_cluster"
-			class="form-control input-sm required"
-			name="id_cluster"
-			data-source="<?= site_url()?>wilayah/list_rt/"
-			data-valueKey="id"
-			data-displayKey="rt">
+			<select id="id_cluster" class="form-control input-sm required" name="id_cluster"
+			data-source="<?= site_url()?>wilayah/list_rt/" data-valueKey="id" data-displayKey="rt">
 				<option class="placeholder" value="">Pilih RT </option>
 				<?php foreach ($rt as $data): ?>
 					<option <?php selected($penduduk['id_cluster'], $data['id']) ?> value="<?= $data['id']?>"> <?= $data['rt']?> </option>
@@ -137,21 +124,30 @@
 		</div>
 	</div>
 
+	<div class="col-sm-6">
+		<div class="form-group">
+			<label for="tanggallahir">Tanggal Masuk</label>
+			<div class="input-group input-group-sm date">
+				<div class="input-group-addon">
+					<i class="fa fa-calendar"></i>
+				</div>
+				<input class="form-control input-sm pull-right tgl-datepicker required" name="tgl_peristiwa" type="text" value="<?= $penduduk['tgl_peristiwa']?>">
+			</div>
+		</div>
+	</div>
+
 </form>
 
 <script type="text/javascript">
-	$(document).ready(function()
-	{
-		$("#dusun").change(function()
-		{
+	$(document).ready(function() {
+		$("#dusun").change(function() {
 			let dusun = $(this).val();
 			$('#isi_rt').hide();
 			var rw = $('#rw');
 			select_options(rw, urlencode(dusun));
 		});
 
-		$("#rw").change(function()
-		{
+		$("#rw").change(function() {
 			let dusun = $("#dusun").val();
 			let rw = $(this).val();
 
@@ -161,15 +157,12 @@
 			select_options(rt, params);
 		});
 
-		$('#tanggallahir').datetimepicker(
-		{
+		$('.tgl-datepicker').datetimepicker({
 			format: 'DD-MM-YYYY'
 		});
 
-		$("#form_penduduk").validate(
-		{
-			submitHandler: function(form)
-			{
+		$("#form_penduduk").validate({
+			submitHandler: function(form) {
 				form.submit();
 			}
 		});

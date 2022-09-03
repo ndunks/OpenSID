@@ -1,3 +1,12 @@
+<style>
+  .small-box {
+    border-radius: 5px;
+  }
+
+  .small-box .icon {
+    top: 3px;
+  }
+</style>
 <div class="content-wrapper">
 	<section class="content-header">
 		<h1>Info Layanan Pelanggan</h1>
@@ -7,7 +16,7 @@
 		</ol>
 	</section>
 	<section class="content" id="maincontent">
-		<?php if (is_null($response)) : ?>
+		<?php if (null === $response) : ?>
 			<div class="box box-danger">
 				<div class="box-header with-border">
 					<i class="icon fa fa-ban"></i>
@@ -17,7 +26,7 @@
 					<div class="callout callout-danger">
 						<h5>Data Gagal Dimuat, Harap Periksa Dibawah Ini</h5>
 						<h5>Fitur ini khusus untuk pelanggan Layanan OpenDesa (hosting, Fitur Premium, dll) untuk menampilkan status langganan.</h5>
-						<li>Periksa log error terakhir di folder <b>logs</b></a></strong></li>
+						<li>Periksa logs error terakhir di menu <strong><a href="<?= site_url('info_sistem#log_viewer'); ?>" style="text-decoration:none;">Pengaturan > Info Sistem > Logs</a></strong></li>
 						<li>Token pelanggan tidak terontentikasi. Periksa [Layanan Opendesa Token] di <a href="#" style="text-decoration:none;" data-remote="false" data-toggle="modal" data-title="Pengaturan <?= ucwords($this->controller); ?>" data-target="#pengaturan"><strong>Pengaturan Pelanggan&nbsp;(<i class="fa fa-gear"></i>)</strong></a></li>
 						<li>Jika masih mengalami masalah harap menghubungi pelaksana masing-masing.
 					</div>
@@ -25,13 +34,18 @@
 			</div>
 		<?php else : ?>
 			<div class="row">
-				<div class="col-lg-3 col-xs-6">
+				<div class="col-md-3 col-sm-6 col-xs-12">
 					<div class="small-box bg-blue">
 						<div class="inner">
 							<h4>PEMESANAN LAYANAN</h4>
 							<h6>
 								<?php foreach ($response->body->pemesanan as $pemesanan) : ?>
 									<?php foreach ($pemesanan->layanan as $layanan) : ?>
+										<?php
+                                            if (preg_match('/Hosting|Domain/', $layanan->nama) && ! file_exists('mitra')) {
+                                                fopen('mitra', 'wb');
+                                            }
+                                        ?>
 										<li><?= $layanan->nama ?></li>
 									<?php endforeach ?>
 								<?php endforeach ?>
@@ -42,7 +56,7 @@
 						</div>
 					</div>
 				</div>
-				<div class="col-lg-3 col-xs-6">
+				<div class="col-md-3 col-sm-6 col-xs-12">
 					<div class="small-box bg-yellow">
 						<div class="inner">
 							<h4>STATUS PELANGGAN</h4>
@@ -53,7 +67,7 @@
 						</div>
 					</div>
 				</div>
-				<div class="col-lg-3 col-xs-6">
+				<div class="col-md-3 col-sm-6 col-xs-12">
 					<div class="small-box bg-green">
 						<div class="inner">
 							<h4>MULAI BERLANGGANAN</h4>
@@ -64,7 +78,7 @@
 						</div>
 					</div>
 				</div>
-				<div class="col-lg-3 col-xs-6">
+				<div class="col-md-3 col-sm-6 col-xs-12">
 					<div class="small-box bg-red">
 						<div class="inner">
 							<h4>AKHIR BERLANGGANAN</h4>
@@ -77,8 +91,10 @@
 				</div>
 			</div>
 			<div class="box box-info">
+				<div class="box-header with-border">
+					<b>Rincian Pelanggan <a href="<?= site_url('pelanggan/perbarui') ?>" title="Perbarui" class="btn btn-social btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-refresh"></i> Perbarui</a></b>
+				</div>
 				<div class="box-body">
-					<h5 class="text-bold">Rincian Pelanggan</h5>
 					<div class="table-responsive">
 						<table class="table table-bordered table-striped table-hover tabel-rincian">
 							<tbody>
@@ -137,16 +153,16 @@
 												<td class="padat"><?= ($number + 1) ?></td>
 												<td class="aksi">
 													<?php
-														$host = $this->setting->layanan_opendesa_server;
-														$token = $this->setting->layanan_opendesa_token;
-													?>
-													<a target="_blank" href="<?= "{$host}/api/v1/pelanggan/pemesanan/faktur?invoice={$pemesanan->faktur}&token={$token}" ?>" class="btn btn-social btn-flat bg-purple btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak Nota Faktur"><i class="fa fa-print"></i>Cetak Nota Faktur</a>
+                                                        $server = config_item('server_layanan');
+                                                        $token  = $this->setting->layanan_opendesa_token;
+                                                    ?>
+													<a target="_blank" href="<?= "{$server}/api/v1/pelanggan/pemesanan/faktur?invoice={$pemesanan->faktur}&token={$token}" ?>" class="btn btn-social btn-flat bg-purple btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak Nota Faktur"><i class="fa fa-print"></i>Cetak Nota Faktur</a>
 													<a href="#" data-toggle="modal" data-target="<?= "#{$pemesanan->id}" ?>" class="btn btn-social btn-flat btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Bukti Pembayaran"><i class="fa fa-file"></i>Bukti Pembayaran</a>
 												</td>
 												<td>
 													<?php foreach ($pemesanan->layanan as $key => $layanan) : ?>
 														<li>
-															<a href="#" data-parent="#layanan" data-target="<?= "#" . url_title($layanan->nama, 'dash', true) ?>" data-toggle="collapse"><?= $layanan->nama; ?></a>
+															<a href="#" data-parent="#layanan" data-target="<?= '#' . url_title($layanan->nama, 'dash', true) ?>" data-toggle="collapse"><?= $layanan->nama; ?></a>
 														</li>
 													<?php endforeach; ?>
 												</td>
@@ -177,12 +193,12 @@
 														</div>
 													</div>
 												</div>
-											</tr>
-										<?php endforeach ?>
-									</tbody>
-								</table>
-							</div>
-						</div>
+											</div>
+										</div>
+									</tr>
+								<?php endforeach ?>
+							</tbody>
+						</table>
 					</div>
 				</div>
 			</div>
@@ -199,7 +215,7 @@
 									</div>
 								</div>
 								<div class="box-body">
-									<?= $layanan->ketentuan ?? "Belum tersedia"; ?>
+									<?= $layanan->ketentuan ?? 'Belum tersedia'; ?>
 								</div>
 							</div>
 						</div>

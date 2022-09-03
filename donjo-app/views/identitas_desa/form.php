@@ -5,11 +5,9 @@
  * View di Modul Identitas Desa
  *
  * donjo-app/views/identitas_desa/form.php
- *
  */
 
-/**
- *
+/*
  * File ini bagian dari:
  *
  * OpenSID
@@ -34,12 +32,11 @@
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
  *
- * @package	OpenSID
- * @author	Tim Pengembang OpenDesa
- * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright	  Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright	  Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
- * @link 	https://github.com/OpenSID/OpenSID
+ *
+ * @see 	https://github.com/OpenSID/OpenSID
  */
 ?>
 <div class="content-wrapper">
@@ -74,7 +71,7 @@
 					</div>
 					<div class="box box-primary">
 						<div class="box-body box-profile">
-							<img class="img-responsive" src="<?= gambar_desa($main['kantor_desa'], TRUE); ?>" alt="Kantor <?= $desa; ?>">
+							<img class="img-responsive" src="<?= gambar_desa($main['kantor_desa'], true); ?>" alt="Kantor <?= $desa; ?>">
 							<br/>
 							<p class="text-center text-bold">Kantor <?= $desa; ?></p>
 							<p class="text-muted text-center text-red">(Kosongkan, jika kantor <?= $desa; ?> tidak berubah)</p>
@@ -99,62 +96,70 @@
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="nama">Nama <?= $desa; ?></label>
 								<div class="col-sm-8">
-									<select id="pilih_desa" name="pilih_desa" class="form-control input-sm select-nama-desa" data-placeholder="<?= $main["nama_desa"]; ?> - <?= $main["nama_kecamatan"]; ?> - <?= $main["nama_kabupaten"]; ?> - <?= $main["nama_propinsi"]; ?>"  data-token="<?= config_item('token_tracksid')?>" data-tracker="<?= $this->setting->tracker; ?>"></select>
+									<?php if (cek_koneksi_internet()): ?>
+										<select id="pilih_desa" name="pilih_desa" class="form-control input-sm select-nama-desa" data-placeholder="<?= $main['nama_desa']; ?> - <?= $main['nama_kecamatan']; ?> - <?= $main['nama_kabupaten']; ?> - <?= $main['nama_propinsi']; ?>" data-token="<?= config_item('token_pantau'); ?>" data-tracker='<?= config_item('server_pantau'); ?>' style="display: none;"></select>
+									<?php endif; ?>
+									<input type="hidden" id="nama_desa" class="form-control input-sm nama_terbatas required" minlength="3" maxlength="50" name="nama_desa" value="<?= $main['nama_desa']; ?>">
 								</div>
 								<input type="hidden" id="nama_desa" name="nama_desa" value="<?= $main["nama_desa"]; ?>">
 							</div>
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="kode_desa">Kode <?= $desa; ?></label>
 								<div class="col-sm-2">
-									<input readonly id="kode_desa" name="kode_desa" class="form-control input-sm" type="text" placeholder="Kode <?= $desa; ?>" value="<?= $main["kode_desa"]; ?>" ></input>
+									<input readonly id="kode_desa" name="kode_desa" class="form-control input-sm <?= jecho(cek_koneksi_internet(), false, 'bilangan') ?> required" <?= jecho(cek_koneksi_internet(), false, 'minlength="10" maxlength="10"') ?> type="text" onkeyup="tampil_kode_desa()" placeholder="Kode <?= $desa; ?>" value="<?= $main['kode_desa']; ?>" ></input>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="kode_pos">Kode Pos <?= $desa; ?></label>
 								<div class="col-sm-2">
-									<input id="kode_pos" name="kode_pos" class="form-control input-sm number" minlength="5" maxlength="5" type="text" placeholder="Kode Pos <?= $desa; ?>" value="<?= $main["kode_pos"]; ?>"></input>
+									<input id="kode_pos" name="kode_pos" class="form-control input-sm number" minlength="5" maxlength="5" type="text" placeholder="Kode Pos <?= $desa; ?>" value="<?= $main['kode_pos']; ?>"></input>
 								</div>
 							</div>
 							<div class="form-group">
-								<label class="col-sm-3 control-label" for="nama_kepala_desa"><?= $this->setting->sebutan_kepala_desa; ?> <?= $desa; ?></label>
+								<label class="col-sm-3 control-label" for="pamong_id">Nama <?= $this->setting->sebutan_kepala_desa; ?></label>
 								<div class="col-sm-8">
-									<input id="nama_kepala_desa" name="nama_kepala_desa" class="form-control input-sm nama required" maxlength="50" type="text" placeholder="Kepala <?= $desa; ?>" value="<?= $main["nama_kepala_desa"]?>"></input>
+									<select class="form-control input-sm" id="kades" name="pamong_id">
+										<option value="">--- Pilih <?= $this->setting->sebutan_kepala_desa; ?> ---</option>
+										<?php foreach ($pamong as $data): ?>
+											<option value="<?= $data['pamong_id']; ?>" data-nip="<?= $data['pamong_nip']; ?>" <?= selected($data['pamong_id'], $main['pamong_id']); ?> ><?= $data['nama'] . ' (' . $data['jabatan'] . ')'; ?></option>
+										<?php endforeach; ?>
+									</select>
 								</div>
 							</div>
 							<div class="form-group">
-								<label class="col-sm-3 control-label" for="nip_kepala_desa">NIP <?= $this->setting->sebutan_kepala_desa; ?> <?=$desa; ?></label>
+								<label class="col-sm-3 control-label" for="nip_kepala_desa">NIP <?= $this->setting->sebutan_kepala_desa; ?></label>
 								<div class="col-sm-8">
-									<input id="nip_kepala_desa" name="nip_kepala_desa" class="form-control input-sm nomor_sk" maxlength="50" type="text" placeholder="NIP Kepala <?= $desa; ?>" value="<?= $main["nip_kepala_desa"]; ?>"></input>
+									<input readonly id="nip_kepala_desa" name="nip_kepala_desa" class="form-control input-sm nomor_sk" maxlength="50" type="text" placeholder="NIP <?= $this->setting->sebutan_kepala_desa; ?>" value="<?= $main['nip_kepala_desa']; ?>"></input>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="alamat_kantor">Alamat Kantor <?= $desa; ?></label>
 								<div class="col-sm-8">
-									<textarea id="alamat_kantor" name="alamat_kantor" class="form-control input-sm alamat required" maxlength="100" placeholder="Alamat Kantor <?= $desa; ?>" rows="3" style="resize:none;"><?= $main["alamat_kantor"]; ?></textarea>
+									<textarea id="alamat_kantor" name="alamat_kantor" class="form-control input-sm alamat required" maxlength="100" placeholder="Alamat Kantor <?= $desa; ?>" rows="3" style="resize:none;"><?= $main['alamat_kantor']; ?></textarea>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="email_desa">E-Mail <?= $desa; ?></label>
 								<div class="col-sm-8">
-									<input id="email_desa" name="email_desa" class="form-control input-sm email" maxlength="50" type="text" placeholder="E-Mail <?= $desa; ?>" value="<?= $main["email_desa"]?>"></input>
+									<input id="email_desa" name="email_desa" class="form-control input-sm email" maxlength="50" type="text" placeholder="E-Mail <?= $desa; ?>" value="<?= $main['email_desa']?>"></input>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="telepon">Telpon <?= $desa; ?></label>
 								<div class="col-sm-8">
-									<input id="telepon" name="telepon" class="form-control input-sm bilangan" type="text" maxlength="15" placeholder="Telpon <?= $desa; ?>" value="<?= $main["telepon"]; ?>"></input>
+									<input id="telepon" name="telepon" class="form-control input-sm bilangan" type="text" maxlength="15" placeholder="Telpon <?= $desa; ?>" value="<?= $main['telepon']; ?>"></input>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="website">Website <?= $desa; ?></label>
 								<div class="col-sm-8">
-									<input id="website" name="website" class="form-control input-sm url" maxlength="50" type="text" placeholder="Website <?= $desa; ?>" value="<?= $main["website"]; ?>"></input>
+									<input id="website" name="website" class="form-control input-sm url" maxlength="50" type="text" placeholder="Website <?= $desa; ?>" value="<?= $main['website']; ?>"></input>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="nama_kecamatan">Nama <?= $kecamatan; ?></label>
 								<div class="col-sm-8">
-									<input readonly id="nama_kecamatan" name="nama_kecamatan" class="form-control input-sm required" type="text" placeholder="Nama <?= $kecamatan; ?>" value="<?= $main["nama_kecamatan"]; ?>"></input>
+									<input readonly id="nama_kecamatan" name="nama_kecamatan" class="form-control input-sm required" type="text" placeholder="Nama <?= $kecamatan; ?>" value="<?= $main['nama_kecamatan']; ?>"></input>
 								</div>
 							</div>
 							<div class="form-group">
@@ -166,37 +171,37 @@
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="nama_kecamatan">Nama <?= ucwords($this->setting->sebutan_camat)?></label>
 								<div class="col-sm-8">
-									<input id="nama_kepala_camat" name="nama_kepala_camat" class="form-control input-sm nama required" maxlength="50" type="text" placeholder="Nama <?= ucwords($this->setting->sebutan_camat); ?>" value="<?= $main["nama_kepala_camat"]; ?>"></input>
+									<input id="nama_kepala_camat" name="nama_kepala_camat" class="form-control input-sm nama required" maxlength="50" type="text" placeholder="Nama <?= ucwords($this->setting->sebutan_camat); ?>" value="<?= $main['nama_kepala_camat']; ?>"></input>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="nip_kepala_camat">NIP <?= ucwords($this->setting->sebutan_camat); ?></label>
 								<div class="col-sm-4">
-									<input id="nip_kepala_camat" name="nip_kepala_camat" class="form-control input-sm nomor_sk" maxlength="50" type="text" placeholder="NIP <?= ucwords($this->setting->sebutan_camat)?>" value="<?= $main["nip_kepala_camat"]; ?>"></input>
+									<input id="nip_kepala_camat" name="nip_kepala_camat" class="form-control input-sm nomor_sk" maxlength="50" type="text" placeholder="NIP <?= ucwords($this->setting->sebutan_camat)?>" value="<?= $main['nip_kepala_camat']; ?>"></input>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="nama_kabupaten">Nama <?= $kabupaten; ?></label>
 								<div class="col-sm-8">
-									<input readonly id="nama_kabupaten" name="nama_kabupaten" class="form-control input-sm required" type="text" placeholder="Nama <?= $kabupaten; ?>" value="<?= $main["nama_kabupaten"]; ?>"></input>
+									<input readonly id="nama_kabupaten" name="nama_kabupaten" class="form-control input-sm required" type="text" placeholder="Nama <?= $kabupaten; ?>" value="<?= $main['nama_kabupaten']; ?>"></input>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="kode_kabupaten">Kode <?= $kabupaten; ?></label>
 								<div class="col-sm-2">
-									<input readonly id="kode_kabupaten" name="kode_kabupaten" class="form-control input-sm required" type="text" placeholder="Kode <?= $kabupaten; ?>" value="<?= $main["kode_kabupaten"]; ?>"></input>
+									<input readonly id="kode_kabupaten" name="kode_kabupaten" class="form-control input-sm required" type="text" placeholder="Kode <?= $kabupaten; ?>" value="<?= $main['kode_kabupaten']; ?>"></input>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="nama_propinsi">Nama Provinsi</label>
 								<div class="col-sm-8">
-									<input readonly id="nama_propinsi" name="nama_propinsi" class="form-control input-sm required" type="text" placeholder="Nama Propinsi" value="<?= $main["nama_propinsi"]; ?>"></input>
+									<input readonly id="nama_propinsi" name="nama_propinsi" class="form-control input-sm required" type="text" placeholder="Nama Propinsi" value="<?= $main['nama_propinsi']; ?>"></input>
 								</div>
 							</div>
 							<div class="form-group">
 								<label class="col-sm-3 control-label" for="kode_propinsi">Kode Provinsi</label>
 								<div class="col-sm-2">
-									<input readonly id="kode_propinsi" name="kode_propinsi" class="form-control input-sm required" type="text" placeholder="Kode Provinsi" value="<?= $main["kode_propinsi"]; ?>"></input>
+									<input readonly id="kode_propinsi" name="kode_propinsi" class="form-control input-sm required" type="text" placeholder="Kode Provinsi" value="<?= $main['kode_propinsi']; ?>"></input>
 								</div>
 							</div>
 						</div>
@@ -213,13 +218,22 @@
 
 <script>
 	$(document).ready(function() {
-		var tracker_host = '<?= $this->setting->tracker ?>';
 
-		// Ambil Nama dan Kode Wilayah dari API Server
-		$('[name="pilih_desa"]').change(function() {
-			$.ajax({
+		var koneksi = "<?= cek_koneksi_internet(); ?>";
+
+		tampil_kode_desa();
+
+		if (koneksi) {
+			$("#nama_desa").attr('type', 'hidden');
+
+			var server_pantau = '<?= config_item('server_pantau'); ?>';
+			var token_pantau = '<?= config_item('token_pantau'); ?>';
+
+			// Ambil Nama dan Kode Wilayah dari Pantau > Wilayah
+			$('[name="pilih_desa"]').change(function(){
+				$.ajax({
 					type: 'GET',
-					url: tracker_host + '/index.php/api/wilayah/ambildesa?token=' + '<?= config_item("token_tracksid")?>' + '&id_desa=' + $(this).val(),
+					url: server_pantau + '/index.php/api/wilayah/ambildesa?token=' + token_pantau + '&id_desa=' + $(this).val(),
 					dataType: 'json',
 					success: function(data) {
 						$('[name="nama_desa"]').val(data.KODE_WILAYAH[0].nama_desa);
@@ -231,11 +245,30 @@
 						$('[name="nama_propinsi"]').val(huruf_awal_besar(data.KODE_WILAYAH[0].nama_prov));
 						$('[name="kode_propinsi"]').val(data.KODE_WILAYAH[0].kode_prov);
 					}
+				});
 			});
-		});
 
-		function hapus_kab_kota(str) {
-			return str.replace(/KAB |KOTA /gi, '');
+			function hapus_kab_kota(str) {
+				return str.replace(/KAB |KOTA /gi, '');
+			}
+		} else {
+			$("#nama_desa").attr('type', 'text');
+			$("#kode_desa").removeAttr('readonly');
+			$("#nama_kecamatan").removeAttr('readonly');
+			$("#nama_kabupaten").removeAttr('readonly');
+			$("#nama_propinsi").removeAttr('readonly');
 		}
+
+		$('#kades').change(function () {
+			var nip = $("#kades option:selected").attr("data-nip");
+			$("#nip_kepala_desa").val(nip);
+		});
 	});
+
+	function tampil_kode_desa() {
+		var kode_desa = $('#kode_desa').val();
+		$('#kode_kecamatan').val(kode_desa.substr(0, 6));
+		$('#kode_kabupaten').val(kode_desa.substr(0, 4));
+		$('#kode_propinsi').val(kode_desa.substr(0, 2));
+	}
 </script>

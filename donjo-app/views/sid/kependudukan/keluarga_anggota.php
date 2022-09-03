@@ -5,11 +5,9 @@
  * View Daftar Anggota Keluarga di komponen Admin
  *
  * donjo-app/views/sid/kependudukan/keluarga_anggota.php
- *
  */
 
-/**
- *
+/*
  * File ini bagian dari:
  *
  * OpenSID
@@ -34,12 +32,11 @@
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
  *
- * @package	OpenSID
- * @author	Tim Pengembang OpenDesa
- * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright	  Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright	  Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
- * @link 	https://github.com/OpenSID/OpenSID
+ *
+ * @see 	https://github.com/OpenSID/OpenSID
  */
 ?>
 
@@ -55,22 +52,24 @@
 	<section class="content" id="maincontent">
 		<div class="box box-info">
 			<div class="box-header with-border">
-				<div class="btn-group btn-group-vertical">
-					<a class="btn btn-social btn-flat btn-success btn-sm" data-toggle="dropdown"><i class='fa fa-plus'></i> Tambah Anggota</a>
-					<ul class="dropdown-menu" role="menu">
-						<li>
-							<a href="<?= site_url("keluarga/form_peristiwa_a/1/$p/$o/$kk")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Anggota Keluarga Lahir"><i class="fa fa-plus"></i> Anggota Keluarga Lahir</a>
-						</li>
-						<li>
-							<a href="<?= site_url("keluarga/form_peristiwa_a/5/$p/$o/$kk")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Anggota Keluarga Masuk"><i class="fa fa-plus"></i> Anggota Keluarga Masuk</a>
-						</li>
-						<li>
-							<a href="<?= site_url("keluarga/ajax_add_anggota/$p/$o/$kk")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Anggota Dari Penduduk Yang Sudah Ada" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Tambah Anggota Keluarga"><i class="fa fa-plus"></i> Dari Penduduk Sudah Ada</a>
-						</li>
-					</ul>
-				</div>
-				<a href="<?= site_url("keluarga/kartu_keluarga/$p/$o/$kk")?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-book"></i> Kartu Keluarga</a>
-				<a href="<?=site_url("keluarga/index/$p/$o")?>" class="btn btn-social btn-flat btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Keluarga"><i class="fa fa-arrow-circle-left "></i>Kembali Ke Daftar Keluarga
+				<?php if ($this->CI->cek_hak_akses('u')): ?>
+					<div class="btn-group btn-group-vertical">
+						<a class="btn btn-social btn-flat btn-success btn-sm" data-toggle="dropdown"><i class='fa fa-plus'></i> Tambah Anggota</a>
+						<ul class="dropdown-menu" role="menu">
+							<li>
+								<a href="<?= site_url("keluarga/form_peristiwa_a/1/{$p}/{$o}/{$kk}")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Anggota Keluarga Lahir"><i class="fa fa-plus"></i> Anggota Keluarga Lahir</a>
+							</li>
+							<li>
+								<a href="<?= site_url("keluarga/form_peristiwa_a/5/{$p}/{$o}/{$kk}")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Anggota Keluarga Masuk"><i class="fa fa-plus"></i> Anggota Keluarga Masuk</a>
+							</li>
+							<li>
+								<a href="<?= site_url("keluarga/ajax_add_anggota/{$p}/{$o}/{$kk}")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Anggota Dari Penduduk Yang Sudah Ada" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Tambah Anggota Keluarga"><i class="fa fa-plus"></i> Dari Penduduk Sudah Ada</a>
+							</li>
+						</ul>
+					</div>
+				<?php endif; ?>
+				<a href="<?= site_url("keluarga/kartu_keluarga/{$p}/{$o}/{$kk}")?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-book"></i> Kartu Keluarga</a>
+				<a href="<?=site_url("keluarga/index/{$p}/{$o}")?>" class="btn btn-social btn-flat btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Keluarga"><i class="fa fa-arrow-circle-left "></i>Kembali Ke Daftar Keluarga
 				</a>
 			</div>
 			<div class="box-body">
@@ -95,13 +94,13 @@
 							</tr>
 							<tr>
 								<td>
-									<?= ($program['programkerja']) ? anchor("program_bantuan/peserta/2/$kepala_kk[no_kk]", 'Program Bantuan', 'target="_blank"') : 'Program Bantuan'; ?>
+									<?= ($program['programkerja']) ? anchor("program_bantuan/peserta/2/{$kepala_kk['no_kk']}", 'Program Bantuan', 'target="_blank"') : 'Program Bantuan'; ?>
 								</td>
 								<td>:</td>
 								<td>
-									<?php if($program['programkerja']): ?>
+									<?php if ($program['programkerja']): ?>
 										<?php foreach ($program['programkerja'] as $item): ?>
-											<?= anchor("program_bantuan/data_peserta/$item[peserta_id]", '<span class="label label-success">' . $item['nama'] . '</span>&nbsp;', 'target="_blank"'); ?>
+											<?= anchor("program_bantuan/data_peserta/{$item['peserta_id']}", '<span class="label label-success">' . $item['nama'] . '</span>&nbsp;', 'target="_blank"'); ?>
 										<?php endforeach; ?>
 									<?php else: ?>
 										-
@@ -134,10 +133,14 @@
 										<tr>
 											<td class="padat"><?= ($key + 1); ?></td>
 											<td class="aksi">
-												<a href="<?= site_url("penduduk/form/$p/$o/$data[id]")?>" class="btn bg-orange btn-flat btn-sm" title="Ubah Biodata Penduduk"><i class="fa fa-edit"></i></a>
-												<a href="#" data-href="<?= site_url("keluarga/delete_anggota/$p/$o/$kk/$data[id]")?>" class="btn bg-purple btn-flat btn-sm" title="Pecah KK" data-toggle="modal" data-target="#confirm-status" data-body="Apakah Anda yakin ingin memecah Data Keluarga ini?"><i class="fa fa-cut"></i></a>
-												<a href="<?= site_url("keluarga/edit_anggota/$p/$o/$kk/$data[id]")?>" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Ubah Hubungan Keluarga" title="Ubah Hubungan Keluarga" class="btn bg-navy btn-flat btn-sm"><i class='fa fa-link'></i></a>
-												<a href="#" data-href="<?= site_url("keluarga/keluarkan_anggota/$kk/$data[id]")?>" class="btn bg-maroon btn-flat btn-sm" title="Bukan anggota keluarga ini" data-toggle="modal" data-target="#confirm-status" data-body="Apakah yakin akan dikeluarkan dari keluarga ini?"><i class="fa fa-times"></i></a>
+												<?php if ($this->CI->cek_hak_akses('u')): ?>
+													<a href="<?= site_url("penduduk/form/{$p}/{$o}/{$data['id']}")?>" class="btn bg-orange btn-flat btn-sm" title="Ubah Biodata Penduduk"><i class="fa fa-edit"></i></a>
+													<a href="#" data-href="<?= site_url("keluarga/delete_anggota/{$p}/{$o}/{$kk}/{$data['id']}")?>" class="btn bg-purple btn-flat btn-sm" title="Pecah KK" data-toggle="modal" data-target="#confirm-status" data-body="Apakah Anda yakin ingin memecah Data Keluarga ini?"><i class="fa fa-cut"></i></a>
+													<?php if ($kepala_kk['status_dasar'] == 1): ?>
+														<a href="<?= site_url("keluarga/edit_anggota/{$p}/{$o}/{$kk}/{$data['id']}")?>" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Ubah Hubungan Keluarga" title="Ubah Hubungan Keluarga" class="btn bg-navy btn-flat btn-sm"><i class='fa fa-link'></i></a>
+													<?php endif; ?>
+													<a href="#" data-href="<?= site_url("keluarga/keluarkan_anggota/{$kk}/{$data['id']}")?>" class="btn bg-maroon btn-flat btn-sm" title="Bukan anggota keluarga ini" data-toggle="modal" data-target="#confirm-status" data-body="Apakah yakin akan dikeluarkan dari keluarga ini?"><i class="fa fa-times"></i></a>
+												<?php endif; ?>
 											</td>
 											<td><?= $data['nik']?></td>
 											<td nowrap width="45%"><?= strtoupper($data['nama'])?></td>
@@ -152,36 +155,8 @@
 					</form>
 				</div>
 			</div>
-			<div class='modal fade' id='confirm-status' tabindex='-1' role='dialog' aria-labelledby='myModalLabel' aria-hidden='true'>
-				<div class='modal-dialog'>
-					<div class='modal-content'>
-						<div class='modal-header'>
-							<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>
-							<h4 class='modal-title' id='myModalLabel'><i class='fa fa-exclamation-triangle text-red'></i> Konfirmasi</h4>
-						</div>
-						<div class='modal-body btn-info'>
-						</div>
-						<div class='modal-footer'>
-							<button type="button" class="btn btn-social btn-flat btn-danger btn-sm" data-dismiss="modal"><i class='fa fa-sign-out'></i> Tutup</button>
-							<a class='btn-ok'>
-								<button type="button" class="btn btn-social btn-flat btn-info btn-sm" id="ok-delete"><i class='fa fa-check'></i> Simpan</button>
-							</a>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="modal fade" id="modalBox" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-				<div class='modal-dialog'>
-					<div class='modal-content'>
-						<div class='modal-header'>
-							<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>
-							<h4 class='modal-title' id='myModalLabel'></h4>
-						</div>
-						<div class="fetched-data"></div>
-					</div>
-				</div>
-			</div>
 		</div>
 	</section>
 </div>
-<?php $this->load->view('global/confirm_delete');?>
+<?php $this->load->view('global/confirm_delete'); ?>
+<?php $this->load->view('global/konfirmasi'); ?>

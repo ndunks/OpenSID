@@ -1,17 +1,6 @@
 <?php
 
-defined('BASEPATH') OR exit('No direct script access allowed');
-
-/**
- * File ini:
- *
- * Controller untuk modul Menu
- *
- * donjo-app/controllers/Menu.php
- *
- */
-
-/**
+/*
  *
  * File ini bagian dari:
  *
@@ -22,7 +11,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -37,236 +26,171 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
  *
- * @package	OpenSID
- * @author	Tim Pengembang OpenDesa
- * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
- * @link 	https://github.com/OpenSID/OpenSID
+ * @package   OpenSID
+ * @author    Tim Pengembang OpenDesa
+ * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @license   http://www.gnu.org/licenses/gpl.html GPL V3
+ * @link      https://github.com/OpenSID/OpenSID
+ *
  */
 
-class Menu extends Admin_Controller {
+defined('BASEPATH') || exit('No direct script access allowed');
 
-	public function __construct()
-	{
-		parent::__construct();
+class Menu extends Admin_Controller
+{
+    protected $list_session = ['cari', 'filter', 'parrent'];
+    protected $set_page     = ['10', '20', '50', '100'];
 
-		$this->load->model('web_menu_model');
-		$this->load->model('web_artikel_model');
-		$this->load->model('web_kategori_model');
-		$this->load->model('referensi_model');
-		$this->load->model('kelompok_model');
-		$this->load->model('suplemen_model');
-		$this->load->model('laporan_penduduk_model');
-		$this->load->model('program_bantuan_model');
-		$this->load->model('web_dokumen_model');
-		$this->load->model('keuangan_model');
-		$this->modul_ini = 13;
-		$this->sub_modul_ini = 49;
-	}
+    public function __construct()
+    {
+        parent::__construct();
 
-	public function clear()
-	{
-		unset($_SESSION['cari']);
-		unset($_SESSION['filter']);
-		redirect('menu');
-	}
+        $this->load->model('web_menu_model');
+        $this->load->model('web_artikel_model');
+        $this->load->model('web_kategori_model');
+        $this->load->model('kelompok_model');
+        $this->load->model('suplemen_model');
+        $this->load->model('program_bantuan_model');
+        $this->load->model('keuangan_model');
+        $this->load->model('kelompok_model');
+        $this->modul_ini     = 13;
+        $this->sub_modul_ini = 49;
+    }
 
-	public function index($tip = 1, $p = 1, $o = 0)
-	{
-		$data['p'] = $p;
-		$data['o'] = $o;
-		$data['tip'] = $tip;
+    public function clear($parrent = 0)
+    {
+        $this->session->unset_userdata($this->list_session);
+        $this->session->per_page = $this->set_page[0];
+        $this->session->parrent  = $parrent;
 
-		if (isset($_SESSION['cari']))
-			$data['cari'] = $_SESSION['cari'];
-		else $data['cari'] = '';
+        redirect($this->controller);
+    }
 
-		if (isset($_SESSION['filter']))
-			$data['filter'] = $_SESSION['filter'];
-		else $data['filter'] = '';
+    public function index($p = 1, $o = 0)
+    {
+        $data['p']   = $p;
+        $data['o']   = $o;
+        $data['tip'] = 1; // Hanya untuk Navigasi
 
-		if (isset($_POST['per_page']))
-			$_SESSION['per_page'] = $_POST['per_page'];
-		$data['per_page'] = $_SESSION['per_page'];
+        foreach ($this->list_session as $list) {
+            $data[$list] = $this->session->{$list} ?: '';
+        }
 
-		$data['paging'] = $this->web_menu_model->paging($tip, $p, $o);
-		$data['main'] = $this->web_menu_model->list_data($tip, $o, $data['paging']->offset, $data['paging']->per_page);
-		$data['keyword'] = $this->web_menu_model->autocomplete($data['cari']);
+        $per_page = $this->input->post('per_page');
 
-		$this->render('menu/table', $data);
-	}
+        if (isset($per_page)) {
+            $this->session->per_page = $per_page;
+        }
 
-	public function form($tip = 1, $id = '')
-	{
-		$data['link_tipe'] = $this->referensi_model->list_ref(LINK_TIPE);
-		$data['artikel_statis'] = $this->web_artikel_model->list_artikel_statis();
-		$data['kategori_artikel'] = $this->web_kategori_model->list_kategori();
-		$data['statistik_penduduk'] = $this->referensi_model->list_ref(STAT_PENDUDUK);
-		$data['statistik_keluarga'] = $this->referensi_model->list_ref(STAT_KELUARGA);
-		$data['statistik_kategori_bantuan'] = $this->referensi_model->list_ref(STAT_BANTUAN);
-		$data['statistik_program_bantuan'] = $this->program_bantuan_model->list_program(0);
-		$data['kelompok'] = $this->kelompok_model->list_data();
-		$data['suplemen'] = $this->suplemen_model->list_data();
-		$data['statis_lainnya'] = $this->referensi_model->list_ref(STAT_LAINNYA);
-		$data['artikel_keuangan'] = $this->keuangan_model->artikel_statis_keuangan();
+        $data['menu_utama'] = ($data['parrent'] != 0) ? $this->web_menu_model->get_menu($data['parrent']) : null; // Untuk dapatkan nama menu utama
+        $data['func']       = 'index';
+        $data['set_page']   = $this->set_page;
+        $data['per_page']   = $this->session->per_page;
+        $data['paging']     = $this->web_menu_model->paging($p);
+        $data['main']       = $this->web_menu_model->list_data($o, $data['paging']->offset, $data['paging']->per_page);
+        $data['keyword']    = $this->web_menu_model->autocomplete($data['cari']);
 
-		if ($id)
-		{
-			$data['submenu'] = $this->web_menu_model->get_menu($id);
-			$data['form_action'] = site_url("menu/update/$tip/$id");
-		}
-		else
-		{
-			$data['submenu'] = NULL;
-			$data['form_action'] = site_url("menu/insert/$tip");
-		}
+        $this->render('menu/table', $data);
+    }
 
-		$data['tip'] = $tip;
+    public function ajax_menu($id = '')
+    {
+        $this->redirect_hak_akses('u');
 
-		$this->render('menu/form', $data);
-	}
+        $parrent = $this->session->parrent;
 
-	public function sub_menu($tip = 1, $menu = 1)
-	{
-		$data['submenu'] = $this->web_menu_model->list_sub_menu($menu);
-		$data['tip'] = $tip;
-		$data['menu'] = $menu;
+        $data['link_tipe']                  = $this->referensi_model->list_ref(LINK_TIPE);
+        $data['artikel_statis']             = $this->web_artikel_model->list_artikel_statis();
+        $data['kategori_artikel']           = $this->web_kategori_model->list_kategori();
+        $data['statistik_penduduk']         = $this->referensi_model->list_ref(STAT_PENDUDUK);
+        $data['statistik_keluarga']         = $this->referensi_model->list_ref(STAT_KELUARGA);
+        $data['statistik_kategori_bantuan'] = $this->referensi_model->list_ref(STAT_BANTUAN);
+        $data['statistik_program_bantuan']  = $this->program_bantuan_model->list_program(0);
+        $data['kelompok']                   = $this->kelompok_model->list_data();
+        $data['suplemen']                   = $this->suplemen_model->list_data();
+        $data['statis_lainnya']             = $this->referensi_model->list_ref(STAT_LAINNYA);
+        $data['artikel_keuangan']           = $this->keuangan_model->artikel_statis_keuangan();
+        $data['menu_utama']                 = ($parrent != 0) ? $this->web_menu_model->get_menu($parrent) : null; // Untuk dapatkan nama menu utama
 
-		$this->render('menu/sub_menu_table', $data);
-	}
+        if ($id) {
+            $data['menu']        = $this->web_menu_model->get_menu($id);
+            $data['form_action'] = site_url("{$this->controller}/update/{$id}");
+        } else {
+            $data['menu']        = null;
+            $data['form_action'] = site_url("{$this->controller}/insert");
+        }
 
-	public function ajax_add_sub_menu($tip = 1, $menu = '', $id = '')
-	{
-		$data['menu'] = $menu;
-		$data['tip'] = $tip;
+        $this->load->view('menu/ajax_menu_form', $data);
+    }
 
-		$data['link_tipe'] = $this->referensi_model->list_ref(LINK_TIPE);
-		$data['artikel_statis'] = $this->web_artikel_model->list_artikel_statis();
-		$data['kategori_artikel'] = $this->web_kategori_model->list_kategori();
-		$data['statistik_penduduk'] = $this->referensi_model->list_ref(STAT_PENDUDUK);
-		$data['statistik_keluarga'] = $this->referensi_model->list_ref(STAT_KELUARGA);
-		$data['statistik_kategori_bantuan'] = $this->referensi_model->list_ref(STAT_BANTUAN);
-		$data['statistik_program_bantuan'] = $this->program_bantuan_model->list_program(0);
-		$data['kelompok'] = $this->kelompok_model->list_data();
-		$data['suplemen'] = $this->suplemen_model->list_data();
-		$data['statis_lainnya'] = $this->referensi_model->list_ref(STAT_LAINNYA);
-		$data['artikel_keuangan'] = $this->keuangan_model->artikel_statis_keuangan();
+    public function search()
+    {
+        if ($cari = $this->input->post('cari')) {
+            $_SESSION['cari'] = $cari;
+        } else {
+            unset($_SESSION['cari']);
+        }
+        redirect($this->controller);
+    }
 
-		if ($id)
-		{
-			$data['submenu'] = $this->web_menu_model->get_menu($id);
-			$data['form_action'] = site_url("menu/update_sub_menu/$tip/$menu/$id");
-		}
-		else
-		{
-			$data['submenu'] = NULL;
-			$data['form_action'] = site_url("menu/insert_sub_menu/$tip/$menu");
-		}
+    public function filter()
+    {
+        $filter = $this->input->post('filter');
+        if ($filter != 0) {
+            $_SESSION['filter'] = $filter;
+        } else {
+            unset($_SESSION['filter']);
+        }
+        redirect($this->controller);
+    }
 
-		$this->load->view('menu/ajax_add_sub_menu_form', $data);
-	}
+    public function insert()
+    {
+        $this->redirect_hak_akses('u');
+        $this->web_menu_model->insert();
+        redirect($this->controller);
+    }
 
-	public function search($tip = 1)
-	{
-		$cari = $this->input->post('cari');
-		if ($cari != '')
-			$_SESSION['cari'] = $cari;
-		else unset($_SESSION['cari']);
-		redirect("menu/index/$tip");
-	}
+    public function update($id = '')
+    {
+        $this->redirect_hak_akses('u');
+        $this->web_menu_model->update($id);
+        redirect($this->controller);
+    }
 
-	public function filter()
-	{
-		$filter = $this->input->post('filter');
-		if ($filter != 0)
-			$_SESSION['filter'] = $filter;
-		else unset($_SESSION['filter']);
-		redirect('menu');
-	}
+    public function delete($id = '')
+    {
+        $this->redirect_hak_akses('h');
+        $this->web_menu_model->delete($id);
+        redirect($this->controller);
+    }
 
-	public function insert($tip = 1)
-	{
-		$this->web_menu_model->insert($tip);
-		redirect("menu/index/$tip");
-	}
+    public function delete_all()
+    {
+        $this->redirect_hak_akses('h');
+        $this->web_menu_model->delete_all();
+        redirect($this->controller);
+    }
 
-	public function update($tip = 1, $id = '')
-	{
-		$this->web_menu_model->update($id);
-		redirect("menu/index/$tip");
-	}
+    public function menu_lock($id = '')
+    {
+        $this->redirect_hak_akses('u');
+        $this->web_menu_model->menu_lock($id, 0);
+        redirect($this->controller);
+    }
 
-	public function delete($tip = 1, $id = '')
-	{
-		$this->redirect_hak_akses('h', "menu/index/$tip");
-		$this->web_menu_model->delete($id);
-		redirect("menu/index/$tip");
-	}
+    public function menu_unlock($id = '')
+    {
+        $this->redirect_hak_akses('u');
+        $this->web_menu_model->menu_lock($id, 1);
+        redirect($this->controller);
+    }
 
-	public function delete_all($tip = 1, $p = 1, $o = 0)
-	{
-		$this->redirect_hak_akses('h', "menu/index/$tip/$p/$o");
-		$this->web_menu_model->delete_all();
-		redirect("menu/index/$tip/$p/$o");
-	}
-
-	public function menu_lock($tip = 1, $id = '')
-	{
-		$this->web_menu_model->menu_lock($id, 1);
-		redirect("menu/index/$tip/$p/$o");
-	}
-
-	public function menu_unlock($tip = 1, $id = '')
-	{
-		$this->web_menu_model->menu_lock($id, 2);
-		redirect("menu/index/$tip/$p/$o");
-	}
-
-	public function insert_sub_menu($tip = 1, $menu = '')
-	{
-		$this->web_menu_model->insert_sub_menu($menu);
-		redirect("menu/sub_menu/$tip/$menu");
-	}
-
-	public function update_sub_menu($tip = 1, $menu = '', $id = '')
-	{
-		$this->web_menu_model->update_sub_menu($id);
-		redirect("menu/sub_menu/$tip/$menu");
-	}
-
-	public function delete_sub_menu($tip = '', $menu = '', $id = 0)
-	{
-		$this->redirect_hak_akses('h', "menu/sub_menu/$tip/$menu");
-		$this->web_menu_model->delete($id);
-		redirect("menu/sub_menu/$tip/$menu");
-	}
-
-	public function delete_all_sub_menu($tip = 1, $menu = '')
-	{
-		$this->redirect_hak_akses('h', "menu/sub_menu/$tip/$menu");
-		$this->web_menu_model->delete_all();
-		redirect("menu/sub_menu/$tip/$menu");
-	}
-
-	public function menu_lock_sub_menu($tip = 1, $menu = '', $id = '')
-	{
-		$this->web_menu_model->menu_lock($id, 1);
-		redirect("menu/sub_menu/$tip/$menu");
-	}
-
-	public function menu_unlock_sub_menu($tip = 1, $menu = '', $id = '')
-	{
-		$this->web_menu_model->menu_lock($id, 2);
-		redirect("menu/sub_menu/$tip/$menu");
-	}
-
-	public function urut($tip = 1, $id = 0, $arah = 0, $menu = '')
-	{
-		$this->web_menu_model->urut($id, $arah, $tip, $menu);
-		if ($menu != '')
-			redirect("menu/sub_menu/$tip/$menu");
-		else
-			redirect("menu/index/$tip");
-	}
+    public function urut($id = 0, $arah = 0)
+    {
+        $this->redirect_hak_akses('u');
+        $this->web_menu_model->urut($id, $arah);
+        redirect($this->controller);
+    }
 }

@@ -1,63 +1,18 @@
-/**
- * File ini:
- *
- * Javascript untuk Layanan Mandiri di OpenSID
- *
- * /assets/front/js/mandiri.js
- *
- */
-
-/**
- *
- * File ini bagian dari:
- *
- * OpenSID
- *
- * Sistem informasi desa sumber terbuka untuk memajukan desa
- *
- * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
- *
- * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- *
- * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
- * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
- * tanpa batasan, termasuk hak untuk menggunakan, menyalin, mengubah dan/atau mendistribusikan,
- * asal tunduk pada syarat berikut:
-
- * Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan dalam
- * setiap salinan atau bagian penting Aplikasi Ini. Barang siapa yang menghapus atau menghilangkan
- * pemberitahuan ini melanggar ketentuan lisensi Aplikasi Ini.
-
- * PERANGKAT LUNAK INI DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN, BAIK TERSURAT MAUPUN
- * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
- * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
- *
- * @package	OpenSID
- * @author	Tim Pengembang OpenDesa
- * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
- * @link 	https://github.com/OpenSID/OpenSID
- */
-
 $(document).ready(function() {
 
-	var url = SITE_URL + 'layanan_mandiri/surat/cek_syarat';
-	table = $('#syarat_surat').DataTable({
+	var table = $('#syarat_surat').DataTable({
 		'processing': true,
-		'serverSide': true,
 		'paging': false,
 		'info': false,
 		'ordering': false,
 		'searching': false,
-		"ajax": {
-			"url": url,
-			"type": "POST",
+		'ajax': {
+			'url': SITE_URL + '/fmandiri/surat/cek_syarat',
+			'type': "POST",
 			data: function ( d ) {
 				d.id_surat = $("#id_surat").val();
 				d.id_permohonan = $("#id_permohonan").val();
-			}
+			},
 		},
 		//Set column definition initialisation properties.
 		"columnDefs": [
@@ -68,7 +23,7 @@ $(document).ready(function() {
 		],
 		'aoColumnDefs': [
 			{
-				"sClass": "padat", "aTargets": [0]
+				"sClass": "padat", "aTargets": [0, 2]
 			}
 		],
 		'language': {
@@ -76,8 +31,17 @@ $(document).ready(function() {
 		},
 		'drawCallback': function () {
 			$('.dataTables_paginate > .pagination').addClass('pagination-sm no-margin');
+			processInfo(table.page.info());
 		}
 	});
+
+	function processInfo(info) {
+		if (info.recordsTotal <= 0) {
+			$('.ada_syarat').hide();
+		} else {
+			$('.ada_syarat').show();
+		}
+	}
 
 	$('#id_surat').change(function() {
 		table.ajax.reload();
@@ -139,13 +103,13 @@ $(document).ready(function() {
 	$('#dokumen').DataTable({
 		'paging': false,
 		'ordering': false,
-		'info': false,
+		'info': true,
 		'searching': false,
 		'responsive': true,
 		'rowReorder': {
 			'selector': 'td:nth-child(2)'
 		},
-		'ajax': SITE_URL + '/layanan_mandiri/surat/ajax_table_surat_permohonan',
+		'ajax': SITE_URL + '/fmandiri/surat/ajax_table_surat_permohonan',
 		'language': {
 			url: BASE_URL + '/assets/bootstrap/js/dataTables.indonesian.lang'
 		},
@@ -188,7 +152,7 @@ $(document).ready(function() {
 		$('#file').removeClass('required');
 		$('#modal .modal-body').LoadingOverlay('show');
 		$.ajax({
-			url: SITE_URL + '/layanan_mandiri/surat/ajax_get_dokumen_pendukung',
+			url: SITE_URL + '/fmandiri/surat/ajax_get_dokumen_pendukung',
 			type: 'POST',
 			data: {
 				id_dokumen: id
@@ -238,7 +202,7 @@ $(document).ready(function() {
 					'action': function() {
 						$('#modal .modal-body').LoadingOverlay('show');
 						$.ajax({
-							url: SITE_URL + '/layanan_mandiri/surat/ajax_hapus_dokumen_pendukung',
+							url: SITE_URL + '/fmandiri/surat/ajax_hapus_dokumen_pendukung',
 							type: 'POST',
 							data: {
 								id_dokumen: id
@@ -270,7 +234,7 @@ $(document).ready(function() {
 		if ($(this).valid()) {
 			$('#modal .modal-body').LoadingOverlay("show");
 			$.ajax({
-				url: SITE_URL + '/layanan_mandiri/surat/ajax_upload_dokumen_pendukung',
+				url: SITE_URL + '/fmandiri/surat/ajax_upload_dokumen_pendukung',
 				type: 'POST',
 				data: new FormData(this),
 				processData: false,

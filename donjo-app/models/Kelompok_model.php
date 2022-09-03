@@ -1,17 +1,6 @@
 <?php
 
-defined('BASEPATH') OR exit('No direct script access allowed');
-
-/**
- * File ini:
- *
- * Model untuk modul Kelompok
- *
- * donjo-app/models/Kelompok_model.php
- *
- */
-
-/**
+/*
  *
  * File ini bagian dari:
  *
@@ -22,7 +11,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -37,288 +26,375 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
  *
- * @package OpenSID
- * @author Tim Pengembang OpenDesa
+ * @package   OpenSID
+ * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- * @license http://www.gnu.org/licenses/gpl.html GPL V3
- * @link https://github.com/OpenSID/OpenSID
+ * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @license   http://www.gnu.org/licenses/gpl.html GPL V3
+ * @link      https://github.com/OpenSID/OpenSID
+ *
  */
 
-class Kelompok_model extends MY_Model {
+defined('BASEPATH') || exit('No direct script access allowed');
 
-	public function __construct()
-	{
-		parent::__construct();
-		$this->load->model('wilayah_model');
-	}
+class Kelompok_model extends MY_Model
+{
+    protected $table = 'kelompok';
+    protected $tipe  = 'kelompok';
 
-	public function autocomplete()
-	{
-		return $this->autocomplete_str('nama', 'kelompok');
-	}
+    public function __construct()
+    {
+        parent::__construct();
+        $this->load->model(['wilayah_model', 'referensi_model']);
+    }
 
-	private function search_sql()
-	{
-		$value = $this->session->cari;
-		if (isset($value))
-		{
-			$kw = $this->db->escape_like_str($value);
-			$kw = '%' .$kw. '%';
-			$search_sql = " AND (u.nama LIKE '$kw' OR u.nama LIKE '$kw')";
-			return $search_sql;
-		}
-	}
+    public function set_tipe(string $tipe)
+    {
+        $this->tipe = $tipe;
 
-	private function filter_sql()
-	{
-		$value = $this->session->filter;
-		if (isset($value))
-		{
-			$filter_sql = " AND u.id_master = $value";
-			return $filter_sql;
-		}
-	}
+        return $this;
+    }
 
-	public function paging($p = 1, $o = 0)
-	{
-		$sql = "SELECT COUNT(*) AS jml ";
-		$sql .= $this->list_data_sql();
+    public function autocomplete()
+    {
+        return $this->autocomplete_str('nama', $this->table);
+    }
 
-		$query = $this->db->query($sql);
-		$row = $query->row_array();
+    private function search_sql()
+    {
+        if ($search = $this->session->cari) {
+            $this->db
+                ->group_start()
+                ->like('u.nama', $search)
+                ->or_like('u.keterangan', $search)
+                ->or_like('c.nama', $search)
+                ->group_end();
+        }
 
-		$this->load->library('paging');
-		$cfg['page'] = $p;
-		$cfg['per_page'] = $this->session->per_page;
-		$cfg['num_rows'] = $row['jml'];
-		$this->paging->init($cfg);
+        return $this->db;
+    }
 
-		return $this->paging;
-	}
+    private function filter_sql()
+    {
+        if ($filter = $this->session->filter) {
+            $this->db->where('u.id_master', $filter);
+        }
 
-	private function list_data_sql()
-	{
-		$sql = "FROM kelompok u
-			LEFT JOIN kelompok_master s ON u.id_master = s.id
-			LEFT JOIN tweb_penduduk c ON u.id_ketua = c.id
-			WHERE 1 ";
-		$sql .= $this->search_sql();
-		$sql .= $this->filter_sql();
-		return $sql;
-	}
+        return $this->db;
+    }
 
-	// $limit = 0 mengambil semua
-	public function list_data($o = 0, $offset = 0, $limit = 0)
-	{
-		switch ($o)
-		{
-			case 1: $order_sql = ' ORDER BY u.nama'; break;
-			case 2: $order_sql = ' ORDER BY u.nama DESC'; break;
-			case 3: $order_sql = ' ORDER BY c.nama'; break;
-			case 4: $order_sql = ' ORDER BY c.nama DESC'; break;
-			case 5: $order_sql = ' ORDER BY master'; break;
-			case 6: $order_sql = ' ORDER BY master DESC'; break;
-			default:$order_sql = ' ORDER BY u.nama';
-		}
+    private function penerima_bantuan_sql()
+    {
+        // Yg berikut hanya untuk menampilkan peserta bantuan
+        $penerima_bantuan = $this->session->penerima_bantuan;
+        if (! in_array($penerima_bantuan, [JUMLAH, BELUM_MENGISI, TOTAL])) {
+            // Salin program_id
+            $this->session->program_bantuan = $penerima_bantuan;
+        }
+        if ($penerima_bantuan && $penerima_bantuan != BELUM_MENGISI) {
+            if ($penerima_bantuan != JUMLAH && $this->session->program_bantuan) {
+                $this->db
+                    ->join('program_peserta bt', 'bt.peserta = u.id')
+                    ->join('program rcb', 'bt.program_id = rcb.id', 'left');
+            }
+        }
+        // Untuk BUKAN PESERTA program bantuan tertentu
+        if ($penerima_bantuan == BELUM_MENGISI) {
+            if ($this->session->program_bantuan) {
+                // Program bantuan tertentu
+                $program_id = $this->session->program_bantuan;
+                $this->db
+                    ->join('program_peserta bt', "bt.peserta = u.id and bt.program_id = {$program_id}", 'left')
+                    ->where('bt.id is null');
+            } else {
+                // Bukan penerima bantuan apa pun
+                $this->db
+                    ->join('program_peserta bt', 'bt.peserta = u.id', 'left')
+                    ->where('bt.id is null');
+            }
+        } elseif ($penerima_bantuan == JUMLAH && ! $this->session->program_bantuan) {
+            // Penerima bantuan mana pun
+            $this->db
+                ->where('u.id IN (select peserta from program_peserta)');
+        }
+    }
 
-		$paging_sql = $limit > 0 ? ' LIMIT ' . $offset . ',' . $limit : '';
+    private function list_data_sql()
+    {
+        $this->db->from("{$this->table} u")
+            ->join('kelompok_master s', 'u.id_master = s.id', 'left')
+            ->join('tweb_penduduk c', 'u.id_ketua = c.id', 'left')
+            ->where('u.tipe', $this->tipe);
 
-		$select_sql = "SELECT u.*, s.kelompok AS master, c.nama AS ketua, (SELECT COUNT(id) FROM kelompok_anggota WHERE id_kelompok = u.id) AS jml_anggota ";
+        if ($this->session->penerima_bantuan) {
+            $this->penerima_bantuan_sql();
+        }
 
-		$sql = $select_sql . $this->list_data_sql();
-		$sql .= $order_sql;
-		$sql .= $paging_sql;
+        $this->search_sql();
+        $this->filter_sql();
 
-		$query = $this->db->query($sql);
-		$data = $query->result_array();
+        $kolom_kode = [
+            ['sex', 'c.sex'],
+        ];
 
-		return $data;
-	}
+        foreach ($kolom_kode as $kolom) {
+            $this->get_sql_kolom_kode($kolom[0], $kolom[1]);
+        }
 
-	private function validasi($post)
-	{
-		$data['id_master'] = bilangan($post['id_master']);
-		if ($post['id_ketua']) $data['id_ketua'] = bilangan($post['id_ketua']);
-		$data['nama'] = nama_terbatas($post['nama']);
-		$data['keterangan'] = htmlentities($post['keterangan']);
-		$data['kode'] = nomor_surat_keputusan($post['kode']);
-		return $data;
-	}
+        return $this->db;
+    }
 
-	public function insert()
-	{
-		$data = $this->validasi($this->input->post());
-		$datax = [];
+    protected function get_sql_kolom_kode($session, $kolom)
+    {
+        if (! empty($ss = $this->session->{$session})) {
+            if ($ss == JUMLAH) {
+                $this->db->where("{$kolom} !=", null);
+            } elseif ($ss == BELUM_MENGISI) {
+                $this->db->where($kolom, null);
+            } else {
+                $this->db->where($kolom, $ss);
+            }
+        }
+    }
 
-		$outpa = $this->db->insert('kelompok', $data);
-		$insert_id = $this->db->insert_id();
+    public function list_data($o = 0, $page = 0)
+    {
+        switch ($o) {
+            case 1: $this->db->order_by('u.nama'); break;
 
-		$outpb = $this->db
-			->set('id_kelompok', $insert_id)
-			->set('id_penduduk', $data['id_ketua'])
-			->set('no_anggota', 1)
-			->set('jabatan', 1)
-			->set('keterangan', 'Ketua Kelompok') // keterangan default untuk Ketua Kelompok
-			->insert('kelompok_anggota');
+            case 2: $this->db->order_by('u.nama', 'desc'); break;
 
-		status_sukses($outpa && $outpb);
-	}
+            case 3: $this->db->order_by('c.nama'); break;
 
-	private function validasi_anggota($post)
-	{
-		if ($post['id_penduduk']) $data['id_penduduk'] = bilangan($post['id_penduduk']);
-		$data['no_anggota'] = bilangan($post['no_anggota']);
-		$data['jabatan'] = bilangan($post['jabatan']);
-		$data['no_sk_jabatan'] = nomor_surat_keputusan($post['no_sk_jabatan']);
-		$data['keterangan'] = htmlentities($post['keterangan']);
-		return $data;
-	}
+            case 4: $this->db->order_by('c.nama desc'); break;
 
-	public function insert_a($id = 0)
-	{
-		$_SESSION['success'] = 1;
-		$nama_file = '';
-		$lokasi_file = $_FILES['foto']['tmp_name'];
-		$tipe_file = $_FILES['foto']['type'];
-		$nama_file = $_FILES['foto']['name'];
+            case 5: $this->db->order_by('master'); break;
 
-		if (!empty($nama_file))
-		{
-		  $nama_file = urlencode(generator(6)."_".$_FILES['foto']['name']);
-			if (!empty($lokasi_file) AND in_array($tipe_file, unserialize(MIME_TYPE_GAMBAR)))
-			{
-				UploadFoto($nama_file, $old_foto='', $tipe_file);
-			}
-			else
-			{
-				$nama_file = '';
-				$_SESSION['success'] = -1;
-				$_SESSION['error_msg'] = " -> Jenis file salah: " . $tipe_file;
-			}
-		}
+            case 6: $this->db->order_by('master desc'); break;
 
-		$data = $this->validasi_anggota($this->input->post());
-		$data['id_kelompok'] = $id;
-		$data['foto'] = $nama_file;
-		$this->ubah_jabatan($data['id_kelompok'], $data['id_penduduk'], $data['jabatan'], NULL);
+            default: $this->db->order_by('u.nama'); break;
+        }
 
-		$sdh_ada = $this->db
-			->select('id')
-			->from('kelompok_anggota')
-			->where('id_kelompok', $id)
-			->where('id_penduduk', $data['id_penduduk'])
-			->get()->row_array();
-		if ( ! $sdh_ada)
-		{
-			$outp = $this->db->insert('kelompok_anggota', $data);
-		}
+        $this->list_data_sql();
 
-		status_sukses($outp); //Tampilkan Pesan
-	}
+        if ($page > 0) {
+            $jumlah_pilahan = $this->db->count_all_results('', false);
+            $paging         = $this->paginasi($page, $jumlah_pilahan);
+            $this->db->limit($paging->per_page, $paging->offset);
+        }
 
-	public function update($id = 0)
-	{
-		$data = $this->validasi($this->input->post());
+        $data = $this->db
+            ->select('u.*, s.kelompok AS master, c.nama AS ketua, (SELECT COUNT(id) FROM kelompok_anggota WHERE id_kelompok = u.id) AS jml_anggota')
+            ->get()
+            ->result_array();
 
-		$this->db->where('id', $id);
-		$outp = $this->db->update('kelompok', $data);
+        if ($page > 0) {
+            return ['paging' => $paging, 'main' => $data];
+        }
 
-		status_sukses($outp); //Tampilkan Pesan
-	}
+        return $data;
+    }
 
-	public function update_a($id = 0, $id_a = 0)
-	{
-		$data = $this->validasi_anggota($this->input->post());
+    private function validasi($post)
+    {
+        if ($post['id_ketua']) {
+            $data['id_ketua'] = bilangan($post['id_ketua']);
+        }
 
-		$_SESSION['success'] = 1;;
-		unset($_SESSION['error_msg']);
-		$lokasi_file = $_FILES['foto']['tmp_name'];
-		$tipe_file = $_FILES['foto']['type'];
-		$nama_file = $_FILES['foto']['name'];
-		$nama_file = str_replace(" ", "_", trim($nama_file));
-		$old_foto = $this->input->post('old_foto') ?: '';
-		if (!empty($nama_file))
-		{
-			if (!empty($lokasi_file) AND in_array($tipe_file, unserialize(MIME_TYPE_GAMBAR)))
-			{
-			  $data['foto'] = urlencode(generator(6)."_".$nama_file);
-				UploadFoto($data['foto'], $old_foto, $tipe_file);
-			}
-			else
-			{
-				$_SESSION['success'] = -1;
-				$_SESSION['error_msg'] = " -> Jenis file salah: " . $tipe_file;
-			}
-		}
+        $data['id_master']  = bilangan($post['id_master']);
+        $data['nama']       = nama_terbatas($post['nama']);
+        $data['slug']       = unique_slug($this->table, $data['nama']);
+        $data['keterangan'] = htmlentities($post['keterangan']);
+        $data['kode']       = nomor_surat_keputusan($post['kode']);
+        $data['tipe']       = $this->tipe;
 
-		$this->ubah_jabatan($id, $id_a, $data['jabatan'], $this->input->post('jabatan_lama'));
-		$outp = $this->db
-			->where('id_kelompok', $id)
-			->where('id_penduduk', $id_a)
-			->update('kelompok_anggota', $data);
-		status_sukses($outp); //Tampilkan Pesan
-	}
+        return $data;
+    }
 
-	public function delete($id = '', $semua = FALSE)
-	{
-		if ( ! $semua) $this->session->success = 1;
+    public function insert()
+    {
+        $data = $this->validasi($this->input->post());
 
-		$outp = $this->db->where('id', $id)->delete('kelompok');
+        if ($this->get_kelompok(null, $data['kode'])) {
+            $this->session->success   = -1;
+            $this->session->error_msg = '<br/>Kode ' . $this->tipe . ' sudah digunakan';
 
-		status_sukses($outp, $gagal_saja = TRUE); //Tampilkan Pesan
-	}
+            return false;
+        }
 
-	public function delete_all()
-	{
-		$this->session->success = 1;
+        $outpa     = $this->db->insert($this->table, $data);
+        $insert_id = $this->db->insert_id();
 
-		$id_cb = $_POST['id_cb'];
-		foreach ($id_cb as $id)
-		{
-			$this->delete($id, $semua=TRUE);
-		}
-	}
+        // TODO : Ubah cara penanganan penambahan ketua kelompok, simpan di bagian kelompok anggota
+        $outpb = $this->db
+            ->set('id_kelompok', $insert_id)
+            ->set('id_penduduk', $data['id_ketua'])
+            ->set('no_anggota', 1)
+            ->set('jabatan', 1)
+            ->set('keterangan', "Ketua {$this->tipe}") // keterangan default untuk Ketua Kelompok
+            ->set('tipe', $this->tipe)
+            ->insert('kelompok_anggota');
 
-	public function delete_anggota($id = '', $semua = FALSE)
-	{
-		if ( ! $semua) $this->session->success = 1;
+        status_sukses($outpa && $outpb);
+    }
 
-		$outp = $this->db->where('id', $id)->delete('kelompok_anggota');
+    private function validasi_anggota($post)
+    {
+        if ($post['id_penduduk']) {
+            $data['id_penduduk'] = bilangan($post['id_penduduk']);
+        }
 
-		status_sukses($outp, $gagal_saja=TRUE); //Tampilkan Pesan
-	}
+        $data['no_anggota']    = bilangan($post['no_anggota']);
+        $data['jabatan']       = alfanumerik_spasi($post['jabatan']);
+        $data['no_sk_jabatan'] = nomor_surat_keputusan($post['no_sk_jabatan']);
+        $data['keterangan']    = htmlentities($post['keterangan']);
+        $data['tipe']          = $this->tipe;
 
-	public function delete_anggota_all()
-	{
-		$this->session->success = 1;
+        if ($this->tipe == 'lembaga') {
+            $data['nmr_sk_pengangkatan']  = nomor_surat_keputusan($post['nmr_sk_pengangkatan']);
+            $data['tgl_sk_pengangkatan']  = ! empty($post['tgl_sk_pengangkatan']) ? tgl_indo_in($post['tgl_sk_pengangkatan']) : null;
+            $data['nmr_sk_pemberhentian'] = nomor_surat_keputusan($post['nmr_sk_pemberhentian']);
+            $data['tgl_sk_pemberhentian'] = ! empty($post['tgl_sk_pemberhentian']) ? tgl_indo_in($post['tgl_sk_pemberhentian']) : null;
+            $data['periode']              = htmlentities($post['periode']);
+        }
 
-		$id_cb = $_POST['id_cb'];
-		foreach ($id_cb as $id)
-		{
-			$this->delete_anggota($id, $semua=TRUE);
-		}
-	}
+        return $data;
+    }
 
-	public function get_kelompok($id = 0)
-	{
-		$data = $this->db
-			->select('k.*, km.kelompok AS kategori, tp.nama AS nama_ketua')
-			->from('kelompok k')
-			->join('kelompok_master km', 'k.id_master = km.id', 'left')
-			->join('tweb_penduduk tp', 'k.id_ketua = tp.id', 'left')
-			->where('k.id', $id)
-			->get()
-			->row_array();
+    public function insert_a($id = 0)
+    {
+        $data                = $this->validasi_anggota($this->input->post());
+        $data['id_kelompok'] = $id;
+        $this->ubah_jabatan($data['id_kelompok'], $data['id_penduduk'], $data['jabatan'], null);
 
-		return $data;
-	}
+        $outp    = $this->db->insert('kelompok_anggota', $data);
+        $id_pend = $data['id_penduduk'];
+        $nik     = $this->get_anggota($id, $id_pend);
 
-	public function get_ketua_kelompok($id)
-	{
-		$this->load->model('penduduk_model');
-		$sql = "SELECT u.id, u.nik, u.nama, k.id as id_kelompok, k.nama as nama_kelompok, u.tempatlahir, u.tanggallahir, s.nama as sex,
-				(SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(`tanggallahir`)), '%Y')+0 FROM tweb_penduduk WHERE id = u.id) AS umur,
+        // Upload foto dilakukan setelah ada id, karena nama foto berisi nik
+        if ($foto = upload_foto_penduduk($id_pend, $nik['nik'])) {
+            $this->db->where('id', $id_pend)->update('tweb_penduduk', ['foto' => $foto]);
+        }
+
+        status_sukses($outp); //Tampilkan Pesan
+    }
+
+    public function update($id = 0)
+    {
+        $data = $this->validasi($this->input->post());
+
+        if ($this->get_kelompok($id, $data['kode'])) {
+            $this->session->success   = -1;
+            $this->session->error_msg = '<br/>Kode ' . $this->tipe . ' sudah digunakan';
+
+            return false;
+        }
+
+        $this->db->where('id', $id);
+        $outp = $this->db->update($this->table, $data);
+
+        status_sukses($outp); //Tampilkan Pesan
+    }
+
+    public function update_a($id = 0, $id_a = 0)
+    {
+        $data = $this->validasi_anggota($this->input->post());
+        $this->ubah_jabatan($id, $id_a, $data['jabatan'], $this->input->post('jabatan_lama'));
+
+        $outp = $this->db
+            ->where('id_penduduk', $id_a)
+            ->update('kelompok_anggota', $data);
+
+        $nik = $this->get_anggota($id, $id_a);
+
+        // Upload foto dilakukan setelah ada id, karena nama foto berisi nik
+        if ($foto = upload_foto_penduduk($id_a, $nik['nik'])) {
+            $this->db->where('id', $id_a)->update('tweb_penduduk', ['foto' => $foto]);
+        }
+
+        status_sukses($outp); //Tampilkan Pesan
+    }
+
+    // Hapus kelompok dengan tipe 'kelompok' saja
+    public function delete($id = '', $semua = false)
+    {
+        if (! $semua) {
+            $this->session->success = 1;
+        }
+
+        $kelompok = $this->db
+            ->where('id', $id)
+            ->where('tipe', $this->tipe)
+            ->get('kelompok')->num_rows();
+
+        if ($kelompok) {
+            $outp = $this->db->where('id', $id)->where('tipe', $this->tipe)->delete($this->table);
+            // Hapus peserta program bantuan sasaran kelompok, kalau ada
+            $outp = $outp && $this->program_bantuan_model->hapus_peserta_dari_sasaran($id, 4);
+        } else {
+            $outp = false;
+        }
+
+        status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
+    }
+
+    public function delete_all()
+    {
+        $this->session->success = 1;
+
+        $id_cb = $_POST['id_cb'];
+
+        foreach ($id_cb as $id) {
+            $this->delete($id, $semua = true);
+        }
+    }
+
+    public function delete_anggota($id = '', $semua = false)
+    {
+        if (! $semua) {
+            $this->session->success = 1;
+        }
+
+        $outp = $this->db->where('id', $id)->where('tipe', $this->tipe)->delete('kelompok_anggota');
+
+        status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
+    }
+
+    public function delete_anggota_all()
+    {
+        $this->session->success = 1;
+
+        $id_cb = $_POST['id_cb'];
+
+        foreach ($id_cb as $id) {
+            $this->delete_anggota($id, $semua = true);
+        }
+    }
+
+    public function get_kelompok($id = null, $kode = null)
+    {
+        if ($id && $kode) {
+            $this->db->where('k.id !=', $id);
+        }
+
+        return $this->db
+            ->select('k.*, km.kelompok AS kategori, tp.nama AS nama_ketua')
+            ->from('kelompok k')
+            ->join('kelompok_master km', 'k.id_master = km.id', 'left')
+            ->join('tweb_penduduk tp', 'k.id_ketua = tp.id', 'left')
+            ->group_start()
+            ->where('k.id', $id)
+            ->or_where('k.kode', $kode)
+            ->group_end()
+            ->get()
+            ->row_array();
+    }
+
+    public function get_ketua_kelompok($id)
+    {
+        $this->load->model('penduduk_model');
+        $sql = "SELECT u.id, u.nik, u.nama, k.id as id_kelompok, k.nama as nama_kelompok, u.tempatlahir, u.tanggallahir, s.nama as sex,
+				DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(`tanggallahir`)), '%Y')+0 AS umur,
 				d.nama as pendidikan, f.nama as warganegara, a.nama as agama,
 				wil.rt, wil.rw, wil.dusun
 			FROM kelompok k
@@ -328,51 +404,60 @@ class Kelompok_model extends MY_Model {
 			LEFT JOIN tweb_penduduk_agama a ON u.agama_id = a.id
 			LEFT JOIN tweb_penduduk_sex s ON s.id = u.sex
 			LEFT JOIN tweb_wil_clusterdesa wil ON wil.id = u.id_cluster
-			WHERE k.id = $id LIMIT 1";
-		$query = $this->db->query($sql);
-		$data = $query->row_array();
-		$data['alamat_wilayah'] = $this->penduduk_model->get_alamat_wilayah($data['id']);
+			WHERE k.id = {$id} LIMIT 1";
+        $query                  = $this->db->query($sql);
+        $data                   = $query->row_array();
+        $data['alamat_wilayah'] = $this->penduduk_model->get_alamat_wilayah($data['id']);
 
-		return $data;
-	}
+        return $data;
+    }
 
-	public function get_anggota($id = 0, $id_a = 0)
-	{
-		$sql = "SELECT * FROM kelompok_anggota WHERE id_kelompok = ? AND id_penduduk = ?";
-		$query = $this->db->query($sql,array($id, $id_a));
-		$data = $query->row_array();
-		return $data;
-	}
+    public function get_anggota($id = 0, $id_a = 0)
+    {
+        return $this->db
+            ->select('ka.*, tp.sex as id_sex, tp.foto, tp.nik')
+            ->from('kelompok_anggota ka')
+            ->join('tweb_penduduk tp', 'ka.id_penduduk = tp.id')
+            ->where('id_kelompok', $id)
+            ->where('id_penduduk', $id_a)
+            ->get()
+            ->row_array();
+    }
 
-	public function list_master()
-	{
-		$sql = "SELECT * FROM kelompok_master";
-		$query = $this->db->query($sql);
-		return $query->result_array();
-	}
+    public function list_master()
+    {
+        return $this->db
+            ->where('tipe', $this->tipe)
+            ->get('kelompok_master')
+            ->result_array();
+    }
 
-	private function in_list_anggota($kelompok)
-	{
-		$anggota = $this->db
-			->select('p.id')
-			->from('kelompok_anggota k')
-			->join('penduduk_hidup p', 'k.id_penduduk = p.id', 'left')
-			->where('k.id_kelompok', $kelompok)
-			->get()->result_array();
-		return sql_in_list(array_column($anggota, 'id'));
-	}
+    private function in_list_anggota($kelompok)
+    {
+        $anggota = $this->db
+            ->select('p.id')
+            ->from('kelompok_anggota k')
+            ->join('penduduk_hidup p', 'k.id_penduduk = p.id', 'left')
+            ->where('k.id_kelompok', $kelompok)
+            ->where('k.tipe', $this->tipe)
+            ->get()
+            ->result_array();
 
-	public function list_penduduk($ex_kelompok = '')
-	{
-		if ($ex_kelompok)
-		{
-			$anggota = $this->in_list_anggota($ex_kelompok);
-			if ($anggota) $this->db->where("p.id not in ($anggota)");
-		}
-		$sebutan_dusun = ucwords($this->setting->sebutan_dusun);
-		$this->db
-			->select('p.id, nik, nama')
-			->select("(
+        return sql_in_list(array_column($anggota, 'id'));
+    }
+
+    public function list_penduduk($ex_kelompok = '')
+    {
+        if ($ex_kelompok) {
+            $anggota = $this->in_list_anggota($ex_kelompok);
+            if ($anggota) {
+                $this->db->where("p.id not in ({$anggota})");
+            }
+        }
+        $sebutan_dusun = ucwords($this->setting->sebutan_dusun);
+        $this->db
+            ->select('p.id, nik, nama')
+            ->select("(
 				case when (p.id_kk IS NULL or p.id_kk = 0)
 					then
 						case when (cp.dusun = '-' or cp.dusun = '')
@@ -385,67 +470,127 @@ class Kelompok_model extends MY_Model {
 							else CONCAT(COALESCE(k.alamat, ''), ' {$sebutan_dusun} ', ck.dusun, ' RT ', ck.rt, ' / RW ', ck.rw)
 						end
 				end) AS alamat")
-			->from('penduduk_hidup p')
-			->join('tweb_wil_clusterdesa cp', 'p.id_cluster = cp.id', 'left')
-			->join('tweb_keluarga k', 'p.id_kk = k.id', 'left')
-			->join('tweb_wil_clusterdesa ck', 'k.id_cluster = ck.id', 'left');
-		$data = $this->db->get()->result_array();
-		return $data;
-	}
+            ->from('penduduk_hidup p')
+            ->join('tweb_wil_clusterdesa cp', 'p.id_cluster = cp.id', 'left')
+            ->join('tweb_keluarga k', 'p.id_kk = k.id', 'left')
+            ->join('tweb_wil_clusterdesa ck', 'k.id_cluster = ck.id', 'left');
 
-	public function list_pengurus($id_kelompok)
-	{
-		$this->db->where('jabatan <>', 90);
-		$data = $this->list_anggota($id_kelompok);
-		return $data;
-	}
+        return $this->db->get()->result_array();
+    }
 
-	public function list_anggota($id_kelompok = 0, $sub = '')
-	{
-		$dusun = ucwords($this->setting->sebutan_dusun);
-		if ($sub == 'anggota') $this->db->where('jabatan', 90); // Hanya anggota saja, tidak termasuk pengurus
-		$data = $this->db
-			->select('ka.*, tp.nik, tp.nama, tp.tempatlahir, tp.tanggallahir, tpx.nama AS sex')
-			->select("(SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(tanggallahir)), '%Y')+0 FROM tweb_penduduk WHERE id = tp.id) AS umur")
-			->select('a.dusun,a.rw,a.rt')
-			->select("CONCAT('{$dusun} ', a.dusun, ' RW ', a.rw, ' RT ', a.rt) as alamat")
-			->from('kelompok_anggota ka')
-			->join('tweb_penduduk tp', 'ka.id_penduduk = tp.id', 'left')
-			->join('tweb_penduduk_sex tpx', 'tp.sex = tpx.id', 'left')
-			->join('tweb_wil_clusterdesa a', 'tp.id_cluster = a.id', 'left')
-			->where('ka.id_kelompok', $id_kelompok)
-			->order_by('CAST(jabatan AS UNSIGNED), CAST(no_anggota AS UNSIGNED)')
-			->get()
-			->result_array();
-		return $data;
-	}
+    public function list_pengurus($id_kelompok)
+    {
+        $this->db->where('jabatan <>', 90);
 
-	public function ubah_jabatan($id_kelompok, $id_penduduk, $jabatan, $jabatan_lama)
-	{
-		// jika ada orang lain yang sudah jabat KETUA ubah jabatan menjadi anggota
-		// update id_ketua kelompok di tabel kelompok
-		if ($jabatan == '1') // Ketua
-		{
-			$this->db
-				->set('jabatan', '90') // Anggota
-				->set('no_sk_jabatan', '')
-				->where('id_kelompok', $id_kelompok)
-				->where('jabatan', '1')
-				->update('kelompok_anggota');
+        return $this->list_anggota($id_kelompok);
+    }
 
-			$this->db
-				->set('id_ketua', $id_penduduk)
-				->where('id', $id_kelompok)
-				->update('kelompok');
-		}
-		elseif ($jabatan_lama == '1') // Ketua
-		{
-			// jika yang diubah adalah jabatan KETUA maka kosongkan id_ketua kelompok di tabel kelompok
-			$this->db
-				->set('id_ketua', -9999) // kolom id_ketua di tabel kelompok tidak bisa NULL
-				->where('id', $id_kelompok)
-				->update('kelompok');
-		}
-	}
+    public function list_anggota($id_kelompok = 0, $sub = '')
+    {
+        $dusun = ucwords($this->setting->sebutan_dusun);
+        if ($sub == 'anggota') {
+            $this->db->where('jabatan', 90); // Hanya anggota saja, tidak termasuk pengurus
+        }
 
+        $data = $this->db
+            ->select('ka.*, tp.nik, tp.nama, tp.tempatlahir, tp.tanggallahir, tp.sex AS id_sex, tpx.nama AS sex, tp.foto, tpp.nama as pendidikan, tpa.nama as agama')
+            ->select("(SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(tanggallahir)), '%Y')+0 FROM tweb_penduduk WHERE id = tp.id) AS umur")
+            ->select('a.dusun,a.rw,a.rt')
+            ->select("CONCAT('{$dusun} ', a.dusun, ' RW ', a.rw, ' RT ', a.rt) AS alamat")
+            ->from('kelompok_anggota ka')
+            ->join('tweb_penduduk tp', 'ka.id_penduduk = tp.id', 'left')
+            ->join('tweb_penduduk_sex tpx', 'tp.sex = tpx.id', 'left')
+            ->join('tweb_penduduk_pendidikan_kk tpp', 'tp.pendidikan_kk_id = tpp.id', 'left')
+            ->join('tweb_penduduk_agama tpa', 'tp.agama_id = tpa.id', 'left')
+            ->join('tweb_wil_clusterdesa a', 'tp.id_cluster = a.id', 'left')
+            ->where('ka.id_kelompok', $id_kelompok)
+            ->where('ka.tipe', $this->tipe)
+            ->order_by('CAST(jabatan AS UNSIGNED) + 30 - jabatan, CAST(no_anggota AS UNSIGNED)')
+            ->get()
+            ->result_array();
+
+        foreach ($data as $key => $anggota) {
+            if ($anggota['jabatan'] != 90) {
+                $data[$key]['jabatan'] = $this->referensi_model->list_ref(JABATAN_KELOMPOK)[$anggota['jabatan']] ?: strtoupper($anggota['jabatan']);
+            } else {
+                $data[$key]['jabatan'] = $this->referensi_model->list_ref(JABATAN_KELOMPOK)[$anggota['jabatan']];
+            }
+        }
+
+        return $data;
+    }
+
+    public function ubah_jabatan($id_kelompok, $id_penduduk, $jabatan, $jabatan_lama)
+    {
+        // jika ada orang lain yang sudah jabat KETUA ubah jabatan menjadi anggota
+        // update id_ketua kelompok di tabel kelompok
+        if ($jabatan == '1') { // Ketua
+            $this->db
+                ->set('jabatan', '90') // Anggota
+                ->set('no_sk_jabatan', '')
+                ->where('id_kelompok', $id_kelompok)
+                ->where('jabatan', '1')
+                ->update('kelompok_anggota');
+
+            $this->db
+                ->set('id_ketua', $id_penduduk)
+                ->where('id', $id_kelompok)
+                ->update($this->table);
+        } elseif ($jabatan_lama == '1') { // Ketua
+            // jika yang diubah adalah jabatan KETUA maka kosongkan id_ketua kelompok di tabel kelompok
+            $this->db
+                ->set('id_ketua', -9999) // kolom id_ketua di tabel kelompok tidak bisa NULL
+                ->where('id', $id_kelompok)
+                ->update($this->table);
+        }
+    }
+
+    public function list_jabatan($id_kelompok = 0)
+    {
+        return $this->db
+            ->distinct()
+            ->select('UPPER(jabatan) as jabatan ')
+            ->where("jabatan REGEXP '[a-zA-Z]+'")
+            ->where('id_kelompok', $id_kelompok)
+            ->where('tipe', $this->tipe)
+            ->order_by('jabatan')
+            ->get('kelompok_anggota')
+            ->result_array();
+    }
+
+    public function get_judul_statistik($tipe = 0, $nomor = 0, $sex = 0)
+    {
+        if ($nomor == JUMLAH) {
+            $judul = ['nama' => ' : JUMLAH'];
+        } elseif ($nomor == BELUM_MENGISI) {
+            $judul = ['nama' => ' : BELUM MENGISI'];
+        } elseif ($nomor == TOTAL) {
+            $judul = ['nama' => ' : TOTAL'];
+        } else {
+            switch ($tipe) {
+                case 'penerima_bantuan': $table = 'program'; break;
+
+                default: $table = 'kelompok'; break;
+            }
+
+            $judul = $this->db->get_where($table, ['id' => $nomor])->row_array();
+        }
+
+        if ($sex == 1) {
+            $judul['nama'] .= ' - LAKI-LAKI';
+        } elseif ($sex == 2) {
+            $judul['nama'] .= ' - PEREMPUAN';
+        }
+
+        return $judul;
+    }
+
+    public function slug($slug = null)
+    {
+        return $this->db
+            ->select('id')
+            ->get_where($this->table, ['slug' => $slug])
+            ->row()
+            ->id;
+    }
 }

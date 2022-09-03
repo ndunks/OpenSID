@@ -1,15 +1,6 @@
-<?php if(!defined('BASEPATH')) exit('No direct script access allowed');
+<?php
 
-/**
- * File ini:
- *
- * Controller untuk modul Kependudukan > Data Suplemen
- *
- * donjo-app/controllers/suplemen.php,
- *
- */
-
-/**
+/*
  *
  * File ini bagian dari:
  *
@@ -20,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -35,238 +26,263 @@
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
  *
- * @package	OpenSID
- * @author	Tim Pengembang OpenDesa
- * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
- * @link 	https://github.com/OpenSID/OpenSID
+ * @package   OpenSID
+ * @author    Tim Pengembang OpenDesa
+ * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @license   http://www.gnu.org/licenses/gpl.html GPL V3
+ * @link      https://github.com/OpenSID/OpenSID
+ *
  */
 
-class Suplemen extends Admin_Controller {
+defined('BASEPATH') || exit('No direct script access allowed');
 
-	public function __construct()
-	{
-		parent::__construct();
-		$this->load->model(['suplemen_model', 'pamong_model']);
-		$this->modul_ini = 2;
-		$this->sub_modul_ini = 25;
-		$this->_list_session = ['cari', 'sasaran'];
-		$this->_set_page = ['20', '50', '100'];
-	}
+class Suplemen extends Admin_Controller
+{
+    public function __construct()
+    {
+        parent::__construct();
+        $this->load->model(['suplemen_model', 'pamong_model', 'penduduk_model', 'keluarga_model']);
+        $this->modul_ini     = 2;
+        $this->sub_modul_ini = 25;
+        $this->_list_session = ['cari', 'sasaran'];
+        $this->_set_page     = ['20', '50', '100'];
+    }
 
-	public function index($p = 1)
-	{
-		$per_page = $this->input->post('per_page');
-		if (isset($per_page))
-			$this->session->per_page = $per_page;
+    public function index($page_number = 1, $order_by = 0)
+    {
+        $per_page = $this->input->post('per_page');
+        if (isset($per_page)) {
+            $this->session->per_page = $per_page;
+        }
 
-		$sasaran = $this->input->post('sasaran');
-		if (isset($sasaran))
-			$this->session->sasaran = $sasaran;
+        $sasaran = $this->input->post('sasaran');
+        if (isset($sasaran)) {
+            $this->session->sasaran = $sasaran;
+        }
 
-		$data['func'] = 'index';
-		$data['set_page'] = $this->_set_page;
-		$data['paging'] = $this->suplemen_model->paging_suplemen($p);
-		$data['suplemen'] = $this->suplemen_model->list_data($data['paging']->offset, $data['paging']->per_page);
-		$data['list_sasaran'] = unserialize(SASARAN);
-		$data['set_sasaran'] = $this->session->sasaran;
+        $data = [
+            'func'         => 'index',
+            'set_page'     => $this->_set_page,
+            'paging'       => $this->suplemen_model->paging_suplemen($page_number),
+            'list_sasaran' => unserialize(SASARAN),
+            'set_sasaran'  => $this->session->sasaran,
+        ];
 
-		$this->render('suplemen/suplemen', $data);
-	}
+        $data['suplemen'] = $this->suplemen_model->list_data($order_by, $data['paging']->offset, $data['paging']->per_page);
 
-	public function form($id = '')
-	{
-		if ($id)
-		{
-			$data['suplemen'] = $this->suplemen_model->get_suplemen($id);
-			$data['form_action'] = site_url("suplemen/ubah/$id");
-		}
-		else
-		{
-			$data['suplemen'] = NULL;
-			$data['form_action'] = site_url("suplemen/tambah");
-		}
+        $this->render('suplemen/suplemen', $data);
+    }
 
-		$data['list_sasaran'] = unserialize(SASARAN);
-		$this->set_minsidebar(1);
+    public function form($id = '')
+    {
+        $this->redirect_hak_akses('u');
+        if ($id) {
+            $data['suplemen']    = $this->suplemen_model->get_suplemen($id);
+            $data['form_action'] = site_url("{$this->controller}/ubah/{$id}");
+        } else {
+            $data['suplemen']    = null;
+            $data['form_action'] = site_url("{$this->controller}/tambah");
+        }
 
-		$this->render('suplemen/form', $data);
-	}
+        $data['list_sasaran'] = unserialize(SASARAN);
 
-	public function tambah()
-	{
-		$this->suplemen_model->create();
-		redirect('suplemen');
-	}
+        $this->render('suplemen/form', $data);
+    }
 
-	public function ubah($id)
-	{
-		$this->suplemen_model->update($id);
-		redirect('suplemen');
-	}
+    public function tambah()
+    {
+        $this->redirect_hak_akses('u');
+        $this->suplemen_model->create();
 
-	public function hapus($id)
-	{
-		$this->redirect_hak_akses('h');
-		$this->suplemen_model->hapus($id);
-		redirect('suplemen');
-	}
+        redirect($this->controller);
+    }
 
-	public function panduan()
-	{
-		$this->render('suplemen/panduan');
-	}
+    public function ubah($id)
+    {
+        $this->redirect_hak_akses('u');
+        $this->suplemen_model->update($id);
 
-	public function filter($filter)
-	{
-		## untuk filter pada data rincian suplemen
-		$value = $this->input->post($filter);
-		$id_rincian = $this->session->id_rincian;
-		if ($value != '')
-			$this->session->$filter = $value;
-		else
-			$this->session->unset_userdata($filter);
-		redirect("suplemen/rincian/$id_rincian");
-	}
+        redirect($this->controller);
+    }
 
-	public function clear($id = 0)
-	{
-		## untuk filter pada data rincian suplemen
-		if ($id)
-		{
-			$this->session->id_rincian = $id;
-			$this->session->unset_userdata('cari');
-			redirect("suplemen/rincian/$id");
-		}
-		//Untuk index Suplemen
-		else
-		{
-			$this->session->unset_userdata($this->_list_session);
-			$this->session->per_page = $this->_set_page[0];
+    public function hapus($id)
+    {
+        $this->redirect_hak_akses('h');
+        $this->suplemen_model->hapus($id);
 
-			redirect('suplemen');
-		}
-	}
+        redirect($this->controller);
+    }
 
-	public function rincian($id = '', $p = 1)
-	{
-		$per_page = $this->input->post('per_page');
-		if (isset($per_page))
-			$this->session->per_page = $per_page;
+    public function panduan()
+    {
+        $this->render('suplemen/panduan');
+    }
 
-		$data = $this->suplemen_model->get_rincian($p, $id);
-		$data['sasaran'] = unserialize(SASARAN);
-		$data['func'] = "rincian/$id";
-		$data['per_page'] = $this->session->per_page;
-		$data['set_page'] = ['20', '50', '100'];
-		$data['cari'] = $this->session->cari;
-		$this->set_minsidebar(1);
+    public function filter($filter)
+    {
+        //# untuk filter pada data rincian suplemen
+        $value      = $this->input->post($filter);
+        $id_rincian = $this->session->id_rincian;
+        if ($value != '') {
+            $this->session->{$filter} = $value;
+        } else {
+            $this->session->unset_userdata($filter);
+        }
 
-		$this->render('suplemen/suplemen_anggota', $data);
-	}
+        redirect("{$this->controller}/rincian/{$id_rincian}");
+    }
 
-	public function form_terdata($id)
-	{
-		$data['sasaran'] = unserialize(SASARAN);
-		$data['suplemen'] = $this->suplemen_model->get_suplemen($id);
-		$sasaran = $data['suplemen']['sasaran'];
-		$data['list_sasaran'] = $this->suplemen_model->list_sasaran($id, $sasaran);
-		if (isset($_POST['terdata']))
-		{
-			$data['individu'] = $this->suplemen_model->get_terdata($_POST['terdata'], $sasaran);
-		}
-		else
-		{
-			$data['individu'] = NULL;
-		}
+    public function clear($id = 0)
+    {
+        $this->session->per_page = $this->_set_page[0];
+        //# untuk filter pada data rincian suplemen
+        if ($id) {
+            $this->session->id_rincian = $id;
+            $this->session->unset_userdata('cari');
 
-		$data['form_action'] = site_url("suplemen/add_terdata");
+            redirect("{$this->controller}/rincian/{$id}");
+        }
+        //Untuk index Suplemen
+        else {
+            $this->session->unset_userdata($this->_list_session);
 
-		$this->render('suplemen/form_terdata', $data);
-	}
+            redirect($this->controller);
+        }
+    }
 
-	public function terdata($sasaran = 0, $id = 0)
-	{
-		$data = $this->suplemen_model->get_terdata_suplemen($sasaran, $id);
+    public function rincian($id = '', $p = 1)
+    {
+        $per_page = $this->input->post('per_page');
+        if (isset($per_page)) {
+            $this->session->per_page = $per_page;
+        }
 
-		$this->render('suplemen/terdata', $data);
-	}
+        $data             = $this->suplemen_model->get_rincian($p, $id);
+        $data['sasaran']  = unserialize(SASARAN);
+        $data['func']     = "rincian/{$id}";
+        $data['per_page'] = $this->session->per_page;
+        $data['set_page'] = $this->_set_page;
+        $data['cari']     = $this->session->cari;
 
-	public function data_terdata($id = 0)
-	{
-		$data['terdata'] = $this->suplemen_model->get_suplemen_terdata_by_id($id);
-		$data['suplemen'] = $this->suplemen_model->get_suplemen($data['terdata']['id_suplemen']);
-		$data['individu'] = $this->suplemen_model->get_terdata($data['terdata']['id_terdata'], $data['suplemen']['sasaran']);
+        $this->render('suplemen/suplemen_anggota', $data);
+    }
 
-		$this->render('suplemen/data_terdata', $data);
-	}
+    public function form_terdata($id)
+    {
+        $this->redirect_hak_akses('u');
+        $data['sasaran']      = unserialize(SASARAN);
+        $data['suplemen']     = $this->suplemen_model->get_suplemen($id);
+        $sasaran              = $data['suplemen']['sasaran'];
+        $data['list_sasaran'] = $this->suplemen_model->list_sasaran($id, $sasaran);
+        if (isset($_POST['terdata'])) {
+            $data['individu'] = $this->suplemen_model->get_terdata($_POST['terdata'], $sasaran);
+        } else {
+            $data['individu'] = null;
+        }
 
-	public function edit_terdata_form($id = 0)
-	{
-		$data = $this->suplemen_model->get_suplemen_terdata_by_id($id);
-		$data['form_action'] = site_url("suplemen/edit_terdata/$id");
+        $data['form_action'] = site_url("{$this->controller}/add_terdata");
 
-		$this->load->view('suplemen/edit_terdata', $data);
-	}
+        $this->render('suplemen/form_terdata', $data);
+    }
 
-	public function add_terdata($id)
-	{
-		$this->suplemen_model->add_terdata($_POST, $id);
-		redirect("suplemen/rincian/$id");
-	}
+    public function terdata($sasaran = 0, $id = 0)
+    {
+        $data = $this->suplemen_model->get_terdata_suplemen($sasaran, $id);
 
-	public function edit_terdata($id)
-	{
-		$this->suplemen_model->edit_terdata($_POST, $id);
-		$id_suplemen = $_POST['id_suplemen'];
-		redirect("suplemen/rincian/$id_suplemen");
-	}
+        $this->render('suplemen/terdata', $data);
+    }
 
-	public function hapus_terdata($id_suplemen, $id_terdata)
-	{
-		$this->redirect_hak_akses('h');
-		$this->suplemen_model->hapus_terdata($id_terdata);
-		redirect("suplemen/rincian/$id_suplemen");
-	}
+    public function data_terdata($id = 0)
+    {
+        $data['terdata']  = $this->suplemen_model->get_suplemen_terdata_by_id($id);
+        $data['suplemen'] = $this->suplemen_model->get_suplemen($data['terdata']['id_suplemen']);
+        $data['individu'] = $this->suplemen_model->get_terdata($data['terdata']['id_terdata'], $data['suplemen']['sasaran']);
 
-	/*
-	* $aksi = cetak/unduh
-	*/
-	public function dialog_daftar($id = 0, $aksi = '')
-	{
-		$data['aksi'] = $aksi;
-		$data['pamong'] = $this->pamong_model->list_data();
-		$data['form_action'] = site_url("suplemen/daftar/$id/$aksi");
+        $this->render('suplemen/data_terdata', $data);
+    }
 
-		$this->load->view('global/ttd_pamong', $data);
-	}
+    public function edit_terdata_form($id = 0)
+    {
+        $this->redirect_hak_akses('u');
+        $data                = $this->suplemen_model->get_suplemen_terdata_by_id($id);
+        $data['form_action'] = site_url("{$this->controller}/edit_terdata/{$id}");
 
-	/*
-	* $aksi = cetak/unduh
-	*/
-	public function daftar($id = 0, $aksi = '')
-	{
-		if ($id > 0)
-		{
-			$post = $this->input->post();
-			$temp = $this->session->per_page;
-			$this->session->per_page = 1000000000; // Angka besar supaya semua data terunduh
-			$data = $this->suplemen_model->get_rincian(1, $id);
-			$data['sasaran'] = unserialize(SASARAN);
-			$data['config'] = $this->header['desa'];
-			$data['pamong_ttd'] = $this->pamong_model->get_data($post['pamong_ttd']);
-			$data['pamong_ketahui'] = $this->pamong_model->get_data($post['pamong_ketahui']);
-			$data['aksi'] = $aksi;
-			$this->session->per_page = $temp;
+        $this->load->view('suplemen/edit_terdata', $data);
+    }
 
-			//pengaturan data untuk format cetak/ unduh
-			$data['file'] = "Laporan Suplemen ".$data['suplemen']['nama'];
-			$data['isi'] = "suplemen/cetak";
-			$data['letak_ttd'] = ['2', '2', '3'];
+    public function add_terdata($id)
+    {
+        $this->redirect_hak_akses('u');
+        $this->suplemen_model->add_terdata($_POST, $id);
 
-			$this->load->view('global/format_cetak', $data);
-		}
-	}
+        redirect("{$this->controller}/rincian/{$id}");
+    }
 
+    public function edit_terdata($id)
+    {
+        $this->redirect_hak_akses('u');
+        $this->suplemen_model->edit_terdata($_POST, $id);
+        $id_suplemen = $_POST['id_suplemen'];
+
+        redirect("{$this->controller}/rincian/{$id_suplemen}");
+    }
+
+    public function hapus_terdata($id_suplemen, $id_terdata)
+    {
+        $this->redirect_hak_akses('h');
+        $this->suplemen_model->hapus_terdata($id_terdata);
+
+        redirect("{$this->controller}/rincian/{$id_suplemen}");
+    }
+
+    // $aksi = cetak/unduh
+    public function dialog_daftar($id = 0, $aksi = '')
+    {
+        $data['aksi']           = $aksi;
+        $data['pamong']         = $this->pamong_model->list_data();
+        $data['pamong_ttd']     = $this->pamong_model->get_ub();
+        $data['pamong_ketahui'] = $this->pamong_model->get_ttd();
+        $data['form_action']    = site_url("{$this->controller}/daftar/{$id}/{$aksi}");
+
+        $this->load->view('global/ttd_pamong', $data);
+    }
+
+    // $aksi = cetak/unduh
+    public function daftar($id = 0, $aksi = '')
+    {
+        if ($id > 0) {
+            $post                    = $this->input->post();
+            $temp                    = $this->session->per_page;
+            $this->session->per_page = 1000000000; // Angka besar supaya semua data terunduh
+            $data                    = $this->suplemen_model->get_rincian(1, $id);
+            $data['sasaran']         = unserialize(SASARAN);
+            $data['config']          = $this->header['desa'];
+            $data['pamong_ttd']      = $this->pamong_model->get_data($post['pamong_ttd']);
+            $data['pamong_ketahui']  = $this->pamong_model->get_data($post['pamong_ketahui']);
+            $data['aksi']            = $aksi;
+            $this->session->per_page = $temp;
+
+            //pengaturan data untuk format cetak/ unduh
+            $data['file']      = 'Laporan Suplemen ' . $data['suplemen']['nama'];
+            $data['isi']       = 'suplemen/cetak';
+            $data['letak_ttd'] = ['2', '2', '3'];
+
+            $this->load->view('global/format_cetak', $data);
+        }
+    }
+
+    public function impor()
+    {
+        $this->redirect_hak_akses('u');
+        $id = $this->input->post('id_suplemen');
+        $this->suplemen_model->impor($id);
+
+        redirect("{$this->controller}/rincian/{$id}");
+    }
+
+    public function ekspor($id = 0)
+    {
+        $this->suplemen_model->ekspor($id);
+    }
 }

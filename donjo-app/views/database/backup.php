@@ -1,4 +1,4 @@
-										<div class="tab-pane <?php if ($act_tab==4): ?> active<?php endif ?>">
+										<div class="tab-pane <?php if ($act_tab == 4): ?> active<?php endif ?>">
 											<div class="row">
 												<div class="col-md-12">
 													<div class="box-header with-border">
@@ -13,13 +13,13 @@
 																			<tr>
 																				<td class="col-sm-10"><b>Backup Seluruh Database SID (.sql)</b></td>
 																				<td class="col-sm-2">
-																					<a href="<?= site_url("database/exec_backup")?>" class="btn btn-social btn-flat btn-block btn-info btn-sm"><i class="fa fa-download"></i> Unduh Database</a>
+																					<a href="<?= site_url('database/exec_backup')?>" class="btn btn-social btn-flat btn-block btn-info btn-sm"><i class="fa fa-download"></i> Unduh Database</a>
 																				</td>
 																			</tr>
 																			<tr>
 																				<td class="col-sm-10"><b>Backup Seluruh Folder Desa SID (.zip)</b> </td>
 																				<td class="col-sm-2">
-																					<a href="<?= site_url("database/desa_backup"); ?>" class="btn btn-social btn-flat btn-block btn-info btn-sm"><i class="fa fa-download"></i> Unduh Folder Desa</a>
+																					<a href="<?= site_url('database/desa_backup'); ?>" class="btn btn-social btn-flat btn-block btn-info btn-sm"><i class="fa fa-download"></i> Unduh Folder Desa</a>
 																				</td>
 																			</tr>
 																		</tbody>
@@ -36,7 +36,8 @@
 														</div>
 													</div>
 												</div>
-												<div class="col-md-12">
+												<?php if ($this->CI->cek_hak_akses('u') && ! config_item('demo_mode')): ?>
+													<div class="col-md-12">
 													<div class="box-header with-border">
 														<h3 class="box-title"><strong>Restore Database SID</strong></h3>
 													</div>
@@ -45,20 +46,19 @@
 															<div class="col-sm-12">
 																<p>Backup yang dibuat dapat dipergunakan untuk mengembalikan database SID anda apabila ada masalah. Klik tombol Restore di bawah untuk menggantikan keseluruhan database SID dengan data hasil backup terdahulu.</p>
 																<form action="<?= $form_action?>" method="post" enctype="multipart/form-data" class="form-horizontal">
-																	<?php if (strlen(@$_SESSION["SIAK"])>1): ?>
-																			<?=$_SESSION["SIAK"]?>
+																	<?php if (strlen(@$_SESSION['SIAK']) > 1): ?>
+																			<?=$_SESSION['SIAK']?>
 																	<?php endif ?>
-																	<?php $_SESSION["SIAK"] = ""; ?>
+																	<?php $_SESSION['SIAK'] = ''; ?>
 																	<p>Batas maksimal pengunggahan berkas <strong><?= max_upload() ?> MB.</strong></p>
-																	<p>Proses ini akan membutuhkan waktu beberapa menit, menyesuaikan dengan spesifikasi
-																	  komputer server SID dan sambungan internet yang tersedia.</p>
+																	<p>Proses ini akan membutuhkan waktu beberapa menit, menyesuaikan dengan spesifikasi komputer server SID dan sambungan internet yang tersedia.</p>
 																	<p></p>
 																	<table class="table table-bordered table-hover" >
 																		<tbody>
 																			<tr>
 																				<td style="padding-top:20px;padding-bottom:10px;">
 																					<div class="form-group">
-																						<label for="file"  class="col-md-2 col-lg-3 control-label">Pilih File .Sql:</label>
+																						<label for="file"class="col-md-2 col-lg-3 control-label">Pilih File .Sql:</label>
 																						<div class="col-sm-12 col-md-5 col-lg-5">
 																							<div class="input-group input-group-sm">
 																								<input type="text" class="form-control" id="file_path" name="userfile">
@@ -69,7 +69,7 @@
 																							</div>
 																						</div>
 																						<div class="col-sm-12 col-md-3 col-lg-2">
-																							<button type="submit" id="restore" class="btn btn-block btn-success btn-sm" disabled="disabled"><i class="fa fa-spin fa-refresh"></i>  Restore</button>
+																							<button type="submit" id="restore" class="btn btn-block btn-success btn-sm" disabled="disabled"><i class="fa fa-spin fa-refresh"></i>Restore</button>
 																						</div>
 																					</div>
 																				</td>
@@ -80,7 +80,8 @@
 															</div>
 														</div>
 													</div>
-												</div>
+													</div>
+												<?php endif; ?>
 											</div>
 										</div>
 									</div>

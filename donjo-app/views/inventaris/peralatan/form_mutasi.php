@@ -8,7 +8,7 @@
 		</ol>
 	</section>
 	<section class="content" id="maincontent">
-		<form class="form-horizontal" id="validasi" name="form_mutasi_peralatan" method="post" action="<?= site_url("api_inventaris_peralatan/add_mutasi"); ?>">
+		<form class="form-horizontal" id="validasi" name="form_mutasi_peralatan" method="post" action="<?= site_url('api_inventaris_peralatan/add_mutasi'); ?>">
 			<div class="row">
 				<div class="col-md-3">
 					<?php $this->load->view('inventaris/menu_kiri'); ?>
@@ -40,20 +40,38 @@
 											<input maxlength="50" value="<?= $main->register; ?>"  class="form-control input-sm required" name="register" id="register" type="text" disabled/>
 										</div>
 									</div>
+
+
 									<div class="form-group">
-										<label class="col-sm-3 control-label" style="text-align:left;" for="mutasi" require>Jenis Mutasi </label>
+										<label class="col-sm-3 control-label" style="text-align:left;" for="mutasi">Status Peralatan</label>
 										<div class="col-sm-4">
-											<select name="mutasi" id="mutasi" class="form-control input-sm required">
-												<option value="<?= $main->jenis_mutasi; ?>">   <?= $main->jenis_mutasi;?></option>
-												<option value="Rusak">Status Rusak</option>
-												<option value="Diperbaiki">Status Diperbaiki</option>
-												<optgroup label="Barang Masih Baik">
-													<option value="Masih Baik Disumbangkan">Sumbangakan</option>
-													<option value="Masih Baik Dijual">Jual</option>
+											<select name="status_mutasi" id="status" class="form-control input-sm required">
+												<option value="Baik">Baik</option>
+												<option value="Rusak">Rusak</option>
+												<option value="Diperbaiki">Diperbaiki</option>
+												<option value="Hapus">Dihapus</option>
+											</select>
+										</div>
+									</div>
+
+									<div class="form-group">
+										<label class="col-sm-3 control-label" style="text-align:left;" for="mutasi">Jenis Mutasi</label>
+										<div class="col-sm-4">
+											<select name="mutasi" id="mutasi" class="form-control input-sm ">
+												<option value="<?= $main->jenis_mutasi; ?>">   <?= $main->jenis_mutasi; ?></option>
+												<optgroup label="Penghapusan">
+													<option value="Baik">Status Baik</option>
+													<option value="Rusak">Status Rusak</option>
+													<option value="Diperbaiki">Status Diperbaiki</option>
 												</optgroup>
-												<optgroup label="Barang Sudah Rusak">
-													<option value="Barang Rusak Disumbangkan">Sumbangakan</option>
-													<option value="Barang Rusak Dijual">Jual</option>
+												<optgroup label="Disumbangkan">
+													<option value="Masih Baik Disumbangkan">Masih Baik</option>
+													<option value="Barang Rusak Disumbangkan">Rusak</option>
+												</optgroup>
+												<optgroup label="Jual">
+													<option value="Masih Baik Dijual">Masih Baik</option>
+													<option value="Barang Rusak Dijual">Rusak</option>
+												</optgroup>
 												</optgroup>
 											</select>
 										</div>
@@ -110,6 +128,7 @@
 	{
 		$(".disumbangkan").hide();
 		$(".harga_jual").hide();
+		$("#mutasi").parent().parent().hide();
 		$("#mutasi").change(function()
 		{
 			if ($("#mutasi").val() == "Masih Baik Disumbangkan" | $("#mutasi").val() == "Barang Rusak Disumbangkan" )
@@ -127,6 +146,18 @@
 				$(".harga_jual").hide();
 			}
 		});
+
+		$("#status").change(function() {
+			var status = $(this).val();
+ 			if (status == "Hapus") {
+				$("#mutasi").parent().parent().show();
+				$("#mutasi").addClass('required');
+			}else{
+				$("#mutasi").parent().parent().hide();
+				$("#mutasi").removeClass('required');
+			}
+		});
+
 	});
 </script>
 

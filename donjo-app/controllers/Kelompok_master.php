@@ -1,16 +1,7 @@
 <?php
 
-defined('BASEPATH') OR exit('No direct script access allowed');
-
 /*
- * File ini:
  *
- * Controller untuk modul Kelompok
- *
- * donjo-app/controllers/Kelompok_master.php
- *
- */
-/*
  * File ini bagian dari:
  *
  * OpenSID
@@ -20,7 +11,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -35,110 +26,123 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
  *
- * @package	OpenSID
- * @author	Tim Pengembang OpenDesa
- * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
- * @link 	https://github.com/OpenSID/OpenSID
+ * @package   OpenSID
+ * @author    Tim Pengembang OpenDesa
+ * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @license   http://www.gnu.org/licenses/gpl.html GPL V3
+ * @link      https://github.com/OpenSID/OpenSID
+ *
  */
 
-class Kelompok_master extends Admin_Controller {
+defined('BASEPATH') || exit('No direct script access allowed');
 
-	private $_set_page;
-	private $_list_session;
+class Kelompok_master extends Admin_Controller
+{
+    private $_set_page;
+    private $_list_session;
+    protected $tipe = 'kelompok';
 
-	public function __construct()
-	{
-		parent::__construct();
-		$this->load->model(['kelompok_master_model']);
-		$this->modul_ini = 2;
-		$this->sub_modul_ini = 24;
-		$this->_set_page = ['20', '50', '100'];
-		$this->_list_session = ['cari', 'filter'];
-	}
+    public function __construct()
+    {
+        parent::__construct();
+        $this->load->model(['kelompok_master_model']);
+        $this->modul_ini     = 2;
+        $this->sub_modul_ini = 24;
+        $this->_set_page     = ['20', '50', '100'];
+        $this->_list_session = ['cari', 'filter'];
+        $this->kelompok_master_model->set_tipe($this->tipe);
+    }
 
-	public function clear()
-	{
-		$this->session->unset_userdata($this->_list_session);
-		$this->session->per_page = $this->_set_page[0];
-		redirect('kelompok_master');
-	}
+    public function clear()
+    {
+        $this->session->unset_userdata($this->_list_session);
+        $this->session->per_page = $this->_set_page[0];
 
-	public function index($p = 1, $o = 0)
-	{
-		$data['p'] = $p;
-		$data['o'] = $o;
+        redirect($this->controller);
+    }
 
-		foreach ($this->_list_session as $list)
-		{
-			$data[$list] = $this->session->$list ?: '';
-		}
+    public function index($p = 1, $o = 0)
+    {
+        $data['p'] = $p;
+        $data['o'] = $o;
 
-		$per_page = $this->input->post('per_page');
-		if (isset($per_page))
-			$this->session->per_page = $per_page;
+        foreach ($this->_list_session as $list) {
+            $data[$list] = $this->session->{$list} ?: '';
+        }
 
-		$data['func'] = 'index';
-		$data['set_page'] = $this->_set_page;
-		$data['paging'] = $this->kelompok_master_model->paging($p, $o);
-		$data['main'] = $this->kelompok_master_model->list_data($o, $data['paging']->offset, $data['paging']->per_page);
-		$data['keyword'] = $this->kelompok_master_model->autocomplete();
+        $per_page = $this->input->post('per_page');
+        if (isset($per_page)) {
+            $this->session->per_page = $per_page;
+        }
 
-		$this->set_minsidebar(1);
-		$this->render('kelompok_master/table', $data);
-	}
+        $data['func']     = 'index';
+        $data['set_page'] = $this->_set_page;
+        $data['paging']   = $this->kelompok_master_model->paging($p);
+        $data['main']     = $this->kelompok_master_model->list_data($o, $data['paging']->offset, $data['paging']->per_page);
+        $data['keyword']  = $this->kelompok_master_model->autocomplete();
+        $data['tipe']     = $this->tipe;
 
-	public function form($id = '')
-	{
-		if ($id)
-		{
-			$data['kelompok_master'] = $this->kelompok_master_model->get_kelompok_master($id);
-			$data['form_action'] = site_url("kelompok_master/update/$id");
-		}
-		else
-		{
-			$data['kelompok_master'] = NULL;
-			$data['form_action'] = site_url("kelompok_master/insert");
-		}
+        $this->render('kelompok_master/table', $data);
+    }
 
-		$this->set_minsidebar(1);
-		$this->render('kelompok_master/form', $data);
-	}
+    public function form($id = 0)
+    {
+        $this->redirect_hak_akses('u');
+        if ($id) {
+            $data['kelompok_master'] = $this->kelompok_master_model->get_kelompok_master($id);
+            $data['form_action']     = site_url("{$this->controller}/update/{$id}");
+        } else {
+            $data['kelompok_master'] = null;
+            $data['form_action']     = site_url("{$this->controller}/insert");
+        }
 
-	public function filter($filter)
-	{
-		$value = $this->input->post($filter);
-		if ($value != "")
-			$this->session->$filter = $value;
-		else $this->session->unset_userdata($filter);
-		redirect('kelompok_master');
-	}
+        $data['tipe'] = $this->tipe;
 
-	public function insert()
-	{
-		$this->kelompok_master_model->insert();
-		redirect('kelompok_master');
-	}
+        $this->render('kelompok_master/form', $data);
+    }
 
-	public function update($id = '')
-	{
-		$this->kelompok_master_model->update($id);
-		redirect('kelompok_master');
-	}
+    public function filter($filter)
+    {
+        $value = $this->input->post($filter);
+        if ($value != '') {
+            $this->session->{$filter} = $value;
+        } else {
+            $this->session->unset_userdata($filter);
+        }
 
-	public function delete($id = '')
-	{
-		$this->redirect_hak_akses('h');
-		$this->kelompok_master_model->delete($id);
-		redirect('kelompok_master');
-	}
+        redirect($this->controller);
+    }
 
-	public function delete_all()
-	{
-		$this->redirect_hak_akses('h');
-		$this->kelompok_master_model->delete_all();
-		redirect('kelompok_master');
-	}
+    public function insert()
+    {
+        $this->redirect_hak_akses('u');
+        $this->kelompok_master_model->insert();
 
+        redirect($this->controller);
+    }
+
+    public function update($id = 0)
+    {
+        $this->redirect_hak_akses('u');
+        $this->kelompok_master_model->update($id);
+
+        redirect($this->controller);
+    }
+
+    public function delete($id = 0)
+    {
+        $this->redirect_hak_akses('h');
+        $this->kelompok_master_model->delete($id);
+
+        redirect($this->controller);
+    }
+
+    public function delete_all()
+    {
+        $this->redirect_hak_akses('h');
+        $this->kelompok_master_model->delete_all();
+
+        redirect($this->controller);
+    }
 }

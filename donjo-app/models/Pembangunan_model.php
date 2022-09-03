@@ -1,17 +1,6 @@
 <?php
 
-defined('BASEPATH') OR exit('No direct script access allowed');
-
-/**
- * File ini:
- *
- * Model Pembangunan
- *
- * donjo-app/models/Pembangunan_model.php
- *
- */
-
-/**
+/*
  *
  * File ini bagian dari:
  *
@@ -22,7 +11,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -37,247 +26,307 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
  *
- * @package	OpenSID
- * @author	Tim Pengembang OpenDesa
- * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
- * @link 	https://github.com/OpenSID/OpenSID
+ * @package   OpenSID
+ * @author    Tim Pengembang OpenDesa
+ * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @license   http://www.gnu.org/licenses/gpl.html GPL V3
+ * @link      https://github.com/OpenSID/OpenSID
+ *
  */
-class Pembangunan_model extends CI_Model
+
+defined('BASEPATH') || exit('No direct script access allowed');
+
+class Pembangunan_model extends MY_Model
 {
-	protected $table = 'pembangunan';
+    public const ENABLE     = 1;
+    public const DISABLE    = 0;
+    public const ORDER_ABLE = [
+        2 => 'p.judul',
+        3 => 'p.sumber_dana',
+        4 => 'p.anggaran',
+        5 => 'max_persentase',
+        6 => 'p.volume',
+        7 => 'p.tahun_anggaran',
+        8 => 'p.pelaksana_kegiatan',
+        9 => 'alamat',
+    ];
 
-	const ENABLE = 1;
-	const DISABLE = 0;
+    protected $tipe  = 'rencana';
+    protected $table = 'pembangunan';
 
-	const ORDER_ABLE = [
-		2  => 'p.judul',
-		3  => 'p.sumber_dana',
-		5  => 'p.volume',
-		6  => 'p.tahun_anggaran',
-		7  => 'p.pelaksana_kegiatan',
-		8  => 'p.lokasi',
-		9  => 'p.keterangan',
-		10 => 'p.created_at',
-		11 => 'p.foto',
-		12 => 'p.anggaran'
-	];
+    public function set_tipe(string $tipe)
+    {
+        $this->tipe = $tipe;
 
-	public function get_data(string $search = '', $tahun = '')
-	{
-		$builder = $this->db->select([
-			'p.*',
-			'(CASE WHEN p.id_lokasi IS NOT NULL THEN CONCAT("RT ", w.rt, " / RW ", w.rw, " - ", w.dusun) ELSE p.lokasi END) AS alamat',
-			'(CASE WHEN MAX(d.persentase) IS NOT NULL THEN MAX(d.persentase) ELSE CONCAT("belum ada progres") END) AS max_persentase',
-		])
-		->from("{$this->table} p")
-		->join('pembangunan_ref_dokumentasi d', 'd.id_pembangunan = p.id', 'left')
-		->join('tweb_wil_clusterdesa w', 'p.id_lokasi = w.id', 'left')
-		->group_by('p.id');
+        return $this;
+    }
 
-		if (empty($search))
-		{
-			$search = $builder;
-		}
-		else
-		{
-			$search = $builder->group_start()
-				->like('p.sumber_dana', $search)
-				->or_like('p.judul', $search)
-				->or_like('p.keterangan', $search)
-				->or_like('p.volume', $search)
-				->or_like('p.tahun_anggaran', $search)
-				->or_like('p.pelaksana_kegiatan', $search)
-				->or_like('p.lokasi', $search)
-				->or_like('p.anggaran', $search)
-				->group_end();
-		}
+    public function get_data(string $search = '', $tahun = 'semua')
+    {
+        $this->lokasi_pembangunan_query();
+        $this->db->select([
+            'p.*',
+            'IF(p.sifat_proyek = "BARU", "&#10004", "-") AS sifat_proyek_baru',
+            'IF(p.sifat_proyek = "LANJUTAN", "&#10004", "-") AS sifat_proyek_lanjutan',
+            '(CASE WHEN MAX(CAST(d.persentase AS UNSIGNED INTEGER)) IS NOT NULL THEN CONCAT(MAX(CAST(d.persentase as UNSIGNED INTEGER)), "%") ELSE CONCAT("belum ada progres") END) AS max_persentase',
+            'IF(p.perubahan_anggaran = 0, p.anggaran, p.perubahan_anggaran) AS jml_anggaran',
+        ])
+            ->from("{$this->table} p")
+            ->join('pembangunan_ref_dokumentasi d', 'd.id_pembangunan = p.id', 'left')
+            ->join('tweb_wil_clusterdesa w', 'p.id_lokasi = w.id', 'left')
+            ->group_by('p.id');
 
-		$condition = $tahun === 'semua'
-			? $search
-			: $search->where('p.tahun_anggaran', $tahun);
+        $this->get_tipe();
 
-		return $condition;
-	}
+        if ($search) {
+            $this->db
+                ->group_start()
+                ->like('p.sumber_dana', $search)
+                ->or_like('p.judul', $search)
+                ->or_like('p.keterangan', $search)
+                ->or_like('p.volume', $search)
+                ->or_like('p.tahun_anggaran', $search)
+                ->or_like('p.pelaksana_kegiatan', $search)
+                ->or_like('p.lokasi', $search)
+                ->or_like('p.anggaran', $search)
+                ->group_end();
+        }
 
-	public function list_lokasi_pembangunan()
-	{
-		$data = $this->db->select([
-			'p.*',
-			'(CASE WHEN p.id_lokasi IS NOT NULL THEN CONCAT("RT ", w.rt, " / RW ", w.rw, " - ", w.dusun) ELSE p.lokasi END) AS alamat',
-		])
-			->from('pembangunan p')
-			->where('p.status = 1')
-			->join('tweb_wil_clusterdesa w', 'p.id_lokasi = w.id', 'left')
-			->get()->result();
+        if ($tahun !== 'semua') {
+            $this->db->where('p.tahun_anggaran', $tahun);
+        }
 
-		return $data;
-	}
+        return $this->db;
+    }
 
-	public function insert()
-	{
-		$post = $this->input->post();
+    public function paging_pembangunan($page_number = 1)
+    {
+        $jml_data = $this->get_data('', 'semua')->count_all_results();
 
-		$data['sumber_dana']        = $post['sumber_dana'];
-		$data['judul']              = $post['judul'];
-		$data['volume']             = $post['volume'];
-		$data['tahun_anggaran']     = $post['tahun_anggaran'];
-		$data['pelaksana_kegiatan'] = $post['pelaksana_kegiatan'];
-		$data['id_lokasi']          = $post['id_lokasi'] ?: null;
-		$data['lokasi']             = $post['lokasi'] ?: null;
-		$data['keterangan']         = $post['keterangan'];
-		$data['created_at']         = date('Y-m-d H:i:s');
-		$data['updated_at']         = date('Y-m-d H:i:s');
-		$data['foto'] 						  = $this->upload_gambar_pembangunan('foto');
-		$data['anggaran']     			= $post['anggaran'];
+        return $this->paginasi($page_number, $jml_data);
+    }
 
-		if (empty($data['foto'])) unset($data['foto']);
+    public function list_lokasi_pembangunan()
+    {
+        $this->lokasi_pembangunan_query();
 
-		unset($data['file_foto']);
-		unset($data['old_foto']);
+        return $this->db
+            ->select('p.*')
+            ->from("{$this->table} p")
+            ->where('p.status = 1')
+            ->join('tweb_wil_clusterdesa w', 'p.id_lokasi = w.id', 'left')
+            ->get()
+            ->result();
+    }
 
-		$outp = $this->db->insert('pembangunan', $data);
+    public function insert()
+    {
+        $post = $this->input->post();
+        $data = $this->validasi($post);
 
-		if ($outp) $_SESSION['success'] = 1;
-		else $_SESSION['success'] = -1;
-	}
+        if (empty($data['foto'])) {
+            unset($data['foto']);
+        }
 
-	public function update($id=0)
-	{
-		$post = $this->input->post();
+        unset($data['file_foto'], $data['old_foto']);
 
-		$data['sumber_dana']        = $post['sumber_dana'];
-		$data['judul']              = $post['judul'];
-		$data['volume']             = $post['volume'];
-		$data['tahun_anggaran']     = $post['tahun_anggaran'];
-		$data['pelaksana_kegiatan'] = $post['pelaksana_kegiatan'];
-		$data['id_lokasi']          = $post['id_lokasi'] ?: null;
-		$data['lokasi']             = $post['lokasi'] ?: null;
-		$data['keterangan']         = $post['keterangan'];
-		$data['created_at']         = date('Y-m-d H:i:s');
-		$data['updated_at']         = date('Y-m-d H:i:s');
-		$data['foto'] 						  = $this->upload_gambar_pembangunan('foto');
-		$data['anggaran']     			= $post['anggaran'];
+        $outp = $this->db->insert($this->table, $data);
 
-		if (empty($data['foto'])) unset($data['foto']);
+        status_sukses($outp);
+    }
 
-		unset($data['file_foto']);
-		unset($data['old_foto']);
+    public function update($id = 0)
+    {
+        $post               = $this->input->post();
+        $data               = $this->validasi($post);
+        $data['updated_at'] = date('Y-m-d H:i:s');
 
-		$this->db->where('id', $id);
-		$outp = $this->db->update('pembangunan', $data);
+        if (empty($data['foto'])) {
+            unset($data['foto']);
+        }
 
-		if ($outp) $_SESSION['success'] = 1;
-		else $_SESSION['success'] = -1;
-	}
+        unset($data['file_foto'], $data['old_foto']);
 
-	private function upload_gambar_pembangunan($jenis)
-	{
-		$this->load->library('upload');
-		$this->uploadConfig = array(
-			'upload_path' => LOKASI_GALERI,
-			'allowed_types' => 'gif|jpg|jpeg|png',
-			'max_size' => max_upload() * 1024,
-		);
-		// Adakah berkas yang disertakan?
-		$adaBerkas = !empty($_FILES[$jenis]['name']);
-		if ($adaBerkas !== TRUE)
-		{
-			return NULL;
-		}
-		// Tes tidak berisi script PHP
-		if (isPHP($_FILES['logo']['tmp_name'], $_FILES[$jenis]['name']))
+        $this->db->where('id', $id);
+        $outp = $this->db->update($this->table, $data);
 
-		{
-			$_SESSION['error_msg'] .= " -> Jenis file ini tidak diperbolehkan ";
-			$_SESSION['success'] = -1;
-			redirect('identitas_desa');
-		}
+        status_sukses($outp);
+    }
 
-		$uploadData = NULL;
-		// Inisialisasi library 'upload'
-		$this->upload->initialize($this->uploadConfig);
-		// Upload sukses
-		if ($this->upload->do_upload($jenis))
-		{
-			$uploadData = $this->upload->data();
-			// Buat nama file unik agar url file susah ditebak dari browser
-			$namaFileUnik = tambahSuffixUniqueKeNamaFile($uploadData['file_name']);
-			// Ganti nama file asli dengan nama unik untuk mencegah akses langsung dari browser
-			$fileRenamed = rename(
-				$this->uploadConfig['upload_path'].$uploadData['file_name'],
-				$this->uploadConfig['upload_path'].$namaFileUnik
-			);
-			// Ganti nama di array upload jika file berhasil di-rename --
-			// jika rename gagal, fallback ke nama asli
-			$uploadData['file_name'] = $fileRenamed ? $namaFileUnik : $uploadData['file_name'];
-		}
-		// Upload gagal
-		else
-		{
-			$_SESSION['success'] = -1;
-			$_SESSION['error_msg'] = $this->upload->display_errors(NULL, NULL);
-		}
-		return (!empty($uploadData)) ? $uploadData['file_name'] : NULL;
-	}
+    private function validasi($post)
+    {
+        return [
+            'sumber_dana'             => $post['sumber_dana'],
+            'judul'                   => $post['judul'],
+            'slug'                    => unique_slug($this->table, $post['judul']),
+            'volume'                  => $post['volume'],
+            'waktu'                   => $post['waktu'],
+            'tahun_anggaran'          => $post['tahun_anggaran'],
+            'pelaksana_kegiatan'      => $post['pelaksana_kegiatan'],
+            'id_lokasi'               => $post['lokasi'] ? null : $post['id_lokasi'],
+            'lokasi'                  => $post['id_lokasi'] ? null : $post['lokasi'],
+            'keterangan'              => $post['keterangan'],
+            'foto'                    => $this->upload_gambar_pembangunan('foto'),
+            'anggaran'                => $post['anggaran'],
+            'sumber_biaya_pemerintah' => $post['sumber_biaya_pemerintah'],
+            'sumber_biaya_provinsi'   => $post['sumber_biaya_provinsi'],
+            'sumber_biaya_kab_kota'   => $post['sumber_biaya_kab_kota'],
+            'sumber_biaya_swadaya'    => $post['sumber_biaya_swadaya'],
+            'sumber_biaya_jumlah'     => $post['sumber_biaya_pemerintah'] + $post['sumber_biaya_provinsi'] + $post['sumber_biaya_kab_kota'] + $post['sumber_biaya_swadaya'],
+            'manfaat'                 => $post['manfaat'],
+            'sifat_proyek'            => $post['sifat_proyek'],
+        ];
+    }
 
-	public function update_lokasi_maps($id, array $request)
-	{
-		return $this->db->where('id', $id)->update($this->table, [
-			'lat'        => $request['lat'],
-			'lng'        => $request['lng'],
-			'updated_at' => date('Y-m-d H:i:s'),
-		]);
-	}
+    private function upload_gambar_pembangunan($jenis)
+    {
+        $this->load->library('upload');
+        $this->uploadConfig = [
+            'upload_path'   => LOKASI_GALERI,
+            'allowed_types' => 'gif|jpg|jpeg|png',
+            'max_size'      => max_upload() * 1024,
+        ];
+        // Adakah berkas yang disertakan?
+        $adaBerkas = ! empty($_FILES[$jenis]['name']);
+        if ($adaBerkas !== true) {
+            // Jika hapus (ceklis)
+            if (isset($_POST['hapus_foto'])) {
+                unlink(LOKASI_GALERI . $this->input->post('old_foto'));
 
-	public function delete($id)
-	{
-		return $this->db->where('id', $id)->delete($this->table);
-	}
+                return null;
+            }
 
-	public function find($id)
-	{
-		return $this->db->select([
-			'p.*',
-			'(CASE WHEN p.id_lokasi IS NOT NULL THEN CONCAT("RT ", w.rt, " / RW ", w.rw, " - ", w.dusun) ELSE p.lokasi END) AS alamat',
-		])
-		->from("{$this->table} p")
-		->join('tweb_wil_clusterdesa w', 'p.id_lokasi = w.id', 'left')
-		->where('p.id', $id)
-		->get()
-		->row();
-	}
+            return $this->input->post('old_foto');
+        }
+        // Tes tidak berisi script PHP
+        if (isPHP($_FILES['logo']['tmp_name'], $_FILES[$jenis]['name'])) {
+            $this->session->success   = -1;
+            $this->session->error_msg = ' -> Jenis file ini tidak diperbolehkan ';
+            redirect('identitas_desa');
+        }
 
-	public function list_filter_tahun()
-	{
-		return $this->db->select('tahun_anggaran')
-			->distinct()
-			->order_by('tahun_anggaran', 'desc')
-			->get($this->table)
-			->result();
-	}
+        $uploadData = null;
+        // Inisialisasi library 'upload'
+        $this->upload->initialize($this->uploadConfig);
+        // Upload sukses
+        if ($this->upload->do_upload($jenis)) {
+            $uploadData = $this->upload->data();
+            // Buat nama file unik agar url file susah ditebak dari browser
+            $namaFileUnik = tambahSuffixUniqueKeNamaFile($uploadData['file_name']);
+            // Ganti nama file asli dengan nama unik untuk mencegah akses langsung dari browser
+            $fileRenamed = rename(
+                $this->uploadConfig['upload_path'] . $uploadData['file_name'],
+                $this->uploadConfig['upload_path'] . $namaFileUnik
+            );
+            // Ganti nama di array upload jika file berhasil di-rename --
+            // jika rename gagal, fallback ke nama asli
+            $uploadData['file_name'] = $fileRenamed ? $namaFileUnik : $uploadData['file_name'];
+        }
+        // Upload gagal
+        else {
+            $this->session->success   = -1;
+            $this->session->error_msg = $this->upload->display_errors(null, null);
+        }
 
-	public function list_dusun_rt_rw()
-	{
-		return $this->db->select(['id', 'rt', 'rw', 'dusun'])
-			->where('rt >', 0)
-			->order_by('dusun')
-			->get('tweb_wil_clusterdesa')
-			->result_array();
-	}
+        return (! empty($uploadData)) ? $uploadData['file_name'] : null;
+    }
 
-	public function unlock($id)
-	{
-		return $this->db->set('status', static::ENABLE)
-			->where('id', $id)
-			->update($this->table);
-	}
+    public function update_lokasi_maps($id, array $request)
+    {
+        return $this->db->where('id', $id)->update($this->table, [
+            'lat'        => $request['lat'],
+            'lng'        => $request['lng'],
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
 
-	public function lock($id)
-	{
-		return $this->db->set('status', static::DISABLE)
-			->where('id', $id)
-			->update($this->table);
-	}
+    public function delete($id)
+    {
+        return $this->db->where('id', $id)->delete($this->table);
+    }
+
+    public function find($id)
+    {
+        $this->lokasi_pembangunan_query();
+
+        return $this->db->select('p.*')
+            ->from("{$this->table} p")
+            ->join('tweb_wil_clusterdesa w', 'p.id_lokasi = w.id', 'left')
+            ->where('p.id', $id)
+            ->get()
+            ->row();
+    }
+
+    public function slug($slug = null)
+    {
+        $this->lokasi_pembangunan_query();
+
+        return $this->db->select('p.*')
+            ->from("{$this->table} p")
+            ->join('tweb_wil_clusterdesa w', 'p.id_lokasi = w.id', 'left')
+            ->where('p.slug', $slug)
+            ->get()
+            ->row();
+    }
+
+    public function list_filter_tahun()
+    {
+        $this->get_tipe();
+
+        return $this->db
+            ->select('p.tahun_anggaran')
+            ->distinct()
+            ->from("{$this->table} p")
+            ->join('pembangunan_ref_dokumentasi d', 'd.id_pembangunan = p.id', 'left')
+            ->order_by('p.tahun_anggaran', 'desc')
+            ->get()
+            ->result();
+    }
+
+    public function unlock($id)
+    {
+        return $this->db->set('status', static::ENABLE)
+            ->where('id', $id)
+            ->update($this->table);
+    }
+
+    public function lock($id)
+    {
+        return $this->db->set('status', static::DISABLE)
+            ->where('id', $id)
+            ->update($this->table);
+    }
+
+    public function get_tipe()
+    {
+        if (empty($this->tipe)) {
+            return;
+        } // Untuk semua pembangunan
+
+        if ($this->tipe == 'kegiatan') {
+            $this->db->where('d.persentase !=', null);
+            $this->db->where('d.persentase !=', '100%');
+        }
+
+        if ($this->tipe == 'rencana') {
+            $this->db->where('d.persentase is NULL', null, false);
+        }
+
+        if ($this->tipe == 'hasil') {
+            $this->db->where('d.persentase !=', null);
+            $this->db->where('d.persentase =', '100%');
+        }
+    }
+
+    protected function lokasi_pembangunan_query()
+    {
+        $this->db->select(
+            "(CASE WHEN p.id_lokasi = w.id THEN CONCAT(
+				(CASE WHEN w.rt != '0' THEN CONCAT('RT ', w.rt, ' / ') ELSE '' END),
+				(CASE WHEN w.rw != '0' THEN CONCAT('RW ', w.rw, ' - ') ELSE '' END),
+				w.dusun
+			) ELSE CASE WHEN p.lokasi IS NOT NULL THEN p.lokasi ELSE '=== Lokasi Tidak Ditemukan ===' END END) AS alamat"
+        );
+    }
 }

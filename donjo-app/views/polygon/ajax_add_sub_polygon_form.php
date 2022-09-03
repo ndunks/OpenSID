@@ -12,7 +12,7 @@
 					<div class="box-body">
 						<div class="form-group">
 							<label class="control-label">Nama Kategori Area</label>
-							<input name="nama" class="form-control input-sm nomor_sk required" maxlength="100" type="text" value="<?=$polygon['nama']?>"></input>
+							<input name="nama" class="form-control input-sm nomor_sk required" maxlength="100" type="text" value="<?= $polygon['nama']?>"></input>
 						</div>
 						<div class="form-group">
 							<label class="control-label">Warna</label>
@@ -20,7 +20,7 @@
 								<div class="input-group-addon input-sm">
 									<i></i>
 								</div>
-								<input type="text" id="color" name="color" class="form-control input-sm" placeholder="#FFFFFF" value="<?= $polygon['color']?>">
+								<input type="text" id="color" name="color" class="form-control input-sm color" placeholder="#FFFFFF" value="<?= $polygon['color']?>">
 							</div>
 						</div>
 					</div>

@@ -3,7 +3,7 @@
 	<head>
 		<title>Data Keluarga</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<?php if (is_file(LOKASI_LOGO_DESA . "favicon.ico")): ?>
+		<?php if (is_file(LOKASI_LOGO_DESA . 'favicon.ico')): ?>
 			<link rel="shortcut icon" href="<?= base_url()?><?= LOKASI_LOGO_DESA?>favicon.ico" />
 		<?php else: ?>
 			<link rel="shortcut icon" href="<?= base_url()?>favicon.ico" />
@@ -53,7 +53,7 @@
 						<?php foreach ($main as $data): ?>
 							<tr>
 								<td><?= $data['no']?></td>
-								<td><?= $privasi_kk ? sensor_nik_kk($data['no_kk']) : $data['no_kk']?></td>
+								<td><?= $privasi_kk ? sensor_nik_kk(get_nokk($data['no_kk'])) : get_nokk($data['no_kk'])?></td>
 								<td><?= strtoupper($data['kepala_kk'])?></td>
 								<td><?= $privasi_kk ? sensor_nik_kk($data['nik']) : $data['nik']?></td>
 								<td><?= $data['jumlah_anggota']?></td>
@@ -70,7 +70,7 @@
 				</table>
 			</div>
 			<label>Tanggal cetak : &nbsp; </label>
-			<?= tgl_indo(date("Y m d"))?>
+			<?= tgl_indo(date('Y m d'))?>
 		</div>
 	</body>
 </html>

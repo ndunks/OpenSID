@@ -43,7 +43,7 @@
 									<option value="-1">-- Tidak ada atasan (keluarkan dari bagan) --</option>
 									<?php foreach ($atasan as $data): ?>
 										<option value="<?= $data['id']?>" <?php selected($pamong['atasan'], $data['id']); ?>><?= $data['nama']?> (<?= $data['jabatan']?>)</option>
-									<?php endforeach;?>
+									<?php endforeach; ?>
 								</select>
 							</div>
 						</div>
@@ -57,7 +57,7 @@
 							<label class="control-label col-sm-3">Warna</label>
 							<div class="col-sm-9">
 								<div class="input-group my-colorpicker2">
-									<input type="text" name="bagan_warna" class="form-control input-sm" placeholder="#FFFFFF" value="">
+									<input type="text" name="bagan_warna" class="form-control input-sm warna" placeholder="#FFFFFF" value="">
 									<div class="input-group-addon input-sm">
 										<i></i>
 									</div>

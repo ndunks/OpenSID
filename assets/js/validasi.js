@@ -134,16 +134,15 @@ $(document).ready(function() {
 	});
 
 	jQuery.validator.addMethod("nik", function(value, element) {
-		nik_valid = /^\d*$/.test(value) && (value == 0 || value.length == 16);
+		nik_valid = /^\d*$/.test(value) && (value.length == 16) && (value.indexOf('0') != 0);
 		return this.optional(element) || nik_valid;
-	}, "Harus 0 atau bilangan 16 digit");
+	}, "NIK harus bilangan 16 digit dan tidak boleh diawali 0");
 
-	$('.nik').each(function() {
-		$(this).rules("add",
-			{
-				nik: true,
-			});
-	});
+	// TODO : Jika validasi no_kk sudah siap seperti nik sementara, silahkan gunakan validasi nik dengan pesan yg dinamis
+	jQuery.validator.addMethod("no_kk", function(value, element) {
+		no_kk_valid = /^\d*$/.test(value) && (value.length == 16) && (value.indexOf('0') != 0);
+		return this.optional(element) || no_kk_valid;
+	}, "Nomor KK harus bilangan 16 digit dan tidak boleh diawali 0");
 
 	jQuery.validator.addMethod("angka", function(value, element) {
 		angka_valid = /^\d*$/.test(value);
@@ -160,15 +159,30 @@ $(document).ready(function() {
 		return this.optional(element) || valid;
 	}, "Hanya boleh berisi karakter alpha, spasi, titik, koma, tanda petik dan strip");
 
+	jQuery.validator.addMethod("nama_suku", function(value, element) {
+		valid = /^[a-zA-Z ]+$/.test(value);
+		return this.optional(element) || valid;
+	}, "Hanya boleh berisi karakter alpha dan spasi");
+
 	jQuery.validator.addMethod("nama_terbatas", function(value, element) {
 		valid = /^[a-zA-Z0-9 \-]+$/i.test(value);
 		return this.optional(element) || valid;
 	}, "Hanya boleh berisi karakter alfanumerik, spasi dan strip");
 
+	jQuery.validator.addMethod("nama_produk", function(value, element) {
+		valid = /^[a-zA-Z0-9()&_:=°% \-]+$/i.test(value);
+		return this.optional(element) || valid;
+	}, `Hanya boleh berisi karakter alfanumerik, spasi, strip, (, ), &, :, =, °, %`);
+
 	jQuery.validator.addMethod("nomor_sk", function(value, element) {
 		valid = /^[a-zA-Z0-9 \.\-\/]+$/i.test(value);
 		return this.optional(element) || valid;
 	}, "Hanya boleh berisi karakter alfanumerik, spasi, titik, garis miring dan strip");
+
+	jQuery.validator.addMethod("alfanumerik_titik", function(value, element) {
+		valid = /^[a-zA-Z0-9\.]+$/i.test(value);
+		return this.optional(element) || valid;
+	}, "Hanya boleh berisi karakter alfanumerik dan titik");
 
 	jQuery.validator.addMethod("bilangan_titik", function(value, element) {
 		valid = /^[0-9\.]+$/.test(value);
@@ -230,6 +244,11 @@ $(document).ready(function() {
 		return this.optional(element) || valid;
 	}, "Username hanya boleh berisi karakter alpha, numerik, titik, dan garis bawah dan terdiri dari 4 hingga 30 karakter");
 
+	jQuery.validator.addMethod("telegram", function(value, element) {
+		valid = /^@[a-zA-Z0-9\_]{5,100}$/.test(value);
+		return this.optional(element) || valid;
+	}, "Username Telegram diawali @ dan berisi minimal 5 karakter alpha, numerik dan garis bawah");
+
 	jQuery.validator.addMethod("pin_mandiri", function(value, element) {
 		angka_valid = /^(?=.*\d).{6,6}$/.test(value);
 		return this.optional(element) || angka_valid;
@@ -239,6 +258,11 @@ $(document).ready(function() {
 		valid = /^(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))$/.test(value);
 		return this.optional(element) || valid;
 	}, "Isi IP address yang valid");
+
+	jQuery.validator.addMethod("mac_address", function(value, element) {
+		valid = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(value);
+		return this.optional(element) || valid;
+	}, "Isi Mac address yang valid");
 
 	// Untuk tanggal lapor dan tanggal peristiwa
 	jQuery.validator.addMethod("tgl_lebih_besar", function(value, element, params)  {
@@ -251,4 +275,8 @@ $(document).ready(function() {
 		return false;
 	}, "Tanggal harus sama atau lebih besar dari tanggal minimal.");
 
+	jQuery.validator.addMethod("warna", function(value, element) {
+		valid = /^#[a-zA-Z0-9#,()]+$/i.test(value) || /^rgba[a-zA-Z0-9#,()]+$/i.test(value);
+		return this.optional(element) || valid;
+	}, `Hanya boleh berisi karakter alfanumerik, tagar, koma, buka dan tutup kurung`);
 })

@@ -1,15 +1,9 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') || exit('No direct script access allowed'); ?>
 <?php
-	// Fallback
-	$base_url = "/";
-	if(class_exists('CI_Controller')){
-		$CI =& get_instance();
-		if( ! isset($CI))
-		{
-			$CI = new CI_Controller();
-		}
-		$base_url = $CI->config->base_url();
-	}
+    $CI = &get_instance();
+    if (! isset($CI)) {
+        $CI = new CI_Controller();
+    }
 ?>
 
 <!DOCTYPE html>
@@ -30,9 +24,9 @@
 			<?php error_log(strip_tags($message)); ?>
 			<p>
 				<?= $message; ?>
-				<?php if( function_exists('AmbilVersi') ): ?>
-				Versi OpenSID <?= AmbilVersi()?>. PHP versi <?= preg_split('/-/', phpversion())[0]?>.
-				<?php endif ?>
+
+				Versi OpenSID <?= AmbilVersi()?>. PHP versi <?= preg_split('/-/', PHP_VERSION)[0]?>.
+
 				<?php if ($status_code >= 500): ?>
 					<br><br>
 					Harap laporkan masalah ini, agar kami dapat mencarikan solusinya.

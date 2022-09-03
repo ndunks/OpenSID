@@ -56,19 +56,19 @@
 																	<td nowrap>Tanah Kas Desa</td>
 																	<td>Informasi mengenai segala yang menyangkut dengan tanah (dalam hal ini tanah yang digunakan dalam instansi tersebut).</td>
 																	<td>
-																		<?=$inventaris_tanah_pribadi->total?>
+																		<?= $inventaris_tanah_pribadi->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_tanah_pemerintah->total?>
+																		<?= $inventaris_tanah_pemerintah->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_tanah_provinsi->total?>
+																		<?= $inventaris_tanah_provinsi->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_tanah_kabupaten->total?>
+																		<?= $inventaris_tanah_kabupaten->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_tanah_sumbangan->total?>
+																		<?= $inventaris_tanah_sumbangan->total?>
 																	</td>
 																	<td>
 																		<div class="btn-group" role="group" aria-label="...">
@@ -81,19 +81,19 @@
 																	<td nowrap>Peralatan dan Mesin</td>
 																	<td>Informasi mengenai peralatan dan mesin</td>
 																	<td>
-																		<?=$inventaris_peralatan_pribadi->total?>
+																		<?= $inventaris_peralatan_pribadi->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_peralatan_pemerintah->total?>
+																		<?= $inventaris_peralatan_pemerintah->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_peralatan_provinsi->total?>
+																		<?= $inventaris_peralatan_provinsi->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_peralatan_kabupaten->total?>
+																		<?= $inventaris_peralatan_kabupaten->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_peralatan_sumbangan->total?>
+																		<?= $inventaris_peralatan_sumbangan->total?>
 																	</td>
 																	<td>
 																		<div class="btn-group" role="group" aria-label="...">
@@ -106,19 +106,19 @@
 																	<td nowrap>Gedung dan Bangunan</td>
 																	<td>Informasi mengenai gedung dan bangunan yang dimiliki.</td>
 																	<td>
-																		<?=$inventaris_gedung_pribadi->total?>
+																		<?= $inventaris_gedung_pribadi->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_gedung_pemerintah->total?>
+																		<?= $inventaris_gedung_pemerintah->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_gedung_provinsi->total?>
+																		<?= $inventaris_gedung_provinsi->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_gedung_kabupaten->total?>
+																		<?= $inventaris_gedung_kabupaten->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_gedung_sumbangan->total?>
+																		<?= $inventaris_gedung_sumbangan->total?>
 																	</td>
 																	<td>
 																		<div class="btn-group" role="group" aria-label="...">
@@ -131,23 +131,23 @@
 																	<td nowrap> Jalan Irigasi dan Jaringan</td>
 																	<td>Informasi mengenai jaringan, seperti listrik atau Internet.</td>
 																	<td>
-																		<?=$inventaris_jalan_pribadi->total?>
+																		<?= $inventaris_jalan_pribadi->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_jalan_pemerintah->total?>
+																		<?= $inventaris_jalan_pemerintah->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_jalan_provinsi->total?>
+																		<?= $inventaris_jalan_provinsi->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_jalan_kabupaten->total?>
+																		<?= $inventaris_jalan_kabupaten->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_jalan_sumbangan->total?>
+																		<?= $inventaris_jalan_sumbangan->total?>
 																	</td>
 																	<td>
 																		<div class="btn-group" role="group" aria-label="...">
-																			<a href="<?= site_url('inventaris_jalan/'.$data->id); ?>" title="Lihat Data" type="button" class="btn btn-default btn-sm"><i class="fa fa-eye"></i></a>
+																			<a href="<?= site_url('inventaris_jalan/' . $data->id); ?>" title="Lihat Data" type="button" class="btn btn-default btn-sm"><i class="fa fa-eye"></i></a>
 																		</div>
 																	</td>
 																</tr>
@@ -156,19 +156,19 @@
 																	<td nowrap> Asset Tetap Lainnya</td>
 																	<td>Informasi mengenai aset tetap seperti barang habis pakai contohnya buku-buku.</td>
 																	<td>
-																		<?=$inventaris_asset_pribadi->total?>
+																		<?= $inventaris_asset_pribadi->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_asset_pemerintah->total?>
+																		<?= $inventaris_asset_pemerintah->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_asset_provinsi->total?>
+																		<?= $inventaris_asset_provinsi->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_asset_kabupaten->total?>
+																		<?= $inventaris_asset_kabupaten->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_asset_sumbangan->total?>
+																		<?= $inventaris_asset_sumbangan->total?>
 																	</td>
 																	<td>
 																		<div class="btn-group" role="group" aria-label="...">
@@ -178,22 +178,22 @@
 																</tr>
 																<tr>
 																	<td></td>
-																	<td nowrap>Kontruksi Dalam Pengerjaan</td>
+																	<td nowrap>Konstruksi Dalam Pengerjaan</td>
 																	<td>Informasi mengenai bangunan yang masih dalam pengerjaan.</td>
 																	<td>
-																		<?=$inventaris_kontruksi_pribadi->total?>
+																		<?= $inventaris_kontruksi_pribadi->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_kontruksi_pemerintah->total?>
+																		<?= $inventaris_kontruksi_pemerintah->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_kontruksi_provinsi->total?>
+																		<?= $inventaris_kontruksi_provinsi->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_kontruksi_kabupaten->total?>
+																		<?= $inventaris_kontruksi_kabupaten->total?>
 																	</td>
 																	<td>
-																		<?=$inventaris_kontruksi_sumbangan->total?>
+																		<?= $inventaris_kontruksi_sumbangan->total?>
 																	</td>
 																	<td>
 																		<div class="btn-group" role="group" aria-label="...">
@@ -221,91 +221,8 @@
 									</div>
 								</div>
 							</div>
-							<div id="unduhBox" class="modal fade" role="dialog" style="padding-top:30px;">
-								<div class="modal-dialog">
-									<div class="modal-content">
-										<div class="modal-header">
-											<button type="button" class="close" data-dismiss="modal">&times;</button>
-											<h4 class="modal-title">Unduh Inventaris</h4>
-										</div>
-										<form target="_blank" class="form-horizontal" method="get" >
-											<div class="modal-body">
-												<div class="form-group">
-													<label class="col-sm-2 control-label required" style="text-align:left;" for="nama_barang">Tahun</label>
-													<div class="col-sm-9">
-														<select name="tahun" id="tahun" class="form-control select2 input-sm" style="width:100%;">
-															<option value="1">Semua Tahun</option>
-															<?php for ($i=date("Y"); $i>=date("Y")-30; $i--): ?>
-																<option value="<?= $i ?>"><?= $i ?></option>
-															<?php endfor; ?>
-														</select>
-													</div>
-												</div>
-												<div class="form-group">
-													<label class="col-sm-2 control-label required" style="text-align:left;" for="penandatangan">Penandatangan</label>
-													<div class="col-sm-9">
-														<select name="penandatangan" id="penandatangan" class="form-control input-sm">
-															<?php foreach ($pamong AS $data): ?>
-																<option value="<?= $data['pamong_id']?>" data-jabatan="<?= trim($data['jabatan'])?>"
-																	<?= (strpos(strtolower($data['jabatan']),'Kepala Desa') !== false) ? 'selected' : '' ?>>
-																	<?= $data['pamong_nama']?>(<?= $data['jabatan']?>)
-																</option>
-															<?php endforeach; ?>
-														</select>
-													</div>
-												</div>
-											</div>
-											<div class="modal-footer">
-												<button type="reset" class="btn btn-social btn-flat btn-danger btn-sm" data-dismiss="modal"><i class='fa fa-sign-out'></i> Tutup</button>
-												<button type="submit" class="btn btn-social btn-flat btn-info btn-sm" id="form_download" name="form_download" data-dismiss="modal"><i class='fa fa-check'></i> Unduh</button>
-											</div>
-
-										</form>
-									</div>
-								</div>
-							</div>
-							<div id="cetakBox" class="modal fade" role="dialog" style="padding-top:30px;">
-								<div class="modal-dialog">
-									<div class="modal-content">
-										<div class="modal-header">
-											<button type="button" class="close" data-dismiss="modal">&times;</button>
-											<h4 class="modal-title">Cetak Inventaris</h4>
-										</div>
-										<form target="_blank" class="form-horizontal" method="get">
-											<div class="modal-body">
-												<div class="form-group">
-													<label class="col-sm-2 control-label required" style="text-align:left;" for="tahun_pdf">Tahun</label>
-													<div class="col-sm-9">
-														<select name="tahun_pdf" id="tahun_pdf" class="form-control select2 input-sm" style="width:100%;">
-															<option value="1">Semua Tahun</option>
-															<?php for ($i = date("Y"); $i >= date("Y")-30; $i--): ?>
-																<option value="<?= $i ?>"><?= $i ?></option>
-															<?php endfor; ?>
-														</select>
-													</div>
-												</div>
-												<div class="form-group">
-													<label class="col-sm-2 control-label required" style="text-align:left;" for="penandatangan_pdf">Penandatangan</label>
-													<div class="col-sm-9">
-														<select name="penandatangan_pdf" id="penandatangan_pdf" class="form-control input-sm">
-															<?php foreach ($pamong AS $data): ?>
-																<option value="<?= $data['pamong_id']?>" data-jabatan="<?= trim($data['jabatan'])?>"
-																	<?= (strpos(strtolower($data['jabatan']),'Kepala Desa') !== false) ? 'selected' : '' ?>>
-																	<?= $data['pamong_nama']?>(<?= $data['jabatan']?>)
-																</option>
-															<?php endforeach; ?>
-														</select>
-													</div>
-												</div>
-											</div>
-											<div class="modal-footer">
-												<button type="reset" class="btn btn-social btn-flat btn-danger btn-sm" data-dismiss="modal"><i class='fa fa-sign-out'></i> Tutup</button>
-												<button type="submit" class="btn btn-social btn-flat btn-info btn-sm" id="form_cetak" name="form_cetak"  data-dismiss="modal"><i class='fa fa-check'></i> Cetak</button>
-											</div>
-										</form>
-									</div>
-								</div>
-							</div>
+							<?php $this->load->view('inventaris/inventaris_global_dialog_unduh') ?>
+							<?php $this->load->view('inventaris/inventaris_global_dialog_cetak') ?>
 						</div>
 					</div>
 				</div>
@@ -405,14 +322,14 @@
 
 	$("#form_cetak").click(function( event )
 	{
-		var link = '<?= site_url("laporan_inventaris/cetak"); ?>'+ '/' + $('#tahun_pdf').val() + '/' + $('#penandatangan_pdf').val();
+		var link = '<?= site_url('laporan_inventaris/cetak'); ?>'+ '/' + $('#tahun_pdf').val() + '/' + $('#penandatangan_pdf').val();
 		window.open(link, '_blank');
 		// alert('fell');
   });
 
 	$("#form_download").click(function( event )
 	{
-		var link = '<?= site_url("laporan_inventaris/download"); ?>'+ '/' + $('#tahun').val() + '/' + $('#penandatangan').val();
+		var link = '<?= site_url('laporan_inventaris/download'); ?>'+ '/' + $('#tahun').val() + '/' + $('#penandatangan').val();
 		window.open(link, '_blank');
 		// alert('fell');
   });

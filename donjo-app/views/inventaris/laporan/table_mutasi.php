@@ -30,7 +30,7 @@
 											<div class="row">
 												<div class="col-sm-12">
 													<div class="table-responsive">
-														<table id="tabel4-laporan" class="table table-bordered table-striped dataTable table-hover">
+														<table id="tabel-laporan" class="table table-bordered table-striped dataTable table-hover">
 															<thead class="bg-gray">
 																<tr>
 																	<th class="text-center" rowspan="3">No</th>
@@ -147,7 +147,7 @@
 																	</td>
 																	<td>
 																		<div class="btn-group" role="group" aria-label="...">
-																			<a href="<?= site_url('inventaris_jalan/'.$data->id.'/mutasi'); ?>" title="Lihat Data" type="button" class="btn btn-default btn-sm"><i class="fa fa-eye"></i></a>
+																			<a href="<?= site_url('inventaris_jalan/' . $data->id . '/mutasi'); ?>" title="Lihat Data" type="button" class="btn btn-default btn-sm"><i class="fa fa-eye"></i></a>
 																		</div>
 																	</td>
 																</tr>
@@ -178,7 +178,7 @@
 																</tr>
 																<tr>
 																	<td></td>
-																	<td nowrap>Kontruksi Dalam Pengerjaan</td>
+																	<td nowrap>Konstruksi Dalam Pengerjaan</td>
 																	<td>Informasi mengenai bangunan yang masih dalam pengerjaan.</td>
 																	<td>
 																		<?=$inventaris_kontruksi_pribadi->total?>
@@ -228,14 +228,14 @@
 											<button type="button" class="close" data-dismiss="modal">&times;</button>
 											<h4 class="modal-title">Unduh Inventaris</h4>
 										</div>
-										<form target="_blank" class="form-horizontal" method="get" >
+										<formtarget="_blank" class="form-horizontal" method="get" >
 											<div class="modal-body">
 												<div class="form-group">
 													<label class="col-sm-2 control-label required" style="text-align:left;" for="nama_barang">Tahun</label>
 													<div class="col-sm-9">
 														<select name="tahun" id="tahun" class="form-control select2 input-sm" style="width:100%;">
 															<option value="1">Semua Tahun</option>
-															<?php for ($i=date("Y"); $i>=date("Y")-30; $i--): ?>
+															<?php for ($i = date('Y'); $i >= date('Y') - 30; $i--): ?>
 																<option value="<?= $i ?>"><?= $i ?></option>
 															<?php endfor; ?>
 														</select>
@@ -245,9 +245,9 @@
 													<label class="col-sm-2 control-label required" style="text-align:left;" for="penandatangan">Penandatangan</label>
 													<div class="col-sm-9">
 														<select name="penandatangan" id="penandatangan" class="form-control input-sm">
-															<?php foreach ($pamong AS $data): ?>
+															<?php foreach ($pamong as $data): ?>
 																<option value="<?= $data['pamong_id']?>" data-jabatan="<?= trim($data['jabatan'])?>"
-																	<?= (strpos(strtolower($data['jabatan']),'Kepala Desa') !== false) ? 'selected' : '' ?>>
+																	<?= (strpos(strtolower($data['jabatan']), 'Kepala Desa') !== false) ? 'selected' : '' ?>>
 																	<?= $data['pamong_nama']?>(<?= $data['jabatan']?>)
 																</option>
 															<?php endforeach; ?>
@@ -271,14 +271,14 @@
 											<button type="button" class="close" data-dismiss="modal">&times;</button>
 											<h4 class="modal-title">Cetak Inventaris</h4>
 										</div>
-										<form target="_blank" class="form-horizontal" method="get">
+										<formtarget="_blank" class="form-horizontal" method="get">
 											<div class="modal-body">
 												<div class="form-group">
 													<label class="col-sm-2 control-label required" style="text-align:left;" for="tahun_pdf">Tahun</label>
 													<div class="col-sm-9">
 														<select name="tahun_pdf" id="tahun_pdf" class="form-control select2 input-sm" style="width:100%;">
 															<option value="1">Semua Tahun</option>
-															<?php for ($i = date("Y"); $i >= date("Y")-30; $i--): ?>
+															<?php for ($i = date('Y'); $i >= date('Y') - 30; $i--): ?>
 																<option value="<?= $i ?>"><?= $i ?></option>
 															<?php endfor; ?>
 														</select>
@@ -288,9 +288,9 @@
 													<label class="col-sm-2 control-label required" style="text-align:left;" for="penandatangan_pdf">Penandatangan</label>
 													<div class="col-sm-9">
 														<select name="penandatangan_pdf" id="penandatangan_pdf" class="form-control input-sm">
-															<?php foreach ($pamong AS $data): ?>
+															<?php foreach ($pamong as $data): ?>
 																<option value="<?= $data['pamong_id']?>" data-jabatan="<?= trim($data['jabatan'])?>"
-																	<?= (strpos(strtolower($data['jabatan']),'Kepala Desa') !== false) ? 'selected' : '' ?>>
+																	<?= (strpos(strtolower($data['jabatan']), 'Kepala Desa') !== false) ? 'selected' : '' ?>>
 																	<?= $data['pamong_nama']?>(<?= $data['jabatan']?>)
 																</option>
 															<?php endforeach; ?>
@@ -405,14 +405,14 @@
 
 	$("#form_cetak").click(function( event )
 	{
-		var link = '<?= site_url("laporan_inventaris/cetak_mutasi"); ?>'+ '/' + $('#tahun_pdf').val() + '/' + $('#penandatangan_pdf').val();
+		var link = '<?= site_url('laporan_inventaris/cetak_mutasi'); ?>'+ '/' + $('#tahun_pdf').val() + '/' + $('#penandatangan_pdf').val();
 		window.open(link, '_blank');
 		// alert('fell');
   });
 
 	$("#form_download").click(function( event )
 	{
-		var link = '<?= site_url("laporan_inventaris/download_mutasi"); ?>'+ '/' + $('#tahun').val() + '/' + $('#penandatangan').val();
+		var link = '<?= site_url('laporan_inventaris/download_mutasi'); ?>'+ '/' + $('#tahun').val() + '/' + $('#penandatangan').val();
 		window.open(link, '_blank');
 		// alert('fell');
   });

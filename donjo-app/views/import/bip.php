@@ -1,4 +1,4 @@
-										<div class="tab-pane <?php if ($act_tab==3): ?> active<?php endif ?>">
+										<div class="tab-pane <?php if ($act_tab == 3): ?> active<?php endif ?>">
 											<div class="row">
 												<div class="col-md-12">
 													<div class="box-header with-border">
@@ -44,8 +44,10 @@
 																									<button type="button" class="btn btn-info btn-flat"  id="file_browser2"><i class="fa fa-search"></i> Browse</button>
 																								</span>
 																							</div>
-																							<p class="help-block"><input type="checkbox" name="hapus_data" value="hapus"></input>	Hapus data penduduk sebelum Impor</p>
-																						</div>
+																							<?php if ($boleh_hapus_penduduk): ?>
+																								<p class="help-block"><input type="checkbox" name="hapus_data" value="hapus"></input>	Hapus data penduduk sebelum Impor</p>
+																							<?php endif; ?>
+																					</div>
 																						<div class="col-md-2">
 																							<a href="#" class="btn btn-block btn-success btn-sm"  title="Impor Database" onclick="document.getElementById('excell').submit();" data-toggle="modal" data-target="#loading"> <i class="fa fa-spin fa-refresh"></i> Impor</a>
 																						</div>
@@ -109,10 +111,10 @@
 													</div>
 												</div>
 											</div>
-											<?php unset($_SESSION['total_keluarga']);?>
-											<?php unset($_SESSION['total_penduduk']);?>
-											<?php unset($_SESSION['baris']);?>
-											<?php unset($_SESSION['gagal']);?>
+											<?php unset($_SESSION['total_keluarga']); ?>
+											<?php unset($_SESSION['total_penduduk']); ?>
+											<?php unset($_SESSION['baris']); ?>
+											<?php unset($_SESSION['gagal']); ?>
 										</div>
 									</div>
 								</div>

@@ -4,7 +4,7 @@
 		<title>Buku Ekspedisi</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<link href="<?= base_url()?>assets/css/report.css" rel="stylesheet" type="text/css">
-		<?php if (is_file(LOKASI_LOGO_DESA . "favicon.ico")): ?>
+		<?php if (is_file(LOKASI_LOGO_DESA . 'favicon.ico')): ?>
 			<link rel="shortcut icon" href="<?= base_url()?><?= LOKASI_LOGO_DESA?>favicon.ico" />
 		<?php else: ?>
 			<link rel="shortcut icon" href="<?= base_url()?>favicon.ico" />
@@ -18,7 +18,7 @@
 					<label align="left"><?= get_identitas()?></label>
 					<h3>
 						<span>BUKU EKSPEDISI</span>
-						<?php if (!empty($_SESSION['filter'])): ?>
+						<?php if (! empty($_SESSION['filter'])): ?>
 							TAHUN <?= $_SESSION['filter']; ?>
 						<?php endif; ?>
 					</h3>
@@ -40,7 +40,7 @@
 						<tr>
 							<td><?= $indeks + 1?></td>
 							<td><?= tgl_indo($data['tanggal_pengiriman'])?></td>
-							<td><?= tgl_indo($data['tanggal_surat']).' / '.$data['nomor_surat']?></td>
+							<td><?= tgl_indo($data['tanggal_surat']) . ' / ' . $data['nomor_surat']?></td>
 							<td><?= $data['isi_singkat']?></td>
 							<td><?= $data['tujuan']?></td>
 							<td><?= $data['keterangan']?></td>
@@ -48,35 +48,7 @@
 						<?php endforeach; ?>
 					</tbody>
 				</table>
-				<table>
-					<col span="5" style="width: 8%">
-					<col style="width: 28%">
-					<tr>
-						<td colspan="6">&nbsp;</td>
-					</tr>
-					<tr>
-						<td colspan="1">&nbsp;</td>
-						<td colspan="2">Mengetahui</td>
-						<td colspan="2">&nbsp;</td>
-						<td><?= ucwords($this->setting->sebutan_desa)?> <?= $desa['nama_desa']?>, <?= tgl_indo(date("Y m d"))?></td>
-					</tr>
-					<tr>
-						<td colspan="1">&nbsp;</td>
-						<td colspan="2"><?= $pamong_ketahui['jabatan']?> <?= $desa['nama_desa']?></td>
-						<td colspan="2">&nbsp;</td>
-						<td><?= $pamong_ttd['jabatan']?> <?= $desa['nama_desa']?></td>
-					</tr>
-					<tr><td colspan="6">&nbsp;</td>
-					<tr><td colspan="6">&nbsp;</td>
-					<tr><td colspan="6">&nbsp;</td>
-					<tr><td colspan="6">&nbsp;</td>
-					<tr>
-						<td colspan="1">&nbsp;</td>
-						<td colspan="2">( <?= $pamong_ketahui['pamong_nama']?> )</td>
-						<td colspan="2">&nbsp;</td>
-						<td>( <?= $pamong_ttd['pamong_nama']?> )</td>
-					</tr>
-				</table>
+				<?php $this->load->view('global/blok_ttd_pamong.php', ['total_col' => 6, 'spasi_kiri' => 1, 'spasi_tengah' => 2]); ?>
 			</div>
 		</div>
 	</body>

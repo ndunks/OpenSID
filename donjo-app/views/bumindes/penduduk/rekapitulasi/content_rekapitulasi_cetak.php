@@ -1,18 +1,16 @@
 <?php
 
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') || exit('No direct script access allowed');
 
-/**
+/*
  * File ini:
  *
  * View untuk modul Buku Administrasi Desa > Buku Rekapitulasi Jumlah Penduduk
  *
  * donjo-app/views/bumindes/penduduk/rekapitulasi/content_rekapitulasi_cetak.php,
- *
  */
 
-/**
- *
+/*
  * File ini bagian dari:
  *
  * OpenSID
@@ -37,44 +35,48 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
  *
- * @package	OpenSID
- * @author	Tim Pengembang OpenDesa
- * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright	  Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright	  Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
- * @link 	https://github.com/OpenSID/OpenSID
+ *
+ * @see 	https://github.com/OpenSID/OpenSID
  */
 ?>
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-	<head>
-		<title>Data Buku Rekapitulasi Jumlah Penduduk</title>
-		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<link href="<?= base_url()?>assets/css/report.css" rel="stylesheet" type="text/css">
-		<?php if (is_file(LOKASI_LOGO_DESA . "favicon.ico")): ?>
-			<link rel="shortcut icon" href="<?= base_url()?><?= LOKASI_LOGO_DESA?>favicon.ico" />
-		<?php else: ?>
-			<link rel="shortcut icon" href="<?= base_url()?>favicon.ico" />
-		<?php endif; ?>
-	</head>
-	<body>
-		<div id="container">
-			<div id="body">
-				<div class="header" align="center">
-					<h3>B.3 BUKU REKAPITULASI JUMLAH PENDUDUK DESA <?= strtoupper($desa['nama_desa'])?></h3>
-					<h3><?= strtoupper($this->setting->sebutan_kecamatan.' '.$desa['nama_kecamatan'].' '.$this->setting->sebutan_kabupaten.' '.$desa['nama_kabupaten'])?></h3>
-					<h3><?= !empty($tahun) ? 'TAHUN '. $tahun : ''?></h3>
-					<br>
-					<!-- 
-						"""
-						Bulan dan Tahun akan diupdate setelah tahu detail didapat dari mana, apa bulan dan tahun
-						sekarang, atau terdapat pilihan data yang ditampilkan.
-						"""
-					 -->
-					<h3>BUKU REKAPITULASI JUMLAH PENDUDUK BULAN ... TAHUN ...</h3>
-					<br>
-				</div>
+<table>
+	<tbody>
+		<tr>
+			<td>
+				<?php if ($aksi == 'cetak'): ?>
+					<img class="logo" src="<?= gambar_desa($config['logo']); ?>" alt="logo-desa">
+				<?php elseif ($aksi == 'pdf'): ?>
+					<div style="text-align: center;">
+						<img class="logo" src="<?= gambar_desa($config['logo'], false, $file = true); ?>" alt="logo-desa">
+					</div>
+				<?php endif; ?>
+				<h1 class="judul">
+					PEMERINTAH <?= strtoupper($this->setting->sebutan_kabupaten . ' ' . $config['nama_kabupaten'] . ' <br>' . $this->setting->sebutan_kecamatan . ' ' . $config['nama_kecamatan'] . ' <br>' . $this->setting->sebutan_desa . ' ' . $config['nama_desa']); ?>
+				</h1>
+			</td>
+		</tr>
+		<tr>
+			<td><hr class="garis"></td>
+		</tr>
+		<tr>
+			<td class="text-center">
+				<h4>B3. BUKU REKAPITULASI JUMLAH PENDUDUK</h4>
+			</td>
+		</tr>
+		<tr>
+			<td class="text-center">
+				<h4>BUKU REKAPITULASI JUMLAH PENDUDUK BULAN <?= strtoupper(getBulan($bulan)) ?> TAHUN <?= $tahun ?></h4>
+			</td>
+		</tr>
+		<tr>
+			<td>&nbsp;</td>
+		</tr>
+		<tr>
+			<td>
 				<table class="border thick">
 					<thead>
 						<tr class="border thick">
@@ -84,7 +86,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 							<th colspan="8">TAMBAHAN BULAN INI</th>
 							<th colspan="8">PENGURANGAN BULAN INI</th>
 							<th rowspan="2" colspan="7">JML PENDUDUK AKHIR BULAN</th>
-							<th rowspan="4">KET</th>								
+							<th rowspan="4">KET</th>
 						</tr>
 						<tr class="border thick">
 							<th colspan="2">WNA</th>
@@ -114,7 +116,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 							<th colspan="2">WNI</th>
 							<th rowspan="2">JML KK</th>
 							<th rowspan="2">JML ANGGOTA KELUARGA</th>
-							<th rowspan="2">JML JIWA (31+32)</th>
+							<th rowspan="2">JML JIWA (30+31)</th>
 						</tr>
 						<tr class="border thick">
 							<th>L</th>
@@ -175,67 +177,48 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 						</tr>
 					</thead>
 					<tbody>
-						<!-- 
-							""" 
-							Menunggu detil informasi data tiap attributnya sudah atau belum, 
-							jika sudah ada bagaimana proses menuju flow tersebut 
-							""" 
-						-->
-						
-					<?php if(!$main): ?>
-						<?php foreach ($main as $data): ?>
-						<tr>
-							<td><?= $data['no']?></td>
-							<td><?= strtoupper($data['nama'])?></td>
-							<td><?= strtoupper($data['sex']) ?></td>
-							<td><?= (strpos($data['kawin'],'KAWIN') !== false) ? $data['kawin'] : (($data['sex'] == 'LAKI-LAKI') ? 'DUDA':'JANDA') ?></td>
-							<td><?= $data['tempatlahir']?></td>
-							<td><?= tgl_indo_out($data['tanggallahir'])?></td>
-							<td><?= $data['agama']?></td>
-							<td><?= $data['pendidikan']?></td>
-							<td><?= $data['pekerjaan']?></td>
-							<td><?= strtoupper($data['bahasa_nama'])?></td>
-							<td><?= $data['warganegara']?></td>
-							<td><?= strtoupper($data['alamat']." RT ".$data['rt']." / RW ".$data['rw']." ".$this->setting->sebutan_dusun." ".$data['dusun'])?></td>
-							<td><?= $data['ket']?></td>
-						</tr>
-						<?php endforeach; ?>
-					<?php endif; ?>
+						<?php if ($main): ?>
+							<?php foreach ($main as $key => $data): ?>
+								<tr>
+									<td class="padat"><?= ($key + $paging->offset + 1); ?></td>
+									<td><?= strtoupper($data['DUSUN'])?></td>
+									<td><?= show_zero_as($data['WNA_L_AWAL'], '-') ?></td>
+									<td><?= show_zero_as($data['WNA_P_AWAL'], '-') ?></td>
+									<td><?= show_zero_as($data['WNI_L_AWAL'], '-') ?></td>
+									<td><?= show_zero_as($data['WNI_P_AWAL'], '-') ?></td>
+									<td><?= show_zero_as($data['KK_JLH'], '-') ?></td>
+									<td><?= show_zero_as($data['KK_ANG_KEL'], '-') ?></td>
+									<td><?= show_zero_as($data['KK_JLH'] + $data['KK_ANG_KEL'], '-') ?></td>
+									<td><?= show_zero_as($data['WNA_L_TAMBAH_LAHIR'], '-') ?></td>
+									<td><?= show_zero_as($data['WNA_P_TAMBAH_LAHIR'], '-') ?></td>
+									<td><?= show_zero_as($data['WNI_L_TAMBAH_LAHIR'], '-') ?></td>
+									<td><?= show_zero_as($data['WNI_P_TAMBAH_LAHIR'], '-') ?></td>
+									<td><?= show_zero_as($data['WNA_L_TAMBAH_MASUK'], '-') ?></td>
+									<td><?= show_zero_as($data['WNA_P_TAMBAH_MASUK'], '-') ?></td>
+									<td><?= show_zero_as($data['WNI_L_TAMBAH_MASUK'], '-') ?></td>
+									<td><?= show_zero_as($data['WNI_P_TAMBAH_MASUK'], '-') ?></td>
+									<td><?= show_zero_as($data['WNA_L_KURANG_MATI'], '-') ?></td>
+									<td><?= show_zero_as($data['WNA_P_KURANG_MATI'], '-') ?></td>
+									<td><?= show_zero_as($data['WNI_L_KURANG_MATI'], '-') ?></td>
+									<td><?= show_zero_as($data['WNI_P_KURANG_MATI'], '-') ?></td>
+									<td><?= show_zero_as($data['WNA_L_KURANG_KELUAR'], '-') ?></td>
+									<td><?= show_zero_as($data['WNA_P_KURANG_KELUAR'], '-') ?></td>
+									<td><?= show_zero_as($data['WNI_L_KURANG_KELUAR'], '-') ?></td>
+									<td><?= show_zero_as($data['WNI_P_KURANG_KELUAR'], '-') ?></td>
+									<td><?= show_zero_as($data['WNA_L_AKHIR'], '-') ?></td>
+									<td><?= show_zero_as($data['WNA_P_AKHIR'], '-') ?></td>
+									<td><?= show_zero_as($data['WNI_L_AKHIR'], '-') ?></td>
+									<td><?= show_zero_as($data['WNI_P_AKHIR'], '-') ?></td>
+									<td><?= show_zero_as($data['KK_AKHIR_JML'], '-') ?></td>
+									<td><?= show_zero_as($data['KK_AKHIR_ANG_KEL'], '-') ?></td>
+									<td><?= show_zero_as($data['KK_AKHIR_JML'] + $data['KK_AKHIR_ANG_KEL'], '-') ?></td>
+									<td>-</td>
+								</tr>
+							<?php endforeach; ?>
+						<?php endif; ?>
 					</tbody>
 				</table>
-				<br><br>
-				<table id="ttd">
-					<tr><td colspan="10">&nbsp;</td></tr>
-					<tr><td colspan="10">&nbsp;</td></tr>
-					<tr>
-						<!-- Persen untuk tampilan cetak.
-								Colspan untuk tampilan unduh.
-						-->
-						<td colspan="2">&nbsp;</td>
-						<td colspan="3">MENGETAHUI</td>
-						<td colspan="3"><span><?= strtoupper($this->setting->sebutan_desa)?> <?= strtoupper($desa['nama_desa']) ?>, <?= strtoupper(tgl_indo(date("Y m d"))) ?></span></td>
-						<td colspan="2">&nbsp;</td>
-					</tr>
-					<tr>
-						<td colspan="2">&nbsp;</td>
-						<td colspan="3" align="center"><?= strtoupper($pamong_ketahui['jabatan']) ?> <?= strtoupper($desa['nama_desa']) ?></td>
-						<td colspan="3" align="center"><?= strtoupper($pamong_ttd['jabatan']) ?> <?= strtoupper($desa['nama_desa']) ?></td>
-						<td colspan="2">&nbsp;</td>
-					</tr>
-					<tr><td colspan="10">&nbsp;</td></tr>
-					<tr><td colspan="10">&nbsp;</td></tr>
-					<tr><td colspan="10">&nbsp;</td></tr>
-					<tr><td colspan="10">&nbsp;</td></tr>
-					<tr><td colspan="10">&nbsp;</td></tr>
-					<tr><td colspan="10">&nbsp;</td></tr>
-					<tr>
-						<td colspan="2">&nbsp;</td>
-						<td colspan="3">( <?= strtoupper($pamong_ketahui['pamong_nama']) ?> )</td>
-						<td colspan="3" align="center"><span>( <?= strtoupper($pamong_ttd['pamong_nama']) ?> )</span></td>
-						<td colspan="2">&nbsp;</td>
-					</tr>
-				</table>
-			</div>
-		</div>
-	</body>
-</html>
+			</td>
+		</tr>
+	</tbody>
+</table>

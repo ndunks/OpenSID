@@ -1,18 +1,16 @@
 <?php
 
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') || exit('No direct script access allowed');
 
-/**
+/*
  * File ini:
  *
  * View untuk modul Buku Administrasi Desa > Buku Rekapitulasi Jumlah Penduduk
  *
  * donjo-app/views/bumindes/penduduk/rekapitulasi/content_rekapitulasi.php,
- *
  */
 
-/**
- *
+/*
  * File ini bagian dari:
  *
  * OpenSID
@@ -37,12 +35,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
  *
- * @package	OpenSID
- * @author	Tim Pengembang OpenDesa
- * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright	  Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright	  Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
- * @link 	https://github.com/OpenSID/OpenSID
+ *
+ * @see 	https://github.com/OpenSID/OpenSID
  */
 ?>
 
@@ -52,7 +49,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			source: function( request, response ) {
 				$.ajax( {
 					type: "POST",
-					url: '<?= site_url("bumindes_penduduk_rekapitulasi/autocomplete"); ?>',
+					url: '<?= site_url('bumindes_penduduk_rekapitulasi/autocomplete'); ?>',
 					dataType: "json",
 					data: {
 						cari: request.term
@@ -66,20 +63,35 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		} );
 	} );
 </script>
+<?php if ($tgl_lengkap && $tgl_lengkap_aktif == 1): ?>
 <div class="box box-info">
 	<div class="box-header with-border">
-		<a href="<?= site_url("bumindes_penduduk_rekapitulasi/ajax_cetak/$o/cetak"); ?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak Buku Rekapitulasi Penduduk Desa" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Cetak Buku Rekapitulasi Penduduk Desa"><i class="fa fa-print "></i> Cetak</a>
-		<a href="<?= site_url("bumindes_penduduk_rekapitulasi/ajax_cetak/$o/unduh"); ?>?>" title="Unduh Buku Rekapitulasi Penduduk Desa" class="btn btn-social btn-flat bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Unduh Buku Rekapitulasi Penduduk Desa" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Unduh Buku Rekapitulasi Penduduk Desa"><i class="fa fa-download"></i> Unduh</a>
+		<a href="<?= site_url($this->controller . '/ajax_cetak/cetak'); ?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak Buku Rekapitulasi Penduduk Desa" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Cetak Buku Rekapitulasi Penduduk Desa"><i class="fa fa-print "></i> Cetak</a>
+		<a href="<?= site_url($this->controller . '/ajax_cetak/unduh'); ?>" title="Unduh Buku Rekapitulasi Penduduk Desa" class="btn btn-social btn-flat bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Unduh Buku Rekapitulasi Penduduk Desa"><i class="fa fa-download"></i> Unduh</a>
+		<a href="<?= site_url($this->controller . '/ajax_cetak/pdf'); ?>" title="Laporan PDF Buku Rekapitulasi Penduduk Desa" class="btn btn-social btn-flat bg-green btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Laporan PDF Buku Rekapitulasi Penduduk Desa"><i class="fa fa-file-pdf-o"></i> Laporan PDF</a>
+		<a href="<?= site_url($this->controller . '/clear') ?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-refresh"></i>Bersihkan</a>
 	</div>
 	<div class="box-body">
 		<div class="dataTables_wrapper form-inline dt-bootstrap no-footer">
 			<form id="mainform" name="mainform" action="" method="post">
 				<div class="row">
-					<div class="col-sm-12">
+					<div class="col-sm-9">
+						<select class="form-control input-sm " name="filter_tahun" onchange="formAction('mainform','<?= site_url($this->controller . '/filter/filter_tahun')?>')">
+							<?php for ($t = $tahun_lengkap; $t <= date('Y'); $t++): ?>
+              	<option value=<?= $t ?> <?php selected($tahun, $t); ?>><?= $t ?></option>
+              <?php endfor; ?>
+						</select>
+						<select class="form-control input-sm" name="filter_bulan" onchange="formAction('mainform','<?= site_url($this->controller . '/filter/filter_bulan')?>')" width="100%">
+							<?php foreach (bulan() as $idx => $nama_bulan): ?>
+								<option value="<?= $idx?>" <?php selected($bulan, $idx); ?>><?= $nama_bulan?></option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+					<div class="col-sm-3">
 						<div class="input-group input-group-sm pull-right">
-							<input name="cari" id="cari" class="form-control" placeholder="Cari..." type="text" title="Pencarian berdasarkan nama penduduk" value="<?=html_escape($cari); ?>" onkeypress="if (event.keyCode == 13){$('#'+'mainform').attr('action', '<?= site_url("bumindes_penduduk_rekapitulasi/filter/cari"); ?>');$('#'+'mainform').submit();}">
+							<input name="cari" id="cari" class="form-control" placeholder="Cari..." type="text" title="Pencarian berdasarkan nama penduduk" value="<?=html_escape($cari); ?>" onkeypress="if (event.keyCode == 13){$('#'+'mainform').attr('action', '<?= site_url('bumindes_penduduk_rekapitulasi/filter/cari'); ?>');$('#'+'mainform').submit();}">
 							<div class="input-group-btn">
-								<button type="submit" class="btn btn-default" onclick="$('#'+'mainform').attr('action', '<?= site_url("bumindes_penduduk_rekapitulasi/filter/cari"); ?>');$('#'+'mainform').submit();"><i class="fa fa-search"></i></button>
+								<button type="submit" class="btn btn-default" onclick="$('#'+'mainform').attr('action', '<?= site_url('bumindes_penduduk_rekapitulasi/filter/cari'); ?>');$('#'+'mainform').submit();"><i class="fa fa-search"></i></button>
 							</div>
 						</div>
 					</div>
@@ -94,7 +106,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 								<th colspan="8">Tambahan Bulan Ini</th>
 								<th colspan="8">Pengurangan Bulan Ini</th>
 								<th rowspan="2" colspan="7">Jml Penduduk Akhir Bulan</th>
-								<th rowspan="4">Ket</th>								
+								<th rowspan="4">Ket</th>
 							</tr>
 							<tr>
 								<th colspan="2">WNA</th>
@@ -124,7 +136,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 								<th colspan="2">WNI</th>
 								<th rowspan="2">Jml KK</th>
 								<th rowspan="2">Jml Anggota Keluarga</th>
-								<th rowspan="2">Jml Jiwa (31+32)</th>
+								<th rowspan="2">Jml Jiwa (30+31)</th>
 							</tr>
 							<tr>
 								<th>L</th>
@@ -148,30 +160,49 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 								<th>L</th>
 								<th>P</th>
 							</tr>
+							<tr class="border thick">
+								<?php for ($i = 1; $i <= 33; $i++): ?>
+									<th><?= $i ?></th>
+								<?php endfor; ?>
+							</tr>
 						</thead>
 						<tbody>
-						<!-- 
-							""" 
-							Menunggu detil informasi data tiap attributnya sudah atau belum, 
-							jika sudah ada bagaimana proses menuju flow tersebut 
-							""" 
-						-->
-							<?php if (!$main): ?>
+							<?php if ($main): ?>
 								<?php foreach ($main as $key => $data): ?>
 									<tr>
 										<td class="padat"><?= ($key + $paging->offset + 1); ?></td>
-										<td><?= strtoupper($data['nama'])?></td>
-										<td><?= strtoupper($data['sex']) ?></td>
-										<td><?= (strpos($data['kawin'],'KAWIN') !== false) ? $data['kawin'] : (($data['sex'] == 'LAKI-LAKI') ? 'DUDA':'JANDA') ?></td>
-										<td><?= $data['tempatlahir']?></td>
-										<td><?= tgl_indo_out($data['tanggallahir'])?></td>
-										<td><?= $data['agama']?></td>
-										<td><?= $data['pendidikan']?></td>
-										<td><?= $data['pekerjaan']?></td>
-										<td><?= $data['pekerjaan']?></td>
-										<td><?= $data['pekerjaan']?></td>
-										<td><?= strtoupper($data['bahasa_nama'])?></td>
-										<td><?= $data['warganegara']?></td>
+										<td><?= strtoupper($data['DUSUN'])?></td>
+										<td><?= show_zero_as($data['WNA_L_AWAL'], '-') ?></td>
+										<td><?= show_zero_as($data['WNA_P_AWAL'], '-') ?></td>
+										<td><?= show_zero_as($data['WNI_L_AWAL'], '-') ?></td>
+										<td><?= show_zero_as($data['WNI_P_AWAL'], '-') ?></td>
+										<td><?= show_zero_as($data['KK_JLH'], '-') ?></td>
+										<td><?= show_zero_as($data['KK_ANG_KEL'], '-') ?></td>
+										<td><?= show_zero_as($data['KK_JLH'] + $data['KK_ANG_KEL'], '-') ?></td>
+										<td><?= show_zero_as($data['WNA_L_TAMBAH_LAHIR'], '-') ?></td>
+										<td><?= show_zero_as($data['WNA_P_TAMBAH_LAHIR'], '-') ?></td>
+										<td><?= show_zero_as($data['WNI_L_TAMBAH_LAHIR'], '-') ?></td>
+										<td><?= show_zero_as($data['WNI_P_TAMBAH_LAHIR'], '-') ?></td>
+										<td><?= show_zero_as($data['WNA_L_TAMBAH_MASUK'], '-') ?></td>
+										<td><?= show_zero_as($data['WNA_P_TAMBAH_MASUK'], '-') ?></td>
+										<td><?= show_zero_as($data['WNI_L_TAMBAH_MASUK'], '-') ?></td>
+										<td><?= show_zero_as($data['WNI_P_TAMBAH_MASUK'], '-') ?></td>
+										<td><?= show_zero_as($data['WNA_L_KURANG_MATI'], '-') ?></td>
+										<td><?= show_zero_as($data['WNA_P_KURANG_MATI'], '-') ?></td>
+										<td><?= show_zero_as($data['WNI_L_KURANG_MATI'], '-') ?></td>
+										<td><?= show_zero_as($data['WNI_P_KURANG_MATI'], '-') ?></td>
+										<td><?= show_zero_as($data['WNA_L_KURANG_KELUAR'], '-') ?></td>
+										<td><?= show_zero_as($data['WNA_P_KURANG_KELUAR'], '-') ?></td>
+										<td><?= show_zero_as($data['WNI_L_KURANG_KELUAR'], '-') ?></td>
+										<td><?= show_zero_as($data['WNI_P_KURANG_KELUAR'], '-') ?></td>
+										<td><?= show_zero_as($data['WNA_L_AKHIR'], '-') ?></td>
+										<td><?= show_zero_as($data['WNA_P_AKHIR'], '-') ?></td>
+										<td><?= show_zero_as($data['WNI_L_AKHIR'], '-') ?></td>
+										<td><?= show_zero_as($data['WNI_P_AKHIR'], '-') ?></td>
+										<td><?= show_zero_as($data['KK_AKHIR_JML'], '-') ?></td>
+										<td><?= show_zero_as($data['KK_AKHIR_ANG_KEL'], '-') ?></td>
+										<td><?= show_zero_as($data['KK_AKHIR_JML'] + $data['KK_AKHIR_ANG_KEL'], '-') ?></td>
+										<td>-</td>
 									</tr>
 								<?php endforeach; ?>
 							<?php else: ?>
@@ -187,3 +218,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		</div>
 	</div>
 </div>
+<?php else: ?>
+	<div class="box box-info">
+		<div class="box-header with-border">
+		</div>
+		<div class="box-body">
+			<div class="alert alert-warning">
+				Buku Rekapitulasi Penduduk masih dalam proses dilengkapi.<br>
+				Buka <a href="<?=site_url('setting')?>">Pengaturan > Aplikasi</a> untuk melengkapi tanggal lengkap data.
+			</div>
+		</div>
+	</div>
+<?php endif; ?>

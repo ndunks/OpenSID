@@ -1,4 +1,4 @@
-<?php $this->load->view('print/headjs.php');?>
+<?php $this->load->view('print/headjs.php'); ?>
 	<body>
 		<div id="content" class="container_12 clearfix">
 			<div id="content-main" class="grid_7">
@@ -7,7 +7,7 @@
 					<tr>
 						<td width="8%">NIK</td>
 						<td width="2%">:</td>
-						<td width="90%"><?= $penduduk['nik']?></td>
+						<td width="90%"><?= get_nik($penduduk['nik'])?></td>
 					</tr>
 					<tr>
 						<td width="8%">No.KK</td>
@@ -18,7 +18,7 @@
 				</table>
 				<table width="100%" style="border: solid 0px black; text-align: center;">
 					<tr>
-						<td align="center"><img src="<?= gambar_desa($desa['logo']);?>" alt="<?= $desa['nama_desa']?>"  class="logo_mandiri">
+						<td align="center"><img src="<?= gambar_desa($desa['logo']); ?>" alt="<?= $desa['nama_desa']?>"  class="logo_mandiri">
 					</tr>
 					<tr>
 						</td>
@@ -35,9 +35,9 @@
 					<tr>
 						<td width="220">Nama Lengkap</td><td width="2%">:</td>
 						<td><?= strtoupper($penduduk['nama'])?></td>
-						<td rowspan="18" style="vertical-align: middle;">
+						<td rowspan="18" style="vertical-align: top;">
 							<?php if ($penduduk['foto']): ?>
-								<img src="<?= AmbilFoto($penduduk['foto'])?>" alt="" style="border: solid 1px black; padding: 5px;"/>
+								<img class="pas_foto" src="<?= AmbilFoto($penduduk['foto'], '', $penduduk['id_sex'])?>" alt="<?= $penduduk['foto']; ?>" style="width: 100%; max-width: 150px; height: auto; border: solid 2px black;"/>
 							<?php endif; ?>
 						</td>
 					</tr>
@@ -89,6 +89,10 @@
 					<tr>
 						<td>Warga Negara</td><td >:</td>
 						<td><?= strtoupper($penduduk['warganegara'])?></td>
+					</tr>
+					<tr>
+						<td>Suku/Etnis</td><td >:</td>
+						<td><?= strtoupper($penduduk['suku'])?></td>
 					</tr>
 					<tr>
 						<td>NIK Ayah</td><td >:</td>
@@ -156,17 +160,21 @@
 						<td>Tanggal Perceraian</td><td >:</td>
 						<td><?= strtoupper($penduduk['tanggalperceraian'])?></td>
 					</tr>
+					<tr>
+						<td>Nomor BPJS Ketenagakerjaan</td><td >:</td>
+						<td><?= strtoupper($penduduk['bpjs_ketenagakerjaan'])?></td>
+					</tr>
 				</table>
 				<table width="100%" border="0" cellspacing="0" cellpadding="0">
 					<tr>
 						<td align="center" scope="col" width="40%">Yang Bersangkutan</td>
 						<td align="center" scope="col" width="10%">&nbsp;</td>
-						<td align="center" scope="col" width="50%"><?= ucwords($this->setting->sebutan_desa . ' '. $desa['nama_desa']) . ', ' . tgl_indo(date("Y m d"))?></td>
+						<td align="center" scope="col" width="50%"><?= ucwords($this->setting->sebutan_desa . ' ' . $desa['nama_desa']) . ', ' . tgl_indo(date('Y m d'))?></td>
 					</tr>
 					<tr>
 						<td align="center">&nbsp;</td>
 						<td align="center">&nbsp;</td>
-						<td align="center"><?= ucwords($this->setting->sebutan_kepala_desa)?> <?= ucwords($this->setting->sebutan_desa . ' ' . $desa['nama_desa']); ?></td>
+						<td align="center"><?= ucwords($this->setting->sebutan_kepala_desa . ' ' . $desa['nama_desa']); ?></td>
 					</tr>
 					<tr>
 						<td align="center" colspan="3" height="90px">&nbsp;</td>

@@ -1,6 +1,6 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') || exit('No direct script access allowed'); ?>
+
 <?php defined('THEME_VERSION') or define('THEME_VERSION', 'v4.5') ?>
-<?php defined('IS_PREMIUM') or define('IS_PREMIUM', preg_match('/premium/', ambilVersi())) ?>
 <?php $desa_title =  ucwords($this->setting->sebutan_desa) . ' '. $desa['nama_desa'] . ' '. ucwords($this->setting->sebutan_kecamatan) . ' '. $desa['nama_kecamatan'] . ' '. ucwords($this->setting->sebutan_kabupaten) . ' '. $desa['nama_kabupaten']; ?>
 
 <meta http-equiv="encoding" content="utf-8">
@@ -29,8 +29,8 @@
 <link rel="stylesheet" href="<?= base_url("$this->theme_folder/$this->theme/assets/css/font-awesome.min.css"); ?>">
 <link rel="stylesheet" href="<?= base_url("$this->theme_folder/$this->theme/assets/css/animate.css"); ?>">
 <link rel="stylesheet" href="<?= base_url("$this->theme_folder/$this->theme/assets/css/slick.css"); ?>">
-<link rel="stylesheet" href="<?= base_url("$this->theme_folder/$this->theme/assets/css/theme.css"); ?>">
-<link rel="stylesheet" href="<?= base_url("$this->theme_folder/$this->theme/assets/css/style.css"); ?>">
+<link rel="stylesheet" href="<?= base_url("$this->theme_folder/$this->theme/assets/css/theme.min.css"); ?>">
+<link rel="stylesheet" href="<?= base_url("$this->theme_folder/$this->theme/assets/css/style.min.css"); ?>">
 <link rel="stylesheet" href="<?= base_url("$this->theme_folder/$this->theme/assets/css/custom.css"); ?>">
 <link rel='stylesheet' href="<?= base_url('assets/css/font-awesome.min.css'); ?>"/>
 <link rel="stylesheet" href="<?= base_url('assets/css/leaflet.css'); ?>"/>
@@ -40,7 +40,7 @@
 <link rel="stylesheet" href="<?= base_url('assets/bootstrap/css/dataTables.bootstrap.min.css'); ?>">
 
 <?php if(isset($single_artikel)): ?>
-	<meta property="og:title" content="<?= htmlspecialchars($single_artikel["judul"]);?>"/>
+	<meta property="og:title" content="<?= htmlspecialchars($single_artikel["judul"]); ?>"/>
 	<meta property="og:url" content="<?= site_url('artikel/'.buat_slug($single_artikel))?>"/>
 	<meta property="og:image" content="<?= base_url(''); ?><?= LOKASI_FOTO_ARTIKEL?>sedang_<?= $single_artikel['gambar'];?>"/>
 	<meta property="og:description" content="<?= potong_teks($single_artikel['isi'], 300)?> ..."/>

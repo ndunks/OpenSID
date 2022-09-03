@@ -8,7 +8,7 @@
 	Uncomment jika situs ini untuk demo. Pada demo, user admin tidak bisa dihapus
 	dan username/password tidak bisa diubah
 */
-// $config['demo_mode'] = 'y';
+// $config['demo_mode'] = false;
 
 // Setting ini untuk menentukan user yang dipercaya. User dengan id di setting ini
 // dapat membuat artikel berisi video yang aktif ditampilkan di Web.

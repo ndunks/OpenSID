@@ -1,17 +1,6 @@
 <?php
 
-defined('BASEPATH') OR exit('No direct script access allowed');
-
-/**
- * File ini:
- *
- * Model untuk modul Kelompok
- *
- * donjo-app/models/Kelompok_master_model.php
- *
- */
-
-/**
+/*
  *
  * File ini bagian dari:
  *
@@ -22,7 +11,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -37,142 +26,151 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
  *
- * @package OpenSID
- * @author Tim Pengembang OpenDesa
+ * @package   OpenSID
+ * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- * @license http://www.gnu.org/licenses/gpl.html GPL V3
- * @link https://github.com/OpenSID/OpenSID
+ * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @license   http://www.gnu.org/licenses/gpl.html GPL V3
+ * @link      https://github.com/OpenSID/OpenSID
+ *
  */
 
-class Kelompok_master_model extends MY_Model {
+defined('BASEPATH') || exit('No direct script access allowed');
 
-	public function __construct()
-	{
-		parent::__construct();
-	}
+class Kelompok_master_model extends MY_Model
+{
+    protected $table = 'kelompok_master';
+    protected $tipe  = 'kelompok';
 
-	public function autocomplete()
-	{
-		return $this->autocomplete_str('kelompok', 'kelompok_master');
-	}
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
-	private function search_sql()
-	{
-		$value = $this->session->cari;
-		if (isset($value))
-		{
-			$kw = $this->db->escape_like_str($value);
-			$kw = '%' .$kw. '%';
-			$search_sql = " AND (u.kelompok LIKE '$kw' OR u.kelompok LIKE '$kw')";
-			return $search_sql;
-		}
-	}
+    public function set_tipe(string $tipe)
+    {
+        $this->tipe = $tipe;
 
-	public function paging($p = 1, $o = 0)
-	{
-		$sql = "SELECT COUNT(*) AS jml ";
-		$sql .= $this->list_data_sql();
+        return $this;
+    }
 
-		$query = $this->db->query($sql);
-		$row = $query->row_array();
+    public function autocomplete()
+    {
+        return $this->autocomplete_str('kelompok', $this->table);
+    }
 
-		$this->load->library('paging');
-		$cfg['page'] = $p;
-		$cfg['per_page'] = $this->session->per_page;
-		$cfg['num_rows'] = $row['jml'];
-		$this->paging->init($cfg);
+    private function search_sql()
+    {
+        if ($search = $this->session->cari) {
+            $this->db
+                ->group_start()
+                ->like('u.kelompok', $search)
+                ->or_like('u.deskripsi', $search)
+                ->group_end();
+        }
 
-		return $this->paging;
-	}
+        return $this->db;
+    }
 
-	private function list_data_sql()
-	{
-		$sql = "FROM kelompok_master u WHERE 1 ";
-		$sql .= $this->search_sql();
-		return $sql;
-	}
+    public function paging($p = 1)
+    {
+        $jml_data = $this->list_data_sql()->count_all_results();
 
-	// $limit = 0 mengambil semua
-	public function list_data($o = 0, $offset = 0, $limit = 0)
-	{
-		switch ($o)
-		{
-			case 1: $order_sql = ' ORDER BY u.kelompok'; break;
-			case 2: $order_sql = ' ORDER BY u.kelompok DESC'; break;
-			default:$order_sql = ' ORDER BY u.kelompok';
-		}
+        return $this->paginasi($p, $jml_data);
+    }
 
-		$paging_sql = $limit > 0 ? ' LIMIT ' . $offset . ',' . $limit : '';
+    private function list_data_sql()
+    {
+        $this->db
+            ->select('u.*')
+            ->select('(SELECT COUNT(k.id) FROM kelompok k WHERE k.id_master = u.id) AS jumlah')
+            ->from("{$this->table} u")
+            ->where('tipe', $this->tipe);
 
-		$sql = "SELECT u.* " . $this->list_data_sql();
+        $this->search_sql();
 
-		$sql .= $order_sql;
-		$sql .= $paging_sql;
+        return $this->db;
+    }
 
-		$query = $this->db->query($sql);
-		$data = $query->result_array();
+    // $limit = 0 mengambil semua
+    public function list_data($o = 0, $offset = 0, $limit = 0)
+    {
+        switch ($o) {
+            case 1: $this->db->order_by('u.kelompok'); break;
 
-		return $data;
-	}
+            case 2: $this->db->order_by('u.kelompok', 'desc'); break;
 
-	public function insert()
-	{
-		$data = $this->validasi($this->input->post());
-		$outp = $this->db->insert('kelompok_master', $data);
+            default: $this->db->order_by('u.kelompok'); break;
+        }
 
-		status_sukses($outp); //Tampilkan Pesan
-	}
+        $this->list_data_sql();
 
-	public function update($id = 0)
-	{
-		$data = $this->validasi($this->input->post());
-		$this->db->where('id', $id);
-		$outp = $this->db->update('kelompok_master', $data);
-		status_sukses($outp); //Tampilkan Pesan
-	}
+        return $this->db
+            ->limit($limit, $offset)
+            ->get()
+            ->result_array();
+    }
 
-	private function validasi($post)
-	{
-		if ($post['id']) $data['id'] = bilangan($post['id']);
-		$data['kelompok'] = nama_terbatas($post['kelompok']);
-		$data['deskripsi'] = htmlentities($post['deskripsi']);
-		return $data;
-	}
+    public function insert()
+    {
+        $data = $this->validasi($this->input->post());
+        $outp = $this->db->insert($this->table, $data);
 
-	public function delete($id = '', $semua = FALSE)
-	{
-		if ( ! $semua) $this->session->success = 1;
+        status_sukses($outp); //Tampilkan Pesan
+    }
 
-		$outp = $this->db->where('id', $id)->delete('kelompok_master');
+    public function update($id = 0)
+    {
+        $data = $this->validasi($this->input->post());
+        $this->db->where('id', $id);
+        $outp = $this->db->update($this->table, $data);
 
-		status_sukses($outp, $gagal_saja = TRUE); //Tampilkan Pesan
-	}
+        status_sukses($outp); //Tampilkan Pesan
+    }
 
-	public function delete_all()
-	{
-		$this->session->success = 1;
+    private function validasi($post)
+    {
+        if ($post['id']) {
+            $data['id'] = bilangan($post['id']);
+        }
+        $data['kelompok']  = nama_terbatas($post['kelompok']);
+        $data['deskripsi'] = htmlentities($post['deskripsi']);
+        $data['tipe']      = $this->tipe;
 
-		$id_cb = $_POST['id_cb'];
-		foreach ($id_cb as $id)
-		{
-			$this->delete($id, $semua=true);
-		}
-	}
+        return $data;
+    }
 
-	public function get_kelompok_master($id = 0)
-	{
-		$sql = "SELECT * FROM kelompok_master WHERE id = ?";
-		$query = $this->db->query($sql,$id);
-		$data = $query->row_array();
-		return $data;
-	}
+    public function delete($id = '', $semua = false)
+    {
+        $outp = $this->db
+            ->where('id', $id)
+            ->where('tipe', $this->tipe)
+            ->delete($this->table);
 
-	public function list_subjek()
-	{
-		$sql = "SELECT * FROM kelompok_ref_subjek";
-		$query = $this->db->query($sql);
-		return $query->result_array();
-	}
+        status_sukses($outp, $semua); //Tampilkan Pesan
+    }
 
+    public function delete_all()
+    {
+        $this->session->success = 1;
+
+        $id_cb = $_POST['id_cb'];
+
+        foreach ($id_cb as $id) {
+            $this->delete($id, true);
+        }
+    }
+
+    public function get_kelompok_master($id = 0)
+    {
+        return $this->db
+            ->where([
+                'id'   => $id,
+                'tipe' => $this->tipe,
+            ])
+            ->get($this->table)
+            ->row();
+
+        return $this->db;
+    }
 }

@@ -5,11 +5,9 @@
  * View untuk halaman dashboard Admin
  *
  * donjo-app/views/home/desa.php
- *
  */
 
-/**
- *
+/*
  * File ini bagian dari:
  *
  * OpenSID
@@ -34,12 +32,11 @@
  * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
  * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
  *
- * @package	OpenSID
- * @author	Tim Pengembang OpenDesa
- * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright	  Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright	  Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
- * @link 	https://github.com/OpenSID/OpenSID
+ *
+ * @see 	https://github.com/OpenSID/OpenSID
  */
 ?>
 
@@ -47,7 +44,7 @@
 	<section class='content-header'>
 		<h1>Tentang OpenSID</h1>
 		<ol class='breadcrumb'>
-			<li><a href='<?=site_url()?>'><i class='fa fa-home'></i> Home</a></li>
+			<li><a href='<?= site_url('hom_sid') ?>'><i class='fa fa-home'></i> Home</a></li>
 			<li class='active'>Tentang OpenSID</li>
 		</ol>
 	</section>
@@ -63,12 +60,12 @@
 						<button class="btn btn-social btn-flat btn-info btn-sm" data-toggle="modal" data-target="#modal-catatan-rilis">
 							<i class="fa fa-book"></i> Catatan Rilis
 						</button>
-						<a href="https://github.com/OpenSID/OpenSID/archive/<?=$latest_version ?>.zip" class="btn btn-social btn-flat bg-navy btn-sm" style="text-decoration: none">
+						<a href="<?= $url_download; ?>" class="btn btn-social btn-flat bg-navy btn-sm" style="text-decoration: none">
 							<i class="fa fa-download none"></i> Unduh
 						</a>
 					</div>
 					<div id="modal-catatan-rilis" class="modal fade" role="dialog">
-						<div class="modal-dialog">
+						<div class="modal-dialog modal-lg">
 							<div class="modal-content">
 								<div class="modal-header">
 									<button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -165,9 +162,7 @@
 							<div class="col-lg-4 col-xs-4">
 								<div class="small-box bg-gray">
 									<div class="inner">
-										<?php foreach ($rtm as $data): ?>
-											<h3><?=$data['jumlah']?></h3>
-										<?php endforeach; ?>
+										<h3><?=$rtm?></h3>
 										<p>Rumah Tangga</p>
 									</div>
 									<div class="icon">
@@ -189,7 +184,7 @@
 										<?php if ($this->CI->cek_hak_akses('u')): ?>
 											<a href="<?= site_url("{$this->controller}/dialog_pengaturan")?>" class="inner text-white rilis_pengaturan" title="Pengaturan Program Bantuan" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Pengaturan Program Bantuan"><i class="fa fa-gear"></i></a>
 										<?php endif; ?>
-										<a href="<?=site_url().$bantuan['link_detail']?>" class="inner text-white">Lihat Detail <i class="fa fa-arrow-circle-right"></i></a>
+										<a href="<?=site_url() . $bantuan['link_detail']?>" class="inner text-white">Lihat Detail <i class="fa fa-arrow-circle-right"></i></a>
 									</div>
 								</div>
 							</div>
@@ -199,7 +194,7 @@
 			</div>
 			<div class='col-md-6'>
 				<div class='box box-info'>
-					<?php $this->load->view('home/about.php');?>
+					<?php $this->load->view('home/about.php'); ?>
 				</div>
 			</div>
 		</div>

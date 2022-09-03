@@ -8,7 +8,7 @@
 		</ol>
 	</section>
 	<section class="content" id="maincontent">
-		<form class="form-horizontal" id="validasi" name="form_tanah" method="post" action="<?= site_url("api_inventaris_tanah/add"); ?>">
+		<form class="form-horizontal" id="validasi" name="form_tanah" method="post" action="<?= site_url('api_inventaris_tanah/add'); ?>">
 			<div class="row">
 				<div class="col-md-3">
 					<?php $this->load->view('inventaris/menu_kiri'); ?>
@@ -20,20 +20,19 @@
 					</div>
 
 					<?php
-						$reg = $count_reg->count + 1;
-						$jumlah_kata = strlen($reg);
-						$hasil = sprintf("%06s",$reg);
-					?>
+                        $reg         = $count_reg->count + 1;
+                        $jumlah_kata = strlen($reg);
+                        $hasil       = sprintf('%06s', $reg);
+                    ?>
 					<div class="box-body">
 						<div class="row">
 							<div class="col-md-12">
 								<div class="form-group">
 									<label class="col-sm-3 control-label" style="text-align:left;" for="nama_barang">Nama Barang</label>
 									<div class="col-sm-8">
-										 <select class="form-control input-sm select2" id="nama_barang" name="nama_barang" style ="width:100%;" onchange="formAction('main')">
-
+										<select class="form-control input-sm select2" id="nama_barang" name="nama_barang" onchange="formAction('main')">
 											<?php foreach ($aset as $data): ?>
-												<option value="<?=  $data['nama']."_".$data['golongan'].".".$data['bidang'].".".$data['kelompok'].".".$data['sub_kelompok'].".".$data['sub_sub_kelompok'].".".$hasil?>">Kode Reg : <?= $data['golongan'].".".$data['bidang'].".".$data['kelompok'].".".$data['sub_kelompok'].".".$data['sub_sub_kelompok']." - ".$data['nama']?></option>
+												<option value="<?=  $data['nama'] . '_' . $data['golongan'] . '.' . $data['bidang'] . '.' . $data['kelompok'] . '.' . $data['sub_kelompok'] . '.' . $data['sub_sub_kelompok'] . '.' . $hasil?>">Kode Reg : <?= $data['golongan'] . '.' . $data['bidang'] . '.' . $data['kelompok'] . '.' . $data['sub_kelompok'] . '.' . $data['sub_sub_kelompok'] . ' - ' . $data['nama']?></option>
 											<?php endforeach; ?>
 										</select>
 									</div>
@@ -42,7 +41,7 @@
 									<label class="col-sm-3 control-label" style="text-align:left;" for="kode_barang">Kode Barang</label>
 									<div class="col-sm-8">
 										<input type="hidden" name="nama_barang_save" id="nama_barang_save">
-										<input type="hidden" name="kode_desa" id="kode_desa" value="<?=kode_wilayah($get_kode["kode_desa"])?>">
+										<input type="hidden" name="kode_desa" id="kode_desa" value="<?=kode_wilayah($get_kode['kode_desa'])?>">
 										<input maxlength="50" class="form-control input-sm required" name="kode_barang" id="kode_barang" type="text" placeholder="Kode Barang"/>
 									</div>
 								</div>
@@ -65,7 +64,7 @@
 									<label class="col-sm-3 control-label" style="text-align:left;" for="tahun">Tahun Pengadaan </label>
 									<div class="col-sm-4">
 										<select name="tahun_pengadaan" id="tahun_pengadaan" class="form-control input-sm select2 required datatable" style="width:100%;" placeholder="Tahun Pengadaan">
-											<?php for ($i=date("Y"); $i>=1900; $i--): ?>
+											<?php for ($i = date('Y'); $i >= 1900; $i--): ?>
 												<option value="<?= $i ?>"><?= $i ?></option>
 											<?php endfor; ?>
 										</select>
@@ -101,15 +100,15 @@
 									</div>
 								</div>
 								<div class="form-group">
-									<label class="col-sm-3 control-label required" style="text-align:left;" for="tanggal_sertifikat">Tanggal Sertifikat</label>
+									<label class="col-sm-3 control-label" style="text-align:left;" for="tanggal_sertifikat">Tanggal Sertifikat</label>
 									<div class="col-sm-4">
-										<input maxlength="50" class="form-control input-sm required" name="tanggal_sertifikat" id="tanggal_sertifikat" type="date" placeholder="Tanggal Sertifikat"/>
+										<input maxlength="50" class="form-control input-sm" name="tanggal_sertifikat" id="tanggal_sertifikat" type="date" placeholder="Tanggal Sertifikat"/>
 									</div>
 								</div>
 								<div class="form-group">
 									<label class="col-sm-3 control-label" style="text-align:left;" for="no_sertifikat">Nomor Sertifikat </label>
 									<div class="col-sm-8">
-										<input maxlength="50" class="form-control input-sm required" name="no_sertifikat" id="no_sertifikat" type="text" placeholder="Nomor Sertifikat"/>
+										<input maxlength="50" class="form-control input-sm" name="no_sertifikat" id="no_sertifikat" type="text" placeholder="Nomor Sertifikat"/>
 									</div>
 								</div>
 								<div class="form-group">

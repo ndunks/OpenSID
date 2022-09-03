@@ -1,4 +1,10 @@
 <!-- Perubahan script coding untuk bisa menampilkan about dalam bentuk tampilan bootstrap (AdminLTE)  -->
+<style>
+	.catatan-scroll {
+		height: 400px;
+		overflow-y: scroll;
+	}
+</style>
 <div class="box-header with-border">
 	<h3 class="box-title"><strong>Anda sedang menggunakan aplikasi OpenSID <?= AmbilVersi()?></strong></h3>
 </div>
@@ -12,7 +18,21 @@
 			</div>
 			<div id="collapse1" class="panel-collapse collapse in">
 				<div class="box-body">
-					<p>OpenSID adalah aplikasi Sistem Informasi Desa (SID) yang dikembangkan sejak Mei 2016. OpenSID dirancang dan dikelola supaya terbuka dan dapat dikembangkan bersama-sama oleh komunitas peduli SID. Informasi lebih lanjut dapat dilihat di <a href= https://github.com/OpenSID/opensid>https://github.com/OpenSID/opensid</a>.</p>
+					<p>OpenSID adalah aplikasi Sistem Informasi Desa (SID) yang dikembangkan sejak Mei 2016. OpenSID dirancang dan dikelola supaya terbuka dan dapat dikembangkan bersama-sama oleh komunitas peduli SID. Informasi lebih lanjut dapat dilihat di <a href= https://github.com/OpenSID/opensid>https://github.com/OpenSID/OpenSID</a>.</p>
+				</div>
+			</div>
+		</div>
+		<div class="panel box box-default">
+			<div class="box-header with-border">
+				<h4 class="box-title">
+					<a data-toggle="collapse" data-parent="#accordion" href="#catatan-rilis">Catatan Rilis </a>
+				</h4>
+			</div>
+			<div id="catatan-rilis" class="panel-collapse collapse">
+				<div class="box-body">
+					<div class="catatan-scroll">
+						<?= $catatan_rilis ?>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -89,9 +109,9 @@
 						<li>Bentuk tim kerja bersama pemerintah desa</li>
 						<li>Diskusikan basis data apa saja yang diperlukan untuk warga</li>
 						<li>Himpun data kependudukan warga dari Kartu Keluarga (KK)</li>
-						<li>Dapatkan aplikasi softwarenya di https://github.com/OpenSID/OpenSID/releases</li>
-						<li>Install aplikasi software SID di komputer desa</li>
-						<li>Entry data penduduk ke SID</li>
+						<li>Dapatkan aplikasi SID di <a href= https://github.com/OpenSID/OpenSID/releases>https://github.com/OpenSID/OpenSID/releases</a></li>
+						<li>Pasang aplikasi SID di komputer desa</li>
+						<li>Masukkan data penduduk ke SID</li>
 						<li>Basis data kependudukan sudah bisa dimanfaatkan</li>
 						<li>Diskusikan rencana pengembangan SID sesuai kebutuhan desa</li>
 						<li>Sebarluaskan informasi desa melalui beragam media untuk warga</li>
@@ -123,24 +143,24 @@
 			<div id="collapse6" class="panel-collapse collapse">
 				<div class="box-body">
 					<ol>
-						<li>Website OpenDesa, pengelola OpenSID: </li>
-						<a href="http://opendesa.id/" target="_blank">http://opendesa.id </a>
-						<li>Website resmi OpenSID: </li>
-						<a href="http://opensid.my.id/" target="_blank">http://opensid.my.id </a>
+						<li>Website Resmi OpenDesa, pengelola OpenSID: </li>
+						<a href="http://opendesa.id" target="_blank">http://opendesa.id</a>
+						<li>Website Resmi OpenSID: </li>
+						<a href="http://opensid.my.id" target="_blank">Website Resmi OpenSID</a>
 						<li>Group Facebook, tempat mendapatkan bantuan dan berbagi pengalaman: </li>
-						<a href="https://www.facebook.com/groups/opensid/" target="_blank">Forum Pengguna dan Pegiat OpenSID </a>
+						<a href="https://www.facebook.com/groups/opensid" target="_blank">Forum Pengguna dan Pegiat OpenSID</a>
 						<li>Tempat mengunduh rilis OpenSID:</li>
-						<a href="https://github.com/OpenSID/OpenSID/releases" target="_blank">https://github.com/OpenSID/OpenSID/releases </a>
+						<a href="https://github.com/OpenSID/OpenSID/releases" target="_blank">https://github.com/OpenSID/OpenSID/releases</a>
 						<li>Panduan OpenSID:</li>
-						<a href="https://github.com/OpenSID/OpenSID/wiki" target="_blank">https://github.com/OpenSID/OpenSID/wiki </a>
+						<a href="https://github.com/OpenSID/OpenSID/wiki" target="_blank">https://github.com/OpenSID/OpenSID/wiki</a>
 						<li>Channel Youtube OpenSID: </li>
-						<a href="https://www.youtube.com/channel/UCvZuSYtrWYuE8otM4SsdT0Q" target="_blank">Kumpulan tutorial video OpenSID </a>
-						<li>Repository (tempat pengelolaan) OpenSID:</li>
-						<a href="https://github.com/OpenSID/OpenSID" target="_blank">https://github.com/OpenSID/OpenSID </a>
+						<a href="https://www.youtube.com/channel/UCvZuSYtrWYuE8otM4SsdT0Q" target="_blank">Kumpulan tutorial video OpenSID</a>
+						<li>Forum OpenDesa:</li>
+						<a href="https://forum.opendesa.id" target="_blank">https://forum.opendesa.id</a>
 						<li>Tempat mendaftarkan masalah dan usulan fitur:</li>
-						<a href="https://github.com/OpenSID/OpenSID/issues" target="_blank" sclass="text-green">https://github.com/OpenSID/OpenSID/issues </a>
+						<a href="https://github.com/OpenSID/OpenSID/issues" target="_blank" sclass="text-green">https://github.com/OpenSID/OpenSID/issues</a>
 						<li>Forum diskusi teknis pengembangan OpenSID:</li>
-						<a href="https://opensid.slack.com" target="_blank">https://opensid.slack.com </a>
+						<a href="https://opensid.slack.com" target="_blank">https://opensid.slack.com</a>
 					</ol>
 				</div>
 			</div>

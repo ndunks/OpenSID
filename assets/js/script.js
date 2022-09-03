@@ -36,16 +36,15 @@ $(document).ready(function()
 
 	//CheckBox All Selected
 	checkAll();
-  $("input[name='id_cb[]'").click(function(){
-  	enableHapusTerpilih();
-  });
+	$('table').on('click', "input[name='id_cb[]']", function() {
+		enableHapusTerpilih();
+	});
 	enableHapusTerpilih();
 
-	//Display Modal Box
+	//Display dialog
 	modalBox();
-
-	//Display MAP Box
 	mapBox();
+	cetakBox();
 
 	//Confirm Delete Modal
 	$('#confirm-delete').on('show.bs.modal', function(e) {
@@ -64,126 +63,6 @@ $(document).ready(function()
 		$(this).find('.modal-body').html($(e.relatedTarget).data('body'));
 	});
 
-	// Select2 dengan fitur pencarian
-	$('.select2').select2({
-		width: '100%',
-		dropdownAutoWidth : true
-	});
-
-	// Select2 - Cari Nama Desa di API Server
-	$('.select-nama-desa').select2({
-		ajax: {
-			url: function () {
-				return $(this).data('tracker') + '/index.php/api/wilayah/caridesa?&token=' + $(this).data('token');
-			},
-			dataType: 'json',
-			data: function (params) {
-				return {
-					q: params.term || '',
-					page: params.page || 1,
-				};
-			},
-			processResults: function (data) {
-					return {
-						results: data.results,
-						pagination: data.pagination,
-					}
-				}
-			},
-			placeholder: '--  Cari Nama Desa --',
-			minimumInputLength: 0,
-	});
-
-	$('.select2-nik-ajax').select2({
-	  ajax: {
-	    url: function () {
-	      return $(this).data('url');
-	    },
-	    dataType: 'json',
-	    delay: 250,
-	    data: function (params) {
-	      return {
-	        q: params.term || '', // search term
-	        page: params.page || 1,
- 	        filter_sex: $(this).data('filter-sex')
-	      };
-	    },
-	    processResults: function (data, params) {
-	      // parse the results into the format expected by Select2
-	      // since we are using custom formatting functions we do not need to
-	      // alter the remote JSON data, except to indicate that infinite
-	      // scrolling can be used
-	      // params.page = params.page || 1;
-
-	      return {
-	        results: data.results,
-	        pagination: data.pagination
-	      };
-	    },
-	    cache: true
-	  },
-		templateResult: function (penduduk) {
-			if (!penduduk.id) {
-			  return penduduk.text;
-			}
-			var _tmpPenduduk = penduduk.text.split('\n');
-			var $penduduk = $(
-			  '<div>'+_tmpPenduduk[0]+'</div><div>'+_tmpPenduduk[1]+'</div>'
-			);
-			return $penduduk;
-		},
-	  placeholder: '--  Cari NIK / Tag ID Card / Nama Penduduk --',
-	  minimumInputLength: 0,
-	});
-
-	$('.select2-nik').select2({
-		templateResult: function (penduduk) {
-			if (!penduduk.id) {
-			  return penduduk.text;
-			}
-			var _tmpPenduduk = penduduk.text.split('\n');
-			var $penduduk = $(
-			  '<div>'+_tmpPenduduk[0]+'</div><div>'+_tmpPenduduk[1]+'</div>'
-			);
-			return $penduduk;
-		}
-	});
-
-	// Select2 menampilkan ikon
-	// https://stackoverflow.com/questions/37386293/how-to-add-icon-in-select2
-	function format_ikon (state) {
-    if (!state.id) { return state.text; }
-    return '<i class="fa fa-lg '+state.id.toLowerCase()+'"></i>&nbsp;&nbsp; '+state.text;
-	}
-	$('.select2-ikon').select2(
-	{
-    templateResult: format_ikon,
-    templateSelection: format_ikon,
-    escapeMarkup: function(m) { return m; }
-	});
-
-	// Select2 dengan fitur pencarian dan boleh isi sendiri
-	$('.select2-tags').select2(
-		{
-			tags: true
-		});
-	// Select2 untuk disposisi pada form
-	// surat masuk
-	$('#disposisi_kepada').select2({
-		placeholder: "Pilih tujuan disposisi"
-	});
-
-	// Reset select2 ke nilai asli
-	// https://stackoverflow.com/questions/10319289/how-to-execute-code-after-html-form-reset-with-jquery
-	$('button[type="reset"]').click(function(e)
-	{
-    e.preventDefault();
-    $(this).closest('form').get(0).reset();
-		// https://stackoverflow.com/questions/15205262/resetting-select2-value-in-dropdown-with-reset-button
-		$('.select2').trigger('change');
-		$('.select2-ikon').trigger('change');
-	});
-
 	//File Upload
 	$('#file_browser').click(function(e)
 	{
@@ -199,7 +78,7 @@ $(document).ready(function()
 		}
 		else
 		{
-			$('#'+$(this).data('submit')).removeAttr('disabled');;
+			$('#'+$(this).data('submit')).removeAttr('disabled');
 		}
 	});
 	$('#file_path').click(function()
@@ -261,147 +140,6 @@ $(document).ready(function()
 	$('#file_path4').click(function()
 	{
 		$('#file_browser4').click();
-	});
-	//Fortmat Tanggal dan Jam
-	$('.datepicker').datepicker(
-	{
-		weekStart : 1,
-		language:'id',
-		format: 'dd-mm-yyyy',
-		autoclose: true
-	});
-	$('#tgl_mulai').datetimepicker({
-		locale:'id',
-		format: 'DD-MM-YYYY',
-		useCurrent: false,
-		date: moment(new Date())
-	});
-
-	$('#tgl_akhir').datetimepicker({
-		locale:'id',
-		format: 'DD-MM-YYYY',
-		useCurrent: false,
-		minDate: moment(new Date()).add(-1, 'day'), // Todo: mengapa harus dikurangi -- bug?
-		date: moment(new Date()).add($('#tgl_akhir').data('masa-berlaku'), $('#tgl_akhir').data('satuan-masa-berlaku'))
-	});
-	$('#tgl_mulai').datetimepicker().on('dp.change', function (e) {
-		$('#tgl_akhir').data('DateTimePicker').minDate(moment(new Date(e.date)));
-		$(this).data("DateTimePicker").hide();
-		var tglAkhir = moment(new Date(e.date));
-		tglAkhir.add($('#tgl_akhir').data('masa-berlaku'), $('#tgl_akhir').data('satuan-masa-berlaku'));
-		$('#tgl_akhir').data('DateTimePicker').date(tglAkhir);
-	});
-
-	$('.tgl_minimal').datetimepicker().on('dp.change', function (e) {
-		var tgl_lebih_besar = $(this).data('tgl-lebih-besar');
-		$(tgl_lebih_besar).data('DateTimePicker').minDate(moment(new Date(e.date)));
-		$(this).data("DateTimePicker").hide();
-	});
-
-	$('#tgljam_mulai').datetimepicker({
-		locale:'id',
-		format: 'DD-MM-YYYY HH:mm',
-		useCurrent: false,
-		date: moment(new Date()),
-		sideBySide:true
-	});
-	$('#tgljam_akhir').datetimepicker({
-		locale:'id',
-		format: 'DD-MM-YYYY HH:mm',
-		useCurrent: false,
-		minDate: moment(new Date()).add(-1, 'day'), // Todo: mengapa harus dikurangi -- bug?
-		date: moment(new Date()).add(1, 'day'),
-		sideBySide:true
-	});
-	$('#tgljam_mulai').datetimepicker().on('dp.change', function (e) {
-		$('#tgljam_akhir').data('DateTimePicker').minDate(moment(new Date(e.date)));
-		var tglAkhir = moment(new Date(e.date));
-		tglAkhir.add(1, 'day');
-		$('#tgljam_akhir').data('DateTimePicker').date(tglAkhir);
-	});
-
-	$('.tgl_jam').datetimepicker(
-	{
-		format: 'DD-MM-YYYY HH:mm:ss',
-		locale:'id'
-	});
-	$('.tgl').datetimepicker(
-	{
-		format: 'DD-MM-YYYY',
-		useCurrent: false,
-		locale:'id'
-	});
-	$('.tgl_indo').datetimepicker(
-	{
-		format: 'DD-MM-YYYY',
-		locale:'id'
-	});
-	$('#tgl_1').datetimepicker(
-	{
-		format: 'DD-MM-YYYY',
-		locale:'id'
-	});
-	$('.tgl_1').datetimepicker(
-	{
-		format: 'DD-MM-YYYY',
-		locale:'id'
-	});
-	$('#tgl_2').datetimepicker(
-	{
-		format: 'DD-MM-YYYY',
-		locale:'id'
-	});
-	$('#tgl_3').datetimepicker(
-	{
-		format: 'DD-MM-YYYY',
-		locale:'id'
-	});
-	$('#tgl_4').datetimepicker(
-	{
-		format: 'DD-MM-YYYY',
-		locale:'id'
-	});
-	$('#tgl_5').datetimepicker(
-	{
-		format: 'DD-MM-YYYY',
-		locale:'id'
-	});
-	$('#tgl_6').datetimepicker(
-	{
-			format: 'DD-MM-YYYY',
-			locale:'id'
-	});
-	$('#jam_1').datetimepicker(
-	{
-		format: 'HH:mm:ss',
-		locale:'id'
-	});
-	$('#jam_2').datetimepicker(
-	{
-		format: 'HH:mm:ss',
-		locale:'id'
-	});
-	$('#jam_3').datetimepicker(
-	{
-		format: 'HH:mm:ss',
-		locale:'id'
-	});
-
-	$('#jammenit_1').datetimepicker(
-	{
-		format: 'HH:mm',
-		locale:'id'
-	});
-	$('#jammenit_2').datetimepicker(
-	{
-		format: 'HH:mm',
-		locale:'id'
-	});
-
-	$('#jammenit_3').datetimepicker(
-	{
-		format: 'HH:mm',
-		locale:'id'
 	});
 
 	$('[data-rel="popover"]').popover(
@@ -471,9 +209,9 @@ $(document).ready(function()
 	});
 
 	//color picker with addon
-  $('.my-colorpicker2').colorpicker();
+  if ($('.my-colorpicker2').length > 0) $('.my-colorpicker2').colorpicker();
 	//Text Editor with addon
-	$('#min-textarea').wysihtml5();
+	if ($('#min-textarea').length > 0) $('#min-textarea').wysihtml5();
 
 	$('ul.sidebar-menu').on('expanded.tree', function(e){
 		// Manipulasi menu perlu ada tenggang waktu -- supaya dilakukan sesudah
@@ -503,24 +241,26 @@ $(document).ready(function()
 	});
 
 	// Penggunaan datatable di inventaris
-	var t = $('#tabel4').DataTable({
-		'paging'      : true,
-    'lengthChange': true,
-    'searching'   : true,
-    'ordering'    : true,
-    'info'        : true,
-    'autoWidth'   : false,
-		'language' 		: {
-				'url': base_url + '/assets/bootstrap/js/dataTables.indonesian.lang'
-		}
-	});
-	t.on('order.dt search.dt', function()
-	{
-		t.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i)
-		{
-			cell.innerHTML = i+1;
+	if ( ! $.fn.DataTable.isDataTable( '#tabel4' ) ) {
+		var t = $('#tabel4').DataTable({
+			'paging'      : true,
+	    'lengthChange': true,
+	    'searching'   : true,
+	    'ordering'    : true,
+	    'info'        : true,
+	    'autoWidth'   : false,
+			'language' 		: {
+					'url': base_url + '/assets/bootstrap/js/dataTables.indonesian.lang'
+			}
 		});
-	}).draw();
+		t.on('order.dt search.dt', function()
+		{
+			t.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i)
+			{
+				cell.innerHTML = i+1;
+			});
+		}).draw();
+	}
 
 });
 
@@ -549,21 +289,14 @@ function scrollTampil(elem)
 	elem.scrollIntoView({behavior: 'smooth'});
 }
 
-function checkAll(id = "#checkall")
-{
-	$(id).click(function ()
-	{
-		if ($(".table " + id).is(':checked'))
-		{
-			$(".table input[type=checkbox]").each(function ()
-			{
+function checkAll(id = "#checkall") {
+	$('table').on('click', id, function() {
+		if ($(this).is(':checked')) {
+			$(".table input[type=checkbox]").each(function () {
 				$(this).prop("checked", true);
 			});
-		}
-		else
-		{
-			$(".table input[type=checkbox]").each(function ()
-			{
+		} else {
+			$(".table input[type=checkbox]").each(function () {
 				$(this).prop("checked", false);
 			});
 		}
@@ -573,20 +306,16 @@ function checkAll(id = "#checkall")
 	$("[data-toggle=tooltip]").tooltip();
 }
 
-function enableHapusTerpilih()
-{
-  if ($("input[name='id_cb[]']:checked:not(:disabled)").length <= 0)
-  {
-    $(".aksi-terpilih").addClass('disabled');
-    $(".hapus-terpilih").addClass('disabled');
-    $(".hapus-terpilih").attr('href','#');
-  }
-  else
-  {
-    $(".aksi-terpilih").removeClass('disabled');
-    $(".hapus-terpilih").removeClass('disabled');
-    $(".hapus-terpilih").attr('href','#confirm-delete');
-  }
+function enableHapusTerpilih() {
+	if ($("input[name='id_cb[]']:checked:not(:disabled)").length <= 0) {
+		$(".aksi-terpilih").addClass('disabled');
+		$(".hapus-terpilih").addClass('disabled');
+		$(".hapus-terpilih").attr('href','#');
+	} else {
+		$(".aksi-terpilih").removeClass('disabled');
+		$(".hapus-terpilih").removeClass('disabled');
+		$(".hapus-terpilih").attr('href','#confirm-delete');
+	}
 }
 
 function deleteAllBox(idForm, action)
@@ -595,6 +324,7 @@ function deleteAllBox(idForm, action)
 	$('#ok-delete').click(function ()
 	{
 		$('#' + idForm).attr('action', action);
+		addCsrfField($('#' + idForm)[0]);
     $('#' + idForm).submit();
 	});
 	return false;
@@ -618,7 +348,29 @@ function modalBox()
 		var modal = $(this)
 		modal.find('.modal-title').text(title)
 		$(this).find('.fetched-data').load(link.attr('href'));
-		window['addCsrfField'] && setTimeout(function() {
+		// tambahkan csrf token kalau ada form
+		if (modal.find("form")[0]) {
+			setTimeout(function() {
+				addCsrfField(modal.find("form")[0]);
+			}, 500);
+		}
+	});
+	return false;
+}
+
+function cetakBox()
+{
+	$('#cetakBox').on('show.bs.modal', function(e)
+	{
+		var link = $(e.relatedTarget);
+		var title = link.data('title');
+		var aksi = link.data('aksi');
+		var form_action = link.data('href');
+		var modal = $(this)
+		modal.find('.title').text(title);
+		modal.find('.aksi').text(aksi);
+		modal.find('form').attr('action', form_action);
+		setTimeout(function() {
 			// tambahkan csrf token
 			addCsrfField(modal.find("form")[0]);
 		}, 500);

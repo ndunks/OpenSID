@@ -1,4 +1,4 @@
-										<div class="tab-pane <?php if ($act_tab==5): ?>active<?php endif ?>">
+										<div class="tab-pane <?php if ($act_tab == 5): ?>active<?php endif ?>">
 											<div class="row">
 												<div class="col-md-12">
 													<div class="box-header with-border">
@@ -24,7 +24,7 @@
 																			<tr>
 																				<td style="padding-top:20px;padding-bottom:10px;">
 																					<div class="form-group">
-																						<div class="col-sm-8 col-lg-4">
+																						<div class="col-sm-5 col-md-4">
 																							<a href="#" class="btn btn-block btn-danger btn-sm ajax"  title="Migrasi DB" onclick="document.getElementById('excell').submit();" data-toggle="modal" data-target="#loading" data-backdrop="false" data-keyboard="false"> <i class="fa fa-spin fa-refresh"></i> Migrasi Database Ke OpenSID <?= AmbilVersi()?></a>
 																						</div>
 																					</div>
@@ -87,9 +87,9 @@
 														</div>
 													</div>
 												</div>
-												<?php unset($_SESSION['sukses']);?>
-												<?php unset($_SESSION['baris']);?>
-												<?php unset($_SESSION['gagal']);?>
+												<?php unset($_SESSION['sukses']); ?>
+												<?php unset($_SESSION['baris']); ?>
+												<?php unset($_SESSION['gagal']); ?>
 											</div>
 										</div>
 									</div>

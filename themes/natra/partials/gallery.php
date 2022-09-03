@@ -1,56 +1,30 @@
-<?php if(!defined('BASEPATH')) exit('No direct script access allowed'); ?>
+<?php defined('BASEPATH') || exit('No direct script access allowed'); ?>
 
-<?php
-	echo "
-	<div style=\"content_bottom_left\">
-			<div class=\"single_page_area\"><h2>Arsip Galeri ".$desa["nama_desa"]."</h2></div>
-				<ul>";
-			$i=1;
-			foreach($gallery AS $data){
-				if(is_file(LOKASI_GALERI . "sedang_" . $data['gambar'])) {
-					echo "
-					<li>
-						<div class=\"single_page_content\">
-						<a class=\"group2\" href=\"".site_url()."first/sub_gallery/". $data['id']."\">
-							<img class='img-fluid img-thumbnail' src=\"".AmbilGaleri($data['gambar'],'kecil')."\" /></a>
+<div class="single_category wow fadeInDown">
+	<h2><span class="bold_line"><span></span></span> <span class="solid_line"></span> <span class="title_text">Galeri <?= $desa["nama_desa"] ?></span></h2>
+</div>
+
+<div style="content_left">
+	<?php if ($gallery): ?>
+		<div class="row">
+			<?php foreach ($gallery as $data): ?>
+				<?php if (is_file(LOKASI_GALERI . "sedang_" . $data['gambar'])): ?>
+					<a href="<?= site_url() . "galeri/" . $data['id'] ?>">
+						<div class="col-sm-6">
+							<div class="card">
+								<img width="auto" class="img-fluid img-thumbnail" src="<?= AmbilGaleri($data['gambar'], 'kecil') ?>" alt="<?= $data['nama']; ?>"/>
+								<p align="center"><b>Album : <?= $data['nama']; ?></b></p>
+								<hr/>
+							</div>
 						</div>
-						<div class=\"title\"><a href=\"". site_url()."first/sub_gallery/". $data['id']."\" title=\"".$data["nama"]."\">Album : ". $data["nama"]."</a></div>
-					</li>";
-					if(fmod($i,2)==0){echo "<br class=\"clearboth\">";}
-					$i++;
-				}
-			}
-			echo "
-				</ul>
-				<br class=\"clearboth\">
-			</div>
+					</a>
+				<?php endif ?>
+			<?php endforeach ?>
+		</div>
 
-			<div class=\"pagination_area\">
-			<div>Halaman ".$p." dari ".$paging->end_link."</div>
-				<ul class=\"pagination\">";
-				// TODO : butuh helper untuk menggenerate html tag untuk paging
-				if($paging->start_link){
-					echo "<li><a href=\"".site_url("first/gallery/$paging->start_link")."\" title=\"Halaman Pertama\"><i class=\"fa fa-fast-backward\"></i>&nbsp;</a></li>";
-				}
-				if($paging->prev){
-					echo "<li><a href=\"".site_url("first/gallery/$paging->prev")."\" title=\"Halaman Sebelumnya\"><i class=\"fa fa-backward\"></i>&nbsp;</a></li>";
-				}
+	<?php $this->load->view("$folder_themes/commons/page"); ?>
 
-				foreach($pages as $i) {
-					$strC = ($p == $i)? "class=\"active\"":"";
-					echo "<li ".$strC."><a href=\"".site_url("first/gallery/$i")."\" title=\"Halaman ".$i."\">".$i."</a></li>";
-				}
-
-				if($paging->next){
-					echo "<li><a href=\"".site_url("first/gallery/$paging->next")."\" title=\"Halaman Selanjutnya\"><i class=\"fa fa-forward\"></i>&nbsp;</a></li>";
-				}
-				if($paging->end_link){
-					echo "<li><a href=\"".site_url("first/gallery/$paging->end_link")."\" title=\"Halaman Terakhir\"><i class=\"fa fa-fast-forward\"></i>&nbsp;</a></li>";
-				}
-					echo "";
-				echo "
-				</ul>
-	</div>
-	";
-
-?>
+	<?php else: ?>
+		<p>Data tidak tersedia</p>
+	<?php endif; ?>
+</div>

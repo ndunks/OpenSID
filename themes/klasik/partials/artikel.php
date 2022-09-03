@@ -36,8 +36,8 @@
  *
  * @package	OpenSID
  * @author	Tim Pengembang OpenDesa
- * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright	  Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright	  Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
  * @link 	https://github.com/OpenSID/OpenSID
  */
@@ -73,7 +73,7 @@
 		<div class="teks"><?= $single_artikel["isi"]?></div>
 
 		<?php	if($single_artikel['dokumen']!='' and is_file(LOKASI_DOKUMEN.$single_artikel['dokumen'])): ?>
-			<p>Dokumen Lampiran : <a href="<?= base_url().LOKASI_DOKUMEN.$single_artikel['dokumen']?>" title=""><?= $single_artikel['link_dokumen']?></a></p>
+			<p>Dokumen Lampiran : <a href='<?= site_url("first/unduh_dokumen_artikel/{$single_artikel[id]}") ?>' title=""><?= $single_artikel['link_dokumen']?></a></p>
 			<br/>
 		<?php endif; ?>
 		<?php if($single_artikel['gambar1']!='' and is_file(LOKASI_FOTO_ARTIKEL."sedang_".$single_artikel['gambar1'])): ?>
@@ -89,14 +89,15 @@
 			</div>
 		<?php endif; ?>
 
-		<div class="form-group" style="clear:both;">
-			<ul id="pageshare" title="Bagikan ke teman anda" class="pagination">
-				<li class="sbutton" id="fb"><a name="fb_share" href="http://www.facebook.com/sharer.php?u=<?= site_url('artikel/'.buat_slug($single_artikel))?>" target="_blank"><i class="fa fa-facebook-square"></i>&nbsp;Facebook</a></li>
-				<li class="sbutton" id="rt"><a href="http://twitter.com/share?url=<?= site_url('artikel/'.buat_slug($single_artikel)) ?>" class="twitter-share-button" target="_blank"><i class="fa fa-twitter"></i>&nbsp;Tweet</a></li>
-				<li class="sbutton" id="wa_share"><a href="https://api.whatsapp.com/send?text=<?= site_url('artikel/'.buat_slug($single_artikel))?>" target="_blank"><i class="fa fa-whatsapp" style="color:green"></i>&nbsp;WhatsApp</a></li>
-				<li class="sbutton" id="tele_share"><a href="https://telegram.me/share/url?url=<?= site_url('artikel/'.buat_slug($single_artikel))?>&text=<?= htmlspecialchars($single_artikel["judul"]); ?>" target="_blank"><i class="fa fa-telegram" style="color:blue"></i>&nbsp;Telegram</a></li>
-			</ul>
-		</div>
+		<?php
+
+			$share = [
+				'link' => site_url('artikel/' . buat_slug($single_artikel)),
+				'judul' => $single_artikel["judul"],
+			];
+			$this->load->view("$folder_themes/commons/share", $share);
+		
+		?>
 
 		<div class="form-group" id="kolom-komentar">
 			<?php if(!empty($komentar)): ?>
@@ -121,56 +122,57 @@
 				<div>Silakan tulis komentar dalam formulir berikut ini (Gunakan bahasa yang santun)</div>
 			<?php endif; ?>
 		</div>
-		<div class="form-group group-komentar">
+		<div class="form-group group-komentar" id="kolom-komentar">
 			<?php if ($single_artikel['boleh_komentar'] == 1): ?>
 				<div class="box box-default">
 					<div class="box-header">
 						<h3 class="box-title">Formulir Komentar (Komentar baru terbit setelah disetujui Admin)</h3>
 					</div>
 
-					<!-- Tampilkan hanya jika 'flash_message' ada -->
-					<?php $label = !empty($_SESSION['validation_error']) ? 'label-danger' : 'label-info'; ?>
-					<?php if ($flash_message): ?>
-						<div class="box-header <?= $label?>"><?= $flash_message?></div>
-						<?php unset($_SESSION['validation_error']); ?>
+					<?php
+						$notif = $this->session->flashdata('notif');
+						$label = ($notif['status'] == -1) ? 'label-danger' : 'label-info';
+					?>
+					<?php if ($notif): ?>
+						<div class="box-header <?= $label; ?>"><?= $notif['pesan']; ?></div>
 					<?php endif; ?>
 					<div class="box-body">
-						<form id="validasi" class="" name="form" action="<?= site_url('add_comment/'.$single_artikel['id'])?>" method="POST" onSubmit="return validasi(this);">
+						<form id="validasi" class="" name="form" action="<?= site_url("add_comment/$single_artikel[id]"); ?>" method="POST" onSubmit="return validasi(this);">
 							<table width="100%">
 								<tr class="komentar nama">
 									<td>Nama</td>
 									<td>
-										<input type="text" name="owner" class="required" maxlength="50" value="<?= !empty($_SESSION['post']['owner']) ? $_SESSION['post']['owner'] : $_SESSION['nama'] ?>">
+										<input type="text" name="owner" class="required" maxlength="50" value="<?= $notif['data']['owner']; ?>">
 									</td>
 								</tr>
 								<tr class="komentar alamat">
 									<td>No. HP</td>
 									<td>
-										<input type="text" class="number required" name="no_hp" maxlength="30" value="<?= $_SESSION['post']['no_hp'] ?>">
+										<input type="text" class="number required" name="no_hp" maxlength="30" value="<?= $notif['data']['no_hp']; ?>">
 									</td>
 								</tr>
 								<tr class="komentar alamat">
 									<td>Alamat e-mail</td>
 									<td>
-										<input type="text" name="email" class="email" maxlength="30" value="<?= $_SESSION['post']['email'] ?>">
+										<input type="text" name="email" class="email" maxlength="30" value="<?= $notif['data']['email']; ?>">
 									</td>
 								</tr>
 								<tr class="komentar pesan">
 									<td valign="top">Komentar</td>
 									<td>
-										<textarea class="required" name="komentar"><?= $_SESSION['post']['komentar']?></textarea>
+										<textarea class="required" name="komentar"><?= $notif['data']['komentar']; ?></textarea>
 									</td>
 								</tr>
 								<tr class="captcha"><td>&nbsp;</td>
 									<td>
-										<img id="captcha" src="<?= base_url().'securimage/securimage_show.php'?>" alt="CAPTCHA Image"/>
-										<a href="#" onclick="document.getElementById('captcha').src = '<?= base_url()."securimage/securimage_show.php?"?>' + Math.random(); return false">[ Ganti gambar ]</a>
+										<img id="captcha" src="<?= base_url('securimage/securimage_show.php'); ?>" alt="CAPTCHA Image"/>
+										<a href="#" onclick="document.getElementById('captcha').src = '<?= base_url()."securimage/securimage_show.php?"?>' + Math.random(); return false" style="color: #000000;">[ Ganti gambar ]</a>
 									</td>
 								</tr>
 								<tr class="captcha_code">
 									<td>&nbsp;</td>
 									<td>
-										<input type="text" name="captcha_code" class="required" maxlength="6" value="<?= $_SESSION['post']['captcha_code']?>"/> Isikan kode di gambar
+										<input type="text" name="captcha_code" class="required" maxlength="6" value="<?= $notif['data']['captcha_code']; ?>"/> Isikan kode di gambar
 									</td>
 								</tr>
 								<tr class="submit">
@@ -187,12 +189,5 @@
 		</div>
 	</div>
 <?php else: ?>
-	<div class="artikel" id="artikel-blank">
-		<div class="box box-danger box-solid">
-			<div class="box-header"><h3 class="box-title">Maaf, data tidak ditemukan</h3></div>
-			<div class="box-body">
-				Anda telah terdampar di halaman yang datanya tidak ada lagi di web ini. Mohon periksa kembali, atau laporkan kepada kami.
-			</div>
-		</div>
-	</div>
+	<?php $this->load->view("$folder_themes/commons/not_found"); ?>
 <?php endif; ?>
