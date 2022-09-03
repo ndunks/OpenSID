@@ -33,17 +33,13 @@
 			<?php if (ENVIRONMENT == 'development') : ?>
 				<pre><?= $message ?></pre>
 				<pre><?= strip_tags((new \Exception())->getTraceAsString()) ?></pre>
+				<h3>Debug Info</h3>
+				<b>Config Path</b>
+				<pre><?= htmlentities(implode("\n", $CI->config->_config_paths )) ?></pre>
+				<b>Config Loaded</b>
+				<pre><?= htmlentities(implode("\n", $CI->config->is_loaded )) ?></pre>
 			<?php endif ?>
 		</div>
-		<?php if ( ENVIRONMENT != 'production' && isset($CI)) : ?>
-			<h3>Debug Info</h3>
-			<b>Config Path</b>
-			<pre><?= htmlentities(implode("\n", $CI->config->_config_paths )) ?></pre>
-			<b>Config Loaded</b>
-			<pre><?= htmlentities(implode("\n", $CI->config->is_loaded )) ?></pre>
-			<b>Config OpenSID Database</b>
-			<pre><?= KonfigurasiDatabase() ?></pre>
-		<?php endif ?>
 	</div>
 </body>
 
