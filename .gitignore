@@ -74,3 +74,6 @@ examples/
 vendor/libreoffice/*
 vendor/mikey179/*
 .idea/*
+
+# Database autobackup
+db/*
