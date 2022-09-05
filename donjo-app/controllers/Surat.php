@@ -100,9 +100,7 @@ class Surat extends Admin_Controller
 
     public function doc($url = '')
     {
-        $this->load->config('develbar', false);
         $this->cetak_doc($url);
-        $this->load->config('develbar', true);
     }
 
     private function cetak_doc($url)
