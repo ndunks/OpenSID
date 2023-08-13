@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -183,58 +183,53 @@ class Surat_keluar extends Admin_Controller
 
     public function dialog_cetak($o = 0)
     {
-        $data['aksi']           = 'Cetak';
-        $data['pamong']         = $this->pamong_model->list_data();
-        $data['pamong_ttd']     = $this->pamong_model->get_ub();
-        $data['pamong_ketahui'] = $this->pamong_model->get_ttd();
-        $data['tahun_surat']    = $this->surat_keluar_model->list_tahun_surat();
-        $data['form_action']    = site_url("surat_keluar/cetak/{$o}");
+        $data['aksi']        = 'Cetak';
+        $data['tahun_surat'] = $this->surat_keluar_model->list_tahun_surat();
+        $data['form_action'] = site_url("surat_keluar/dialog/cetak/{$o}");
+
         $this->load->view('surat_keluar/ajax_cetak', $data);
     }
 
     public function dialog_unduh($o = 0)
     {
         $data['aksi']        = 'Unduh';
-        $data['pamong']      = $this->pamong_model->list_data();
         $data['tahun_surat'] = $this->surat_keluar_model->list_tahun_surat();
-        $data['form_action'] = site_url("surat_keluar/unduh/{$o}");
+        $data['form_action'] = site_url("surat_keluar/dialog/unduh/{$o}");
         $this->load->view('surat_keluar/ajax_cetak', $data);
     }
 
-    public function cetak($o = 0)
+    public function dialog($aksi = 'unduh', $o = 0)
     {
-        $data['input']          = $this->input->post();
-        $this->session->filter  = $data['input']['tahun'];
-        $data['pamong_ttd']     = $this->pamong_model->get_data($data['input']['pamong_ttd']);
-        $data['pamong_ketahui'] = $this->pamong_model->get_data($data['input']['pamong_ketahui']);
-        $data['desa']           = $this->config_model->get_data();
-        $data['main']           = $this->surat_keluar_model->list_data($o, 0, 10000);
-        $this->load->view('surat_keluar/surat_keluar_print', $data);
-    }
+        // TODO :: gunakan view global penandatangan
+        $ttd                    = $this->modal_penandatangan();
+        $data['pamong_ttd']     = $this->pamong_model->get_data($ttd['pamong_ttd']->pamong_id);
+        $data['pamong_ketahui'] = $this->pamong_model->get_data($ttd['pamong_ketahui']->pamong_id);
 
-    public function unduh($o = 0)
-    {
-        $data['input']          = $this->input->post();
-        $this->session->filter  = $data['input']['tahun'];
-        $data['pamong_ttd']     = $this->pamong_model->get_data($data['input']['pamong_ttd']);
-        $data['pamong_ketahui'] = $this->pamong_model->get_data($data['input']['pamong_ketahui']);
-        $data['desa']           = $this->config_model->get_data();
-        $data['main']           = $this->surat_keluar_model->list_data($o, 0, 10000);
-        $this->load->view('surat_keluar/surat_keluar_excel', $data);
+        $data['input']         = $this->input->post();
+        $this->session->filter = $data['input']['tahun'];
+        $data['desa']          = $this->header['desa'];
+        $data['main']          = $this->surat_keluar_model->list_data($o, 0, 10000);
+
+        if ($aksi == 'unduh') {
+            $this->load->view('surat_keluar/surat_keluar_excel', $data);
+        } else {
+            $this->load->view('surat_keluar/surat_keluar_print', $data);
+        }
     }
 
     /**
      * Unduh berkas scan berdasarkan kolom surat_keluar.id
      *
-     * @param int $idSuratMasuk Id berkas scan pada koloam surat_keluar.id
+     * @param int $idSuratKeluar Id berkas scan pada koloam surat_keluar.id
+     * @param int $tipe
      *
      * @return void
      */
-    public function unduh_berkas_scan($idSuratMasuk)
+    public function berkas($idSuratKeluar = 0, $tipe = 0)
     {
         // Ambil nama berkas dari database
-        $berkas = $this->surat_keluar_model->getNamaBerkasScan($idSuratMasuk);
-        ambilBerkas($berkas, 'surat_keluar', '__sid__');
+        $berkas = $this->surat_keluar_model->getNamaBerkasScan($idSuratKeluar);
+        ambilBerkas($berkas, 'surat_keluar', '__sid__', LOKASI_ARSIP, ($tipe == 1) ? true : false);
     }
 
     public function nomor_surat_duplikat()

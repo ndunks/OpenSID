@@ -1,13 +1,14 @@
 <div class="content-wrapper">
 	<section class="content-header">
-		<h1>Staf Pemerintahan <?= ucwords($this->setting->sebutan_desa)?></h1>
+		<?php $pemerintah = 'Staf ' . ucwords(setting('sebutan_pemerintah_desa')) ?>
+		<h1><?= $pemerintah ?></h1>
 		<ol class="breadcrumb">
 			<li><a href="<?= site_url('hom_sid'); ?>"><i class="fa fa-home"></i> Home</a></li>
-			<li><a href="<?= site_url('pengurus'); ?>">Daftar Staf Pemerintahan</a></li>
-			<li class="active">Staf Pemerintahan <?= ucwords($this->setting->sebutan_desa); ?></li>
+			<li><a href="<?= site_url('pengurus'); ?>">Daftar <?= $pemerintah ?></a></li>
+			<li class="active"><?= $pemerintah ?></li>
 		</ol>
 	</section>
-	<section class="content">
+	<section class="content" id="maincontent">
 		<div class="box box-info">
 			<div class="box-header with-border">
 				<a href="<?= site_url('pengurus'); ?>" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-arrow-circle-o-left"></i> Kembali Ke Daftar Staf</a>
@@ -44,15 +45,15 @@
 			</div>
 		</div>
 		<div class="row">
-			<form id="validasi" action="<?= $form_action; ?>" method="POST" enctype="multipart/form-data" class="form-horizontal">
+			<?= form_open_multipart($form_action, 'id="validasi-proses" class="form-horizontal"') ?>
 				<input type="hidden" name="id_pend" value="<?= $individu['id']?>">
 				<div class="col-md-3">
 					<?php
-                        $sex  = $individu ? $individu['id_sex'] : $pamong['id_sex'];
-                        $foto = $individu ? $individu['foto'] : $pamong['foto'];
+                        $sex = $individu ? $individu['id_sex'] : $pamong['id_sex'];
+		$foto                      = $individu ? $individu['foto'] : $pamong['foto'];
 
-                        $this->load->view('global/ambil_foto', ['id_sex' => $sex, 'foto' => $foto]);
-                    ?>
+		$this->load->view('global/ambil_foto', ['id_sex' => $sex, 'foto' => $foto]);
+		?>
 				</div>
 				<div class="col-md-9">
 					<div class="box box-primary">
@@ -61,8 +62,24 @@
 								<label class="col-sm-4 control-label" for="pamong_nama">Nama Pegawai <?= ucwords($this->setting->sebutan_desa)?></label>
 								<div class="col-sm-7">
 									<input type="hidden" name="nik" value="<?= $individu['nik']; ?>">
-									<input class="form-control input-sm pengurus-desa" type="text" placeholder="Nama" value="<?= ($individu['nama'])?>" disabled="disabled"></input>
+									<input id="nama_penduduk" class="form-control input-sm pengurus-desa" type="text" placeholder="Nama" value="<?= ($individu['nama'])?>" disabled="disabled"></input>
 									<input id="pamong_nama" name="pamong_nama" class="form-control input-sm pengurus-luar-desa <?= ! empty($individu) ?: 'required'?>" type="text" placeholder="Nama" value="<?= ($pamong['pamong_nama'])?>" style="display: none;"></input>
+								</div>
+							</div>
+							<div class="form-group gelar">
+								<label class="col-sm-4 control-label"></label>
+								<div class="col-sm-3"></div>
+								<div class="col-sm-7">
+									<input id="nama_dengan_gelar" class="form-control input-sm" type="text" placeholder="Nama dengan gelar" disabled></input>
+								</div>
+							</div>
+							<div class="form-group gelar">
+								<label class="col-sm-4 control-label" for="gelar">Gelar</label>
+								<div class="col-sm-2">
+									<input id="gelar_depan" name="gelar_depan" class="form-control input-sm input-gelar" type="text" placeholder="Gelar Depan" value="<?= ($pamong['gelar_depan'])?>"></input>
+								</div>
+								<div class="col-sm-2">
+									<input id="gelar_belakang" name="gelar_belakang" class="form-control input-sm input-gelar" type="text" placeholder="Gelar Belakang" value="<?= ($pamong['gelar_belakang'])?>"></input>
 								</div>
 							</div>
 							<div class="form-group">
@@ -82,6 +99,13 @@
 								<label class="col-sm-4 control-label" for="pamong_nip">NIP</label>
 								<div class="col-sm-7">
 									<input id="pamong_nip" name="pamong_nip" class="form-control input-sm digits" type="text" maxlength="20" placeholder="NIP" value="<?=$pamong['pamong_nip']?>" ></input>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-4 control-label" for="pamong_tag_id_card">Tag ID Card</label>
+								<div class="col-sm-7">
+									<input class="form-control input-sm pengurus-desa" type="text" placeholder="Tag ID Card" value="<?=$individu['tag_id_card']?>" disabled="disabled"></input>
+									<input id="pamong_tag_id_card" name="pamong_tag_id_card" class="form-control input-sm pengurus-luar-desa tag_id_card" type="text" maxlength="17" placeholder="Tag ID Card" value="<?=$pamong['pamong_tag_id_card']?>" style="display: none;"></input>
 								</div>
 							</div>
 							<div class="form-group">
@@ -120,8 +144,8 @@
 									<input class="form-control input-sm pengurus-desa" type="text" placeholder="Pendidikan" value="<?= $individu['pendidikan_kk']?>" disabled="disabled"></input>
 									<select class="form-control input-sm pengurus-luar-desa" name="pamong_pendidikan" style="display: none;">
 										<option value="">Pilih Pendidikan (Dalam KK) </option>
-										<?php foreach ($pendidikan_kk as $data): ?>
-											<option value="<?= $data['id']?>" <?= selected($pamong['pamong_pendidikan'], $data['id']); ?>><?= strtoupper($data['nama'])?></option>
+										<?php foreach ($pendidikan_kk as $key => $value): ?>
+											<option value="<?= $key ?>" <?= selected($pamong['pamong_pendidikan'], $key); ?>><?= strtoupper($value)?></option>
 										<?php endforeach?>
 									</select>
 								</div>
@@ -132,8 +156,8 @@
 									<input class="form-control input-sm pengurus-desa" type="text" placeholder="Agama" value="<?= $individu['agama']?>" disabled="disabled"></input>
 									<select class="form-control input-sm pengurus-luar-desa" name="pamong_agama" style="display: none;">
 										<option value="">Pilih Agama</option>
-										<?php foreach ($agama as $data): ?>
-											<option value="<?= $data['id']?>" <?= selected($pamong['pamong_agama'], $data['id']); ?>><?= strtoupper($data['nama'])?></option>
+										<?php foreach ($agama as $key => $value): ?>
+											<option value="<?= $key ?>" <?= selected($pamong['pamong_agama'], $key); ?>><?= strtoupper($value)?></option>
 										<?php endforeach; ?>
 									</select>
 								</div>
@@ -145,13 +169,13 @@
 								</div>
 							</div>
 							<div class="form-group">
-								<label class="col-sm-4 control-label" for="pamong_nosk">Nomor SK Pengangkatan</label>
+								<label class="col-sm-4 control-label" for="pamong_nosk">Nomor Keputusan Pengangkatan</label>
 								<div class="col-sm-7">
-									<input name="pamong_nosk" class="form-control input-sm" type="text" maxlength="30" placeholder="Nomor SK Pengangkatan" value="<?= $pamong['pamong_nosk']?>" ></input>
+									<input name="pamong_nosk" class="form-control input-sm" type="text" maxlength="30" placeholder="Nomor Keputusan Pengangkatan" value="<?= $pamong['pamong_nosk']?>" ></input>
 								</div>
 							</div>
 							<div class='form-group'>
-								<label class="col-sm-4 control-label" for="pamong_tglsk">Tanggal SK Pengangkatan</label>
+								<label class="col-sm-4 control-label" for="pamong_tglsk">Tanggal Keputusan Pengangkatan</label>
 								<div class="col-sm-7">
 									<div class="input-group input-group-sm date">
 										<div class="input-group-addon">
@@ -162,13 +186,13 @@
 								</div>
 							</div>
 							<div class="form-group">
-								<label class="col-sm-4 control-label" for="pamong_nohenti">Nomor SK Pemberhentian</label>
+								<label class="col-sm-4 control-label" for="pamong_nohenti">Nomor Keputusan Pemberhentian</label>
 								<div class="col-sm-7">
-									<input name="pamong_nohenti" class="form-control input-sm" type="text" placeholder="Nomor SK Pemberhentian" value="<?= $pamong['pamong_nohenti']?>" ></input>
+									<input name="pamong_nohenti" class="form-control input-sm" type="text" placeholder="Nomor Keputusan Pemberhentian" value="<?= $pamong['pamong_nohenti']?>" ></input>
 								</div>
 							</div>
 							<div class='form-group'>
-								<label class="col-sm-4 control-label" for="pamong_tglhenti">Tanggal SK Pemberhentian</label>
+								<label class="col-sm-4 control-label" for="pamong_tglhenti">Tanggal Keputusan Pemberhentian</label>
 								<div class="col-sm-7">
 									<div class="input-group input-group-sm date">
 										<div class="input-group-addon">
@@ -187,7 +211,12 @@
 							<div class="form-group">
 								<label class="col-sm-4 control-label" for="jabatan">Jabatan</label>
 								<div class="col-sm-7">
-									<input id="jabatan" name="jabatan" class="form-control input-sm required" type="text" placeholder="Jabatan" value="<?= $pamong['jabatan']?>" ></input>
+									<select class="form-control select2 input-sm required" name="jabatan_id">
+										<option value="">Pilih Jabatan</option>
+										<?php foreach ($jabatan as $key => $value): ?>
+											<option value="<?= $key ?>" <?= selected($pamong['jabatan_id'], $key); ?>><?= $value ?></option>
+										<?php endforeach; ?>
+									</select>
 								</div>
 							</div>
 							<div class="form-group">
@@ -260,11 +289,36 @@
 
 <script>
 	$('document').ready(function() {
+		gelar();
+
 		$("input[name='pengurus']:checked").change();
 		if ($("#validasi input[name='id_pend']").val() != '') {
 			$('#pamong_nama').removeClass('required');
 		}
+
+		$(".input-gelar").keyup(function() {
+			gelar();
+		});
 	});
+
+	function gelar() {
+		var nama = $("input[name='id_pend']").val() != ''
+			? $("#nama_penduduk").val()
+			: $("#pamong_nama").val();
+
+		var depan = $("#gelar_depan").val();
+		var belakang = $("#gelar_belakang").val();
+
+		if (depan) {
+			nama = depan + ' ' + nama;
+		}
+
+		if (belakang) {
+			nama = nama + ', ' + belakang;
+		}
+
+		$("#nama_dengan_gelar").val(nama);
+	}
 
 	function reset_form() {
 		<?php if ($pamong['pamong_status'] == '1' || $pamong['pamong_status'] == null): ?>

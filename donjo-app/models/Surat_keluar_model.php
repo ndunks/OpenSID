@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -112,21 +112,29 @@ class Surat_keluar_model extends MY_Model
         $this->list_data_sql();
         //Ordering
         switch ($o) {
-            case 1: $order = ' YEAR(u.tanggal_surat) ASC, u.nomor_urut ASC'; break;
+            case 1: $order = ' YEAR(u.tanggal_surat) ASC, u.nomor_urut ASC';
+                break;
 
-            case 2: $order = ' YEAR(u.tanggal_surat) DESC, u.nomor_urut DESC'; break;
+            case 2: $order = ' YEAR(u.tanggal_surat) DESC, u.nomor_urut DESC';
+                break;
 
-            case 3: $order = ' u.tanggal_surat'; break;
+            case 3: $order = ' u.tanggal_surat';
+                break;
 
-            case 4: $order = ' u.tanggal_surat DESC'; break;
+            case 4: $order = ' u.tanggal_surat DESC';
+                break;
 
-            case 5: $order = ' u.tujuan'; break;
+            case 5: $order = ' u.tujuan';
+                break;
 
-            case 6: $order = ' u.tujuan DESC'; break;
+            case 6: $order = ' u.tujuan DESC';
+                break;
 
-            case 7: $order = ' u.tanggal_pengiriman'; break;
+            case 7: $order = ' u.tanggal_pengiriman';
+                break;
 
-            case 8: $order = ' u.tanggal_pengiriman DESC'; break;
+            case 8: $order = ' u.tanggal_pengiriman DESC';
+                break;
 
             default:$order = ' u.id';
         }

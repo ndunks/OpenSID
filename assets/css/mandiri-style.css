@@ -436,13 +436,16 @@ a.btn {
 
 .modal-dialog {
   background: rgb(0 0 0 / 0%);
-  top: 30%;
   padding: 5px;
+}
+
+.notifikasi {
+  top: 30%;
 }
 
 .modal-content {
   border-radius: 5px;
-  background: #00c0ef;
+  background: #ffffff;
   border: 2px solid black;
 }
 
@@ -493,6 +496,24 @@ a.pendapat > p {
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
+}
+
+.card-img-top {
+  height: 24vw !important;
+  object-fit: cover;
+}
+
+@media only screen and (max-width: 768px) {
+  .card-img-top {
+    height: 72vw !important;
+    object-fit: cover;
+  }
+}
+
+.btn-info.active, .btn-info.active:focus, .btn-info.active:hover, .open>.dropdown-toggle.btn-info.focus, .open>.dropdown-toggle.btn-info:hover {
+    color: #fff;
+    background-color: #1788aa;
+    border-color: #1b6d85;
 }
 
 .carousel-indicators li,

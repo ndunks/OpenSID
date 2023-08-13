@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -99,13 +99,17 @@ class Plan_point_model extends MY_Model
     public function list_data($o = 0, $offset = 0, $limit = 1000)
     {
         switch ($o) {
-            case 1: $order_sql = ' ORDER BY nama'; break;
+            case 1: $order_sql = ' ORDER BY nama';
+                break;
 
-            case 2: $order_sql = ' ORDER BY nama DESC'; break;
+            case 2: $order_sql = ' ORDER BY nama DESC';
+                break;
 
-            case 3: $order_sql = ' ORDER BY enabled'; break;
+            case 3: $order_sql = ' ORDER BY enabled';
+                break;
 
-            case 4: $order_sql = ' ORDER BY enabled DESC'; break;
+            case 4: $order_sql = ' ORDER BY enabled DESC';
+                break;
 
             default:$order_sql = ' ORDER BY id';
         }
@@ -267,40 +271,21 @@ class Plan_point_model extends MY_Model
 
     public function tambah_simbol()
     {
-        $vdir_upload  = LOKASI_SIMBOL_LOKASI;
-        $vfile_upload = $vdir_upload . basename($_FILES['simbol']['name']);
-        $fupload_name = basename($_FILES['simbol']['name']);
+        $config['upload_path']   = LOKASI_SIMBOL_LOKASI;
+        $config['allowed_types'] = 'gif|jpg|png|jpeg';
+        $this->load->library('upload');
+        $this->upload->initialize($config);
 
-        $error = periksa_file('simbol', unserialize(MIME_TYPE_SIMBOL), unserialize(EXT_SIMBOL));
-        if ($error != '') {
-            $this->session->set_userdata('success', -1);
-            $this->session->set_userdata('error_msg', $error);
+        if (! $this->upload->do_upload('simbol')) {
+            session_error($this->upload->display_errors());
 
-            return null;
-        }
-        move_uploaded_file($_FILES['simbol']['tmp_name'], $vfile_upload);
-
-        $im_src     = imagecreatefrompng($vfile_upload);
-        $src_width  = imageSX($im_src);
-        $src_height = imageSY($im_src);
-        if (($src_width * 3) < ($src_height * 3)) {
-            $dst_width  = 32;
-            $dst_height = ($dst_width / $src_width) * $src_height;
-            $cut_height = $dst_height - 32;
-
-            $im = imagecreatetruecolor(32, 32);
-            imagecopyresampled($im, $im_src, 0, 0, 0, $cut_height, $dst_width, $dst_height, $src_width, $src_height);
-        } else {
-            $dst_height = 32;
-            $dst_width  = ($dst_height / $src_height) * $src_width;
-            $cut_width  = $dst_width - 32;
-
-            $im = imagecreatetruecolor(32, 32);
-            imagecopyresampled($im, $im_src, 0, 0, $cut_width, 0, $dst_width, $dst_height, $src_width, $src_height);
+            return;
         }
 
-        imagepng($im, $vdir_upload . $fupload_name);
-        $data['simbol'] = basename($_FILES['simbol']['name']);
+        $uploadedImage = $this->upload->data();
+        ResizeGambar($uploadedImage['full_path'], $uploadedImage['full_path'], ['width' => 32, 'height' => 32]); // ubah ukuran gambar
+
+        $data['simbol'] = $uploadedImage['file_name'];
         $outp           = $this->db->insert('gis_simbol', $data);
         status_sukses($outp);
     }

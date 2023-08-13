@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -83,26 +83,6 @@ switch (ENVIRONMENT) {
 
 /*
  *---------------------------------------------------------------
- * CATATAN
- *---------------------------------------------------------------
- *
- * Setiap kali melakukan define folder,
- * Lakukan juga di file assets/filemanager/init.php
- * 
- */
-
-/*
- *---------------------------------------------------------------
- * DESA DIRECTORY NAME
- *---------------------------------------------------------------
- *
- * This variable must contain the name of your "desa" directory.
- * Set the path if it is not in the same directory as this file.
- */
-	$desa_path = 'desa';
-
-/*
- *---------------------------------------------------------------
  * SYSTEM DIRECTORY NAME
  *---------------------------------------------------------------
  *
@@ -142,27 +122,6 @@ $application_folder = 'donjo-app';
  * NO TRAILING SLASH!
  */
 $view_folder = '';
-
-/**
- *---------------------------------------------------------------
- * WEB DIRECTORY NAME
- *---------------------------------------------------------------
- */
-	$web_folder = 'fweb';
-
-/**
- *---------------------------------------------------------------
- * MANDIRI DIRECTORY NAME
- *---------------------------------------------------------------
- */
-	$mandiri_folder = 'fmandiri';
-
-/**
- *---------------------------------------------------------------
- * ADMIN DIRECTORY NAME
- *---------------------------------------------------------------
- */
-	$admin_folder = 'fadmin';
 
 /*
  * --------------------------------------------------------------------
@@ -314,15 +273,7 @@ if (! isset($view_folder[0]) && is_dir(APPPATH . 'views' . DIRECTORY_SEPARATOR))
 
 define('VIEWPATH', $view_folder . DIRECTORY_SEPARATOR);
 
-/**
- * Custom path
- */
-	define('WEB', $web_folder);
-    define('MANDIRI', $mandiri_folder);
-	define('ADMIN', $admin_folder);
-	define('DESAPATH', $desa_path.DIRECTORY_SEPARATOR);
-
-/**
+/*
  * --------------------------------------------------------------------
  * LOAD THE BOOTSTRAP FILE
  * --------------------------------------------------------------------

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -69,7 +69,7 @@ class Migrasi_fitur_premium_2105 extends MY_model
         $hasil = $hasil && $this->tambah_kolom_nik_tanah_di_desa();
         $hasil = $hasil && $this->tambah_kolom_tanah_kas_desa();
         $hasil = $hasil && $this->pengaturan_grup($hasil);
-        $hasil = $hasil && $this->bumindes_updates($hasil);		//harus setelah fungsi pengaturan grup
+        $hasil = $hasil && $this->bumindes_updates($hasil);        //harus setelah fungsi pengaturan grup
 
         return $hasil && $this->impor_google_form($hasil);
     }
@@ -184,7 +184,7 @@ class Migrasi_fitur_premium_2105 extends MY_model
         // Menambahkan data Redirect URI Google API pada Setting Aplikasi
         $data_setting = [
             'key'        => 'api_gform_redirect_uri',
-            'value'      => 'https://berputar.opensid.or.id/index.php/first/get_form_info',
+            'value'      => 'https://berputar.opendesa.id/index.php/first/get_form_info',
             'keterangan' => 'Redirecet URI untuk Google API',
             'kategori'   => 'setting_analisis',
         ];
@@ -213,7 +213,7 @@ class Migrasi_fitur_premium_2105 extends MY_model
         // Perhatikan pemindahan ini tidak akan dilakukan jika semua log id_peristiwa = 7
         // terhapus pada Migrasi_fitur_premium_2102.php
         $log_keluar = $this->db
-            ->select('l.id as id, l.id_pend, k.id as id_kk, p2.sex as kk_sex')
+            ->select('l.id as id, l.id_pend, k.id as id_kk')
             ->where('l.kode_peristiwa', 7)
             ->from('log_penduduk l')
             ->join('tweb_penduduk p1', 'p1.id = l.id_pend')
@@ -235,7 +235,6 @@ class Migrasi_fitur_premium_2105 extends MY_model
                 'tgl_peristiwa' => $log['tgl_peristiwa'],
                 'updated_by'    => $log['updated_by'] ?: $this->session->user,
                 'id_kk'         => $log['id_kk'],
-                'kk_sex'        => $log['kk_sex'],
                 'id_pend'       => $log['id_pend'],
             ];
         }
@@ -253,7 +252,7 @@ class Migrasi_fitur_premium_2105 extends MY_model
         $this->db->truncate('log_keluarga');
         // Tambah keluarga yg ada sebagai keluarga baru
         $keluarga = $this->db
-            ->select('k.id as id_kk, p.sex as kk_sex, "1" as id_peristiwa, tgl_daftar as tgl_peristiwa, "1" as updated_by')
+            ->select('k.id as id_kk, "1" as id_peristiwa, tgl_daftar as tgl_peristiwa, "1" as updated_by')
             ->from('tweb_keluarga k')
             ->join('tweb_penduduk p', 'p.id = k.nik_kepala')
             ->get()->result_array();
@@ -261,7 +260,7 @@ class Migrasi_fitur_premium_2105 extends MY_model
 
         // Tambah mutasi keluarga
         $mutasi = $this->db
-            ->select('k.id as id_kk, p.sex as kk_sex, lp.tgl_lapor as tgl_peristiwa')
+            ->select('k.id as id_kk, lp.tgl_lapor as tgl_peristiwa')
             ->select('(case when lp.kode_peristiwa in (2, 3, 4) then lp.kode_peristiwa end) as id_peristiwa')
             ->select('"1" as updated_by')
             ->from('tweb_keluarga k')
@@ -460,7 +459,7 @@ class Migrasi_fitur_premium_2105 extends MY_model
 
         $hasil = $hasil && $this->modul_tambahan($hasil);
         $hasil = $hasil && $this->ubah_grup($hasil);
-        $hasil = $hasil && $this->tambah_grup_akses($hasil);
+        $hasil = $hasil && $this->tambah_grupAkses($hasil);
         $hasil = $hasil && $this->urut_modul($hasil);
         $hasil = $hasil && $this->bersihkan_modul($hasil);
 
@@ -475,10 +474,30 @@ class Migrasi_fitur_premium_2105 extends MY_model
         $hasil = $hasil && $this->dbforge->modify_column('user_grup', $fields);
         if (! $this->db->field_exists('created_by', 'user_grup')) {
             $hasil = $hasil && $this->dbforge->add_column('user_grup', [
-                'jenis' => ['type' => 'TINYINT', 'constraint' => 2, 'null' => false, 'default' => 1],
-                'created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
                 'created_by' => ['type' => 'INT', 'constraint' => 11, 'null' => true],
+            ]);
+        }
+
+        if (! $this->db->field_exists('jenis', 'user_grup')) {
+            $hasil = $hasil && $this->dbforge->add_column('user_grup', [
+                'jenis' => ['type' => 'TINYINT', 'constraint' => 2, 'null' => false, 'default' => 1],
+            ]);
+        }
+
+        if (! $this->db->field_exists('created_at', 'user_grup')) {
+            $hasil = $hasil && $this->dbforge->add_column('user_grup', [
+                'created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
+            ]);
+        }
+
+        if (! $this->db->field_exists('updated_at', 'user_grup')) {
+            $hasil = $hasil && $this->dbforge->add_column('user_grup', [
                 'updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP',
+            ]);
+        }
+
+        if (! $this->db->field_exists('updated_by', 'user_grup')) {
+            $hasil = $hasil && $this->dbforge->add_column('user_grup', [
                 'updated_by' => ['type' => 'INT', 'constraint' => 11, 'null' => false],
             ]);
         }
@@ -486,7 +505,7 @@ class Migrasi_fitur_premium_2105 extends MY_model
         return $hasil && $this->db->where('id >', 4)->update('user_grup', ['jenis' => 2]);
     }
 
-    private function tambah_grup_akses($hasil)
+    private function tambah_grupAkses($hasil)
     {
         if ($this->db->table_exists('grup_akses')) {
             return $hasil;
@@ -593,10 +612,8 @@ class Migrasi_fitur_premium_2105 extends MY_model
 			(2,30,3),
 			(2,31,3),
 			(2,32,3),
-			(2,33,3),
 			(2,39,3),
 			(2,40,3),
-			(2,41,3),
 			(2,42,3),
 			(2,47,3),
 			(2,48,3),
@@ -701,15 +718,15 @@ class Migrasi_fitur_premium_2105 extends MY_model
         // Hanya isi jika grup Satgas Covid masih ada dan grup_akses belum ada (Jangan ubah grup_akses satgas covid jika sudah ada)
         if ($this->db->get_where('user_grup', ['id' => 5])->row()) {
             if (! $this->db->get_where('grup_akses', ['id_grup' => 5, 'id_modul' => 3])->row()) {
-                $this->grup_akses(5, 3, 0);
+                $this->grupAkses(5, 3, 0);
             }
 
             if (! $this->db->get_where('grup_akses', ['id_grup' => 5, 'id_modul' => 206])->row()) {
-                $this->grup_akses(5, 206, 0);
+                $this->grupAkses(5, 206, 0);
             }
 
             if (! $this->db->get_where('grup_akses', ['id_grup' => 5, 'id_modul' => 208])->row()) {
-                $this->grup_akses(5, 208, 7);
+                $this->grupAkses(5, 208, 7);
             }
         }
 

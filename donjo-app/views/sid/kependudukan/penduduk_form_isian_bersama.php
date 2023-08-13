@@ -7,7 +7,7 @@
 					<div class="input-group-addon">
 						<i class="fa fa-calendar"></i>
 					</div>
-					<input class="form-control input-sm pull-right" id="tgl_5" name="tgl_peristiwa" type="text" value="<?= $penduduk['tgl_peristiwa'] ? rev_tgl($penduduk['tgl_peristiwa']) : date('d-m-Y'); ?>">
+					<input class="form-control input-sm pull-right tgl_sekarang required" name="tgl_peristiwa" type="text" value="<?= $penduduk['tgl_peristiwa'] ? rev_tgl($penduduk['tgl_peristiwa']) : date('d-m-Y'); ?>">
 				</div>
 			</div>
 		</div>
@@ -20,7 +20,7 @@
 					<div class="input-group-addon">
 						<i class="fa fa-calendar"></i>
 					</div>
-					<input class="form-control input-sm pull-right" id="tgl_6" name="tgl_lapor" type="text" value="<?= $penduduk['tgl_lapor'] ? rev_tgl($penduduk['tgl_lapor']) : date('d-m-Y'); ?>">
+					<input class="form-control input-sm pull-right tgl_sekarang required" name="tgl_lapor" type="text" value="<?= $penduduk['tgl_lapor'] ? rev_tgl($penduduk['tgl_lapor']) : date('d-m-Y'); ?>">
 				</div>
 			</div>
 		</div>
@@ -109,7 +109,7 @@
 						<div class="input-group-addon">
 							<i class="fa fa-calendar"></i>
 						</div>
-						<input class="form-control input-sm pull-right tgl_1" id="tanggal_cetak_ktp" name="tanggal_cetak_ktp" type="text" value="<?= $penduduk['tanggal_cetak_ktp'] ?>">
+						<input class="form-control input-sm pull-right" id="tanggal_cetak_ktp" name="tanggal_cetak_ktp" type="text" value="<?= $penduduk['tanggal_cetak_ktp'] ?>">
 					</div>
 				</div>
 			</div>
@@ -246,7 +246,7 @@
 			<div class='col-sm-4'>
 				<div class='form-group'>
 					<label for="kelahiran_anak_ke">Anak Ke <code>(Isi dengan angka)</code></label>
-					<input id="kelahiran_anak_ke" name="kelahiran_anak_ke" class="form-control input-sm number" maxlength="2" type="text" placeholder="Anak Ke" value="<?= strtoupper($penduduk['kelahiran_anak_ke']) ?>"></input>
+					<input id="kelahiran_anak_ke" name="kelahiran_anak_ke" class="form-control input-sm number" min="1" max="20" type="number" placeholder="Anak Ke-" value="<?= $penduduk['kelahiran_anak_ke'] ?>"></input>
 				</div>
 			</div>
 			<div class='col-sm-4'>
@@ -341,7 +341,7 @@
 	<div class='col-sm-4'>
 		<div class='form-group'>
 			<label for="warganegara_id">Status Warga Negara</label>
-			<select class="form-control input-sm required" id="warganegara_id" name="warganegara_id" onchange="show_hide_negara_asal($(this).find(':selected').val())">
+			<select class="form-control input-sm required" id="warganegara_id" name="warganegara_id" onchange="show_hide_status_warga_negara($(this).find(':selected').val())">
 				<option value="">Pilih Warga Negara</option>
 				<?php foreach ($warganegara as $data) : ?>
 					<option value="<?= $data['id'] ?>" <?php selected($penduduk['warganegara_id'], $data['id']); ?>><?= strtoupper($data['nama']) ?></option>
@@ -366,7 +366,7 @@
 			</div>
 		</div>
 	</div>
-	<div class='col-sm-8'>
+	<div class='col-sm-8' id='field_dokumen_kitas'>
 		<div class='form-group'>
 			<label for="dokumen_kitas">Nomor KITAS/KITAP </label>
 			<input id="dokumen_kitas" name="dokumen_kitas" class="form-control input-sm number" maxlength="45" type="text" placeholder="Nomor KITAS/KITAP" value="<?= strtoupper($penduduk['dokumen_kitas']) ?>"></input>
@@ -459,26 +459,8 @@
 	<?php endif; ?>
 	<div class='col-sm-12'>
 		<div class='form-group'>
-			<label for="telepon"> Nomor Telepon </label>
-			<input id="telepon" name="telepon" class="form-control input-sm number" type="text" maxlength="20" placeholder="Nomor Telepon" value="<?= $penduduk['telepon'] ?>"></input>
-		</div>
-	</div>
-	<div class='col-sm-4'>
-		<div class='form-group'>
-			<label for="email"> Alamat Email </label>
-			<input id="email" name="email" class="form-control input-sm email" maxlength="50" placeholder="Alamat Email" value="<?= $penduduk['email'] ?>"></input>
-		</div>
-	</div>
-	<div class='col-sm-8'>
-		<div class='form-group'>
-			<label for="telegram">Telegram </label>
-			<input name="telegram" class="form-control input-sm number" maxlength="100" type="text" placeholder="Akun Telegram" value="<?= $penduduk['telegram'] ?>"></input>
-		</div>
-	</div>
-	<div class='col-sm-12'>
-		<div class='form-group'>
 			<label for="alamat_sebelumnya">Alamat Sebelumnya </label>
-			<input id="alamat_sebelumnya" name="alamat_sebelumnya" class="form-control input-sm nomor_sk" maxlength="200" type="text" placeholder="Alamat Sebelumnya" value="<?= $penduduk['alamat_sebelumnya'] ?>"></input>
+			<input id="alamat_sebelumnya" name="alamat_sebelumnya" class="form-control input-sm nomor_sk <?= jecho($jenis_peristiwa, 5, 'required') ?>" maxlength="200" type="text" placeholder="Alamat Sebelumnya" value="<?= $penduduk['alamat_sebelumnya'] ?>"></input>
 		</div>
 	</div>
 	<?php if (! $penduduk['no_kk'] && ! $kk_baru) : ?>
@@ -489,6 +471,40 @@
 			</div>
 		</div>
 	<?php endif; ?>
+	<div class='col-sm-4'>
+		<div class='form-group'>
+			<label for="telepon"> Nomor Telepon </label>
+			<input id="telepon" name="telepon" class="form-control input-sm number" type="text" maxlength="20" placeholder="Nomor Telepon" value="<?= $penduduk['telepon'] ?>"></input>
+		</div>
+	</div>
+	<div class='col-sm-4'>
+		<div class='form-group'>
+			<label for="email"> Email </label>
+			<input id="email" name="email" class="form-control input-sm email" maxlength="50" placeholder="Alamat Email" value="<?= $penduduk['email'] ?>"></input>
+		</div>
+	</div>
+	<div class='col-sm-4'>
+		<div class='form-group'>
+			<label for="telegram"> Telegram </label>
+			<input name="telegram" class="form-control input-sm number" maxlength="100" type="text" placeholder="Akun Telegram" value="<?= $penduduk['telegram'] ?>"></input>
+		</div>
+	</div>
+	<div class='col-sm-4'>
+		<div class='form-group'>
+			<label for="status_kawin"> Cara Hubung Warga </label>
+			<select class="form-control input-sm required" name="hubung_warga">
+				<option value="">Pilih Cara Hubungi</option>
+				<?php foreach (['SMS', 'Email', 'Telegram'] as $value) : ?>
+					<?php
+                        if ((bool) $this->setting->aktifkan_sms === false && $value === 'SMS') {
+                            continue;
+                        }
+				    ?>
+					<option value="<?= $value ?>" <?= selected($penduduk['hubung_warga'], $value); ?>><?= $value ?></option>
+				<?php endforeach ?>
+			</select>
+		</div>
+	</div>
 	<div class='col-sm-12'>
 		<div class="form-group subtitle_head">
 			<label class="text-right"><strong>STATUS PERKAWINAN :</strong></label>
@@ -742,7 +758,7 @@
 		$('#nik_sementara').change();
 
 		show_hide_penduduk_tidak_tetap($('#status_penduduk').val());
-		show_hide_negara_asal($('#warganegara_id').val());
+		show_hide_status_warga_negara($('#warganegara_id').val());
 		show_hide_ktp_el($('#ktp_el').val());
 
 	});
@@ -790,12 +806,12 @@
 		//Jika tidak, pakai foto default
 		if (foto) {
 			ukuran_foto = ukuran || null
-			file_foto = '<?= base_url() . LOKASI_USER_PICT; ?>' + ukuran_foto + foto;
+			file_foto = '<?= LOKASI_USER_PICT ?>' + ukuran_foto + foto;
 		} else {
 			file_foto = sex == '2' ? '<?= FOTO_DEFAULT_WANITA ?>' : '<?= FOTO_DEFAULT_PRIA ?>';
 		}
 
-		return file_foto;
+		return BASE_URL + file_foto;
 	}
 
 	function disable_kawin_cerai(status) {
@@ -816,15 +832,15 @@
 				$('#wajib_ktp').text('WAJIB');
 				break;
 			case '3':
-				$("#akta_perkawinan").attr('disabled', true);
-				$("input[name=tanggalperkawinan]").attr('disabled', true);
+				$("#akta_perkawinan").attr('disabled', false);
+				$("input[name=tanggalperkawinan]").attr('disabled', false);
 				$("#akta_perceraian").attr('disabled', false);
 				$("input[name=tanggalperceraian]").attr('disabled', false);
 				$('#wajib_ktp').text('WAJIB');
 				break;
 			case '4':
-				$("#akta_perkawinan").attr('disabled', true);
-				$("input[name=tanggalperkawinan]").attr('disabled', true);
+				$("#akta_perkawinan").attr('disabled', false);
+				$("input[name=tanggalperkawinan]").attr('disabled', false);
 				$("#akta_perceraian").attr('disabled', true);
 				$("input[name=tanggalperceraian]").attr('disabled', true);
 				$('#wajib_ktp').text('WAJIB');
@@ -841,12 +857,14 @@
 		}
 	}
 
-	function show_hide_negara_asal(warganegaraId) {
+	function show_hide_status_warga_negara(warganegaraId) {
 		// warganegara_id 1 = WNI, 2 = WNA, 3 = DUA KEWARGANEGARAAN
 		if (warganegaraId == 2 || warganegaraId == 3) {
 			$('#field_negara_asal').fadeIn();
+			$('#field_dokumen_kitas').fadeIn();
 		} else {
 			$('#field_negara_asal').fadeOut();
+			$('#field_dokumen_kitas').fadeOut();
 		}
 	}
 

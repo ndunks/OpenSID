@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -116,18 +116,20 @@ class Migrasi_fitur_premium_2201 extends MY_model
             $hasil = $hasil && $this->tambah_setting($setting);
         }
 
-        $id_setting = $this->db->get_where('setting_aplikasi', ['key' => 'tampilan_anjungan'])->row()->id;
-        if ($id_setting) {
-            $this->db->where('id_setting', $id_setting)->delete('setting_aplikasi_options');
+        if ($this->db->table_exists('setting_aplikasi_options')) {
+            $id_setting = $this->db->get_where('setting_aplikasi', ['key' => 'tampilan_anjungan'])->row()->id;
+            if ($id_setting) {
+                $this->db->where('id_setting', $id_setting)->delete('setting_aplikasi_options');
 
-            $hasil = $hasil && $this->db->insert_batch(
-                'setting_aplikasi_options',
-                [
-                    ['id_setting' => $id_setting, 'kode' => '0', 'value' => 'Tidak Aktif'],
-                    ['id_setting' => $id_setting, 'kode' => '1', 'value' => 'Slider'],
-                    ['id_setting' => $id_setting, 'kode' => '2', 'value' => 'Video'],
-                ]
-            );
+                $hasil = $hasil && $this->db->insert_batch(
+                    'setting_aplikasi_options',
+                    [
+                        ['id_setting' => $id_setting, 'kode' => '0', 'value' => 'Tidak Aktif'],
+                        ['id_setting' => $id_setting, 'kode' => '1', 'value' => 'Slider'],
+                        ['id_setting' => $id_setting, 'kode' => '2', 'value' => 'Video'],
+                    ]
+                );
+            }
         }
 
         return $hasil;
@@ -204,9 +206,8 @@ class Migrasi_fitur_premium_2201 extends MY_model
     protected function migrasi_2021122471($hasil)
     {
         $hasil = $hasil && $this->tambah_tabel_pengaduan($hasil);
-        $hasil = $hasil && $this->tambah_modul_pengaduan($hasil);
 
-        return $hasil && $this->tambah_folder_pengaduan($hasil);
+        return $hasil && $this->tambah_modul_pengaduan($hasil);
     }
 
     protected function tambah_tabel_pengaduan($hasil)
@@ -299,17 +300,6 @@ class Migrasi_fitur_premium_2201 extends MY_model
         ]);
     }
 
-    protected function tambah_folder_pengaduan($hasil)
-    {
-        $folder = 'upload/pengaduan';
-        if (! file_exists('/desa/' . $folder)) {
-            mkdir('desa/' . $folder, 0755, true);
-            xcopy('desa-contoh/' . $folder, 'desa/' . $folder);
-        }
-
-        return $hasil;
-    }
-
     protected function migrasi_2021122971($hasil)
     {
         $hasil = $hasil && $this->tambah_modul_hasil_pembangunan($hasil);
@@ -348,12 +338,6 @@ class Migrasi_fitur_premium_2201 extends MY_model
 
     protected function migrasi_2021122972($hasil)
     {
-        // tambahkan folder vaksin
-        $folder = 'upload/vaksin';
-        if (! file_exists('/desa/' . $folder)) {
-            mkdir('desa/' . $folder, 0755, true);
-            xcopy('desa-contoh/' . $folder, 'desa/' . $folder);
-        }
         // tambahkan field untuk vaksin covid 19
 
         if (! $this->db->table_exists('covid19_vaksin')) {

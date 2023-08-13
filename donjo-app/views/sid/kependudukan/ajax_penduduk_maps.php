@@ -70,8 +70,13 @@
 				var zoom = 10;
 			<?php	endif; ?>
 
+			var options = {
+				maxZoom: <?= setting('max_zoom_peta') ?>,
+				minZoom: <?= setting('min_zoom_peta') ?>,
+			};
+
 			//Inisialisasi tampilan peta
-			var peta_penduduk = L.map('tampil-map').setView(posisi, zoom);
+			var peta_penduduk = L.map('tampil-map', options).setView(posisi, zoom);
 
 			//1. Menampilkan overlayLayers Peta Semua Wilayah
 			var marker_desa = [];
@@ -107,7 +112,7 @@
 			<?php endif; ?>
 
 			//Menampilkan BaseLayers Peta
-			var baseLayers = getBaseLayers(peta_penduduk, '<?=$this->setting->mapbox_key?>');
+			var baseLayers = getBaseLayers(peta_penduduk, MAPBOX_KEY, JENIS_PETA);
 
 			//Menampilkan dan Menambahkan Peta wilayah + Geolocation GPS + Exim GPX/KML
 			L.Control.FileLayerLoad.LABEL = '<img class="icon-map" src="<?= base_url()?>assets/images/folder.svg" alt="file icon"/>';

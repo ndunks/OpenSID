@@ -31,10 +31,10 @@
 											<select class="form-control select2 input-sm required" id="nik" name="nik" onchange="formAction('main')" style="width:100%">
 												<option value="">-- Silakan Masukan <?= $detail['judul_cari_peserta'] ?> --</option>
 												<?php foreach ($program[2] as $item) :
-                                                    if ($item['id'] !== '') : ?>
+												    if ($item['id'] !== '') : ?>
 														<option value="<?= $item['id'] ?>" <?= selected($individu['nik'], $item['nik']); ?>><?= $item['nama'] . ' - ' . $item['info'] ?></option>
 												<?php endif;
-                                                endforeach; ?>
+												endforeach; ?>
 											</select>
 										</div>
 									</div>
@@ -66,7 +66,7 @@
 												<div class="form-group">
 													<label for="no_id_kartu" class="col-sm-4 col-lg-4 control-label">Nomor Kartu Peserta</label>
 													<div class="col-sm-8">
-														<input id="no_id_kartu" class="form-control input-sm nama_terbatas required" type="text" placeholder="Nomor Kartu Peserta" name="no_id_kartu" maxlength="30">
+														<input id="no_id_kartu" class="form-control input-sm nama_terbatas required" type="text" placeholder="Nomor Kartu Peserta" name="no_id_kartu" maxlength="36">
 													</div>
 												</div>
 												<div class="form-group">
@@ -74,7 +74,7 @@
 													<div class="col-sm-8">
 														<div class="input-group input-group-sm ">
 															<input type="text" class="form-control" id="file_path">
-															<input type="file" class="hidden" id="file" name="satuan">
+															<input type="file" class="hidden" id="file" name="file" accept=".jpg,.jpeg,.png">
 															<span class="input-group-btn">
 																<button type="button" class="btn btn-info btn-flat" id="file_browser"><i class="fa fa-search"></i> Browse</button>
 															</span>

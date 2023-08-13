@@ -12,18 +12,12 @@
     <?php if (is_file('desa/pengaturan/siteman/siteman.css')) : ?>
         <link rel='Stylesheet' href="<?= base_url('desa/pengaturan/siteman/siteman.css') ?>">
     <?php endif ?>
-    <?php if (is_file(LOKASI_LOGO_DESA . 'favicon.ico')) : ?>
-        <link rel="shortcut icon" href="<?= base_url(LOKASI_LOGO_DESA . 'favicon.ico') ?>">
-    <?php else : ?>
-        <link rel="shortcut icon" href="<?= base_url('favicon.ico') ?>" />
-    <?php endif ?>
+    <link rel="shortcut icon" href="<?= favico_desa() ?>" />
 
     <style type="text/css">
-        <?php if ($latar_login) : ?>body.login {
-            background-image: url('<?= base_url($latar_login) ?>');
+        body.login {
+            background-image: url('<?= $latar_login ?>');
         }
-
-        <?php endif ?>
     </style>
     <script src="<?= asset('bootstrap/js/jquery.min.js') ?>"></script>
     <script src="<?= asset('js/jquery.validate.min.js') ?>"></script>
@@ -59,6 +53,14 @@
                                     <input name="email" type="text" placeholder="Email Pengguna" class="form-control required">
                                 </div>
                                 <div class="form-group">
+                                    <a href="#" id="b-captcha" onclick="document.getElementById('captcha').src = '<?= base_url() . 'securimage/securimage_show.php?' ?>' + Math.random(); return false" style="color: #000000;">
+                                        <img id="captcha" src="<?= base_url('securimage/securimage_show.php?')  ?>" alt="CAPTCHA Image" />
+                                    </a>
+                                </div>
+                                <div class="form-group captcha">
+                                    <input name="captcha_code" type="text" class="form-control" maxlength="6" placeholder="Isikan jawaban" autocomplete="off" required />
+                                </div>
+                                <div class="form-group">
                                     <button type="submit" class="btn">Kirim Lupa Sandi</button>
                                 </div>
                             </form>
@@ -71,5 +73,8 @@
         </div>
     </div>
 </body>
+<script>
+    $('#b-captcha').click();
+</script>
 
 </html>

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -126,25 +126,35 @@ class Web_komentar_model extends MY_Model
     public function list_data($o = 0, $offset = 0, $limit = 500, $kat = 0)
     {
         switch ($o) {
-            case 1: $order_sql = ' ORDER BY owner DESC'; break;
+            case 1: $order_sql = ' ORDER BY owner DESC';
+                break;
 
-            case 2: $order_sql = ' ORDER BY owner'; break;
+            case 2: $order_sql = ' ORDER BY owner';
+                break;
 
-            case 3: $order_sql = ' ORDER BY email DESC'; break;
+            case 3: $order_sql = ' ORDER BY email DESC';
+                break;
 
-            case 4: $order_sql = ' ORDER BY email'; break;
+            case 4: $order_sql = ' ORDER BY email';
+                break;
 
-            case 5: $order_sql = ' ORDER BY komentar DESC'; break;
+            case 5: $order_sql = ' ORDER BY komentar DESC';
+                break;
 
-            case 6: $order_sql = ' ORDER BY komentar'; break;
+            case 6: $order_sql = ' ORDER BY komentar';
+                break;
 
-            case 7: $order_sql = ' ORDER BY status DESC'; break;
+            case 7: $order_sql = ' ORDER BY status DESC';
+                break;
 
-            case 8: $order_sql = ' ORDER BY status'; break;
+            case 8: $order_sql = ' ORDER BY status';
+                break;
 
-            case 9: $order_sql = ' ORDER BY tgl_upload DESC'; break;
+            case 9: $order_sql = ' ORDER BY tgl_upload DESC';
+                break;
 
-            case 10: $order_sql = ' ORDER BY tgl_upload'; break;
+            case 10: $order_sql = ' ORDER BY tgl_upload';
+                break;
 
             default:$order_sql = ' ORDER BY tgl_upload DESC';
         }

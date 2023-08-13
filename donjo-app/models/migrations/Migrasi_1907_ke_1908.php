@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -91,24 +91,27 @@ class Migrasi_1907_ke_1908 extends CI_model
         $fields['path']      = ['type' => 'TEXT', 'constraint' => 11, 'null' => true, 'default' => null];
         $fields['map_tipe']  = ['type' => 'VARCHAR', 'constraint' => 20, 'null' => true, 'default' => null];
         $this->dbforge->modify_column('tweb_wil_clusterdesa', $fields);
-        // Tambah kolom kode untuk setting_aplikasi_options
-        if (! $this->db->field_exists('kode', 'setting_aplikasi_options')) {
-            $fields         = [];
-            $fields['kode'] = ['type' => 'TINYINT', 'constraint' => 4, 'null' => true, 'default' => null];
-            $this->dbforge->add_column('setting_aplikasi_options', $fields);
+
+        if ($this->db->table_exists('setting_aplikasi_options')) {
+            // Tambah kolom kode untuk setting_aplikasi_options
+            if (! $this->db->field_exists('kode', 'setting_aplikasi_options')) {
+                $fields         = [];
+                $fields['kode'] = ['type' => 'TINYINT', 'constraint' => 4, 'null' => true, 'default' => null];
+                $this->dbforge->add_column('setting_aplikasi_options', $fields);
+            }
+            // Perbaiki setting offline_mode
+            $this->db->where('key', 'offline_mode')->update('setting_aplikasi', ['jenis' => 'option-kode']);
+            $setting_id = $this->db->select('id')->where('key', 'offline_mode')->get('setting_aplikasi')->row()->id;
+            $this->db->where('id_setting', $setting_id)->delete('setting_aplikasi_options');
+            $this->db->insert_batch(
+                'setting_aplikasi_options',
+                [
+                    ['id_setting' => $setting_id, 'kode' => '0', 'value' => 'Web bisa diakses publik'],
+                    ['id_setting' => $setting_id, 'kode' => '1', 'value' => 'Web hanya bisa diakses petugas web'],
+                    ['id_setting' => $setting_id, 'kode' => '2', 'value' => 'Web non-aktif sama sekali'],
+                ]
+            );
         }
-        // Perbaiki setting offline_mode
-        $this->db->where('key', 'offline_mode')->update('setting_aplikasi', ['jenis' => 'option-kode']);
-        $setting_id = $this->db->select('id')->where('key', 'offline_mode')->get('setting_aplikasi')->row()->id;
-        $this->db->where('id_setting', $setting_id)->delete('setting_aplikasi_options');
-        $this->db->insert_batch(
-            'setting_aplikasi_options',
-            [
-                ['id_setting' => $setting_id, 'kode' => '0', 'value' => 'Web bisa diakses publik'],
-                ['id_setting' => $setting_id, 'kode' => '1', 'value' => 'Web hanya bisa diakses petugas web'],
-                ['id_setting' => $setting_id, 'kode' => '2', 'value' => 'Web non-aktif sama sekali'],
-            ]
-        );
         // Tambah Surat Perintah Perjalanan Dinas
         // Tambah surat keterangan penghasilan orangtua
         $data = [

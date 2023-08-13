@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -110,6 +110,7 @@ class Area extends Admin_Controller
 
         $data['list_polygon'] = $this->plan_area_model->list_polygon();
         $data['tip']          = 4;
+        $data['foto_area']    = to_base64(LOKASI_FOTO_AREA . 'kecil_' . $data['area']['foto']);
 
         $this->render('area/form', $data);
     }
@@ -124,8 +125,8 @@ class Area extends Admin_Controller
             $data['area'] = null;
         }
 
-        $data['desa']                   = $this->config_model->get_data();
-        $data['wil_atas']               = $this->config_model->get_data();
+        $data['desa']                   = $this->header['desa'];
+        $data['wil_atas']               = $this->header['desa'];
         $data['dusun_gis']              = $this->wilayah_model->list_dusun();
         $data['rw_gis']                 = $this->wilayah_model->list_rw();
         $data['rt_gis']                 = $this->wilayah_model->list_rt();
@@ -200,15 +201,26 @@ class Area extends Admin_Controller
     public function insert($tip = 1)
     {
         $this->redirect_hak_akses('u');
-        $this->plan_area_model->insert($tip);
-        redirect("area/index/{$tip}");
+        if ($this->validation()) {
+            $this->plan_area_model->insert($tip);
+            redirect("area/index/{$tip}");
+        }
+
+        session_error(trim(validation_errors()));
+        redirect('area/form');
     }
 
     public function update($id = '', $p = 1, $o = 0)
     {
         $this->redirect_hak_akses('u');
-        $this->plan_area_model->update($id);
-        redirect("area/index/{$p}/{$o}");
+
+        if ($this->validation()) {
+            $this->plan_area_model->update($id);
+            redirect("area/index/{$p}/{$o}");
+        }
+
+        session_error(trim(validation_errors()));
+        redirect("area/form/{$id}/{$p}/{$o}");
     }
 
     public function delete($p = 1, $o = 0, $id = '')
@@ -237,5 +249,16 @@ class Area extends Admin_Controller
         $this->redirect_hak_akses('u');
         $this->plan_area_model->area_lock($id, 2);
         redirect("area/index/{$p}/{$o}");
+    }
+
+    private function validation()
+    {
+        $this->load->library('form_validation');
+        $this->form_validation->set_rules('nama', 'Nama', 'required|trim');
+        $this->form_validation->set_rules('ref_polygon', 'Kategori', 'required');
+        $this->form_validation->set_rules('desk', 'Keterangan', 'required|trim');
+        $this->form_validation->set_rules('enabled', 'Status', 'required');
+
+        return $this->form_validation->run();
     }
 }

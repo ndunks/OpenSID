@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -378,13 +378,17 @@ class Analisis_respon_model extends CI_Model
         $this->list_data_sql();
 
         switch ($o) {
-            case 1: $this->db->order_by('u.id'); break;
+            case 1: $this->db->order_by('u.id');
+                break;
 
-            case 2: $this->db->order_by('u.id DESC'); break;
+            case 2: $this->db->order_by('u.id DESC');
+                break;
 
-            case 3: $this->db->order_by('nama'); break;
+            case 3: $this->db->order_by('nama');
+                break;
 
-            case 4: $this->db->order_by('nama DESC'); break;
+            case 4: $this->db->order_by('nama DESC');
+                break;
 
             default:$this->db->order_by('u.id');
         }
@@ -452,13 +456,17 @@ class Analisis_respon_model extends CI_Model
         $this->list_data_sql();
 
         switch ($o) {
-            case 1: $this->db->order_by('u.id'); break;
+            case 1: $this->db->order_by('u.id');
+                break;
 
-            case 2: $this->db->order_by('u.id DESC'); break;
+            case 2: $this->db->order_by('u.id DESC');
+                break;
 
-            case 3: $this->db->order_by('nama'); break;
+            case 3: $this->db->order_by('nama');
+                break;
 
-            case 4: $this->db->order_by('nama DESC'); break;
+            case 4: $this->db->order_by('nama DESC');
+                break;
 
             default:$this->db->order_by('u.id');
         }
@@ -953,9 +961,11 @@ class Analisis_respon_model extends CI_Model
         $subjek = $this->subjek;
         if ($subjek == 2 || $subjek == 3) {
             switch ($subjek) {
-                case 2: $sql = 'SELECT u.* FROM penduduk_hidup u WHERE u.id_kk = ? ORDER BY kk_level'; break;
+                case 2: $sql = 'SELECT u.* FROM penduduk_hidup u WHERE u.id_kk = ? ORDER BY kk_level';
+                    break;
 
-                case 3: $sql = 'SELECT u.* FROM penduduk_hidup u WHERE u.id_rtm = ? ORDER BY rtm_level'; break;
+                case 3: $sql = 'SELECT u.* FROM penduduk_hidup u WHERE u.id_rtm = ? ORDER BY rtm_level';
+                    break;
 
                 default: return null;
             }

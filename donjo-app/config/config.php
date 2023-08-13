@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -250,6 +250,7 @@ $config['allow_get_array'] = true;
 |	2 = Debug Messages
 |	3 = Informational Messages
 |	4 = All Messages
+|	5 = Notice Messages
 |
 | You can also pass an array with threshold levels to show individual error types
 |
@@ -259,7 +260,7 @@ $config['allow_get_array'] = true;
 | your log files will fill up very fast.
 |
 */
-$config['log_threshold'] = ENVIRONMENT === 'development' ? 1 : 1;
+$config['log_threshold'] = [1, 5];
 
 /*
 |--------------------------------------------------------------------------
@@ -270,7 +271,7 @@ $config['log_threshold'] = ENVIRONMENT === 'development' ? 1 : 1;
 | application/logs/ directory. Use a full server path with trailing slash.
 |
 */
-$config['log_path'] = FCPATH . 'logs/';
+$config['log_path'] = STORAGEPATH . '/logs/';
 
 /*
 |--------------------------------------------------------------------------
@@ -339,7 +340,7 @@ $config['error_views_path'] = '';
 | application/cache/ directory.  Use a full server path with trailing slash.
 |
 */
-$config['cache_path'] = DESAPATH . 'cache/';
+$config['cache_path'] = FCPATH . LOKASI_CACHE;
 
 /*
 |--------------------------------------------------------------------------
@@ -499,7 +500,7 @@ $config['csrf_token_name']   = 'sidcsrf';
 $config['csrf_cookie_name']  = 'sidcsrf';
 $config['csrf_expire']       = 7200;
 $config['csrf_regenerate']   = true;
-$config['csrf_exclude_uris'] = [];
+$config['csrf_exclude_uris'] = ['api.*+'];
 
 /*
 |--------------------------------------------------------------------------
@@ -570,6 +571,18 @@ $config['proxy_ips'] = '';
 
 /*
 |--------------------------------------------------------------------------
+| APLIKASI
+|--------------------------------------------------------------------------
+|
+| - Nama Aplikasi
+| - Nama Lembaga
+|
+*/
+$config['nama_aplikasi'] = 'OpenSID';
+$config['nama_lembaga']  = 'OpenDesa';
+
+/*
+|--------------------------------------------------------------------------
 | PANTAU / TRACKSID
 |--------------------------------------------------------------------------
 |
@@ -596,5 +609,45 @@ $config['server_layanan'] = 'https://layanan.opendesa.id';
 |--------------------------------------------------------------------------
 |
 */
-$config['rilis_umum']    = 'https://api.github.com/repos/opensid/opensid/releases/latest';
-$config['rilis_premium'] = 'https://api.github.com/repos/opensid/berputar/releases/latest';
+$config['rilis_umum'] = 'https://api.github.com/repos/opensid/opensid/releases/latest';
+
+/*
+|--------------------------------------------------------------------------
+| API IDM Kemendesa
+|--------------------------------------------------------------------------
+|
+*/
+$config['api_idm'] = 'https://idm.kemendesa.go.id/open/api/desa/rumusan';
+
+/*
+|--------------------------------------------------------------------------
+| API SDGS Kemendesa
+|--------------------------------------------------------------------------
+|
+*/
+$config['api_sdgs'] = 'https://sid.kemendesa.go.id/sdgs/searching/score-sdgs?location_code=';
+
+/*
+|--------------------------------------------------------------------------
+| Path View Blade
+|--------------------------------------------------------------------------
+|
+*/
+$config['views_blade'] = RESOURCESPATH . 'views/';
+
+/*
+|--------------------------------------------------------------------------
+| Path Cache Balde
+|--------------------------------------------------------------------------
+|
+*/
+$config['cache_blade'] = STORAGEPATH . 'framework/views/';
+
+/*
+|--------------------------------------------------------------------------
+| failed login attempts
+|--------------------------------------------------------------------------
+|
+*/
+$config['maximum_login_attempts'] = 3;
+$config['lockout_time']           = 300;                 // The number of seconds to lockout an account due to exceeded attempts

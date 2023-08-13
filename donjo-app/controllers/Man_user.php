@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,18 +37,26 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
+use App\Models\Pamong;
+
 class Man_user extends Admin_Controller
 {
+    private $_set_page;
+    private $_list_session;
+
     public function __construct()
     {
         parent::__construct();
         $this->modul_ini     = 11;
         $this->sub_modul_ini = 44;
+        $this->_set_page     = ['5', '50', '100', '200'];
+        $this->_list_session = ['cari', 'filter'];
     }
 
     public function clear()
     {
-        unset($_SESSION['cari'], $_SESSION['filter']);
+        $this->session->unset_userdata($this->_list_session);
+        $this->session->per_page = $this->_set_page[0];
 
         redirect('man_user');
     }
@@ -59,27 +67,21 @@ class Man_user extends Admin_Controller
         $data['p']     = $p;
         $data['o']     = $o;
 
-        if (isset($_SESSION['cari'])) {
-            $data['cari'] = $_SESSION['cari'];
-        } else {
-            $data['cari'] = '';
+        foreach ($this->_list_session as $list) {
+            $data[$list] = $this->session->{$list} ?: '';
         }
 
-        if (isset($_SESSION['filter'])) {
-            $data['filter'] = $_SESSION['filter'];
-        } else {
-            $data['filter'] = '';
+        $per_page = $this->input->post('per_page');
+        if (isset($per_page)) {
+            $this->session->per_page = $per_page;
         }
 
-        if (isset($_POST['per_page'])) {
-            $_SESSION['per_page'] = $_POST['per_page'];
-        }
-        $data['per_page'] = $_SESSION['per_page'];
-
-        $data['paging']  = $this->user_model->paging($p, $o);
-        $data['main']    = $this->user_model->list_data($o, $data['paging']->offset, $data['paging']->per_page);
-        $data['keyword'] = $this->user_model->autocomplete();
-
+        $data['func']       = 'index';
+        $data['set_page']   = $this->_set_page;
+        $data['per_page']   = $this->session->per_page;
+        $data['paging']     = $this->user_model->paging($p, $o);
+        $data['main']       = $this->user_model->list_data($o, $data['paging']->offset, $data['paging']->per_page);
+        $data['keyword']    = $this->user_model->autocomplete();
         $data['user_group'] = $this->referensi_model->list_data('user_grup');
 
         $this->render('man_user/manajemen_user_table', $data);
@@ -100,6 +102,8 @@ class Man_user extends Admin_Controller
         }
 
         $data['user_group'] = $this->referensi_model->list_data('user_grup');
+
+        $data['pamong'] = Pamong::selectData()->daftar()->get();
 
         $this->render('man_user/manajemen_user_form', $data);
     }
@@ -132,20 +136,29 @@ class Man_user extends Admin_Controller
         $this->set_form_validation();
         $this->form_validation->set_rules('username', 'Username', 'is_unique[user.username]');
         $this->form_validation->set_rules('email', 'Email', 'is_unique[user.email]');
+        $this->form_validation->set_rules([
+            [
+                'field'  => 'pamong_id',
+                'label'  => 'Pamong',
+                'rules'  => 'is_unique[user.pamong_id]',
+                'errors' => [
+                    'is_unique' => 'pengguna tersebut sudah ada',
+                ],
+            ],
+        ]);
 
         if ($this->form_validation->run() !== true) {
-            $this->session->success   = -1;
-            $this->session->error_msg = trim(validation_errors());
+            session_error(trim(validation_errors()));
             redirect('man_user/form');
         } else {
             $this->user_model->insert();
+
             redirect('man_user');
         }
     }
 
     private function set_form_validation()
     {
-        $this->load->helper('form');
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('', '');
         $this->form_validation->set_rules('password', 'Kata Sandi Baru', 'required|callback_syarat_sandi');
@@ -163,40 +176,21 @@ class Man_user extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
         $this->set_form_validation();
+        $this->form_validation->set_rules('username', 'Username', "is_unique[user.username,id,{$id}]");
+        $this->form_validation->set_rules('email', 'Email', "is_unique[user.email,id,{$id}]");
+        $this->form_validation->set_rules([
+            [
+                'field'  => 'pamong_id',
+                'label'  => 'Pamong',
+                'rules'  => "is_unique[user.pamong_id,id,{$id}]",
+                'errors' => [
+                    'is_unique' => 'pengguna tersebut sudah ada',
+                ],
+            ],
+        ]);
 
-        // Validasi Email
-        $email = $this->input->post('email');
-        if (isset($email)) {
-            $validation_email = $this->db
-                ->select('email')
-                ->from('user')
-                ->where('email', $email)
-                ->where_not_in('id', $id)
-                ->limit(1)->get()->row();
-        }
-
-        // Validasi Username
-        $username = $this->input->post('username');
-        if (isset($username)) {
-            $validation_username = $this->db
-                ->select('username')
-                ->from('user')
-                ->where('username', $username)
-                ->where_not_in('id', $id)
-                ->limit(1)->get()->row();
-        }
-
-        if ($validation_email->email == $email) {
-            $this->session->success   = -1;
-            $this->session->error_msg = 'Email Sudah digunakan';
-            redirect("man_user/form/{$p}/{$o}/{$id}");
-        } elseif ($validation_username->username == $username) {
-            $this->session->success   = -1;
-            $this->session->error_msg = 'Username Sudah digunakan';
-            redirect("man_user/form/{$p}/{$o}/{$id}");
-        } elseif ($this->form_validation->run() !== true) {
-            $this->session->success   = -1;
-            $this->session->error_msg = trim(validation_errors());
+        if ($this->form_validation->run() !== true) {
+            session_error(trim(validation_errors()));
             redirect("man_user/form/{$p}/{$o}/{$id}");
         } else {
             $this->user_model->update($id);
@@ -222,13 +216,13 @@ class Man_user extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
         $this->user_model->user_lock($id, 0);
-        redirect("man_user/index/{$p}/{$o}");
+        redirect('man_user');
     }
 
     public function user_unlock($id = '')
     {
         $this->redirect_hak_akses('u');
         $this->user_model->user_lock($id, 1);
-        redirect("man_user/index/{$p}/{$o}");
+        redirect('man_user');
     }
 }

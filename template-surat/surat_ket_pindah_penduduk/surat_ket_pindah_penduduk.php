@@ -375,9 +375,8 @@
 			$('#group_jenis_permohonan').show();
 			$('#jenis_permohonan_id').removeAttr('disabled');
 
-			// Klasifikasi pindah tidak untuk F-1.03
-			$('#pindah').hide();
-			$('#klasifikasi_pindah_id').removeClass('required');
+			$('#pindah').show();
+			$('#klasifikasi_pindah_id').addClass('required');
 		} else if (kode_format == 'f108') {
 			$('#kode_format').val('F-1.08');
 			$('#status_kk_tidak_pindah_f103_show').hide();
@@ -396,9 +395,8 @@
 			$('#group_alamat_tujuan').hide();
 			$('#group_penanggungjawab').hide();
 
-			// Klasifikasi pindah tidak untuk F-1.08
-			$('#pindah').hide();
-			$('#klasifikasi_pindah_id').removeClass('required');
+			$('#pindah').show();
+			$('#klasifikasi_pindah_id').addClass('required');
 
 			$('#nama_sponsor').attr('disabled', 'disabled');
 			$('#tipe_sponsor_id').attr('disabled', 'disabled');
@@ -632,7 +630,7 @@
 			if ($('#pakai_format').val() == 'f127') {
 				$('#kode_format').val('F-1.27');
 			}
-			$('#desa_tujuan_show').removeAttr('disabled');
+			$('#desa_tujuan_show').removeAttr('disabled').val('');
 			$('#desa_tujuan-opener').show();
 		} else {
 			$('#kode_format').val('F-1.23');
@@ -646,7 +644,7 @@
 			if ($('#pakai_format').val() == 'f127') {
 				$('#kode_format').val('F-1.31');
 			}
-			$('#kecamatan_tujuan_show').removeAttr('disabled');
+			$('#kecamatan_tujuan_show').removeAttr('disabled').val('');
 			$('#kecamatan_tujuan-opener').show();
 		}
 
@@ -655,7 +653,7 @@
 			if ($('#pakai_format').val() == 'f127') {
 				$('#kode_format').val('F-1.39');
 			}
-			$('#kabupaten_tujuan_show').removeAttr('disabled');
+			$('#kabupaten_tujuan_show').removeAttr('disabled').val('');
 			$('#kabupaten_tujuan-opener').show();
 		}
 
@@ -664,7 +662,7 @@
 			if ($('#pakai_format').val() == 'f127') {
 				$('#kode_format').val('F-1.39');
 			}
-			$('#provinsi_tujuan_show').removeAttr('disabled');
+			$('#provinsi_tujuan_show').removeAttr('disabled').val('');
 			$('#provinsi_tujuan-opener').show();
 		}
 

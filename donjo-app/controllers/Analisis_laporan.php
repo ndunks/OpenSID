@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -45,6 +45,14 @@ class Analisis_laporan extends Admin_Controller
     public function __construct()
     {
         parent::__construct();
+
+        if (! $this->session->has_userdata('analisis_master')) {
+            $this->session->success   = -1;
+            $this->session->error_msg = 'Pilih master analisis terlebih dahulu';
+
+            redirect('analisis_master');
+        }
+
         $this->load->model(['pamong_model', 'wilayah_model', 'analisis_laporan_model', 'analisis_respon_model', 'analisis_master_model']);
         $this->session->submenu  = 'Laporan Analisis';
         $this->session->asubmenu = 'analisis_laporan';
@@ -148,8 +156,8 @@ class Analisis_laporan extends Admin_Controller
     // $aksi = cetak/unduh
     public function dialog_kuisioner($p = 1, $o = 0, $id = 0, $aksi = '')
     {
+        $data                = $this->modal_penandatangan();
         $data['aksi']        = ucwords($aksi);
-        $data['pamong']      = $this->pamong_model->list_data();
         $data['form_action'] = site_url("analisis_laporan/daftar/{$p}/{$o}/{$id}/{$aksi}");
 
         $this->load->view('global/ttd_pamong', $data);
@@ -160,13 +168,17 @@ class Analisis_laporan extends Admin_Controller
         $subjek_tipe = $this->session->subjek_tipe;
 
         switch ($subjek_tipe) {
-            case 1: $asubjek = 'Penduduk'; break;
+            case 1: $asubjek = 'Penduduk';
+                break;
 
-            case 2: $asubjek = 'Keluarga'; break;
+            case 2: $asubjek = 'Keluarga';
+                break;
 
-            case 3: $asubjek = 'Rumahtangga'; break;
+            case 3: $asubjek = 'Rumahtangga';
+                break;
 
-            case 4: $asubjek = 'Kelompok'; break;
+            case 4: $asubjek = 'Kelompok';
+                break;
 
             default: return null;
         }
@@ -204,12 +216,10 @@ class Analisis_laporan extends Admin_Controller
         // Simpan session lama
         $temp_cari = $this->session->cari;
         $this->session->unset_userdata('cari');
-        $data['aksi']           = ucwords($aksi);
-        $data['pamong']         = $this->pamong_model->list_data();
-        $data['pamong_ketahui'] = $this->pamong_model->get_ttd();
-        $data['pamong_ttd']     = $this->pamong_model->get_ub();
-        $data['form_action']    = site_url("analisis_laporan/cetak/{$o}/{$aksi}");
-        $this->session->cari    = $temp_cari;
+        $data                = $this->modal_penandatangan();
+        $data['aksi']        = ucwords($aksi);
+        $data['form_action'] = site_url("analisis_laporan/cetak/{$o}/{$aksi}");
+        $this->session->cari = $temp_cari;
 
         $this->load->view('global/ttd_pamong', $data);
     }

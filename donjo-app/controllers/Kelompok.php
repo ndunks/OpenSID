@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -50,14 +50,15 @@ class Kelompok extends Admin_Controller
         $this->modul_ini     = 2;
         $this->sub_modul_ini = 24;
         $this->_set_page     = ['20', '50', '100'];
-        $this->_list_session = ['cari', 'filter', 'penerima_bantuan', 'sex'];
+        $this->_list_session = ['cari', 'filter', 'penerima_bantuan', 'sex', 'status_dasar'];
         $this->kelompok_model->set_tipe($this->tipe);
     }
 
     public function clear()
     {
         $this->session->unset_userdata($this->_list_session);
-        $this->session->per_page = $this->_set_page[0];
+        $this->session->per_page     = $this->_set_page[0];
+        $this->session->status_dasar = 1; // Rumah Tangga Aktif
 
         redirect($this->controller);
     }
@@ -88,10 +89,21 @@ class Kelompok extends Admin_Controller
         $this->render('kelompok/table', $data);
     }
 
-    public function anggota($id = 0)
+    public function anggota($id = 0, $p = 1, $o = 0)
     {
+        $data['p'] = $p;
+        $data['o'] = $o;
+
+        $per_page = $this->input->post('per_page');
+        if (isset($per_page)) {
+            $this->session->per_page = $per_page;
+        }
+
+        $data['set_page'] = $this->_set_page;
+        $data['paging']   = $this->kelompok_model->paging($p, $id);
+        $data['func']     = 'anggota/' . $id;
         $data['kelompok'] = $this->kelompok_model->get_kelompok($id);
-        $data['main']     = $this->kelompok_model->list_anggota($id);
+        $data['main']     = $this->kelompok_model->list_anggota($o, $data['paging']->offset, $data['paging']->per_page, $id);
 
         $this->render('kelompok/anggota/table', $data);
     }
@@ -135,7 +147,7 @@ class Kelompok extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
         $data['kelompok']      = $id;
-        $data['list_penduduk'] = $this->kelompok_model->list_penduduk();
+        $data['list_penduduk'] = $this->kelompok_model->list_penduduk($id, $id_a);
         $data['list_jabatan1'] = $this->referensi_model->list_ref(JABATAN_KELOMPOK);
         $data['list_jabatan2'] = $this->kelompok_model->list_jabatan($id);
 
@@ -153,11 +165,9 @@ class Kelompok extends Admin_Controller
     // $aksi = cetak/unduh
     public function dialog($aksi = 'cetak')
     {
-        $data['aksi']           = ucwords($aksi);
-        $data['pamong']         = $this->pamong_model->list_data();
-        $data['pamong_ttd']     = $this->pamong_model->get_ub();
-        $data['pamong_ketahui'] = $this->pamong_model->get_ttd();
-        $data['form_action']    = site_url("{$this->controller}/daftar/{$aksi}");
+        $data                = $this->modal_penandatangan();
+        $data['aksi']        = ucwords($aksi);
+        $data['form_action'] = site_url("{$this->controller}/daftar/{$aksi}");
 
         $this->load->view('global/ttd_pamong', $data);
     }
@@ -180,11 +190,9 @@ class Kelompok extends Admin_Controller
     // $aksi = cetak/unduh
     public function dialog_anggota($aksi = 'cetak', $id = 0)
     {
-        $data['aksi']           = ucwords($aksi);
-        $data['pamong']         = $this->pamong_model->list_data();
-        $data['pamong_ttd']     = $this->pamong_model->get_ub();
-        $data['pamong_ketahui'] = $this->pamong_model->get_ttd();
-        $data['form_action']    = site_url("{$this->controller}/daftar_anggota/{$aksi}/{$id}");
+        $data                = $this->modal_penandatangan();
+        $data['aksi']        = ucwords($aksi);
+        $data['form_action'] = site_url("{$this->controller}/daftar_anggota/{$aksi}/{$id}");
 
         $this->load->view('global/ttd_pamong', $data);
     }
@@ -196,7 +204,7 @@ class Kelompok extends Admin_Controller
         $data['config']         = $this->header['desa'];
         $data['pamong_ttd']     = $this->pamong_model->get_data($post['pamong_ttd']);
         $data['pamong_ketahui'] = $this->pamong_model->get_data($post['pamong_ketahui']);
-        $data['main']           = $this->kelompok_model->list_anggota($id);
+        $data['main']           = $this->kelompok_model->list_anggota(0, 0, 0, $id);
         $data['kelompok']       = $this->kelompok_model->get_kelompok($id);
         $data['file']           = "Laporan Data {$this->tipe} " . $data['kelompok']['nama']; // nama file
         $data['isi']            = 'kelompok/anggota/cetak';

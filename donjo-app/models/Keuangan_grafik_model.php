@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -107,6 +107,11 @@ class Keuangan_grafik_model extends CI_model
         $this->db->group_by('jenis_pelaksanaan');
         $this->db->where('Tahun', $thn);
         $data['realisasi_biaya'] = $this->db->get('keuangan_ta_jurnal_umum_rinci')->result_array();
+
+        $this->db->select('LEFT(Kd_Rincian, 2) AS jenis_pelaksanaan, SUM(debet) AS realisasi');
+        $this->db->group_by('jenis_pelaksanaan');
+        $this->db->where('Tahun', $thn);
+        $data['realisasi_jurnal'] = $this->db->get('keuangan_ta_jurnal_umum_rinci')->result_array();
 
         return $data;
     }
@@ -215,6 +220,12 @@ class Keuangan_grafik_model extends CI_model
         $this->db->where('Tahun', $thn);
         $data['realisasi_bunga'] = $this->db->get('keuangan_ta_mutasi')->result_array();
 
+        $this->db->select('LEFT(Kd_Keg, , 10) AS jenis_belanja, SUM(keuangan_ta_jurnal_umum_rinci.Debet) AS realisasi');
+        $this->db->like('Kd_Rincian', '5.', 'after');
+        $this->db->group_by('jenis_belanja');
+        $this->db->where('keuangan_ta_jurnal_umum_rinci.Tahun', $thn);
+        $data['realisasi_belanja_jurnal'] = $this->db->get('keuangan_ta_jurnal_umum_rinci')->result_array();
+
         return $data;
     }
 
@@ -262,12 +273,13 @@ class Keuangan_grafik_model extends CI_model
         $data['belanja'] = $this->db->get('keuangan_master')->result_array();
 
         foreach ($data['belanja'] as $i => $p) {
-            $data['belanja'][$i]['anggaran']        = $this->pagu_akun($p['Akun'], $thn);
-            $data['belanja'][$i]['realisasi']       = $this->real_akun_belanja($p['Akun'], $thn, $smt1);
-            $data['belanja'][$i]['realisasi_um']    = $this->real_akun_belanja_um($p['Akun'], $thn, $smt1);
-            $data['belanja'][$i]['realisasi_spj']   = $this->real_akun_belanja_spj($p['Akun'], $thn, $smt1);
-            $data['belanja'][$i]['realisasi_bunga'] = $this->real_akun_belanja_bunga($p['Akun'], $thn, $smt1);
-            $data['belanja'][$i]['sub_belanja']     = $this->get_subval_belanja($p['id_keuangan_master'], $p['Akun'], $thn, $smt1);
+            $data['belanja'][$i]['anggaran']         = $this->pagu_akun($p['Akun'], $thn);
+            $data['belanja'][$i]['realisasi']        = $this->real_akun_belanja($p['Akun'], $thn, $smt1);
+            $data['belanja'][$i]['realisasi_um']     = $this->real_akun_belanja_um($p['Akun'], $thn, $smt1);
+            $data['belanja'][$i]['realisasi_spj']    = $this->real_akun_belanja_spj($p['Akun'], $thn, $smt1);
+            $data['belanja'][$i]['realisasi_bunga']  = $this->real_akun_belanja_bunga($p['Akun'], $thn, $smt1);
+            $data['belanja'][$i]['realisasi_jurnal'] = $this->real_akun_belanja_jurnal($p['Akun'], $thn, $smt1);
+            $data['belanja'][$i]['sub_belanja']      = $this->get_subval_belanja($p['id_keuangan_master'], $p['Akun'], $thn, $smt1);
         }
 
         $this->db->select('Kd_Bid, Nama_Bidang, id_keuangan_master');
@@ -276,12 +288,13 @@ class Keuangan_grafik_model extends CI_model
         $data['belanja_bidang'] = $this->db->get('keuangan_master')->result_array();
 
         foreach ($data['belanja_bidang'] as $i => $p) {
-            $data['belanja_bidang'][$i]['anggaran']        = $this->pagu_akun_bidang($p['Kd_Bid'], $thn);
-            $data['belanja_bidang'][$i]['realisasi']       = $this->real_akun_belanja_bidang($p['Kd_Bid'], $thn, $smt1);
-            $data['belanja_bidang'][$i]['realisasi_um']    = $this->real_akun_belanja_bidang_um($p['Kd_Bid'], $thn, $smt1);
-            $data['belanja_bidang'][$i]['realisasi_spj']   = $this->real_akun_belanja_spj_bidang($p['Kd_Bid'], $thn, $smt1);
-            $data['belanja_bidang'][$i]['realisasi_bunga'] = $this->real_akun_belanja_bunga_bidang($p['Kd_Bid'], $thn, $smt1);
-            $data['belanja_bidang'][$i]['sub_belanja']     = $this->get_subval_belanja_bidang($p['id_keuangan_master'], $p['Kd_Bid'], $thn, $smt1);
+            $data['belanja_bidang'][$i]['anggaran']         = $this->pagu_akun_bidang($p['Kd_Bid'], $thn);
+            $data['belanja_bidang'][$i]['realisasi']        = $this->real_akun_belanja_bidang($p['Kd_Bid'], $thn, $smt1);
+            $data['belanja_bidang'][$i]['realisasi_um']     = $this->real_akun_belanja_bidang_um($p['Kd_Bid'], $thn, $smt1);
+            $data['belanja_bidang'][$i]['realisasi_spj']    = $this->real_akun_belanja_spj_bidang($p['Kd_Bid'], $thn, $smt1);
+            $data['belanja_bidang'][$i]['realisasi_bunga']  = $this->real_akun_belanja_bunga_bidang($p['Kd_Bid'], $thn, $smt1);
+            $data['belanja_bidang'][$i]['realisasi_jurnal'] = $this->real_akun_belanja_bidang_jurnal($p['Kd_Bid'], $thn, $smt1);
+            $data['belanja_bidang'][$i]['sub_belanja']      = $this->get_subval_belanja_bidang($p['id_keuangan_master'], $p['Kd_Bid'], $thn, $smt1);
         }
 
         $this->db->select('Akun, Nama_Akun, id_keuangan_master');
@@ -405,6 +418,51 @@ class Keuangan_grafik_model extends CI_model
         $this->db->group_by('Akun');
 
         return $this->db->get('keuangan_ta_spp_rinci')->result_array();
+    }
+
+    public function real_akun_belanja_jurnal($akun, $thn, $smt1 = false)
+    {
+        $this->db->select('LEFT(Kd_Rincian, 2) AS Akun, SUM(keuangan_ta_jurnal_umum_rinci.Debet) AS realisasi');
+        $this->db->like('Kd_Rincian', $akun, 'after');
+        $this->db->where('keuangan_ta_jurnal_umum_rinci.Tahun', $thn);
+        if ($smt1) {
+            $this->db->join('keuangan_ta_jurnal_umum', 'keuangan_ta_jurnal_umum.NoBukti = keuangan_ta_jurnal_umum_rinci.NoBukti', 'left');
+            $this->db->where('keuangan_ta_jurnal_umum.Tanggal >=', '01/01/$thn 00:00:00');
+            $this->db->where('keuangan_ta_jurnal_umum.Tanggal <=', '06/31/$thn 00:00:00');
+        }
+        $this->db->group_by('LEFT(Kd_Rincian, 2)');
+
+        return $this->db->get('keuangan_ta_jurnal_umum_rinci')->result_array();
+    }
+
+    public function real_akun_belanja_bidang_jurnal($kelompok, $thn, $smt1 = false)
+    {
+        $this->db->select('keuangan_ta_jurnal_umum_rinci.Kd_Keg AS kelompok, SUM(keuangan_ta_jurnal_umum_rinci.Debet) AS realisasi');
+        $this->db->like('keuangan_ta_jurnal_umum_rinci.Kd_Keg', $kelompok, 'after');
+        $this->db->where('keuangan_ta_jurnal_umum_rinci.Tahun', $thn);
+        if ($smt1) {
+            $this->db->join('keuangan_ta_jurnal_umum', 'keuangan_ta_jurnal_umum.NoBukti = keuangan_ta_jurnal_umum_rinci.NoBukti', 'left');
+            $this->db->where('keuangan_ta_jurnal_umum.Tanggal >=', '01/01/$thn 00:00:00');
+            $this->db->where('keuangan_ta_jurnal_umum.Tanggal <=', '06/31/$thn 00:00:00');
+        }
+        $this->db->group_by('kelompok');
+
+        return $this->db->get('keuangan_ta_jurnal_umum_rinci')->result_array();
+    }
+
+    public function real_akun_subbelanja_jurnal($akun, $thn, $smt1 = false)
+    {
+        $this->db->select('LEFT(Kd_Rincian, 6) AS Akun, SUM(keuangan_ta_jurnal_umum_rinci.Debet) AS realisasi');
+        $this->db->like('Kd_Rincian', $akun, 'after');
+        $this->db->where('keuangan_ta_jurnal_umum_rinci.Tahun', $thn);
+        if ($smt1) {
+            $this->db->join('keuangan_ta_jurnal_umum', 'keuangan_ta_jurnal_umum.NoBukti = keuangan_ta_jurnal_umum_rinci.NoBukti', 'left');
+            $this->db->where('keuangan_ta_jurnal_umum.Tanggal >=', '01/01/$thn 00:00:00');
+            $this->db->where('keuangan_ta_jurnal_umum.Tanggal <=', '06/31/$thn 00:00:00');
+        }
+        $this->db->group_by('LEFT(Kd_Rincian, 6)');
+
+        return $this->db->get('keuangan_ta_jurnal_umum_rinci')->result_array();
     }
 
     private function real_akun_belanja_spj($akun, $thn, $smt1 = false)
@@ -553,12 +611,13 @@ class Keuangan_grafik_model extends CI_model
         $data = $this->db->get('keuangan_ref_rek2')->result_array();
 
         foreach ($data as $i => $d) {
-            $data[$i]['anggaran']        = $this->pagu_subval_belanja($d['Kelompok'], $thn);
-            $data[$i]['realisasi']       = $this->real_subval_belanja($d['Kelompok'], $thn, $smt1);
-            $data[$i]['realisasi_um']    = $this->real_subval_belanja_um($d['Kelompok'], $thn, $smt1);
-            $data[$i]['realisasi_spj']   = $this->real_subval_belanja_spj($d['Kelompok'], $thn, $smt1);
-            $data[$i]['realisasi_bunga'] = $this->real_subval_belanja_bunga($d['Kelompok'], $thn, $smt1);
-            $data[$i]['sub_belanja2']    = $this->sub_belanja2($id_keuangan_master, $d['Kelompok'], $thn, $smt1);
+            $data[$i]['anggaran']         = $this->pagu_subval_belanja($d['Kelompok'], $thn);
+            $data[$i]['realisasi']        = $this->real_subval_belanja($d['Kelompok'], $thn, $smt1);
+            $data[$i]['realisasi_jurnal'] = $this->real_akun_belanja_jurnal($d['Kelompok'], $thn, $smt1);
+            $data[$i]['realisasi_um']     = $this->real_subval_belanja_um($d['Kelompok'], $thn, $smt1);
+            $data[$i]['realisasi_spj']    = $this->real_subval_belanja_spj($d['Kelompok'], $thn, $smt1);
+            $data[$i]['realisasi_bunga']  = $this->real_subval_belanja_bunga($d['Kelompok'], $thn, $smt1);
+            $data[$i]['sub_belanja2']     = $this->sub_belanja2($id_keuangan_master, $d['Kelompok'], $thn, $smt1);
         }
 
         return $data;
@@ -573,11 +632,12 @@ class Keuangan_grafik_model extends CI_model
         $data = $this->db->get('keuangan_ta_kegiatan')->result_array();
 
         foreach ($data as $i => $d) {
-            $data[$i]['anggaran']        = $this->pagu_subval_belanja_bidang($d['Kd_Keg'], $thn);
-            $data[$i]['realisasi']       = $this->real_subval_belanja_bidang($d['Kd_Keg'], $thn, $smt1);
-            $data[$i]['realisasi_um']    = $this->real_subval_belanja_bidang_um($d['Kd_Keg'], $thn, $smt1);
-            $data[$i]['realisasi_spj']   = $this->real_subval_belanja_spj_bidang($d['Kd_Keg'], $thn, $smt1);
-            $data[$i]['realisasi_bunga'] = $this->real_subval_belanja_bunga_bidang($d['Kd_Keg'], $thn, $smt1);
+            $data[$i]['anggaran']         = $this->pagu_subval_belanja_bidang($d['Kd_Keg'], $thn);
+            $data[$i]['realisasi']        = $this->real_subval_belanja_bidang($d['Kd_Keg'], $thn, $smt1);
+            $data[$i]['realisasi_um']     = $this->real_subval_belanja_bidang_um($d['Kd_Keg'], $thn, $smt1);
+            $data[$i]['realisasi_spj']    = $this->real_subval_belanja_spj_bidang($d['Kd_Keg'], $thn, $smt1);
+            $data[$i]['realisasi_bunga']  = $this->real_subval_belanja_bunga_bidang($d['Kd_Keg'], $thn, $smt1);
+            $data[$i]['realisasi_jurnal'] = $this->real_subval_belanja_jurnal($d['Kd_Keg'], $thn, $smt1);
         }
 
         return $data;
@@ -696,9 +756,9 @@ class Keuangan_grafik_model extends CI_model
         return $this->db->get('keuangan_ta_mutasi')->result_array();
     }
 
-    private function real_subval_jurnal($kelompok, $thn, $smt1 = false)
+    private function real_subval_jurnal($kelompok, $thn, $smt1 = false, $kolom = 'Kredit')
     {
-        $this->db->select('LEFT(Kd_Rincian, 4) AS Kelompok, SUM(keuangan_ta_jurnal_umum_rinci.Kredit) AS realisasi');
+        $this->db->select("LEFT(Kd_Rincian, 4) AS Kelompok, SUM(keuangan_ta_jurnal_umum_rinci.{$kolom}) AS realisasi");
         $this->db->like('Kd_Rincian', $kelompok, 'after');
         $this->db->where('keuangan_ta_jurnal_umum_rinci.Tahun', $thn);
         if ($smt1) {
@@ -833,6 +893,21 @@ class Keuangan_grafik_model extends CI_model
         return $this->db->get('keuangan_ta_mutasi')->result_array();
     }
 
+    public function real_subval_belanja_jurnal($kelompok, $thn, $smt1 = false)
+    {
+        $this->db->select('keuangan_ta_jurnal_umum_rinci.Kd_Keg AS kelompok, SUM(keuangan_ta_jurnal_umum_rinci.Debet) AS realisasi');
+        $this->db->like('keuangan_ta_jurnal_umum_rinci.Kd_Keg', $kelompok, 'after');
+        $this->db->where('keuangan_ta_jurnal_umum_rinci.Tahun', $thn);
+        if ($smt1) {
+            $this->db->join('keuangan_ta_jurnal_umum', 'keuangan_ta_jurnal_umum.NoBukti = keuangan_ta_jurnal_umum_rinci.NoBukti', 'left');
+            $this->db->where('keuangan_ta_jurnal_umum.Tanggal >=', '01/01/$thn 00:00:00');
+            $this->db->where('keuangan_ta_jurnal_umum.Tanggal <=', '06/31/$thn 00:00:00');
+        }
+        $this->db->group_by('kelompok');
+
+        return $this->db->get('keuangan_ta_jurnal_umum_rinci')->result_array();
+    }
+
     private function real_subval_pembiayaan($kelompok, $thn, $smt1 = false)
     {
         $this->db->select('LEFT(Kd_Rincian, 4) AS Kelompok, SUM(keuangan_ta_jurnal_umum_rinci.Kredit) AS realisasi');
@@ -888,11 +963,12 @@ class Keuangan_grafik_model extends CI_model
         $data = $this->db->get('keuangan_ref_rek3')->result_array();
 
         foreach ($data as $i => $d) {
-            $data[$i]['anggaran']        = $this->pagu_belanja2($d['Jenis'], $thn);
-            $data[$i]['realisasi']       = $this->real_belanja2($d['Jenis'], $thn, $smt1);
-            $data[$i]['realisasi_um']    = $this->real_belanja2_um($d['Jenis'], $thn, $smt1);
-            $data[$i]['realisasi_spj']   = $this->real_belanja2_spj($d['Jenis'], $thn, $smt1);
-            $data[$i]['realisasi_bunga'] = $this->real_belanja2_bunga($d['Jenis'], $thn, $smt1);
+            $data[$i]['anggaran']         = $this->pagu_belanja2($d['Jenis'], $thn);
+            $data[$i]['realisasi']        = $this->real_belanja2($d['Jenis'], $thn, $smt1);
+            $data[$i]['realisasi_um']     = $this->real_belanja2_um($d['Jenis'], $thn, $smt1);
+            $data[$i]['realisasi_spj']    = $this->real_belanja2_spj($d['Jenis'], $thn, $smt1);
+            $data[$i]['realisasi_bunga']  = $this->real_belanja2_bunga($d['Jenis'], $thn, $smt1);
+            $data[$i]['realisasi_jurnal'] = $this->real_akun_subbelanja_jurnal($d['Jenis'], $thn, $smt1); // cek jurnal
         }
 
         return $data;
@@ -1226,6 +1302,10 @@ class Keuangan_grafik_model extends CI_model
             foreach ($raw_data['realisasi_biaya'] as $r) {
                 $tmp_belanja[$r['jenis_belanja']]['realisasi_biaya'] = ($r['realisasi'] ?: 0);
             }
+
+            foreach ($raw_data['realisasi_belanja_jurnal'] as $r) {
+                $tmp_belanja[$r['jenis_belanja']]['realisasi_belanja_jurnal'] = ($r['realisasi'] ?: 0);
+            }
         }
 
         foreach ($tmp_belanja as $key => $value) {
@@ -1326,14 +1406,29 @@ class Keuangan_grafik_model extends CI_model
         return $res_pelaksanaan;
     }
 
-    public function widget_keuangan()
+    public function widget_keuangan($tahun = null)
     {
-        $data = $this->keuangan_model->list_tahun_anggaran();
+        if (null === $tahun) {
+            $tahun = date('Y');
+        }
+        $thn = $this->keuangan_model->list_tahun_anggaran();
+        if (empty($thn)) {
+            return null;
+        }
 
-        foreach ($data as $tahun) {
-            $res[$tahun]['res_pendapatan']  = $this->data_widget_pendapatan($tahun, $opt = true);
-            $res[$tahun]['res_belanja']     = $this->data_widget_belanja($tahun, $opt = true);
-            $res[$tahun]['res_pelaksanaan'] = $this->data_widget_pelaksanaan($tahun, $opt = true);
+        if (! in_array($tahun, $thn)) {
+            $tahun = $thn[0];
+        }
+
+        $raw_data = $this->data_keuangan_tema($tahun);
+
+        foreach ($raw_data as $keys => $raws) {
+            foreach ($raws as $raw) {
+                $data         = $this->raw_perhitungan($raw);
+                $data['nama'] = $raw['nama'];
+
+                $res[$tahun][$keys][] = $data;
+            }
         }
 
         return [
@@ -1380,18 +1475,8 @@ class Keuangan_grafik_model extends CI_model
                     continue;
                 }
 
-                $data['judul']     = $raw['nama'];
-                $data['anggaran']  = $raw['anggaran'];
-                $data['realisasi'] = $raw['realisasi'] + $raw['realisasi_pendapatan'] + ($raw['realisasi_belanja'] - $raw['realisasi_belanja_um']) + $raw['realisasi_belanja_spj'] + $raw['realisasi_bunga'] + $raw['realisasi_jurnal'] + $raw['realisasi_biaya'];
-
-                if ($data['anggaran'] != 0 && $data['realisasi'] != 0) {
-                    $data['persen'] = $data['realisasi'] / $data['anggaran'] * 100;
-                } elseif ($data['realisasi'] != 0) {
-                    $data['persen'] = 100;
-                } else {
-                    $data['persen'] = 0;
-                }
-                $data['persen'] = round($data['persen'], 2);
+                $data          = $this->raw_perhitungan($raw);
+                $data['judul'] = $raw['nama'];
 
                 $result['data_widget'][$keys][] = $data;
             }
@@ -1399,5 +1484,30 @@ class Keuangan_grafik_model extends CI_model
         $result['tahun'] = $tahun;
 
         return $result;
+    }
+
+    public function raw_perhitungan($raw)
+    {
+        if ($raw['nama'] === 'PEMBIAYAAN') {
+            $penerimaan_pembiayaan   = $raw['realisasi'] + $raw['realisasi_pendapatan'] + ($raw['realisasi_belanja'] - $raw['realisasi_belanja_um']) + $raw['realisasi_belanja_spj'] + $raw['realisasi_bunga'] + $raw['realisasi_jurnal'] + $raw['realisasi_biaya'];
+            $pengeluaraan_pembiayaan = $raw['anggaran'] - $penerimaan_pembiayaan;
+
+            $data['anggaran']  = $penerimaan_pembiayaan - $pengeluaraan_pembiayaan;
+            $data['realisasi'] = $penerimaan_pembiayaan;
+        } else {
+            $data['anggaran']  = $raw['anggaran'];
+            $data['realisasi'] = $raw['realisasi'] + $raw['realisasi_pendapatan'] + ($raw['realisasi_belanja'] - $raw['realisasi_belanja_um']) + $raw['realisasi_belanja_spj'] + $raw['realisasi_bunga'] + $raw['realisasi_jurnal'] + $raw['realisasi_biaya'] + $raw['realisasi_belanja_jurnal'];
+        }
+
+        if ($data['anggaran'] != 0 && $data['realisasi'] != 0) {
+            $data['persen'] = $data['realisasi'] / $data['anggaran'] * 100;
+        } elseif ($data['realisasi'] != 0) {
+            $data['persen'] = 100;
+        } else {
+            $data['persen'] = 0;
+        }
+        $data['persen'] = round($data['persen'], 2);
+
+        return $data;
     }
 }

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -90,7 +90,6 @@ class Menu extends Admin_Controller
         $data['paging']     = $this->web_menu_model->paging($p);
         $data['main']       = $this->web_menu_model->list_data($o, $data['paging']->offset, $data['paging']->per_page);
         $data['keyword']    = $this->web_menu_model->autocomplete($data['cari']);
-
         $this->render('menu/table', $data);
     }
 
@@ -107,7 +106,8 @@ class Menu extends Admin_Controller
         $data['statistik_keluarga']         = $this->referensi_model->list_ref(STAT_KELUARGA);
         $data['statistik_kategori_bantuan'] = $this->referensi_model->list_ref(STAT_BANTUAN);
         $data['statistik_program_bantuan']  = $this->program_bantuan_model->list_program(0);
-        $data['kelompok']                   = $this->kelompok_model->list_data();
+        $data['kelompok']                   = $this->kelompok_model->set_tipe('kelompok')->list_data();
+        $data['lembaga']                    = $this->kelompok_model->set_tipe('lembaga')->list_data();
         $data['suplemen']                   = $this->suplemen_model->list_data();
         $data['statis_lainnya']             = $this->referensi_model->list_ref(STAT_LAINNYA);
         $data['artikel_keuangan']           = $this->keuangan_model->artikel_statis_keuangan();

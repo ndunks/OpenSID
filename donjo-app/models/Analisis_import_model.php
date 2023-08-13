@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,7 +37,7 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use OpenSpout\Reader\Common\Creator\ReaderEntityFactory;
 
 class Analisis_import_model extends CI_Model
 {
@@ -58,14 +58,11 @@ class Analisis_import_model extends CI_Model
         $this->load->library('upload');
 
         $config['upload_path']   = sys_get_temp_dir();
-        $config['allowed_types'] = 'xlsx|xlsm';
+        $config['allowed_types'] = 'xlsx';
 
         $this->upload->initialize($config);
         if (! $this->upload->do_upload('userfile')) {
-            $this->session->error_msg = $this->upload->display_errors();
-            $this->session->success   = -1;
-
-            return;
+            return session_error($this->upload->display_errors());
         }
         $upload = $this->upload->data();
 
@@ -106,8 +103,7 @@ class Analisis_import_model extends CI_Model
                     break;
 
                 default:
-                    $this->session->success   = -1;
-                    $this->session->error_msg = 'Bukan file impor master analisis';
+                    session_error('Bukan file impor master analisis');
                     break;
             }
             if ($this->session->success == -1) {
@@ -176,9 +172,7 @@ class Analisis_import_model extends CI_Model
 
     private function impor_error()
     {
-        $error                    = $this->db->error();
-        $this->session->success   = -1;
-        $this->session->error_msg = $error['message'];
+        return session_error($this->db->error()['message']);
     }
 
     private function impor_pertanyaan($sheet, $id_master)

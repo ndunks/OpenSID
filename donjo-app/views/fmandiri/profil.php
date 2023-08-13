@@ -294,7 +294,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 							<td><?= strtoupper($penduduk['akta_perceraian']); ?></td>
 						</tr>
 						<tr>
-							<td>Akta perceraian</td>
+							<td>Tanggal perceraian</td>
 							<td>:</td>
 							<td><?= strtoupper($penduduk['tanggalperceraian']); ?></td>
 						</tr>
@@ -361,54 +361,19 @@ defined('BASEPATH') || exit('No direct script access allowed');
 				</thead>
 				<tbody>
 					<?php if ($kelompok) :
-                        foreach ($kelompok as $key => $data) : ?>
+					    foreach ($kelompok as $key => $data) : ?>
 							<tr>
 								<td><?= ($key + 1); ?></td>
 								<td><?= $data['nama']; ?></td>
 								<td><?= $data['kategori']; ?></td>
 							</tr>
 						<?php endforeach;
-                    else : ?>
+					else : ?>
 						<tr>
 							<td class="text-center" colspan="3">Data tidak tersedia</td>
 						</tr>
 					<?php endif; ?>
 				</tbody>
-			</table>
-		</div>
-	</div>
-
-	<div class="box-body box-line">
-		<h4><b>DOKUMEN / KELENGKAPAN PENDUDUK</b></h4>
-		<div class="table-responsive">
-			<table class="table table-bordered table-hover table-data datatable-polos">
-				<thead>
-					<tr>
-						<th class="padat">No</th>
-						<th class="padat">Aksi</th>
-						<th width="80%">Nama Dokumen</th>
-						<th width="20%">Tanggal Upload</th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php if ($dokumen) :
-                        foreach ($dokumen as $key => $data) : ?>
-							<tr>
-								<td class="padat"><?= ($key + 1); ?></td>
-								<td class="padat">
-									<a href="<?= site_url("layanan-mandiri/unduh-berkas/{$data['id']}"); ?>" title="Unduh" class="btn bg-navy btn-sm"><i class="fa fa-download"></i></a>
-								</td>
-								<td><?= $data['nama']; ?></td>
-								<td nowrap><?= tgl_indo2($data['tgl_upload']); ?></td>
-							</tr>
-						<?php endforeach;
-                    else : ?>
-						<tr>
-							<td class="text-center" colspan="4">Data tidak tersedia</td>
-						</tr>
-					<?php endif; ?>
-			</table>
-			</tbody>
 			</table>
 		</div>
 	</div>

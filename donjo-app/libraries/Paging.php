@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -104,11 +104,11 @@ class Paging
         if ($this->page < $this->num_links) {
             $start = 1;
             $end   = min($this->num_links, $this->num_page);
-        /** Aslinya sbb:
-         * if($this->num_page > (int)($this->num_links * 1.5)) // 30
-         * $end=$this->num_links;
-         * else $end=$this->num_page;
-         */
+            /** Aslinya sbb:
+             * if($this->num_page > (int)($this->num_links * 1.5)) // 30
+             * $end=$this->num_links;
+             * else $end=$this->num_page;
+             */
         } elseif ($this->page > $this->num_page - $this->num_links) {
             $start = (int) ($this->num_page - $this->num_links);
             $end   = (int) $this->num_page;

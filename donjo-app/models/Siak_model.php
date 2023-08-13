@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -66,7 +66,7 @@ define('KOLOM_IMPOR_SIAK', serialize([
     'tgl_entri'         => '37',
 ]));
 
-class Siak_model extends Import_model
+class Siak_model extends Impor_model
 {
     public function __construct()
     {
@@ -196,10 +196,7 @@ class Siak_model extends Import_model
         // membaca jumlah baris dari data excel
         $baris = $data->rowcount($sheet_index = 0);
         if ($this->cari_baris_pertama($data, $baris) <= 1) {
-            $_SESSION['error_msg'] .= ' -> Tidak ada data';
-            $_SESSION['success'] = -1;
-
-            return;
+            return set_session('error', 'Data penduduk gagal diimpor, data tidak tersedia.');
         }
 
         $gagal_penduduk = 0;
@@ -237,14 +234,18 @@ class Siak_model extends Import_model
 
         if ($gagal_penduduk == 0) {
             $baris_gagal = 'tidak ada data yang gagal di import.';
-        } else {
-            $_SESSION['success'] = -1;
         }
 
-        $_SESSION['gagal']          = $gagal_penduduk;
-        $_SESSION['total_keluarga'] = $total_keluarga;
-        $_SESSION['total_penduduk'] = $total_penduduk;
-        $_SESSION['baris']          = $baris_gagal;
+        $pesan_impor = [
+            'gagal'          => $gagal_penduduk,
+            'total_keluarga' => $total_keluarga,
+            'total_penduduk' => $total_penduduk,
+            'baris'          => $baris_gagal,
+        ];
+
+        set_session('pesan_impor', $pesan_impor);
+
+        return set_session('success', 'Data penduduk berhasil diimpor');
     }
 
     private function tulis_log_penduduk($data, $id)

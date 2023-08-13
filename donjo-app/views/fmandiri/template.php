@@ -51,11 +51,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>Layanan Mandiri <?= ucwords($this->setting->sebutan_desa . ' ' . $desa['nama_desa']) ?></title>
 	<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-	<?php if (is_file(LOKASI_LOGO_DESA . 'favicon.ico')): ?>
-		<link rel="shortcut icon" href="<?= base_url(LOKASI_LOGO_DESA . 'favicon.ico') ?>"/>
-	<?php else: ?>
-		<link rel="shortcut icon" href="<?= base_url('favicon.ico') ?>"/>
-	<?php endif ?>
+	<link rel="shortcut icon" href="<?= favico_desa() ?>"/>
 	<!-- Bootstrap 3.3.7 -->
 	<link rel="stylesheet" href="<?= asset('bootstrap/css/bootstrap.min.css') ?>">
 	<!-- Font Awesome -->
@@ -77,8 +73,10 @@ defined('BASEPATH') || exit('No direct script access allowed');
 	<!-- AdminLTE Skins. -->
 	<link rel="stylesheet" href="<?= asset('css/skins/_all-skins.min.css') ?>">
 
+	<?php if (cek_koneksi_internet()): ?>
 	<!-- Form Wizard - smartWizard -->
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/smartwizard@5/dist/css/smart_wizard_all.min.css">
+	<?php endif ?>
 
 	<?php if ($this->controller == 'lapak') : ?>
 		<!-- Map -->
@@ -134,6 +132,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 							<li><a href="<?= site_url('layanan-mandiri/pesan-masuk') ?>">Pesan</a></li>
 							<li><a href="<?= site_url('layanan-mandiri/lapak') ?>">Lapak</a></li>
 							<li><a href="<?= site_url('layanan-mandiri/bantuan') ?>">Bantuan</a></li>
+							<li><a href="<?= site_url('layanan-mandiri/kehadiran') ?>">Perangkat</a></li>
 						</ul>
 					</div>
 					<div class="navbar-custom-menu">
@@ -213,12 +212,12 @@ defined('BASEPATH') || exit('No direct script access allowed');
 								</div>
 							</div>
 						</a>
-						<a href="<?= site_url('layanan-mandiri/bantuan') ?>">
+						<a href="<?= site_url('layanan-mandiri/kehadiran') ?>">
 							<div class="col-md-3 col-sm-6 col-xs-12">
 								<div class="info-box bg-red">
-									<span class="info-box-icon"><i class="fa fa-handshake-o"></i></span>
+									<span class="info-box-icon"><i class="fa fa-users"></i></span>
 									<div class="info-box-content">
-										<span class="info-box-text-widget">Bantuan</span>
+										<span class="info-box-text-widget">Perangkat</span>
 									</div>
 								</div>
 							</div>
@@ -234,21 +233,27 @@ defined('BASEPATH') || exit('No direct script access allowed');
 									<img class="img-circle" src="<?= AmbilFoto($this->is_login->foto, '', $this->is_login->sex) ?>" alt="Foto" width="100%">
 								</div>
 								<div class="box-body">
-									<a href="<?= ($this->is_login->ganti_pin === '1') ? '#' : site_url('layanan-mandiri/profil') ?>" class="btn btn-block btn-social bg-blue" rel="noopener noreferrer">
+									<a href="<?= ($this->is_login->ganti_pin === '1') ? '#' : site_url('layanan-mandiri/profil') ?>" class="btn btn-block btn-social bg-blue">
 										<i class="fa fa-user-o"></i> Profil
 									</a>
 									<a href="<?= ($this->is_login->ganti_pin === '1') ? '#' : site_url('layanan-mandiri/cetak-biodata') ?>" class="btn btn-block btn-social bg-green" target="_blank" rel="noopener noreferrer">
 										<i class="fa fa-print"></i> Cetak Biodata
 									</a>
 									<?php if ($this->is_login->id_kk != 0) : ?>
-										<a href="<?= ($this->is_login->ganti_pin === '1') ? '#' : site_url('layanan-mandiri/cetak-kk') ?>" class="btn btn-block btn-social bg-aqua" target="_blank" rel="noopener noreferrer">
+										<a href="<?= ($this->is_login->ganti_pin === '1') ? '#' : site_url('layanan-mandiri/cetak-kk') ?>" class="btn btn-block btn-social bg-green" target="_blank" rel="noopener noreferrer">
 											<i class="fa fa-print"></i> Cetak Salinan KK
 										</a>
 									<?php endif; ?>
+									<a href="<?= ($this->is_login->ganti_pin === '1') ? '#' : site_url('layanan-mandiri/dokumen') ?>" class="btn btn-block btn-social bg-aqua">
+										<i class="fa fa-file"></i> Dokumen
+									</a>
+									<a href="<?= ($this->is_login->ganti_pin === '1') ? '#' : site_url('layanan-mandiri/bantuan') ?>" class="btn btn-block btn-social bg-aqua">
+										<i class="fa fa-handshake-o"></i> Bantuan
+									</a>
 									<a href="<?= site_url('layanan-mandiri/ganti-pin') ?>" class="btn btn-block btn-social bg-navy">
 										<i class="fa fa-key"></i> Ganti PIN
 									</a>
-									<a href="<?= site_url('layanan-mandiri/verifikasi') ?>" class="btn btn-block btn-social bg-purple">
+									<a href="<?= ($this->is_login->ganti_pin === '1') ? '#' : site_url('layanan-mandiri/verifikasi') ?>" class="btn btn-block btn-social bg-purple">
 										<i class="fa fa-key"></i> Verifikasi
 									</a>
 									<button type="button" class="btn btn-block btn-social bg-red" data-toggle="modal" data-target="#pendapat"><i class="fa fa-sign-out"></i>Keluar</button>
@@ -259,22 +264,22 @@ defined('BASEPATH') || exit('No direct script access allowed');
 							<?php
                             $this->load->view(MANDIRI . '/' . $konten);
 
-                            if ($this->is_login->ganti_pin === '1' && $this->uri->segment(2) != 'ganti-pin') :
+if ($this->is_login->ganti_pin === '1' && $this->uri->segment(2) != 'ganti-pin') :
 
-                                $data = [
-                                    'pesan' => 'Selamat datang pengguna layanan mandiri <b> ' . ucwords($this->setting->sebutan_desa . ' ' . $desa['nama_desa']) . ' </b>, <br>Untuk keamanan akun anda, silahkan ganti <b>PIN</b> anda terlebih dahulu sebelum melanjutkan menggunakan layanan mandiri.',
-                                    'aksi'  => site_url('layanan-mandiri/ganti-pin'),
-                                ];
+    $data = [
+        'pesan' => 'Selamat datang pengguna layanan mandiri <b> ' . ucwords($this->setting->sebutan_desa . ' ' . $desa['nama_desa']) . ' </b>, <br>Untuk keamanan akun anda, silahkan ganti <b>PIN</b> anda terlebih dahulu sebelum melanjutkan menggunakan layanan mandiri.',
+        'aksi'  => site_url('layanan-mandiri/ganti-pin'),
+    ];
 
-                                $this->load->view(MANDIRI . '/notif', $data);
-                            endif;
+    $this->load->view(MANDIRI . '/notif', $data);
+endif;
 
-                            $data = $this->session->flashdata('notif');
+$data = $this->session->flashdata('notif');
 
-                            if ($data['status'] == 1) :
-                                $this->load->view(MANDIRI . '/notif', $data);
-                            endif;
-                            ?>
+if ($data['status'] == 1) :
+    $this->load->view(MANDIRI . '/notif', $data);
+endif;
+?>
 						</div>
 					</div>
 				</section>
@@ -287,7 +292,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 				<div class="pull-right hidden-xs">
 					<b>Versi</b> <?= AmbilVersi() ?>
 				</div>
-				<strong>Aplikasi <a href="https://github.com/OpenSID/OpenSID" target="_blank"> OpenSID</a>, dikembangkan oleh <a href="https://www.facebook.com/groups/OpenSID/" target="_blank">Komunitas OpenSID</a>.</strong>
+				<strong>Aplikasi <a href="https://github.com/OpenSID/OpenSID" target="_blank"> <?= config_item('nama_aplikasi') ?></a>, dikembangkan oleh <a href="https://www.facebook.com/groups/OpenSID/" target="_blank">Komunitas <?= config_item('nama_aplikasi') ?></a>.</strong>
 			</div>
 		</footer>
 	</div>
@@ -305,6 +310,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 	<!-- DataTables -->
 	<script src="<?= asset('bootstrap/js/jquery.dataTables.min.js') ?>"></script>
 	<script src="<?= asset('bootstrap/js/dataTables.bootstrap.min.js') ?>"></script>
+	<script src="<?= asset('bootstrap/js/dataTables.rowsgroup.min.js') ?>"></script>
 	<!-- bootstrap color picker -->
 	<script src="<?= asset('bootstrap/js/bootstrap-colorpicker.min.js') ?>"></script>
 	<!-- bootstrap Date time picker -->
@@ -348,7 +354,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 				$(".callout").fadeTo(500, 0).slideUp(500, function() {
 					$(this).remove();
 				});
-			}, 5000);
+			}, 1000);
 
 			setTimeout(function() {
 				refresh_badge($("#b_pesan"), "<?= site_url('notif_web/inbox') ?>");
@@ -357,7 +363,9 @@ defined('BASEPATH') || exit('No direct script access allowed');
 		});
 	</script>
 
+	<?php if (cek_koneksi_internet()): ?>
 	<!-- Form Wizard - jquery.smartWizard -->
 	<script src="https://cdn.jsdelivr.net/npm/smartwizard@5/dist/js/jquery.smartWizard.min.js"></script>
+	<?php endif ?>
 </body>
 </html>

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -40,16 +40,9 @@ defined('BASEPATH') || exit('No direct script access allowed');
 // Model ini digunakan untuk data referensi statis yg tidak disimpan pd database atau sebagai referensi global
 
 define('JENIS_PERATURAN_DESA', serialize([
-    'Peraturan Desa (Perdes)',
-    'Peraturan Kepala Desa (Perkades)',
+    'Peraturan Desa',
+    'Peraturan Kepala Desa',
     'Peraturan Bersama Kepala Desa',
-]));
-
-define('MASA_BERLAKU', serialize([
-    'd' => 'Hari',
-    'w' => 'Minggu',
-    'M' => 'Bulan',
-    'y' => 'Tahun',
 ]));
 
 define('KATEGORI_PUBLIK', serialize([
@@ -77,6 +70,7 @@ define('LINK_TIPE', serialize([
     '5'  => 'Halaman Statis Lainnya',
     '6'  => 'Artikel Keuangan',
     '7'  => 'Kelompok',
+    '11' => 'Lembaga',
     '9'  => 'Data Suplemen',
     '10' => 'Status IDM',
     '99' => 'Eksternal',
@@ -126,17 +120,20 @@ define('STAT_BANTUAN', serialize([
 
 // Statistik Lainnya
 define('STAT_LAINNYA', serialize([
-    'dpt'              => 'Calon Pemilih',
-    'data-wilayah'     => 'Wilayah Administratif',
-    'peraturan_desa'   => 'Produk Hukum',
-    'informasi_publik' => 'Informasi Publik',
-    'peta'             => 'Peta',
-    'data_analisis'    => 'Data Analisis',
-    'status-sdgs'      => 'SDGs Desa',
-    'lapak'            => 'Lapak Desa',
-    'pembangunan'      => 'Pembangunan',
-    'galeri'           => 'Galeri',
-    'pengaduan'        => 'Pengaduan',
+    'dpt'                     => 'Calon Pemilih',
+    'data-wilayah'            => 'Wilayah Administratif',
+    'peraturan-desa'          => 'Produk Hukum',
+    'informasi_publik'        => 'Informasi Publik',
+    'peta'                    => 'Peta',
+    'data_analisis'           => 'Data Analisis',
+    'status-sdgs'             => 'SDGs [Desa]',
+    'lapak'                   => 'Lapak [Desa]',
+    'pembangunan'             => 'Pembangunan',
+    'galeri'                  => 'Galeri',
+    'pengaduan'               => 'Pengaduan',
+    'data-vaksinasi'          => 'Vaksin',
+    'pemerintah'              => '[Pemerintah Desa]',
+    'layanan-mandiri/beranda' => 'Layanan Mandiri',
 ]));
 
 // Jabatan Kelompok
@@ -198,6 +195,23 @@ define('JENIS_VAKSIN', serialize([
 define('STATUS', serialize([
     1 => 'Ya',
     2 => 'Tidak',
+]));
+
+// Sebab Kematian
+define('SEBAB', serialize([
+    1 => 'Sakit biasa / tua',
+    2 => 'Wabah Penyakit',
+    3 => 'Kecelakaan',
+    4 => 'Kriminalitas',
+    5 => 'Bunuh Diri',
+    6 => 'Lainnya',
+]));
+
+define('PENOLONG_MATI', serialize([
+    '1' => 'Dokter',
+    '2' => 'Tenaga Kesehatan',
+    '3' => 'Kepolisian',
+    '4' => 'Lainnya',
 ]));
 
 class Referensi_model extends CI_Model
@@ -265,5 +279,12 @@ class Referensi_model extends CI_Model
         $data = array_flip(array_combine(array_column($data, 'id'), array_column($data, 'nama')));
 
         return array_change_key_case(array_merge($data, $tambahan));
+    }
+
+    public function jenis_peraturan_desa()
+    {
+        $dafault = $this->list_ref(JENIS_PERATURAN_DESA);
+
+        return collect($dafault)->unique()->values();
     }
 }

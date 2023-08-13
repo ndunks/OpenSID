@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -365,7 +365,7 @@ class Migrasi_fitur_premium_2202 extends MY_model
             $hasil = $hasil && $this->db->update_batch('tweb_penduduk', $penduduk, 'id');
         }
 
-        return $hasil && $this->tambah_indeks('tweb_penduduk', 'email');
+        return $hasil && $this->tambahIndeks('tweb_penduduk', 'email');
     }
 
     protected function migrasi_2022012071($hasil)
@@ -422,7 +422,7 @@ class Migrasi_fitur_premium_2202 extends MY_model
         $hasil = $hasil && $this->db->where_in('id_modul', [220, 221])->delete('grup_akses');
 
         // Tambah group akses modul pembangunan untuk operator
-        $hasil = $hasil && $this->grup_akses(2, 220, 3);
+        $hasil = $hasil && $this->grupAkses(2, 220, 3);
 
         $this->cache->hapus_cache_untuk_semua('_cache_modul');
 
@@ -447,9 +447,9 @@ class Migrasi_fitur_premium_2202 extends MY_model
             $hasil = $hasil && $this->db->update_batch('user', $users, 'id');
         }
 
-        $hasil = $hasil && $this->tambah_indeks('user', 'username');
+        $hasil = $hasil && $this->tambahIndeks('user', 'username');
 
-        return $hasil && $this->tambah_indeks('user', 'email');
+        return $hasil && $this->tambahIndeks('user', 'email');
     }
 
     protected function migrasi_2022012771($hasil)

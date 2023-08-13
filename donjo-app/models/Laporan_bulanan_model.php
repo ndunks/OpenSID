@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -48,9 +48,9 @@ class Laporan_bulanan_model extends MY_Model
 
     private function dusun_sql()
     {
-        $dusun = $_SESSION['dusun'];
+        $dusun = $this->session->dusun;
         if (! empty($dusun)) {
-            return " AND dusun = '" . $dusun . "'";
+            return " AND c.dusun = '" . $dusun . "'";
         }
     }
 
@@ -198,7 +198,7 @@ class Laporan_bulanan_model extends MY_Model
                     ->join('tweb_keluarga k', 'k.id = l.id_kk')
                     ->join('tweb_penduduk p', 'p.id = k.nik_kepala')
                     ->where("DATE_FORMAT(l.tgl_peristiwa, '%Y-%m') < '{$thn}-{$pad_bln}'");
-                    break;
+                break;
         }
 
         $penduduk_mutasi_sql = $this->db->get_compiled_select();
@@ -249,25 +249,33 @@ class Laporan_bulanan_model extends MY_Model
     private function rincian_dasar($tipe)
     {
         switch ($tipe) {
-            case 'wni_l': $this->db->where('sex = 1 AND warganegara_id <> 2'); break;
+            case 'wni_l': $this->db->where('sex = 1 AND warganegara_id <> 2');
+                break;
 
-            case 'wni_p': $this->db->where('sex = 2 AND warganegara_id <> 2'); break;
+            case 'wni_p': $this->db->where('sex = 2 AND warganegara_id <> 2');
+                break;
 
-            case 'wna_l': $this->db->where('sex = 1 AND warganegara_id = 2'); break;
+            case 'wna_l': $this->db->where('sex = 1 AND warganegara_id = 2');
+                break;
 
-            case 'wna_p': $this->db->where('sex = 2 AND warganegara_id = 2'); break;
+            case 'wna_p': $this->db->where('sex = 2 AND warganegara_id = 2');
+                break;
 
             case 'jml': break;
 
-            case 'jml_l': $this->db->where('sex = 1'); break;
+            case 'jml_l': $this->db->where('sex = 1');
+                break;
 
-            case 'jml_p': $this->db->where('sex = 2'); break;
+            case 'jml_p': $this->db->where('sex = 2');
+                break;
 
             case 'kk': break;
 
-            case 'kk_l': $this->db->where('sex = 1'); break;
+            case 'kk_l': $this->db->where('sex = 1');
+                break;
 
-            case 'kk_p': $this->db->where('sex = 2'); break;
+            case 'kk_p': $this->db->where('sex = 2');
+                break;
         }
     }
 
@@ -297,7 +305,7 @@ class Laporan_bulanan_model extends MY_Model
                     ->join('tweb_keluarga k', 'k.id = l.id_kk')
                     ->join('tweb_penduduk p', 'p.id = k.nik_kepala')
                     ->where("DATE_FORMAT(l.tgl_peristiwa, '%Y-%m') <= '{$thn}-{$pad_bln}'");
-                    break;
+                break;
         }
 
         $penduduk_mutasi_sql = $this->db->get_compiled_select();
@@ -435,37 +443,45 @@ class Laporan_bulanan_model extends MY_Model
 
         if (in_array($tipe, $penduduk)) {
             $mutasi_pada_bln_thn = $this->mutasi_pada_bln_thn($peristiwa);
-            $data                = $this->db
+            $this->db
                 ->select('*')
                 ->from('(' . $mutasi_pada_bln_thn . ') as m');
 
             switch ($tipe) {
-                case 'wni_l': $this->db->where('sex = 1 AND warganegara_id <> 2'); break;
+                case 'wni_l': $this->db->where('sex = 1 AND warganegara_id <> 2');
+                    break;
 
-                case 'wni_p': $this->db->where('sex = 2 AND warganegara_id <> 2'); break;
+                case 'wni_p': $this->db->where('sex = 2 AND warganegara_id <> 2');
+                    break;
 
-                case 'wna_l': $this->db->where('sex = 1 AND warganegara_id = 2'); break;
+                case 'wna_l': $this->db->where('sex = 1 AND warganegara_id = 2');
+                    break;
 
-                case 'wna_p': $this->db->where('sex = 2 AND warganegara_id = 2'); break;
+                case 'wna_p': $this->db->where('sex = 2 AND warganegara_id = 2');
+                    break;
 
                 case 'jml': break;
 
-                case 'jml_l': $this->db->where('sex = 1'); break;
+                case 'jml_l': $this->db->where('sex = 1');
+                    break;
 
-                case 'jml_p': $this->db->where('sex = 2'); break;
+                case 'jml_p': $this->db->where('sex = 2');
+                    break;
             }
         } elseif (in_array($tipe, $keluarga)) {
             $mutasi_keluarga_bln_thn = $this->mutasi_keluarga_bln_thn($peristiwa);
-            $data                    = $this->db
+            $this->db
                 ->select('*')
                 ->from('(' . $mutasi_keluarga_bln_thn . ') as m');
 
             switch ($tipe) {
                 case 'kk': break;
 
-                case 'kk_l': $this->db->where('sex = 1'); break;
+                case 'kk_l': $this->db->where('sex = 1');
+                    break;
 
-                case 'kk_p': $this->db->where('sex = 2'); break;
+                case 'kk_p': $this->db->where('sex = 2');
+                    break;
             }
         }
 

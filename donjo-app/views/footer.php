@@ -2,8 +2,9 @@
 					<div class="pull-right hidden-xs">
 						<b>Versi</b> <?= AmbilVersi() ?>
 					</div>
-					<strong>Aplikasi <a href="https://github.com/OpenSID/OpenSID" target="_blank"> OpenSID</a>, dikembangkan oleh <a href="https://www.facebook.com/groups/OpenSID/" target="_blank">Komunitas OpenSID</a>.</strong>
+					<strong>Aplikasi <a href="https://github.com/OpenSID/OpenSID" target="_blank"><?= config_item('nama_aplikasi') ?></a>, dikembangkan oleh <a href="https://www.facebook.com/groups/OpenSID/" target="_blank">Komunitas <?= config_item('nama_aplikasi') ?></a>.</strong>
 				</footer>
+				<?php include RESOURCESPATH . 'views/admin/layouts/partials/control_sidebar.blade.php'; ?>
 				</div>
 				</div>
 
@@ -49,6 +50,32 @@
 				<script src="<?= asset('js/custom-select2.js') ?>"></script>
 				<script src="<?= asset('js/custom-datetimepicker.js') ?>"></script>
 
+				<!-- numeral js -->
+				<script src="<?= asset('js/numeraljs/numeral.min.js') ?>"></script>
+
+				<!-- Sweet Alert -->
+				<script src="<?= asset('js/sweetalert2/sweetalert2.all.min.js') ?>"></script>
+				<script type="text/javascript">
+					numeral.register("locale", "id-id", {
+						delimiters: {
+							thousands: ".",
+							decimal: ","
+						},
+						abbreviations: {
+								thousand: 'k',
+								million: 'm',
+								billion: 'b',
+								trillion: 't'
+							},
+						currency: {
+							symbol: "Rp." //The currency for UAE is called the Dirham
+						}
+					});
+					numeral.locale('id-id');
+					numeral.defaultFormat('0,0.00');
+					console.log(numeral.locale())
+				</script>
+
 				<!-- Token Field -->
 				<?php if ($this->controller == 'bumindes_kader') : ?>
 					<script src="<?= asset('bootstrap/js/bootstrap-tokenfield.min.js') ?>"></script>
@@ -58,48 +85,60 @@
 					<script src="<?= asset('js/demo.js') ?>"></script>
 				<?php endif ?>
 
+				<?php if (! setting('inspect_element')): ?>
+					<script src="<?= asset('js/disabled.min.js') ?>"></script>
+				<?php endif ?>
+
 				<!-- set timezone -->
 				<script>
 					$.extend($.fn.datetimepicker.defaults, {
 						timeZone: `<?= date_default_timezone_get() ?>`
 					});
 
-						moment.tz.setDefault(`<?= date_default_timezone_get() ?>`);
+					moment.tz.setDefault(`<?= date_default_timezone_get() ?>`);
 				</script>
 
 				<!-- NOTIFICATION-->
 				<script type="text/javascript">
 					$('document').ready(function() {
-						if ($('#success-code').val() == 1) {
+						var koneksi = '<?= ! cek_koneksi_internet() && setting('notifikasi_koneksi') ?>';
+
+						if (koneksi) {
+							cek_koneksi();
+						}
+
+						var success = '<?= addslashes($this->session->success) ?>';
+						var message = '<?= addslashes($this->session->error_msg) ?>';
+
+						if (success == 1) {
 							notify = 'success';
 							notify_msg = 'Data berhasil disimpan';
-						} else if ($('#success-code').val() == -1) {
+						} else if (success == -1) {
 							notify = 'error';
-							notify_msg = `Data gagal disimpan <?= addslashes($this->session->error_msg) ?>`;
-						} else if ($('#success-code').val() == -2) {
-							notify = 'error';
-							notify_msg = 'Data gagal disimpan, nama id sudah ada!';
-						} else if ($('#success-code').val() == -3) {
+							notify_msg = 'Data gagal disimpan ' + message;
+						} else if (success == -2) {
 							notify = 'error';
 							notify_msg = 'Data gagal disimpan, nama id sudah ada!';
-						} else if ($('#success-code').val() == 4) {
+						} else if (success == -3) {
+							notify = 'error';
+							notify_msg = 'Data gagal disimpan, nama id sudah ada!';
+						} else if (success == 4) {
 							notify = 'success';
 							notify_msg = 'Data berhasil dihapus';
-						} else if ($('#success-code').val() == -4) {
+						} else if (success == -4) {
 							notify = 'error';
 							notify_msg = 'Data gagal dihapus';
-						} else if ($('#success-code').val() == 5) {
+						} else if (success == 5) {
 							notify = 'success';
 							notify_msg = 'Data berhasil diunggah';
-						} else if ($('#success-code').val() == 6) {
+						} else if (success == 6) {
 							notify = 'success';
 							notify_msg = 'Silahkan Cek Pesan di Email Anda';
 						} else {
-							notify = '';
-							notify_msg = '';
+							notify = success;
+							notify_msg = message;
 						}
 						notification(notify, notify_msg);
-						$('#success-code').val('');
 
 						// Sidebar
 						if (typeof(Storage) !== 'undefined' && localStorage.getItem('sidebar') === 'false') {
@@ -111,7 +150,8 @@
 						});
 					});
 				</script>
-				<?php $_SESSION['success'] = 0 ?>
+				<?php session_error_clear(); ?>
+
 				</body>
 
 				</html>

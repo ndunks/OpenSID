@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -172,5 +172,24 @@ class OTP_email implements OTP_interface
         return isset($this->ci->db)
             ? ($this->ci->db->where('email', $user['email'])->where_not_in('id', $user['id'])->get('tweb_penduduk')->num_rows() === 0)
             : false;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function kirim_pesan($data = [])
+    {
+        $this->ci->email
+            ->from($this->ci->email->smtp_user, 'OpenSID')
+            ->to($data['tujuan'])
+            ->subject($data['subjek'])
+            ->set_mailtype('html')
+            ->message($this->ci->load->view('sms/template_email', ['subjek' => $data['subjek'], 'isi' => $data['isi']], true));
+
+        if ($this->ci->email->send()) {
+            return true;
+        }
+
+        throw new \Exception($this->ci->email->print_debugger());
     }
 }

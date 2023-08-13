@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,56 +29,17 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
-use Esyede\Curly;
-
-require_once APPPATH . '/libraries/Curly.php';
-
-class Notif_model extends CI_Model
+class Notif_model extends MY_Model
 {
-    /**
-     * @var Esyede\Curly
-     */
-    protected $client;
-
     public function __construct()
     {
-        $this->client = new Curly();
-    }
-
-    public function status_langganan()
-    {
-        if (empty($response = $this->api_pelanggan_pemesanan())) {
-            return null;
-        }
-
-        if (is_array($response->body->tanggal_berlangganan)) {
-            $tgl_akhir    = strtotime($response->body->tanggal_berlangganan->tgl_akhir);
-            $masa_berlaku = round(($tgl_akhir - time()) / (60 * 60 * 24));
-        } else {
-            return null;
-        }
-
-        switch (true) {
-            case $masa_berlaku > 30:
-                $status = ['status' => 1, 'warna' => 'lightgreen', 'ikon' => 'fa-battery-full'];
-                break;
-
-            case $masa_berlaku > 10:
-                $status = ['status' => 2, 'warna' => 'orange', 'ikon' => 'fa-battery-half'];
-                break;
-
-            default:
-                $status = ['status' => 3, 'warna' => 'pink', 'ikon' => 'fa-battery-empty'];
-        }
-        $status['masa'] = $masa_berlaku;
-
-        return $status;
+        parent::__construct();
     }
 
     public function permohonan_surat_baru()
@@ -200,45 +161,5 @@ class Notif_model extends CI_Model
     {
         $sql = $this->db->insert_string('notifikasi', $data) . duplicate_key_update_str($data);
         $this->db->query($sql);
-    }
-
-    /**
-     * Ambil data pemesanan dari api layanan.opendeda.id
-     *
-     * @return mixed
-     */
-    public function api_pelanggan_pemesanan()
-    {
-        if (empty($token = $this->setting->layanan_opendesa_token)) {
-            $this->session->set_userdata('error_status_langganan', 'Token Pelanggan Kosong.');
-
-            return null;
-        }
-
-        $host = config_item('server_layanan');
-
-        // simpan cache
-        $response = $this->cache->pakai_cache(function () use ($host, $token) {
-            // request ke api layanan.opendesa.id
-            return $this->client->get(
-                "{$host}/api/v1/pelanggan/pemesanan",
-                [],
-                [
-                    CURLOPT_HTTPHEADER => [
-                        'X-Requested-With: XMLHttpRequest',
-                        "Authorization: Bearer {$token}",
-                    ],
-                ]
-            );
-        }, 'status_langganan', 24 * 60 * 60);
-
-        if ($response->header->http_code != 200) {
-            $this->cache->hapus_cache_untuk_semua('status_langganan');
-            $this->session->set_userdata('error_status_langganan', "{$response->header->http_code} {$response->body->messages->error}");
-
-            return null;
-        }
-
-        return $response;
     }
 }

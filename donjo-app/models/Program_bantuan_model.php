@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,17 +29,19 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Models\BantuanPeserta;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Program_bantuan_model extends MY_Model
 {
-    // Untuk datatables peserta bantuan di themes/klasik/partials/statistik.php (web)
+    // Untuk datatables peserta bantuan di themes/nama_tema/partials/statistik.php (web)
     public $column_order  = [null, 'program', 'peserta', null]; //set column field database for datatable orderable
     public $column_search = []; // Daftar kolom yg bisa dicari
     public $order         = ['peserta' => 'asc']; // default order
@@ -141,7 +143,7 @@ class Program_bantuan_model extends MY_Model
                 // Data Penduduk; $peserta_id adalah NIK
                 $data                   = $this->get_penduduk($peserta_id);
                 $data['alamat_wilayah'] = $this->wilayah_model->get_alamat_wilayah($data);
-                $data['kartu_nik']      = $data['id_peserta']      = $data['nik']; /// NIK Penduduk digunakan sebagai peserta
+                $data['kartu_nik']      = $data['id_peserta'] = $data['nik']; /// NIK Penduduk digunakan sebagai peserta
                 $data['judul_nik']      = 'NIK Penduduk';
                 $data['judul']          = 'Penduduk';
                 break;
@@ -152,7 +154,7 @@ class Program_bantuan_model extends MY_Model
                 $data = $this->get_penduduk($peserta_id);
                 // Data KK
                 $kk                     = $this->get_kk($data['id_kk']);
-                $data['no_kk']          = $data['id_peserta']          = $kk['no_kk']; // No KK digunakan sebagai peserta
+                $data['no_kk']          = $data['id_peserta'] = $kk['no_kk']; // No KK digunakan sebagai peserta
                 $data['nik_kk']         = $kk['nik_kk'];
                 $data['nama_kk']        = $kk['nama_kk'];
                 $data['alamat_wilayah'] = $this->wilayah_model->get_alamat_wilayah($kk);
@@ -195,7 +197,7 @@ class Program_bantuan_model extends MY_Model
             $kw = $this->db->escape_like_str($value);
             $kw = '%' . $kw . '%';
 
-            return " AND (o.nama LIKE '{$kw}' OR peserta LIKE '{$kw}' OR p.kartu_nik LIKE '{$kw}' OR p.kartu_nama LIKE '{$kw}')";
+            return " AND (o.nama LIKE '{$kw}' OR peserta LIKE '{$kw}' OR p.kartu_nik LIKE '{$kw}' OR p.kartu_nama LIKE '{$kw}' OR o.tag_id_card LIKE '{$kw}')";
         }
     }
 
@@ -211,10 +213,11 @@ class Program_bantuan_model extends MY_Model
             case 1:
                 // Data penduduk
                 if (! $jumlah) {
-                    $select_sql = 'p.*, o.nama, x.nama AS sex, w.rt, w.rw, w.dusun, k.no_kk';
+                    $select_sql = 'p.*, o.nama, s.nama as status_dasar, x.nama AS sex, w.rt, w.rw, w.dusun, k.no_kk';
                 }
                 $strSQL = 'SELECT ' . $select_sql . ' FROM program_peserta p
-					RIGHT JOIN penduduk_hidup o ON p.peserta = o.nik
+					RIGHT JOIN tweb_penduduk o ON p.peserta = o.nik
+                    LEFT JOIN tweb_status_dasar s ON o.status_dasar = s.id
 					LEFT JOIN tweb_penduduk_sex x ON x.id = o.sex
 					LEFT JOIN tweb_keluarga k ON k.id = o.id_kk
 					LEFT JOIN tweb_wil_clusterdesa w ON w.id = o.id_cluster
@@ -224,13 +227,14 @@ class Program_bantuan_model extends MY_Model
             case 2:
                 // Data KK
                 if (! $jumlah) {
-                    $select_sql = 'p.*, p.peserta as nama, k.nik_kepala, k.no_kk, o.nik as nik_kk, o.nama as nama_kk, x.nama AS sex, w.rt, w.rw, w.dusun';
+                    $select_sql = 'p.*, p.peserta as nama, k.nik_kepala, k.no_kk, o.nik as nik_kk, o.nama as nama_kk, x.nama AS sex, w.rt, w.rw, w.dusun, s.nama as status_dasar';
                 }
                 $strSQL = 'SELECT ' . $select_sql . '
 					FROM program_peserta p
 					JOIN tweb_keluarga k ON p.peserta = k.no_kk
-					RIGHT JOIN penduduk_hidup o ON k.nik_kepala = o.id
-					RIGHT JOIN penduduk_hidup kartu on p.kartu_id_pend = kartu.id
+					RIGHT JOIN tweb_penduduk o ON k.nik_kepala = o.id
+                    LEFT JOIN tweb_status_dasar s ON o.status_dasar = s.id
+					RIGHT JOIN tweb_penduduk kartu on p.kartu_id_pend = kartu.id
 					LEFT JOIN tweb_penduduk_sex x ON x.id = kartu.sex
 					LEFT JOIN tweb_wil_clusterdesa w ON w.id = o.id_cluster
 					WHERE p.program_id =' . $slug;
@@ -239,11 +243,12 @@ class Program_bantuan_model extends MY_Model
             case 3:
                 // Data RTM
                 if (! $jumlah) {
-                    $select_sql = 'p.*, o.nama, o.nik, r.no_kk, x.nama AS sex, w.rt, w.rw, w.dusun';
+                    $select_sql = 'p.*, o.nama, o.nik, r.no_kk, x.nama AS sex, w.rt, w.rw, w.dusun, s.nama as status_dasar';
                 }
                 $strSQL = 'SELECT ' . $select_sql . ' FROM program_peserta p
 					LEFT JOIN tweb_rtm r ON r.no_kk = p.peserta
-					RIGHT JOIN penduduk_hidup o ON o.id = r.nik_kepala
+					RIGHT JOIN tweb_penduduk o ON o.id = r.nik_kepala
+                    LEFT JOIN tweb_status_dasar s ON o.status_dasar = s.id
 					LEFT JOIN tweb_penduduk_sex x ON x.id = o.sex
 					LEFT JOIN tweb_wil_clusterdesa w ON w.id = o.id_cluster
 					WHERE p.program_id=' . $slug;
@@ -252,11 +257,12 @@ class Program_bantuan_model extends MY_Model
             case 4:
                 // Data Kelompok
                 if (! $jumlah) {
-                    $select_sql = 'p.*, o.nama, o.nik, x.nama AS sex, k.no_kk, r.nama as nama_kelompok, w.rt, w.rw, w.dusun';
+                    $select_sql = 'p.*, o.nama, o.nik, x.nama AS sex, k.no_kk, r.nama as nama_kelompok, w.rt, w.rw, w.dusun, s.nama as status_dasar';
                 }
                 $strSQL = 'SELECT ' . $select_sql . ' FROM program_peserta p
 					LEFT JOIN kelompok r ON r.id = p.peserta
-					RIGHT JOIN penduduk_hidup o ON o.id = r.id_ketua
+					RIGHT JOIN tweb_penduduk o ON o.id = r.id_ketua
+                    LEFT JOIN tweb_status_dasar s ON o.status_dasar = s.id
 					LEFT JOIN tweb_penduduk_sex x ON x.id = o.sex
 					LEFT JOIN tweb_keluarga k on k.id = o.id_kk
 					LEFT JOIN tweb_wil_clusterdesa w ON w.id = o.id_cluster
@@ -606,21 +612,25 @@ class Program_bantuan_model extends MY_Model
     {
         if ($slug === false) {
             //Query untuk expiration status, jika end date sudah melebihi dari datenow maka status otomatis menjadi tidak aktif
-            $expirySQL   = 'UPDATE program SET status = IF(edate < CURRENT_DATE(), 0, IF(edate > CURRENT_DATE(), 1, status)) WHERE status IS NOT NULL';
-            $expiryQuery = $this->db->query($expirySQL);
+            $expirySQL = 'UPDATE program SET status = IF(edate < CURRENT_DATE(), 0, IF(edate > CURRENT_DATE(), 1, status)) WHERE status IS NOT NULL';
+            $this->db->query($expirySQL);
 
             $response['paging'] = $this->paging_bantuan($p);
 
             $this->sasaran_sql();
 
             $data = $this->db
-                ->select('COUNT(v.id) AS jml_peserta, p.id, p.nama, p.sasaran, p.ndesc, p.sdate, p.edate, p.userid, p.status, p.asaldana')
+                ->select('p.id, p.nama, p.sasaran, p.ndesc, p.sdate, p.edate, p.userid, p.status, p.asaldana')
                 ->from('program p')
-                ->join('program_peserta v', 'p.id = v.program_id', 'left')
                 ->group_by('p.id')
                 ->limit($response['paging']->per_page, $response['paging']->offset)
-                ->get()->result_array();
-            $response['program'] = $data;
+                ->get()
+                ->result_array();
+            $response['program'] = collect($data)->map(function ($item, $key) {
+                $item['jml_peserta'] = $this->db->query($this->get_peserta_sql($item['id'], (int) $item['sasaran'], true))->row_array()['jumlah'];
+
+                return $item;
+            });
 
             return $response;
         }
@@ -781,48 +791,38 @@ class Program_bantuan_model extends MY_Model
         $data['asaldana'] = $post['asaldana'];
         $data['sdate']    = date('Y-m-d', strtotime($post['sdate']));
         $data['edate']    = date('Y-m-d', strtotime($post['edate']));
-        $data['status']   = $post['status'];
 
         return $data;
     }
 
     public function add_peserta($program_id)
     {
-        $this->session->success   = 1;
-        $this->session->error_msg = '';
-        $data                     = $this->validasi_peserta($this->input->post());
-        $data['program_id']       = $program_id;
-        $data['peserta']          = $this->input->post('peserta');
-
-        $file_gambar = $this->_upload_gambar();
-        if ($file_gambar) {
-            $data['kartu_peserta'] = $file_gambar;
+        $data               = $this->validasi_peserta($this->input->post());
+        $data['program_id'] = $program_id;
+        $data['peserta']    = $this->input->post('peserta');
+        if ($_FILES['file']['name']) {
+            $data['kartu_peserta'] = unggah_file(['upload_path' => LOKASI_DOKUMEN, 'allowed_types' => 'jpg|jpeg|png']);
         }
-        $outp = $this->db->insert('program_peserta', $data);
-        status_sukses($outp, true);
+
+        $outp = BantuanPeserta::create($data);
+        status_sukses($outp);
     }
 
     // $id = program_peserta.id
     public function edit_peserta($id)
     {
-        $this->session->success   = 1;
-        $this->session->error_msg = '';
-        $data                     = $this->validasi_peserta($this->input->post());
-
-        if ($this->input->post('gambar_hapus')) {
-            unlink(LOKASI_DOKUMEN . $this->input->post('gambar_hapus'));
-            $data['kartu_peserta'] = '';
+        $peserta = BantuanPeserta::findOrFail($id);
+        if ($_FILES['file']['name']) {
+            $peserta->kartu_peserta = unggah_file(['upload_path' => LOKASI_DOKUMEN, 'allowed_types' => 'jpg|jpeg|png'], $peserta->kartu_peserta);
+        } else {
+            if ($this->input->post('gambar_hapus')) {
+                unlink(LOKASI_DOKUMEN . $peserta->kartu_peserta);
+                $peserta->kartu_peserta = null;
+            }
         }
+        $outp = $peserta->update($this->validasi_peserta($this->request));
 
-        unset($data['gambar_hapus']);
-        $file_gambar = $this->_upload_gambar($data['old_gambar']);
-        if ($file_gambar) {
-            $data['kartu_peserta'] = $file_gambar;
-        }
-        unset($data['old_gambar']);
-        $this->db->where('id', $id);
-        $outp = $this->db->update('program_peserta', $data);
-        status_sukses($outp, true);
+        status_sukses($outp);
     }
 
     public function validasi_peserta($post)
@@ -840,46 +840,30 @@ class Program_bantuan_model extends MY_Model
         return $data;
     }
 
-    private function _upload_gambar($old_document = '')
-    {
-        if ($_FILES['satuan']['error'] == UPLOAD_ERR_NO_FILE) {
-            return null;
-        }
-
-        $error = periksa_file('satuan', unserialize(MIME_TYPE_GAMBAR), unserialize(EXT_GAMBAR));
-        if ($error != '') {
-            $this->session->set_userdata('success', -1);
-            $this->session->set_userdata('error_msg', $error);
-
-            return null;
-        }
-        $nama_file = $_FILES['satuan']['name'];
-        $nama_file = time() . '-' . urlencode($nama_file);      // normalkan nama file
-        UploadDocument($nama_file, $old_document);
-
-        return $nama_file;
-    }
-
     public function hapus_peserta_program($peserta_id, $program_id)
     {
         $this->db->where(['peserta' => $peserta_id, 'program_id' => $program_id]);
         $this->db->delete('program_peserta');
     }
 
-    public function hapus_peserta($peserta_id = '', $semua = false)
+    public function hapus_peserta($peserta_id = '')
     {
-        $this->db->where('id', $peserta_id);
-        $this->db->delete('program_peserta');
+        $peserta = BantuanPeserta::findOrFail($peserta_id);
+        $outp    = $peserta->delete();
+
+        if ($outp && $peserta->kartu_peserta) {
+            unlink(LOKASI_DOKUMEN . $peserta->kartu_peserta);
+        }
+
+        status_sukses($outp);
     }
 
     public function delete_all()
     {
-        $this->session->success = 1;
-
         $id_cb = $_POST['id_cb'];
 
         foreach ($id_cb as $peserta_id) {
-            $this->hapus_peserta($peserta_id, $semua = true);
+            $this->hapus_peserta($peserta_id);
         }
     }
 
@@ -991,7 +975,7 @@ class Program_bantuan_model extends MY_Model
     }
 
     /* ====================================
-     * Untuk datatable #peserta_program di themes/klasik/partials/statistik.php
+     * Untuk datatable #peserta_program di themes/nama_tema/partials/statistik.php
      * ==================================== */
 
     private function get_all_peserta_bantuan_query()
@@ -1049,10 +1033,18 @@ class Program_bantuan_model extends MY_Model
         }
     }
 
-    public function get_peserta_bantuan($status = '')
+    public function get_peserta_bantuan($filter = [])
     {
-        if ($status != '') {
-            $this->db->where('p.status', $status);
+        if ($filter) {
+            if ($status = $filter['status'] != '') {
+                $this->db->where('p.status', $status);
+            }
+
+            $tahun = $this->session->tahun;
+            if (isset($tahun)) {
+                $this->db->where('YEAR(p.sdate)', $tahun);
+                $this->db->or_where('YEAR(p.edate)', $tahun);
+            }
         }
 
         $this->get_peserta_bantuan_query();
@@ -1062,6 +1054,25 @@ class Program_bantuan_model extends MY_Model
         $data = $this->db->get()->result_array();
 
         return $data;
+    }
+
+    public function tahun_bantuan_pertama($sasaran = '')
+    {
+        if ($status = $this->session->status) {
+            $this->db->where('status', $status);
+        }
+
+        if ($sasaran != '') {
+            $this->db->where('sasaran', $sasaran);
+        }
+
+        return $this->db
+            ->select('min(date_format(sdate, "%Y")) as thn')
+            ->from('program')
+            ->where('DAYNAME(sdate) IS NOT NULL')
+            ->get()
+            ->row()
+            ->thn;
     }
 
     public function count_peserta_bantuan_filtered()
@@ -1157,7 +1168,9 @@ class Program_bantuan_model extends MY_Model
             $this->db->where_in('peserta', $data_diubah)->where('program_id', $program_id)->delete('program_peserta');
         }
 
-        $outp = $this->db->insert_batch('program_peserta', $data_peserta);
+        if ($data_peserta != null) {
+            $outp = $this->db->insert_batch('program_peserta', $data_peserta);
+        }
         status_sukses($outp, true);
     }
 
@@ -1182,7 +1195,7 @@ class Program_bantuan_model extends MY_Model
 
             case 2:
                 // Keluarga
-                $sasaran = 'No. KK';
+                $sasaran_peserta = 'No. KK';
 
                 $data = $this->db
                     ->select('k.id, p.nik')
@@ -1256,5 +1269,50 @@ class Program_bantuan_model extends MY_Model
         return $this->db
             ->where_in('id', $peserta_hapus)
             ->delete('program_peserta');
+    }
+
+    public function peserta_duplikat($program)
+    {
+        return $this->db
+            ->select('pp.peserta, COUNT(peserta) as jumlah, MAX(pp.id) as id, MAX(p.nama) as nama, MAX(p.sasaran) as sasaran, MAX(pp.kartu_nama) as kartu_nama')
+            ->from('program_peserta pp')
+            ->join('program p', 'pp.program_id = p.id')
+            ->where('pp.program_id', $program['id'])
+            ->group_by('pp.peserta')
+            ->having('COUNT(peserta) > 1')
+            ->get()->result_array() ?? [];
+    }
+
+    public function peserta_tidak_valid($sasaran)
+    {
+        $query = $this->db->select('pp.id, p.nama, p.sasaran, pp.peserta, pp.kartu_nama')
+            ->from('program_peserta pp')
+            ->join('program p', 'p.id = pp.program_id')
+            ->where('p.sasaran', $sasaran)
+            ->where('s.id is NULL')
+            ->order_by('p.sasaran', 'pp.peserta');
+
+        switch ($sasaran) {
+            case '1':
+                $query->join('tweb_penduduk s', 's.nik = pp.peserta', 'left');
+                break;
+
+            case '2':
+                $query->join('tweb_keluarga s', 's.no_kk = pp.peserta', 'left');
+                break;
+
+            case '3':
+                $query->join('tweb_rtm s', 's.no_kk = pp.peserta', 'left');
+                break;
+
+            case '4':
+                $query->join('kelompok s', 's.kode = pp.peserta', 'left');
+                break;
+
+            default:
+                break;
+        }
+
+        return $query->get()->result_array() ?? [];
     }
 }

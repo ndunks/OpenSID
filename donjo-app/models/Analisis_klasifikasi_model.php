@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -92,17 +92,23 @@ class Analisis_klasifikasi_model extends MY_Model
     public function list_data($o = 0, $offset = 0, $limit = 500)
     {
         switch ($o) {
-            case 1: $order_sql = ' ORDER BY u.minval'; break;
+            case 1: $order_sql = ' ORDER BY u.minval';
+                break;
 
-            case 2: $order_sql = ' ORDER BY u.minval DESC'; break;
+            case 2: $order_sql = ' ORDER BY u.minval DESC';
+                break;
 
-            case 3: $order_sql = ' ORDER BY u.minval'; break;
+            case 3: $order_sql = ' ORDER BY u.minval';
+                break;
 
-            case 4: $order_sql = ' ORDER BY u.minval DESC'; break;
+            case 4: $order_sql = ' ORDER BY u.minval DESC';
+                break;
 
-            case 5: $order_sql = ' ORDER BY g.minval'; break;
+            case 5: $order_sql = ' ORDER BY g.minval';
+                break;
 
-            case 6: $order_sql = ' ORDER BY g.minval DESC'; break;
+            case 6: $order_sql = ' ORDER BY g.minval DESC';
+                break;
 
             default:$order_sql = ' ORDER BY u.minval';
         }
@@ -131,29 +137,27 @@ class Analisis_klasifikasi_model extends MY_Model
 
     private function validasi_data($post)
     {
-        $data           = [];
-        $data['nama']   = nomor_surat_keputusan($post['nama']);
-        $data['minval'] = bilangan_titik($post['minval']);
-        $data['maxval'] = bilangan_titik($post['maxval']);
-
-        return $data;
+        return [
+            'nama'      => nomor_surat_keputusan($post['nama']),
+            'minval'    => bilangan_titik($post['minval']),
+            'maxval'    => bilangan_titik($post['maxval']),
+            'id_master' => $this->session->analisis_master,
+        ];
     }
 
     public function insert()
     {
-        $data              = $this->validasi_data($this->input->post());
-        $data['id_master'] = $this->session->analisis_master;
-        $outp              = $this->db->insert('analisis_klasifikasi', $data);
+        $data = $this->validasi_data($this->input->post());
+        $outp = $this->db->insert('analisis_klasifikasi', $data);
 
         status_sukses($outp); //Tampilkan Pesan
     }
 
     public function update($id = 0)
     {
-        $data              = $this->validasi_data($this->input->post());
-        $data['id_master'] = $this->session->analisis_master;
-        $this->db->where('id', $id);
-        $outp = $this->db->update('analisis_klasifikasi', $data);
+        $data = $this->validasi_data($this->input->post());
+        $outp = $this->db->where('id', $id)->update('analisis_klasifikasi', $data);
+
         status_sukses($outp); //Tampilkan Pesan
     }
 

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -176,9 +176,9 @@ function rp($inp = 0)
     return number_format($inp, 2, ',', '.');
 }
 
-function rupiah24($angka)
+function rupiah24($angka, $prefix = 'Rp ', $digit = 2)
 {
-    return 'Rp ' . number_format($angka, 2, ',', '.');
+    return $prefix . number_format($angka, $digit, ',', '.');
 }
 
 function jecho($a, $b, $str)
@@ -236,16 +236,6 @@ function unpenetration($str)
 function spaceunpenetration($str)
 {
     return str_replace('-', ' ', $str);
-}
-
-function underscore($str)
-{
-    return str_replace(' ', '_', $str);
-}
-
-function ununderscore($str)
-{
-    return str_replace('_', ' ', $str);
 }
 
 function bulan()
@@ -499,32 +489,6 @@ function get_identitas()
     return $string;
 }
 
-// fix str aneh utk masuk ke db
-// TODO: Jangan pernah gunakan saya lagi bro,,,,,, :p
-function fixSQL($str, $encode_ent = false)
-{
-    $str = @trim($str);
-    if ($encode_ent) {
-        $str = htmlentities($str);
-    }
-
-    if (version_compare(PHP_VERSION, '4.3.0') >= 0) {
-        if (get_magic_quotes_gpc()) {
-            $str = stripslashes($str);
-        }
-        // FIXME
-        if (function_exists('mysql_ping') && @mysql_ping()) {
-            $str = mysql_real_escape_string($str);
-        } else {
-            $str = addslashes($str);
-        }
-    } elseif (! get_magic_quotes_gpc()) {
-        $str = addslashes($str);
-    }
-
-    return $str;
-}
-
 //baca data tanpa HTML Tags
 function fixTag($varString)
 {
@@ -745,3 +709,95 @@ function delete_col(&$array, $offset)
     });
 }
 // =======================================
+
+function get_pesan_opendk()
+{
+    $ci = &get_instance();
+    if ((! $ci->db->table_exists('pesan') && ! $ci->db->table_exists('pesan_detail')) || empty($ci->setting->api_opendk_key)) {
+        return;
+    }
+    $model_pesan        = new \App\Models\Pesan();
+    $model_detail_pesan = new \App\Models\PesanDetail();
+    $id_terakhir        = $model_detail_pesan::latest('id')->first()->id;
+
+    try {
+        $client   = new \GuzzleHttp\Client();
+        $response = $client->post("{$ci->setting->api_opendk_server}/api/v1/pesan/getpesan", [
+            'headers' => [
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Authorization'    => "Bearer {$ci->setting->api_opendk_key}",
+            ],
+            'form_params' => [
+                'kode_desa' => kode_wilayah($ci->header['desa']['kode_desa']),
+                'id'        => (int) $id_terakhir,
+            ],
+        ])->getBody()->getContents();
+        $data_respon = json_decode($response);
+
+        foreach ($data_respon->data as $pesan) {
+            $row = [
+                'id'         => $pesan->id,
+                'judul'      => $pesan->judul,
+                'jenis'      => $pesan->jenis,
+                'diarsipkan' => $pesan->diarsipkan,
+            ];
+            $model_pesan::firstOrCreate(['id' => $pesan->id], $row);
+
+            foreach ($pesan->detail_pesan as $pesan_detail) {
+                $row = [
+                    'id'            => $pesan_detail->id,
+                    'pesan_id'      => $pesan_detail->pesan_id,
+                    'text'          => $pesan_detail->text,
+                    'pengirim'      => $pesan_detail->pengirim,
+                    'nama_pengirim' => $pesan_detail->nama_pengirim,
+                ];
+                $model_detail_pesan::firstOrCreate(['id' => $pesan_detail->id], $row);
+                if ($pesan_detail->pengirim == 'kecamatan') {
+                    $model_pesan::where('id', '=', $pesan_detail->pesan_id)->update(['sudah_dibaca' => 0]);
+                }
+            }
+        }
+    } catch (Exception $e) {
+        log_message('error', $e);
+    }
+}
+
+if (! function_exists('opendk_api')) {
+    function opendk_api($path_url = '', $options = [], $method = 'get')
+    {
+        $ci = &get_instance();
+
+        try {
+            $client   = new \GuzzleHttp\Client();
+            $response = $client->{$method}("{$ci->setting->api_opendk_server}{$path_url}", array_merge(
+                [
+                    'headers' => [
+                        'X-Requested-With' => 'XMLHttpRequest',
+                        'Authorization'    => "Bearer {$ci->setting->api_opendk_key}",
+                    ],
+                ],
+                $options
+            ))->getBody()->getContents();
+
+            $data_respon = json_decode($response);
+            $notif       = [
+                'status' => $data_respon->status,
+                'pesan'  => $data_respon->message,
+            ];
+        } catch (GuzzleHttp\Exception\ConnectException $e) {
+            $message = $e->getHandlerContext()['error'];
+            $notif   = [
+                'status' => 'danger',
+                'pesan'  => "<br/>{$message}<br/>",
+            ];
+        } catch (GuzzleHttp\Exception\ClientException $e) {
+            $message = $e->getResponse()->getBody()->getContents();
+            $notif   = [
+                'status' => 'danger',
+                'pesan'  => "<br/>{$message}<br/>",
+            ];
+        }
+
+        return $notif;
+    }
+}

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -127,7 +127,7 @@ class Web_menu_model extends MY_Model
         for ($i = 0; $i < count($data); $i++) {
             $data[$i]['no'] = $j + 1;
             if ($data[$i]['link_tipe'] != 99) {
-                $data[$i]['link'] = $this->menu_slug($data[$i]['link']);
+                $data[$i]['link'] = menu_slug($data[$i]['link']);
             }
 
             $j++;
@@ -198,7 +198,7 @@ class Web_menu_model extends MY_Model
             ->get_where($this->table, ['id' => $id])
             ->row_array();
 
-        $data['link'] = $this->menu_slug($data['link']);
+        $data['url'] = menu_slug($data['link']);
 
         return $data;
     }

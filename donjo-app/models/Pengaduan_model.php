@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -142,19 +142,23 @@ class Pengaduan_model extends CI_Model
 
     public function insert()
     {
-        $this->load->library('upload');
+        $upload['file_name'] = '';
 
-        $config['upload_path']   = LOKASI_PENGADUAN;
-        $config['allowed_types'] = 'jpg|jpeg|png';
-        $config['max_size']      = max_upload() * 1024;
-        $config['file_name']     = namafile($this->input->post('judul', true));
+        if ($_FILES['foto']['error'] == 0) {
+            $this->load->library('MY_Upload', null, 'upload');
 
-        $this->upload->initialize($config);
+            $config['upload_path']   = LOKASI_PENGADUAN;
+            $config['allowed_types'] = 'jpg|jpeg|png';
+            $config['max_size']      = max_upload() * 1024;
+            $config['file_name']     = namafile($this->input->post('judul', true));
 
-        if ($this->upload->do_upload('foto')) {
-            $upload = $this->upload->data();
-        } else {
-            $upload['file_name'] = '';
+            $this->upload->initialize($config);
+
+            if ($this->upload->do_upload('foto')) {
+                $upload = $this->upload->data();
+            } else {
+                return false;
+            }
         }
 
         $data = $this->validasi($this->input->post());
@@ -167,12 +171,13 @@ class Pengaduan_model extends CI_Model
     private function validasi($post)
     {
         return [
-            'nik'     => bilangan($post['nik']),
-            'nama'    => alfanumerik_kolon($post['nama']),
-            'email'   => htmlentities($post['email']),
-            'telepon' => bilangan($post['telepon']),
-            'judul'   => htmlentities($post['judul']),
-            'isi'     => htmlentities($post['isi']),
+            'nik'        => bilangan($post['nik']),
+            'nama'       => nama($post['nama']),
+            'email'      => email($post['email']),
+            'telepon'    => bilangan($post['telepon']),
+            'judul'      => htmlentities($post['judul']),
+            'isi'        => htmlentities($post['isi']),
+            'ip_address' => $this->input->ip_address(),
         ];
     }
 
@@ -197,6 +202,7 @@ class Pengaduan_model extends CI_Model
             'nama'         => $this->session->nama,
             'isi'          => $post['isi'],
             'status'       => $post['status'],
+            'ip_address'   => $this->input->ip_address() ?? '',
         ];
     }
 

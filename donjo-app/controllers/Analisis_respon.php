@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -42,6 +42,14 @@ class Analisis_respon extends Admin_Controller
     public function __construct()
     {
         parent::__construct();
+
+        if (! $this->session->has_userdata('analisis_master')) {
+            $this->session->success   = -1;
+            $this->session->error_msg = 'Pilih master analisis terlebih dahulu';
+
+            redirect('analisis_master');
+        }
+
         $this->session->unset_userdata(['delik']);
         $this->load->model(['analisis_respon_model', 'wilayah_model', 'analisis_master_model']);
         $this->session->submenu  = 'Input Data';
@@ -267,15 +275,22 @@ class Analisis_respon extends Admin_Controller
         $this->load->view('analisis_respon/import/data_ajax');
     }
 
-    public function data_unduh($p = 0, $o = 0)
+    /**
+     * Unduh data analisis respon
+     *
+     * @param int $tipe | 1. Dengan isian data, 2. Dengan kode isian
+     *
+     * @return void
+     */
+    public function data_unduh($tipe = 1)
     {
         $data['subjek_tipe'] = $this->session->subjek_tipe;
-        $data['main']        = $this->analisis_respon_model->data_unduh($p, $o);
+        $data['main']        = $this->analisis_respon_model->data_unduh(1, 0);
         $data['periode']     = $this->analisis_master_model->get_aktif_periode();
-        $data['indikator']   = $this->analisis_respon_model->indikator_unduh($p, $o);
-
-        $key         = ($data['periode'] + 3) * ($this->session->analisis_master + 7) * ($this->session->subjek_tipe * 3);
-        $data['key'] = 'AN' . $key;
+        $data['indikator']   = $this->analisis_respon_model->indikator_unduh(1);
+        $data['tipe']        = $tipe;
+        $key                 = ($data['periode'] + 3) * ($this->session->analisis_master + 7) * ($this->session->subjek_tipe * 3);
+        $data['key']         = 'AN' . $key;
 
         switch ($this->session->subjek_tipe) {
             case 5:

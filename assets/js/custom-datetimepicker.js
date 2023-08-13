@@ -109,10 +109,16 @@ $(document).ready(function()
 		format: 'DD-MM-YYYY',
 		locale:'id'
 	});
-	$('#tgl_6').datetimepicker(
+	$('.tgl_sekarang').datetimepicker(
 	{
-			format: 'DD-MM-YYYY',
-			locale:'id'
+		format: 'DD-MM-YYYY',
+		locale:'id',
+		maxDate: moment(new Date())
+	});
+	$('.jam').datetimepicker(
+	{
+		format: 'HH:mm:ss',
+		locale:'id'
 	});
 	$('#jam_1').datetimepicker(
 	{
@@ -146,5 +152,10 @@ $(document).ready(function()
 		format: 'HH:mm',
 		locale:'id'
 	});
-
+	$('#tanggal_cetak_ktp').datetimepicker(
+	{
+		format: 'DD-MM-YYYY',
+		locale:'id',
+		maxDate: new(Date)
+	});
 });

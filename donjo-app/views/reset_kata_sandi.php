@@ -12,18 +12,12 @@
     <?php if (is_file('desa/pengaturan/siteman/siteman.css')) : ?>
         <link rel='Stylesheet' href="<?= base_url('desa/pengaturan/siteman/siteman.css') ?>">
     <?php endif ?>
-    <?php if (is_file(LOKASI_LOGO_DESA . 'favicon.ico')) : ?>
-        <link rel="shortcut icon" href="<?= base_url(LOKASI_LOGO_DESA . 'favicon.ico') ?>">
-    <?php else : ?>
-        <link rel="shortcut icon" href="<?= base_url('favicon.ico') ?>" />
-    <?php endif ?>
+    <link rel="shortcut icon" href="<?= favico_desa() ?>" />
 
     <style type="text/css">
-        <?php if ($latar_login) : ?>body.login {
-            background-image: url('<?= base_url($latar_login) ?>');
+        body.login {
+            background-image: url('<?= $latar_login ?>');
         }
-
-        <?php endif ?>
     </style>
     <script src="<?= asset('bootstrap/js/jquery.min.js') ?>"></script>
     <script src="<?= asset('js/jquery.validate.min.js') ?>"></script>
@@ -61,10 +55,10 @@
                                     <input type="hidden" name="token" value="<?= $token ?>">
                                 </div>
                                 <div class="form-group">
-                                    <input name="password" type="password" placeholder="Password" class="form-control required pwdLengthNist">
+                                    <input name="password" type="password" placeholder="Password" autocomplete="off" class="form-control required pwdLengthNist">
                                 </div>
                                 <div class="form-group">
-                                    <input name="konfirmasi_password" type="password" placeholder="Konfirmasi Password" class="form-control required pwdLengthNist">
+                                    <input name="konfirmasi_password" type="password" placeholder="Konfirmasi Password" autocomplete="off" class="form-control required pwdLengthNist">
                                 </div>
                                 <div class="form-group">
                                     <button type="submit" class="btn">Reset Sandi</button>

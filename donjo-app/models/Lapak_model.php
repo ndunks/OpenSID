@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -198,12 +198,7 @@ class Lapak_model extends MY_Model
 
     private function upload_foto_produk($key = 1)
     {
-        $this->load->library('upload');
-        $this->uploadConfig = [
-            'upload_path'   => LOKASI_PRODUK,
-            'allowed_types' => 'gif|jpg|jpeg|png',
-            'max_size'      => max_upload() * 1024,
-        ];
+        $this->load->library('MY_Upload', null, 'upload');
         // Adakah berkas yang disertakan?
         if (empty($_FILES["foto_{$key}"]['name'])) {
             // Jika hapus (ceklis)
@@ -216,39 +211,25 @@ class Lapak_model extends MY_Model
             return $this->input->post("old_foto_{$key}");
         }
 
-        // Tes tidak berisi script PHP
-        if (isPHP($_FILES['logo']['tmp_name'], $_FILES["foto_{$key}"]['name'])) {
-            $this->session->success   = -1;
-            $this->session->error_msg = ' -> Jenis file ini tidak diperbolehkan ';
-            redirect('produk');
-        }
-
         $uploadData = null;
         // Inisialisasi library 'upload'
-        $this->upload->initialize($this->uploadConfig);
-        // Upload sukses
-        if ($this->upload->do_upload("foto_{$key}")) {
-            $uploadData = $this->upload->data();
-            // Buat nama file unik agar url file susah ditebak dari browser
-            $namaFileUnik = tambahSuffixUniqueKeNamaFile($uploadData['file_name']);
-            // Ganti nama file asli dengan nama unik untuk mencegah akses langsung dari browser
-            $fileRenamed = rename(
-                $this->uploadConfig['upload_path'] . $uploadData['file_name'],
-                $this->uploadConfig['upload_path'] . $namaFileUnik
-            );
-            // Ganti nama di array upload jika file berhasil di-rename --
-            // jika rename gagal, fallback ke nama asli
-            $uploadData['file_name'] = $fileRenamed ? $namaFileUnik : $uploadData['file_name'];
-
-            unlink(LOKASI_PRODUK . $this->input->post("old_foto_{$key}"));
-        }
+        $this->upload->initialize([
+            'upload_path'   => LOKASI_PRODUK,
+            'allowed_types' => 'gif|jpg|jpeg|png',
+            'max_size'      => 1024, // 1 MB
+        ]);
         // Upload gagal
+        if (! $this->upload->do_upload("foto_{$key}")) {
+            session_error($this->upload->display_errors());
+            redirect('lapak_admin/produk');
+        }
+        // Upload sukses
         else {
-            $this->session->success   = -1;
-            $this->session->error_msg = $this->upload->display_errors(null, null);
+            unlink(LOKASI_PRODUK . $this->input->post("old_foto_{$key}"));
+            $uploadData = $this->upload->data()['file_name'];
         }
 
-        return (! empty($uploadData)) ? $uploadData['file_name'] : null;
+        return $uploadData;
     }
 
     public function produk_delete($id = 0)

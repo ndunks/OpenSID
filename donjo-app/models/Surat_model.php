@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,6 +37,10 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
+use App\Libraries\DateConv;
+use App\Models\Config;
+use App\Models\LogSurat;
+use App\Models\Pamong;
 use Spipu\Html2Pdf\Exception\ExceptionFormatter;
 use Spipu\Html2Pdf\Exception\Html2PdfException;
 use Spipu\Html2Pdf\Html2Pdf;
@@ -48,8 +52,7 @@ class Surat_model extends CI_Model
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('penduduk_model');
-        $this->load->model('penomoran_surat_model');
+        $this->load->model(['penduduk_model', 'penomoran_surat_model', 'url_shortener_model']);
     }
 
     public function list_surat()
@@ -289,9 +292,10 @@ class Surat_model extends CI_Model
     // TODO: ganti menggunakan pamong_model->list_data()
     public function list_pamong()
     {
-        $sql = 'SELECT u.*, p.nama as nama
+        $sql = 'SELECT u.*, p.nama AS nama, rj.id AS ref_jabatan_id, rj.nama AS jabatan
 			FROM tweb_desa_pamong u
 			LEFT JOIN tweb_penduduk p ON u.id_pend = p.id
+			LEFT JOIN ref_jabatan rj ON u.jabatan_id = rj.id
 			WHERE pamong_status = 1';
         $query = $this->db->query($sql);
         $data  = $query->result_array();
@@ -301,12 +305,15 @@ class Surat_model extends CI_Model
                 // Dari database penduduk
                 $data[$i]['pamong_nama'] = $data[$i]['nama'];
             }
-            $data[$i]['no'] = $i + 1;
+
+            $data[$i]['nama'] = gelar($data[$i]['gelar_depan'], $data[$i]['nama'], $data[$i]['gelar_belakang']);
+            $data[$i]['no']   = $i + 1;
         }
 
         return $data;
     }
 
+    // TODO: Ganti cara mengambil data kk, pisahkan dalam variabel lain
     public function get_data_surat($id = 0)
     {
         $sql = "SELECT u.*,
@@ -317,6 +324,7 @@ class Surat_model extends CI_Model
 			w.nama AS status_kawin, u.status_kawin as status_kawin_id, f.nama AS warganegara, a.nama AS agama, d.nama AS pendidikan, h.nama AS hubungan, j.nama AS pekerjaan, c.rt AS rt, c.rw AS rw, c.dusun AS dusun, k.alamat, m.nama as cacat,
 			(select tweb_penduduk.nik from tweb_penduduk where (tweb_penduduk.id = k.nik_kepala)) AS nik_kk,
 			(select tweb_penduduk.telepon from tweb_penduduk where (tweb_penduduk.id = k.nik_kepala)) AS telepon_kk,
+            (select tweb_penduduk.email from tweb_penduduk where (tweb_penduduk.id = k.nik_kepala)) AS email_kk,
 			(select tweb_penduduk.nama AS nama from tweb_penduduk where (tweb_penduduk.id = k.nik_kepala)) AS kepala_kk,
 			r.bdt
 			from tweb_penduduk u
@@ -354,14 +362,11 @@ class Surat_model extends CI_Model
             }
         }
         if (isset($data['pendidikan'])) {
-            $namaPendidikan = ['Tk' => 'TK', 'Sd' => 'SD', 'Sltp' => 'SLTP', 'Slta' => 'SLTA', 'Slb' => 'SLB', 'Iii/s' => 'III/S', 'Iii' => 'III', 'Ii' => 'II', 'Iv' => 'IV'];
-
-            foreach ($namaPendidikan as $key => $value) {
-                $data['pendidikan'] = str_replace($key, $value, $data['pendidikan']);
-            }
+            $data['pendidikan'] = kasus_lain('pendidikan', $data['pendidikan']);
         }
+
         if (isset($data['pekerjaan'])) {
-            $data['pekerjaan'] = $this->penduduk_model->normalkanPekerjaan($data['pekerjaan']);
+            $data['pekerjaan'] = kasus_lain('pekerjaan', $data['pekerjaan']);
         }
     }
 
@@ -573,35 +578,35 @@ class Surat_model extends CI_Model
 
         while ($in < strlen($buffer_in)) {
             switch ($buffer_in[$in]) {
-          case '[':
-            // Ambil kode isian, hilangkan karakter bukan alpha
-            $kode_isian = $buffer_in[$in];
-            $in++;
+                case '[':
+                    // Ambil kode isian, hilangkan karakter bukan alpha
+                    $kode_isian = $buffer_in[$in];
+                    $in++;
 
-            while ($buffer_in[$in] != ']' && $in < strlen($buffer_in)) {
-                $kode_isian .= $buffer_in[$in];
-                $in++;
-            }
-            if ($in < strlen($buffer_in)) {
-                $kode_isian .= $buffer_in[$in];
-                $in++;
-            }
-            // Ganti karakter non-alphanumerik supaya bisa di-cek
-            $kode_isian = preg_replace('/[^a-zA-Z0-9,_\{\}\[\]\-]/', '#', $kode_isian);
-            // Regex ini untuk membersihkan kode isian dari karakter yang dimasukkan oleh Word
-            // Regex ini disusun berdasarkan RTF yang dihasilkan oleh Word 2011 di Mac.
-            // Perlu diverifikasi regex ini berlaku juga untuk RTF yang dihasilkan oleh versi Word lain.
-            $regex      = '/(\\}.?#)|rtlch.?#|cf\\d#|fcs.?#+|afs.?\\d#+|f\\d*?\\d#|fs\\d*?\\d#|af\\d*?\\d#+|ltrch#+|insrsid\\d*?\\d#+|alang\\d+#+|lang\\d+|langfe\\d+|langnp\\d+|langfenp\\d+|b#+|ul#+|hich#+|dbch#+|loch#+|charrsid\\d*?\\d#+|#+/';
-            $kode_isian = preg_replace($regex, '', $kode_isian);
-            $buffer_out .= $kode_isian;
-            break;
+                    while ($buffer_in[$in] != ']' && $in < strlen($buffer_in)) {
+                        $kode_isian .= $buffer_in[$in];
+                        $in++;
+                    }
+                    if ($in < strlen($buffer_in)) {
+                        $kode_isian .= $buffer_in[$in];
+                        $in++;
+                    }
+                    // Ganti karakter non-alphanumerik supaya bisa di-cek
+                    $kode_isian = preg_replace('/[^a-zA-Z0-9,_\{\}\[\]\-]/', '#', $kode_isian);
+                    // Regex ini untuk membersihkan kode isian dari karakter yang dimasukkan oleh Word
+                    // Regex ini disusun berdasarkan RTF yang dihasilkan oleh Word 2011 di Mac.
+                    // Perlu diverifikasi regex ini berlaku juga untuk RTF yang dihasilkan oleh versi Word lain.
+                    $regex      = '/(\\}.?#)|rtlch.?#|cf\\d#|fcs.?#+|afs.?\\d#+|f\\d*?\\d#|fs\\d*?\\d#|af\\d*?\\d#+|ltrch#+|insrsid\\d*?\\d#+|alang\\d+#+|lang\\d+|langfe\\d+|langnp\\d+|langfenp\\d+|b#+|ul#+|hich#+|dbch#+|loch#+|charrsid\\d*?\\d#+|#+/';
+                    $kode_isian = preg_replace($regex, '', $kode_isian);
+                    $buffer_out .= $kode_isian;
+                    break;
 
-          default:
-            // Ambil isi yang bukan bagian dari kode isian
-            $buffer_out .= $buffer_in[$in];
-            $in++;
-            break;
-        }
+                default:
+                    // Ambil isi yang bukan bagian dari kode isian
+                    $buffer_out .= $buffer_in[$in];
+                    $in++;
+                    break;
+            }
         }
 
         return $buffer_out;
@@ -614,12 +619,14 @@ class Surat_model extends CI_Model
         return str_replace('[kop_surat]', $kop_surat, $buffer);
     }
 
-    private function sisipkan_logo($nama_logo, $buffer)
+    private function sisipkan_logo($nama_logo, $logo_garuda, $buffer)
     {
-        $file_logo = APPPATH . '../' . LOKASI_LOGO_DESA . $nama_logo;
+        $file_logo = FCPATH . (($logo_garuda) ? 'assets/images/garuda.png' : LOKASI_LOGO_DESA . $nama_logo);
+
         if (! is_file($file_logo)) {
             return $buffer;
         }
+
         // Akhiran dan awalan agak panjang supaya unik
         $akhiran_logo      = 'e33874670000000049454e44ae426082';
         $awalan_logo       = '89504e470d0a1a0a0000000d4948445200000040000000400806000000aa';
@@ -727,69 +734,79 @@ class Surat_model extends CI_Model
         }
     }
 
-    /* Dipanggil untuk setiap kode isian ditemukan,
-       dan diganti dengan kata pengganti yang huruf besar/kecil mengikuti huruf kode isian.
-         Berdasarkan contoh di http://stackoverflow.com/questions/19317493/php-preg-replace-case-insensitive-match-with-case-sensitive-replacement
-
-         Huruf pertama dan kedua huruf besar --> ganti dengan huruf besar semua:
-                 [SEbutan_desa] ==> KAMPUNG
-         Huruf pertama besar dan kedua kecil --> ganti dengan huruf besar pertama saja:
-                 [Sebutan_desa] ==> Kampung
-         Huruf pertama kecil --> ganti dengan huruf kecil semua:
-                 [sebutan_desa] ==> kampung
-    */
-    public function case_replace($dari, $ke, $str)
-    {
-        $replacer = static function ($matches) use ($ke) {
-            $matches = array_map(static function ($match) {
-                return preg_replace('/[\\[\\]]/', '', $match);
-            }, $matches);
-            if (ctype_upper($matches[0][0]) && ctype_upper($matches[0][1])) {
-                return strtoupper($ke);
-            }
-            if (ctype_upper($matches[0][0])) {
-                return ucwords($ke);
-            }
-
-            return strtolower($ke);
-        };
-        $dari = str_replace('[', '\\[', $dari);
-        $str  = preg_replace_callback('/(' . $dari . ')/i', $replacer, $str);
-
-        return $str;
-    }
-
-    private function atas_nama($data)
+    private function atas_nama($data, $buffer = null)
     {
         //Data penandatangan
-        $input  = $data['input'];
-        $config = $data['config'];
-        $this->load->model('pamong_model');
-        $pamong_ttd = $this->pamong_model->get_ttd();
-        $atas_nama  = '';
-        if (! empty($input['pilih_atas_nama'])) {
-            $atas_nama = 'a.n ' . ucwords($pamong_ttd['jabatan'] . ' ' . $config['nama_desa']);
-            if (strpos($input['pilih_atas_nama'], 'u.b') !== false) {
-                $pamong_ub = $this->pamong_model->get_ub();
-                $atas_nama .= ' \par ' . $pamong_ub['jabatan'] . ' \par' . ' u.b';
-            }
-            $atas_nama .= ' \par ';
-            $atas_nama .= $input['jabatan'];
-        } else {
-            $atas_nama .= $input['jabatan'] . ' ' . $config['nama_desa'];
+        $input     = $data['input'];
+        $nama_desa = Config::select(['nama_desa'])->first()->nama_desa;
+
+        //Data penandatangan
+        $kades = Pamong::kepalaDesa()->first();
+
+        $ttd         = $input['pilih_atas_nama'];
+        $atas_nama   = $kades->pamong_jabatan . ' ' . $nama_desa;
+        $jabatan     = $kades->pamong_jabatan;
+        $nama_pamong = $kades->pamong_nama;
+        $nip_pamong  = $kades->pamong_nip;
+        $niap_pamong = $kades->pamong_niap;
+
+        $sekdes = Pamong::ttd('a.n')->first();
+        if (preg_match('/a.n/i', $ttd)) {
+            $atas_nama   = 'a.n ' . $atas_nama . ' \par ' . $sekdes->pamong_jabatan;
+            $jabatan     = $sekdes->pamong_jabatan;
+            $nama_pamong = $sekdes->pamong_nama;
+            $nip_pamong  = $sekdes->pamong_nip;
+            $niap_pamong = $sekdes->pamong_niap;
         }
 
-        return $atas_nama;
-    }
+        if (preg_match('/u.b/i', $ttd)) {
+            $pamong      = Pamong::ttd('u.b')->find($input['pamong_id']);
+            $atas_nama   = 'a.n ' . $atas_nama . ' \par ' . $sekdes->pamong_jabatan . ' \par  u.b  \par ' . $pamong->jabatan->nama;
+            $jabatan     = $pamong->pamong_jabatan;
+            $nama_pamong = $pamong->pamong_nama;
+            $nip_pamong  = $pamong->pamong_nip;
+            $niap_pamong = $pamong->pamong_niap;
+        }
 
-    private function penandatangan_lampiran($data)
-    {
-        return str_replace('\par', '<br>', $this->atas_nama($data));
+        // Untuk lampiran
+        if (null === $buffer) {
+            return [
+                'atas_nama' => str_replace('\par', '<br>', $atas_nama),
+                'jabatan'   => $jabatan,
+                'nama'      => $nama_pamong,
+                'nip'       => $nip_pamong,
+                'niap'      => $niap_pamong,
+            ];
+        }
+
+        $buffer = str_replace('[penandatangan]', $atas_nama, $buffer);
+        $buffer = str_replace('[jabatan]', "{$jabatan}", $buffer);
+        $buffer = str_replace('[nama_pamong]', $nama_pamong, $buffer);
+
+        if (strlen($nip_pamong) > 10) {
+            $sebutan_nip_desa = 'NIP';
+            $nip              = $nip_pamong;
+            $pamong_nip       = $sebutan_nip_desa . ' : ' . $nip;
+        } else {
+            $sebutan_nip_desa = setting('sebutan_nip_desa');
+            if (! empty($niap_pamong)) {
+                $nip        = $niap_pamong;
+                $pamong_nip = $sebutan_nip_desa . ' : ' . $niap_pamong;
+            } else {
+                $pamong_nip = '';
+            }
+        }
+
+        $buffer = str_replace('[sebutan_nip_desa]', $sebutan_nip_desa, $buffer);
+        $buffer = str_replace('[pamong_nip]', $nip, $buffer);
+
+        return str_replace('[form_pamong_nip]', $pamong_nip, $buffer);
     }
 
     public function surat_rtf($data)
     {
-        $this->load->library('date_conv');
+        $DateConv = new DateConv();
+
         // Ambil data
         $input       = $data['input'];
         $individu    = $data['individu'];
@@ -799,11 +816,11 @@ class Surat_model extends CI_Model
         $surat       = $data['surat'];
         $id          = $input['nik'];
         $url         = $surat['url_surat'];
+        $logo_garuda = $surat['logo_garuda'];
         $tgl         = tgl_indo(date('Y m d'));
-        $tgl_hijri   = Hijri_date_id::date('j F Y');
+        $tgl_hijri   = $DateConv->HijriDateId('j F Y');
         $thn         = date('Y');
         $tampil_foto = $input['tampil_foto'];
-        $qrcode      = $this->session->qrcode;
 
         $tgllhr           = ucwords(tgl_indo($individu['tanggallahir']));
         $individu['nama'] = strtoupper($individu['nama']);
@@ -819,10 +836,9 @@ class Surat_model extends CI_Model
             $buffer = stream_get_contents($handle);
             $buffer = $this->bersihkan_kode_isian($buffer);
             $buffer = $this->sisipkan_kop_surat($buffer);
-            $buffer = $this->sisipkan_logo($config['logo'], $buffer);
-
+            $buffer = $this->sisipkan_logo($config['logo'], $logo_garuda, $buffer);
             $buffer = $this->sisipkan_foto($data, $tampil_foto ? $individu['foto'] : 'empty.png', $buffer);
-            $buffer = $this->sisipkan_qr($data, $qrcode ? "{$qrcode['namaqr']}.png" : 'empty.png', $buffer);
+            $buffer = $this->sisipkan_qr($data['qrCode']['viewqr'] ?? FCPATH . LOKASI_SISIPAN_DOKUMEN . 'empty.png', $buffer);
 
             // SURAT PROPERTI
             $array_replace = [
@@ -852,14 +868,14 @@ class Surat_model extends CI_Model
             $buffer = str_replace(array_keys($array_replace), array_values($array_replace), $buffer);
 
             //Data penandatangan
-            $buffer = str_replace('[penandatangan]', $this->atas_nama($data), $buffer);
+            $buffer = $this->atas_nama($data, $buffer);
 
             //DATA DARI KONFIGURASI DESA
-            $buffer = $this->case_replace('[sebutan_kabupaten]', $this->setting->sebutan_kabupaten, $buffer);
-            $buffer = $this->case_replace('[sebutan_kecamatan]', $this->setting->sebutan_kecamatan, $buffer);
-            $buffer = $this->case_replace('[sebutan_desa]', $this->setting->sebutan_desa, $buffer);
-            $buffer = $this->case_replace('[sebutan_dusun]', $this->setting->sebutan_dusun, $buffer);
-            $buffer = $this->case_replace('[sebutan_camat]', $this->setting->sebutan_camat, $buffer);
+            $buffer = case_replace('[sebutan_kabupaten]', $this->setting->sebutan_kabupaten, $buffer);
+            $buffer = case_replace('[sebutan_kecamatan]', $this->setting->sebutan_kecamatan, $buffer);
+            $buffer = case_replace('[sebutan_desa]', $this->setting->sebutan_desa, $buffer);
+            $buffer = case_replace('[sebutan_dusun]', $this->setting->sebutan_dusun, $buffer);
+            $buffer = case_replace('[sebutan_camat]', $this->setting->sebutan_camat, $buffer);
             if (! empty($config['email_desa'])) {
                 $alamat_desa  = "{$config['alamat_kantor']} Email: {$config['email_desa']} Kode Pos: {$config['kode_pos']}";
                 $alamat_surat = "{$config['alamat_kantor']} Telp. {$config['telepon']} Kode Pos: {$config['kode_pos']} \\par Website: {$config['website']} Email: {$config['email_desa']}";
@@ -878,11 +894,15 @@ class Surat_model extends CI_Model
                 '[kode_kabupaten]'    => $config['kode_kabupaten'],
                 '[kode_pos]'          => $config['kode_pos'],
                 '[kode_provinsi]'     => $config['kode_propinsi'],
+                '[NAMA_DES]'          => strtoupper($config['nama_desa']),
                 '[nama_des]'          => $config['nama_desa'],
+                '[NAMA_KAB]'          => strtoupper($config['nama_kabupaten']),
                 '[nama_kab]'          => ucwords(strtolower($config['nama_kabupaten'])),
                 '[nama_kabupaten]'    => $config['nama_kabupaten'],
+                '[NAMA_KEC]'          => strtoupper($config['nama_kecamatan']),
                 '[nama_kec]'          => $config['nama_kecamatan'],
                 '[nama_kecamatan]'    => $config['nama_kecamatan'],
+                '[NAMA_PROV]'         => strtoupper($config['nama_propinsi']),
                 '[nama_provinsi]'     => ucwords(strtolower($config['nama_propinsi'])),
                 '[nama_kepala_camat]' => $config['nama_kepala_camat'],
                 '[nama_kepala_desa]'  => $config['nama_kepala_desa'],
@@ -963,27 +983,12 @@ class Surat_model extends CI_Model
             // Kode isian yang disediakan pada SID CRI
             $this->substitusi_nomor_surat($input['nomor'], $buffer);
             $buffer = str_replace('[nomor_sorat]', "{$input['nomor']}", $buffer);
-            if (isset($input['berlaku_dari'])) {
+            if (isset($input['berlaku_dari']) || isset($input['berlaku_dari'])) {
                 $buffer = str_replace('[mulai_berlaku]', tgl_indo(date('Y m d', strtotime($input['berlaku_dari']))), $buffer);
-            }
-            if (isset($input['berlaku_sampai'])) {
                 $buffer = str_replace('[tgl_akhir]', tgl_indo(date('Y m d', strtotime($input['berlaku_sampai']))), $buffer);
-            }
-            $buffer = str_replace('[jabatan]', "{$input['jabatan']}", $buffer);
-            $buffer = str_replace('[nama_pamong]', "{$input['pamong']}", $buffer);
-            $nip    = "{$input['pamong_nip']}";
-            if (strlen($nip) > 10) {
-                $pamong_nip = 'NIP: ' . $nip;
             } else {
-                $sebutan_nip_desa = $this->setting->sebutan_nip_desa;
-                $pamong_niap      = "{$input['pamong_niap']}";
-                if (! empty($pamong_niap)) {
-                    $pamong_nip = $sebutan_nip_desa . ': ' . $pamong_niap;
-                } else {
-                    $pamong_nip = '';
-                }
+                $buffer = str_replace('[mulai_berlaku] s/d [tgl_akhir]', '-', $buffer);
             }
-            $buffer = str_replace('NIP: [pamong_nip]', $pamong_nip, $buffer);
             $buffer = str_replace('[keterangan]', "{$input['keterangan']}", $buffer);
             if (isset($input['keperluan'])) {
                 $buffer = str_replace('[keperluan]', "{$input['keperluan']}", $buffer);
@@ -1061,14 +1066,18 @@ class Surat_model extends CI_Model
 
     public function lampiran($data, $nama_surat, &$lampiran)
     {
-        $surat = $data['surat'];
+        $surat    = $data['surat'];
+        $config   = $data['config'];
+        $individu = $data['individu'];
+        $input    = $data['input'];
+
         if (! $surat['lampiran']) {
             return;
         }
 
-        $config   = $data['config'];
-        $individu = $data['individu'];
-        $input    = $data['input'];
+        // Data penandatangan terpilih
+        $penandatangan = $this->atas_nama($data);
+
         // $lampiran_surat dalam bentuk seperti "f-1.08.php, f-1.25.php, f-1.27.php"
         $daftar_lampiran = explode(',', $surat['lampiran']);
         include $this->get_file_data_lampiran($surat['url_surat'], $surat['lokasi_rtf']);
@@ -1091,13 +1100,14 @@ class Surat_model extends CI_Model
         } catch (Html2PdfException $e) {
             $html2pdf->clean();
             $formatter = new ExceptionFormatter($e);
-            echo $formatter->getHtmlMessage();
+            log_message('error', $formatter->getHtmlMessage());
         }
     }
 
     public function get_data_untuk_surat($url)
     {
         $data['input'] = $_POST;
+
         // Ambil data
         $data['config']                      = $this->header['desa'];
         $data['surat']                       = $this->get_surat($url);
@@ -1117,14 +1127,18 @@ class Surat_model extends CI_Model
 
     public function buat_surat($url, &$nama_surat, &$lampiran)
     {
-        $data  = $this->get_data_untuk_surat($url);
-        $input = $data['input'];
+        $data           = $this->get_data_untuk_surat($url);
+        $data['qrCode'] = null;
         if ($data['surat']['qr_code'] == 1) {
-            $this->buat_qrcode($data, $nama_surat);
+            $data['qrCode'] = $this->buatQrCode($nama_surat);
         }
+
         $this->lampiran($data, $nama_surat, $lampiran);
 
-        return $this->surat_utama($data, $nama_surat);
+        return [
+            'namaSurat' => $this->surat_utama($data, $nama_surat),
+            'qrCode'    => $data['qrCode'],
+        ];
     }
 
     public function surat_utama($data, &$nama_surat)
@@ -1197,20 +1211,8 @@ class Surat_model extends CI_Model
             ->row()->jml;
     }
 
-    public function masa_berlaku_surat($url)
+    private function sisipkan_qr($file_qr, $buffer)
     {
-        return $this->db
-            ->select('masa_berlaku, satuan_masa_berlaku')
-            ->from('tweb_surat_format')
-            ->where('url_surat', $url)
-            ->get()->result_array()[0];
-    }
-
-    private function sisipkan_qr($data, $nama_qr, $buffer)
-    {
-        $input   = $data['input'];
-        $file_qr = APPPATH . '../' . (($nama_qr == 'empty.png') ? LOKASI_SISIPAN_DOKUMEN : LOKASI_MEDIA) . $nama_qr;
-
         if (! is_file($file_qr)) {
             return $buffer;
         }
@@ -1234,58 +1236,24 @@ class Surat_model extends CI_Model
         return $buffer;
     }
 
-    public function buat_qrcode($data, $nama_surat)
+    public function buatQrCode($nama_surat)
     {
-        $this->load->model('url_shortener_model');
-
-        $surat         = $data['surat'];
-        $input         = $data['input'];
-        $config        = $data['config'];
-        $foreqr        = '#000000';
-        $nama_surat_qr = pathinfo($nama_surat, PATHINFO_FILENAME);
-        $id_log_surat  = $this->db->select('id')->from('log_surat')->where('nama_surat', $nama_surat)->limit(1)->get()->row()->id;
+        $log_surat = LogSurat::select(['id', 'urls_id'])->where('nama_surat', $nama_surat)->first();
 
         //redirect link tidak ke path aslinya dan encode ID surat
-        $check_surat = site_url("c1/{$id_log_surat}");
+        $urls = $this->url_shortener_model->url_pendek($log_surat);
 
-        //link diubah ke URL Shortener
-        $isiqr = $this->url_shortener_model->url_pendek($check_surat);
-
-        $pathqr = LOKASI_MEDIA;
-        $desa   = $this->header['desa'];
-        $logoqr = gambar_desa($desa['logo'], false, $file = true);
-
-        $qrcode = [
-            'pathqr' => $pathqr,
-            'namaqr' => $nama_surat_qr,
-            'isiqr'  => $isiqr,
-            'logoqr' => $logoqr,
-            'sizeqr' => 6,
-            'foreqr' => $foreqr,
-            'viewqr' => base_url(LOKASI_MEDIA . '' . $nama_surat_qr . '.png'),
+        $qrCode = [
+            'isiqr'   => $urls['isiqr'],
+            'urls_id' => $urls['urls_id'],
+            'logoqr'  => gambar_desa($this->header['desa']['logo'], false, true),
+            'sizeqr'  => 6,
+            'foreqr'  => '#000000',
         ];
-        $this->session->qrcode = $qrcode;
-        qrcode_generate($qrcode['pathqr'], $qrcode['namaqr'], $qrcode['isiqr'], $qrcode['logoqr'], $qrcode['sizeqr'], $qrcode['foreqr']);
-    }
 
-    // Periksa apakah template rtf berisi sematan qrcode
-    public function cek_sisipan_qrcode($url)
-    {
-        $ada = false;
-        // Pakai surat ubahan desa apabila ada
-        $file = SuratExportDesa($url);
-        if ($file == '') {
-            $file = "template-surat/{$url}/{$url}.rtf";
-        }
+        $qrCode['viewqr'] = qrcode_generate($qrCode);
 
-        if (is_file($file)) {
-            $handle = fopen($file, 'rb');
-            $buffer = stream_get_contents($handle);
-            $ada    = strpos($buffer, $this->awalan_qr) !== false;
-            fclose($handle);
-        }
-
-        return $ada;
+        return $qrCode;
     }
 
     public function cek_surat_mandiri($id)
@@ -1293,5 +1261,22 @@ class Surat_model extends CI_Model
         return $this->db
             ->get_where('tweb_surat_format', ['id' => $id])
             ->row_array();
+    }
+
+    public function getQrCode($id)
+    {
+        //redirect link tidak ke path aslinya dan encode ID surat
+        $urls = $this->url_shortener_model->getUrlById($id);
+
+        $qrCode = [
+            'isiqr'  => site_url('v/' . $urls->alias),
+            'logoqr' => gambar_desa($this->header['desa']['logo'], false, true),
+            'sizeqr' => 6,
+            'foreqr' => '#000000',
+        ];
+
+        $qrCode['viewqr'] = qrcode_generate($qrCode, true);
+
+        return $qrCode;
     }
 }

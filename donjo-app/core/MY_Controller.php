@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,14 +29,37 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Models\Anjungan;
+use App\Models\Config;
+use App\Models\GrupAkses;
+use App\Models\LogSurat;
+use App\Models\Pamong;
+use App\Models\Pesan;
+use Illuminate\Support\Facades\Schema;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
+/**
+ * @property CI_Benchmark        $benchmark
+ * @property CI_Config           $config
+ * @property CI_DB_query_builder $db
+ * @property CI_Input            $input
+ * @property CI_Lang             $lang
+ * @property CI_Loader           $loader
+ * @property CI_log              $log
+ * @property CI_Output           $output
+ * @property CI_Router           $router
+ * @property CI_Security         $security
+ * @property CI_Session          $session
+ * @property CI_URI              $uri
+ * @property CI_Utf8             $utf8
+ */
 class MY_Controller extends CI_Controller
 {
     // Common data
@@ -53,9 +76,34 @@ class MY_Controller extends CI_Controller
     public function __construct()
     {
         parent::__construct();
+        $error = $this->session->db_error;
+        if ($error['code'] == 1049 && ! $this->db) {
+            return;
+        }
+
+        /*
+        | Tambahkan model yg akan diautoload di sini.
+        | donjo-app/config/autoload.php digunakan untuk autoload model untuk mengisi data awal
+        | pada waktu install, di mana database masih kosong
+        */
+        $this->load->model(['setting_model', 'anjungan_model']);
         $this->controller = strtolower($this->router->fetch_class());
         $this->setting_model->init();
-        $this->header = $this->config_model->get_data();
+        $this->request = $this->input->post();
+
+        // Untuk anjungan
+        if (Schema::hasColumn('anjungan', 'tipe') && Schema::hasColumn('anjungan', 'status_alasan')) {
+            if (! cek_anjungan() && Anjungan::exists()) {
+                try {
+                    Anjungan::tipe(1)->update(['status' => 0, 'status_alasan' => 'tidak berlangganan anjungan']);
+                } catch (Exception $e) {
+                }
+            }
+            $this->cek_anjungan = $this->anjungan_model->cek_anjungan();
+        }
+
+        // Cek perangkat lupa absen keluar
+        cek_kehadiran();
     }
 
     // Bersihkan session cluster wilayah
@@ -67,97 +115,60 @@ class MY_Controller extends CI_Controller
             $this->session->unset_userdata($session);
         }
     }
-
-    public function json_output($parm, $header = 200)
-    {
-        $this->output
-            ->set_status_header($header)
-            ->set_content_type('application/json', 'utf-8')
-            ->set_output(json_encode($parm))
-            ->_display();
-
-        exit();
-    }
 }
 
 class Web_Controller extends MY_Controller
 {
+    public $cek_anjungan;
+
     // Constructor
     public function __construct()
     {
         parent::__construct();
-        // Gunakan tema klasik kalau setting tema kosong atau folder di desa/themes untuk tema pilihan tidak ada
-        // if (empty($this->setting->web_theme) OR !is_dir(FCPATH.'desa/themes/'.$this->setting->web_theme))
-        $theme        = preg_replace('/desa\\//', '', strtolower($this->setting->web_theme));
-        $theme_folder = preg_match('/desa\\//', strtolower($this->setting->web_theme)) ? 'desa/themes' : 'themes';
-        if (empty($this->setting->web_theme) || !is_dir(FCPATH . $theme_folder . '/' . $theme)) {
-            $this->theme        = 'klasik';
-            $this->theme_folder = 'themes';
-        } else {
-            $this->theme        = $theme;
-            $this->theme_folder = $theme_folder;
+
+        $this->header = Schema::hasColumn('tweb_desa_pamong', 'jabatan_id') ? Config::first() : null;
+
+        if ($this->setting->offline_mode == 2) {
+            $this->view_maintenance();
+        } elseif ($this->setting->offline_mode == 1) {
+            $this->load->model('user_model');
+            $grup = $this->user_model->sesi_grup($this->session->sesi);
+            if (! $this->user_model->hak_akses($grup, 'web', 'b')) {
+                $this->view_maintenance();
+            }
         }
+
+        $this->load->model('theme_model');
+        $this->theme        = $this->theme_model->tema;
+        $this->theme_folder = $this->theme_model->folder;
+
         // Variabel untuk tema
-        $this->template                  = "../../{$this->theme_folder}/{$this->theme}/template.php";
-        $this->includes['folder_themes'] = '../../' . $this->theme_folder . '/' . $this->theme;
+        $this->set_template();
+        $this->includes['folder_themes'] = "../../{$this->theme_folder}/{$this->theme}";
 
         $this->load->model('web_menu_model');
     }
 
-    /*
-     * Jika file theme/view tidak ada, gunakan file klasik/view
-     * Supaya tidak semua layout atau partials harus diulangi untuk setiap tema
-     */
-    public static function fallback_default($theme, $view)
-    {
-        $view         = trim($view, '/');
-        $theme_folder = self::get_instance()->theme_folder;
-        $theme_view   = "../../{$theme_folder}/{$theme}/{$view}";
-
-        if (!is_file(APPPATH . 'views/' . $theme_view)) {
-            $theme_view = "../../themes/klasik/{$view}";
-        }
-
-        return $theme_view;
-    }
-
     /**
-     * Set Template
-     * sometime, we want to use different template for different page
-     * for example, 404 template, login template, full-width template, sidebar template, etc.
-     * so, use this function
-     * --------------------------------------
+     * set_template function
      *
-     * @since	Version 3.1.0
+     * @param string $template_file
      *
-     * @param	string, template file name
-     * @param mixed $template_file
-     *
-     * @return chained object
+     * @return void
      */
-    public function set_template($template_file = 'template.php')
+    public function set_template($template_file = 'template')
     {
-        // make sure that $template_file has .php extension
-        $template_file = substr($template_file, -4) == '.php' ? $template_file : ($template_file . '.php');
-
-        $template_file_path = FCPATH . $this->theme_folder . '/' . $this->theme . '/' . $template_file;
-        if (is_file($template_file_path)) {
-            $this->template = "../../{$this->theme_folder}/{$this->theme}/{$template_file}";
-        } else {
-            $this->template = '../../themes/klasik/' . $template_file;
-        }
+        $this->template = "../../{$this->theme_folder}/{$this->theme}/{$template_file}";
     }
 
     public function _get_common_data(&$data)
     {
         $this->load->library('statistik_pengunjung');
 
-        $this->load->model('theme_model');
         $this->load->model('first_menu_m');
         $this->load->model('teks_berjalan_model');
         $this->load->model('first_artikel_m');
         $this->load->model('web_widget_model');
-        $this->load->model('anjungan_model');
         $this->load->model('keuangan_grafik_manual_model');
         $this->load->model('keuangan_grafik_model');
         $this->load->model('pengaduan_model');
@@ -168,15 +179,15 @@ class Web_Controller extends MY_Controller
         // Data statistik pengunjung
         $data['statistik_pengunjung'] = $this->statistik_pengunjung->get_statistik();
 
-        $data['latar_website'] = $this->theme_model->latar_website();
+        $data['latar_website'] = default_file($this->theme_model->lokasi_latar_website() . $this->setting->latar_website, DEFAULT_LATAR_WEBSITE);
         $data['desa']          = $this->header;
         $data['menu_atas']     = $this->first_menu_m->list_menu_atas();
         $data['menu_kiri']     = $this->first_menu_m->list_menu_kiri();
-        $data['teks_berjalan'] = $this->teks_berjalan_model->list_data(true);
+        $data['teks_berjalan'] = ($this->db->field_exists('tipe', 'teks_berjalan')) ? $this->teks_berjalan_model->list_data(true, 1) : null;
         $data['slide_artikel'] = $this->first_artikel_m->slide_show();
         $data['slider_gambar'] = $this->first_artikel_m->slider_gambar();
         $data['w_cos']         = $this->web_widget_model->get_widget_aktif();
-        $data['cek_anjungan']  = $this->anjungan_model->cek_anjungan();
+        $data['cek_anjungan']  = $this->cek_anjungan;
 
         $this->web_widget_model->get_widget_data($data);
         $data['data_config'] = $this->header;
@@ -196,26 +207,41 @@ class Web_Controller extends MY_Controller
             $data[$kolom] = $this->security->xss_clean($data[$kolom]);
         }
     }
+
+    private function view_maintenance()
+    {
+        $this->load->model('pamong_model');
+
+        $main         = $this->header;
+        $pamong_kades = Pamong::ttd('a.n')->first()->toArray();
+
+        // TODO : Gunakan view blade
+        if (file_exists(DESAPATH . 'offline_mode.php')) {
+            include DESAPATH . 'offline_mode.php';
+        } else {
+            include VIEWPATH . 'offline_mode.php';
+        }
+
+        exit();
+    }
 }
 
 class Mandiri_Controller extends MY_Controller
 {
-    public $cek_anjungan;
     public $is_login;
 
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('anjungan_model');
-        $this->cek_anjungan = $this->anjungan_model->cek_anjungan();
-        $this->is_login     = $this->session->is_login;
+        $this->is_login = $this->session->is_login;
+        $this->header   = Schema::hasColumn('tweb_desa_pamong', 'jabatan_id') ? Config::first() : null;
 
-        if ($this->setting->layanan_mandiri == 0 && !$this->cek_anjungan) {
+        if ($this->setting->layanan_mandiri == 0 && ! $this->cek_anjungan) {
             show_404();
         }
 
         if ($this->session->mandiri != 1) {
-            if (!$this->session->login_ektp) {
+            if (! $this->session->login_ektp) {
                 redirect('layanan-mandiri/masuk');
             } else {
                 redirect('layanan-mandiri/masuk-ektp');
@@ -258,7 +284,8 @@ class Admin_Controller extends MY_Controller
     {
         parent::__construct();
         $this->CI = CI_Controller::get_instance();
-        $this->load->model(['header_model', 'user_model', 'notif_model', 'referensi_model']);
+        $this->load->model(['header_model', 'user_model', 'notif_model', 'pelanggan_model', 'referensi_model']);
+        $this->header = $this->header_model->get_data();
 
         // Kalau sehabis periksa data, paksa harus login lagi
         if ($this->session->periksa_data == 1) {
@@ -267,11 +294,12 @@ class Admin_Controller extends MY_Controller
 
         $this->grup = $this->user_model->sesi_grup($_SESSION['sesi']);
         $this->load->model('modul_model');
-        if (!$this->modul_model->modul_aktif($this->controller)) {
+        if (! $this->modul_model->modul_aktif($this->controller)) {
             session_error('Fitur ini tidak aktif');
             redirect($_SERVER['HTTP_REFERER']);
         }
-        if (!$this->user_model->hak_akses($this->grup, $this->controller, 'b')) {
+
+        if (! $this->user_model->hak_akses($this->grup, $this->controller, 'b')) {
             if (empty($this->grup)) {
                 $_SESSION['request_uri'] = $_SERVER['REQUEST_URI'];
                 redirect('siteman');
@@ -281,12 +309,38 @@ class Admin_Controller extends MY_Controller
                 redirect('main');
             }
         }
-        $this->cek_pengumuman();
-        $this->header                           = $this->header_model->get_data();
+        $cek_kotak_pesan                        = $this->db->table_exists('pesan') && $this->db->table_exists('pesan_detail');
         $this->header['notif_permohonan_surat'] = $this->notif_model->permohonan_surat_baru();
         $this->header['notif_inbox']            = $this->notif_model->inbox_baru();
         $this->header['notif_komentar']         = $this->notif_model->komentar_baru();
-        $this->header['notif_langganan']        = $this->notif_model->status_langganan();
+        $this->header['notif_langganan']        = $this->pelanggan_model->status_langganan();
+        $this->header['notif_pesan_opendk']     = $cek_kotak_pesan ? Pesan::where('sudah_dibaca', '=', 0)->where('diarsipkan', '=', 0)->count() : 0;
+        $this->header['notif_pengumuman']       = $this->cek_pengumuman();
+        $isAdmin                                = $this->session->isAdmin->pamong;
+        $this->header['notif_permohonan']       = 0;
+        if ($this->db->field_exists('verifikasi_operator', 'log_surat') && $this->db->field_exists('deleted_at', 'log_surat')) {
+            $this->header['notif_permohonan'] = LogSurat::whereNull('deleted_at')->when($isAdmin->jabatan_id == '1', static function ($q) {
+                return $q->when(setting('tte') == 1, static function ($tte) {
+                    return $tte->where('verifikasi_kades', '=', 0)->orWhere('tte', '=', 0);
+                })->when(setting('tte') == 0, static function ($tte) {
+                    return $tte->where('verifikasi_kades', '=', 0);
+                });
+            })
+                ->when($isAdmin->jabatan_id == '2', static function ($q) {
+                    return $q->where('verifikasi_sekdes', '=', '0');
+                })
+                ->when($isAdmin == null || ! in_array($isAdmin->jabatan_id, ['1', '2']), static function ($q) {
+                    return $q->where('verifikasi_operator', '=', '0')->orWhere('verifikasi_operator', '=', '-1');
+                })
+                ->count();
+        }
+
+        // cek langganan premium
+        $info_langganan = $this->cache->file->get_metadata('status_langganan');
+
+        if ((strtotime('+1 day', $info_langganan['mtime']) < strtotime('now')) || ($this->cache->file->get_metadata('status_langganan') == false && $this->setting->layanan_opendesa_token != null)) {
+            $this->header['perbaharui_langganan'] = true;
+        }
     }
 
     private function cek_pengumuman()
@@ -298,11 +352,16 @@ class Admin_Controller extends MY_Controller
         // Hanya untuk user administrator
         if ($this->grup == 1) {
             $notifikasi = $this->notif_model->get_semua_notif();
+
             foreach ($notifikasi as $notif) {
-                $this->pengumuman = $this->notif_model->notifikasi($notif);
-                if ($notif['jenis'] == 'persetujuan') break;
+                $pengumuman = $this->notif_model->notifikasi($notif);
+                if ($notif['jenis'] == 'persetujuan') {
+                    break;
+                }
             }
         }
+
+        return $pengumuman;
     }
 
     // Untuk kasus di mana method controller berbeda hak_akses. Misalnya 'setting_qrcode' readonly, tetapi 'setting/analisis' boleh ubah
@@ -320,13 +379,15 @@ class Admin_Controller extends MY_Controller
         }
     }
 
-    protected function redirect_hak_akses($akses, $redirect = '', $controller = '')
+    protected function redirect_hak_akses($akses, $redirect = '', $controller = '', $admin_only = false)
     {
         if (empty($controller)) {
             $controller = $this->controller;
         }
-        if (! $this->user_model->hak_akses($this->grup, $controller, $akses)) {
+
+        if (($admin_only && $this->grup != GrupAkses::ADMINISTRATOR) || ! $this->user_model->hak_akses($this->grup, $controller, $akses)) {
             session_error('Anda tidak mempunyai akses pada fitur ini');
+
             if (empty($this->grup)) {
                 redirect('siteman');
             }
@@ -369,5 +430,27 @@ class Admin_Controller extends MY_Controller
         $this->load->view('nav');
         $this->load->view($view, $data);
         $this->load->view('footer');
+    }
+
+    public function modal_penandatangan()
+    {
+        $this->load->model('pamong_model');
+
+        return [
+            'pamong'         => Pamong::penandaTangan()->get(),
+            'pamong_ttd'     => Pamong::sekretarisDesa()->first(),
+            'pamong_ketahui' => Pamong::kepalaDesa()->first(),
+        ];
+    }
+}
+
+class Anjungan_Controller extends Admin_Controller
+{
+    public function __construct()
+    {
+        parent::__construct();
+        if (! cek_anjungan()) {
+            redirect('anjungan');
+        }
     }
 }

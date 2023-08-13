@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -50,22 +50,35 @@ class Setting extends Admin_Controller
     public function index()
     {
         $data = [
-            'judul'         => 'Pengaturan Aplikasi',
-            'kategori'      => [null, '', 'sistem', 'web_theme', 'readonly', 'web'],
-            'atur_latar'    => true,
-            'latar_website' => $this->theme_model->latar_website(),
-            'latar_login'   => $this->theme_model->latar_login(),
-            'list_tema'     => $this->theme_model->list_all(),
+            'judul'               => 'Pengaturan Aplikasi',
+            'pengaturan_kategori' => ['sistem', 'peta', 'web_theme', 'readonly', 'web', 'mobile'],
+            'atur_latar'          => true,
+            'latar_website'       => to_base64(default_file($this->theme_model->lokasi_latar_website() . $this->setting->latar_website, DEFAULT_LATAR_WEBSITE)),
+            'latar_siteman'       => to_base64(default_file(LATAR_LOGIN . $this->setting->latar_login, DEFAULT_LATAR_SITEMAN)),
         ];
-        $this->setting_model->load_options();
 
-        $this->render('setting/setting_form', $data);
+        return view('admin.pengaturan.index', $data);
     }
 
+    // Untuk view lama
     public function update()
     {
         $this->redirect_hak_akses_url('u');
-        $this->setting_model->update_setting($this->input->post());
+        $hasil = $this->setting_model->update_setting($this->input->post());
+        status_sukses($hasil, false, 'Berhasil Ubah Data');
+
+        redirect($_SERVER['HTTP_REFERER']);
+    }
+
+    // Untuk view menggunakan blade
+    public function new_update()
+    {
+        $this->redirect_hak_akses_url('u');
+        if ($this->setting_model->update_setting($this->input->post())) {
+            set_session('success', 'Berhasil Ubah Data');
+        } else {
+            set_session('error', 'Gagal Ubah Data. ' . session('flash_error_msg'));
+        }
 
         redirect($_SERVER['HTTP_REFERER']);
     }
@@ -86,12 +99,12 @@ class Setting extends Admin_Controller
         $this->sub_modul_ini = 211;
 
         $data = [
-            'judul'           => 'Pengaturan Halaman Web',
-            'kategori'        => ['conf_web'],
-            'aksi_controller' => 'setting/web',
+            'judul'               => 'Pengaturan Halaman Web',
+            'pengaturan_kategori' => ['conf_web'],
+            'aksi_controller'     => 'setting/web',
         ];
 
-        $this->render('setting/setting_form', $data);
+        return view('admin.pengaturan.index', $data);
     }
 
     // Pengaturan mandiri
@@ -99,19 +112,16 @@ class Setting extends Admin_Controller
     {
         $this->modul_ini     = 14;
         $this->sub_modul_ini = 314;
-        $this->load->model('first_gallery_m');
 
         $data = [
             'judul'               => 'Pengaturan Layanan Mandiri',
-            'kategori'            => ['setting_mandiri'],
+            'pengaturan_kategori' => ['setting_mandiri'],
             'atur_latar'          => true,
-            'latar_login_mandiri' => $this->theme_model->latar_login_mandiri(),
-            'daftar_album'        => $this->first_gallery_m->gallery_show(),
             'aksi_controller'     => 'setting/mandiri',
+            'latar_mandiri'       => to_base64(default_file(LATAR_LOGIN . $this->setting->latar_login_mandiri, DEFAULT_LATAR_KEHADIRAN)),
         ];
-        $this->setting_model->load_options();
 
-        $this->render('setting/setting_form', $data);
+        return view('admin.pengaturan.index', $data);
     }
 
     // Pengaturan analisis
@@ -121,90 +131,53 @@ class Setting extends Admin_Controller
         $this->sub_modul_ini = 111;
 
         $data = [
-            'judul'           => 'Pengaturan Analisis',
-            'kategori'        => ['setting_analisis'],
-            'aksi_controller' => 'setting/analisis',
+            'judul'               => 'Pengaturan Analisis',
+            'pengaturan_kategori' => ['setting_analisis'],
+            'aksi_controller'     => 'setting/analisis',
         ];
 
-        $this->render('setting/setting_form', $data);
+        return view('admin.pengaturan.index', $data);
     }
 
-    public function qrcode($aksi = '', $file = '')
+    public function qrcode($aksi = '')
     {
-        switch ($aksi) {
-            case 'clear':
-                $this->session->unset_userdata('qrcode');
-                redirect('setting/qrcode');
+        $this->modul_ini     = 11;
+        $this->sub_modul_ini = 212;
 
-                // no break
-            case 'hapus':
-                $this->redirect_hak_akses_url('u');
-                unlink(LOKASI_MEDIA . '' . $file . '.png');
-                redirect('setting/qrcode/clear');
+        $data['qrcode']        = ['changeqr' => '1', 'sizeqr' => '6', 'foreqr' => '#000000']; // Default
+        $data['list_changeqr'] = ['Otomatis (Logo Desa)', 'Manual'];
+        $data['list_sizeqr']   = ['25', '50', '75', '100', '125', '150', '175', '200', '225', '250'];
 
-                // no break
-            case 'unduh':
-                $this->load->helper('download');
-                force_download(LOKASI_MEDIA . $file . '.png', null);
-                redirect('setting/qrcode');
-
-                // no break
-            default:
-                $this->modul_ini     = 11;
-                $this->sub_modul_ini = 212;
-
-                $data['qrcode']        = $this->session->qrcode ?: $qrcode        = ['changeqr' => '1', 'sizeqr' => '6', 'foreqr' => '#000000'];
-                $data['list_changeqr'] = ['Otomatis (Logo Desa)', 'Manual'];
-                $data['list_sizeqr']   = ['25', '50', '75', '100', '125', '150', '175', '200', '225', '250'];
-
-                $this->render('setting/setting_qr', $data);
-
-                break;
-        }
+        $this->render('setting/setting_qr', $data);
     }
 
     public function qrcode_generate()
     {
         $this->redirect_hak_akses_url('u');
-        $pathqr   = LOKASI_MEDIA; // Lokasi default simpan file qrcode
         $post     = $this->input->post();
-        $namaqr   = $post['namaqr']; // Nama file gambar asli
-        $namaqr1  = str_replace(' ', '_', nama_terbatas($namaqr)); // Nama file gambar yg akan disimpan
         $changeqr = $post['changeqr'];
 
         // $logoqr = yg akan ditampilkan, url
         // $logoqr1 = yg akan disimpan, directory
         if ($changeqr == '1') {
-            $desa = $this->header['desa'];
             // Ambil absolute path, bukan url
-            $logoqr1 = gambar_desa($desa['logo'], false, $file = true);
+            $logoqr1 = gambar_desa($this->header['desa']['logo'], false, true);
         } else {
             $logoqr = $post['logoqr'];
             // Ubah url (http) menjadi absolute path ke file di lokasi media
             $lokasi_media = preg_quote(LOKASI_MEDIA, '/');
             $file_logoqr  = preg_split('/' . $lokasi_media . '/', $logoqr)[1];
-            $logoqr1      = APPPATH . '../' . LOKASI_MEDIA . $file_logoqr;
+            $logoqr1      = FCPATH . LOKASI_MEDIA . $file_logoqr;
         }
 
-        $qrcode = [
-            'namaqr'   => $namaqr, // Nama file
-            'namaqr1'  => $namaqr1, // Nama file untuk download
+        $qrCode = [
             'isiqr'    => $post['isiqr'], // Isi / arti dr qrcode
             'changeqr' => $changeqr, // Pilihan jenis sisipkan logo
-            'logoqr'   => $logoqr,
+            'logoqr'   => $logoqr1,
             'sizeqr'   => bilangan($post['sizeqr']), // Ukuran qrcode
             'foreqr'   => $post['foreqr'],
-            'pathqr'   => base_url(LOKASI_MEDIA . '' . $namaqr1 . '.png'), // Tampilkan gambar qrcode
         ];
 
-        $this->session->qrcode = $qrcode;
-
-        if ($post) {
-            $this->session->success = 1;
-            $data                   = qrcode_generate($pathqr, $namaqr1, $qrcode['isiqr'], $logoqr1, $qrcode['sizeqr'], $qrcode['foreqr']);
-            echo json_encode($data);
-        } else {
-            $this->session->success = -1;
-        }
+        json(qrcode_generate($qrCode, true));
     }
 }

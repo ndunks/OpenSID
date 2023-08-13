@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,18 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Enums\SHDKEnum;
+use App\Enums\StatusDasarEnum;
+use App\Models\LogKeluarga;
+use App\Models\LogPenduduk;
+use App\Models\Penduduk;
+use Carbon\Carbon;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -48,14 +55,14 @@ class Penduduk_log_model extends MY_Model
     /**
      * Ambil data log penduduk
      *
-     * @param $id_log 					id log penduduk
+     * @param $id_log id log penduduk
      *
      * @return array(data log)
      */
     public function get_log($id_log)
     {
         $log = $this->db
-            ->select("s.nama as status, s.id as status_id, date_format(tgl_peristiwa, '%d-%m-%Y') as tgl_peristiwa, kode_peristiwa, ref_pindah, catatan, date_format(tgl_lapor, '%d-%m-%Y') as tgl_lapor, alamat_tujuan, meninggal_di, p.alamat_sebelumnya")
+            ->select("s.nama as status, s.id as status_id, date_format(tgl_peristiwa, '%d-%m-%Y') as tgl_peristiwa, kode_peristiwa, ref_pindah, catatan, date_format(tgl_lapor, '%d-%m-%Y') as tgl_lapor, alamat_tujuan, meninggal_di, p.alamat_sebelumnya, p.kelahiran_anak_ke AS anak_ke, l.jam_mati, l.sebab, l.penolong_mati, l.akta_mati")
             ->where('l.id', $id_log)
             ->join('tweb_penduduk p', 'l.id_pend = p.id', 'left')
             ->join('ref_peristiwa s', 's.id = l.kode_peristiwa', 'left')
@@ -70,7 +77,7 @@ class Penduduk_log_model extends MY_Model
     /**
      * Update log penduduk
      *
-     * @param $id_log 					id log penduduk
+     * @param $id_log id log penduduk
      *
      * @return void
      */
@@ -81,86 +88,147 @@ class Penduduk_log_model extends MY_Model
         if ($this->input->post('alamat_tujuan')) {
             $data['alamat_tujuan'] = htmlentities($this->input->post('alamat_tujuan'));
         }
+
         if ($this->input->post('meninggal_di')) {
             $data['meninggal_di'] = htmlentities($this->input->post('meninggal_di'));
         }
+
+        if ($this->input->post('jam_mati')) {
+            $data['jam_mati'] = htmlentities($this->input->post('jam_mati'));
+        }
+
+        if ($this->input->post('sebab')) {
+            $data['sebab'] = (int) $this->input->post('sebab');
+        }
+
+        if ($this->input->post('penolong_mati')) {
+            $data['penolong_mati'] = (int) $this->input->post('penolong_mati');
+        }
+
+        if ($this->input->post('akta_mati')) {
+            $data['akta_mati'] = $this->input->post('akta_mati');
+        }
+
+        $penduduk = [];
+        if ($this->input->post('anak_ke')) {
+            $penduduk['kelahiran_anak_ke'] = (int) $this->input->post('anak_ke');
+        }
+
         if ($this->input->post('alamat_sebelumnya')) {
             $penduduk['alamat_sebelumnya'] = htmlentities($this->input->post('alamat_sebelumnya'));
-            $get_pendudukId                = $this->db->where('id', $id_log)->get('log_penduduk')->row()->id_pend;
+        }
+
+        if ($penduduk) {
+            $get_pendudukId = $this->db->where('id', $id_log)->get('log_penduduk')->row()->id_pend;
             $this->db->where('id', $get_pendudukId)->update('tweb_penduduk', $penduduk);
         }
         $data['tgl_peristiwa'] = rev_tgl($this->input->post('tgl_peristiwa'));
         $data['tgl_lapor']     = rev_tgl($this->input->post('tgl_lapor'), null);
         $data['updated_at']    = date('Y-m-d H:i:s');
         $data['updated_by']    = $this->session->user;
-        if (! $this->db->where('id', $id_log)->update('log_penduduk', $data)) {
-            $_SESSION['success'] = -1;
-        } else {
-            $_SESSION['success'] = 1;
-        }
+
+        $outp = $this->db->where('id', $id_log)->update('log_penduduk', $data);
+        status_sukses($outp);
     }
 
     /**
      * Kembalikan status dasar penduduk ke hidup
      *
-     * @param $id_log 			id log penduduk
+     * @param $id_log id log penduduk
      *
      * @return void
      */
     public function kembalikan_status($id_log)
     {
-        $log = $this->db->where('id', $id_log)->get('log_penduduk')->row();
-        // Kembalikan status selain masuk dan lahir
-        if ($log->kode_peristiwa != 5 && $log->kode_peristiwa != 1) {
-            $data['status_dasar'] = 1; // status dasar hidup
-            $data['updated_at']   = date('Y-m-d H:i:s');
-            $data['updated_by']   = $this->session->user;
-            $outp                 = $this->db->where('id', $log->id_pend)->update('tweb_penduduk', $data);
+        $log = LogPenduduk::findOrFail($id_log);
+
+        // Kembalikan status selain lahir dan masuk
+        if (! in_array($log->kode_peristiwa, [LogPenduduk::BARU_LAHIR, LogPenduduk::BARU_PINDAH_MASUK])) {
+            $outp = Penduduk::where('id', $log->id_pend)
+                ->update([
+                    'status_dasar' => StatusDasarEnum::HIDUP,
+                ]);
+
             // Hapus log_keluarga, jika terkait
-            $outp = $outp && $this->db->where('id_log_penduduk', $log->id)->delete('log_keluarga');
+            $logKeluarga = LogKeluarga::where('id_log_penduduk', $log->id)->first();
+            if ($logKeluarga) {
+                $outp = $outp && $logKeluarga->delete();
+            }
+
             // Hapus log penduduk
-            $outp = $outp && $this->db->where('id', $id_log)->delete('log_penduduk');
-            status_sukses($outp);
+            $outp = $outp && LogPenduduk::find($id_log)->delete();
+
+            return status_sukses($outp);
         }
+
+        return session_error(', tidak dapat mengubah status dasar.');
     }
 
     /**
      * Kembalikan status dasar penduduk dari PERGI ke HIDUP
      *
-     * @param $id_log 			id log penduduk
+     * @param $id_log id log penduduk
      *
      * @return void
      */
     public function kembalikan_status_pergi($id_log)
     {
-        $log = $this->db->where('id', $id_log)->get('log_penduduk')->row();
-        // Kembalikan status selain masuk dan lahir
-        if ($log->kode_peristiwa != 5 && $log->kode_peristiwa != 1) {
-            $data['status_dasar'] = 1; // status dasar hidup
-            $data['updated_at']   = date('Y-m-d H:i:s');
-            $data['updated_by']   = $this->session->user;
-            if (! $this->db->where('id', $log->id_pend)->update('tweb_penduduk', $data)) {
-                $_SESSION['success'] = -1;
+        $log = LogPenduduk::findOrFail($id_log);
+
+        // Cek tgl lapor
+        // tampilkan hanya jika beda tanggal lapor
+        $tgl_lapor    = Carbon::parse($log['tgl_lapor'])->format('m-Y');
+        $tgl_sekarang = Carbon::now()->format('m-Y');
+        if ($tgl_lapor >= $tgl_sekarang) {
+            session_error('Tidak dapat mengubah status dasar penduduk, karena tanggal lapor masih sama dengan tanggal sekarang.');
+
+            return;
+        }
+
+        // Kembalikan status_dasar hanya jika penduduk pindah keluar (3) atau tidak tetap pergi (6)
+        if (in_array($log->kode_peristiwa, [LogPenduduk::PINDAH_KELUAR, LogPenduduk::TIDAK_TETAP_PERGI])) {
+            $outp = Penduduk::find($log->id_pend)
+                ->updated([
+                    'status_dasar' => StatusDasarEnum::HIDUP,
+                ]);
+
+            if (! $outp) {
+                $this->session->success = -1;
             }
 
-            $log = [
+            // Log Penduduk
+            $logPenduduk = [
                 'tgl_peristiwa'            => rev_tgl($this->input->post('tgl_peristiwa')),
-                'kode_peristiwa'           => 5,
+                'kode_peristiwa'           => LogPenduduk::BARU_PINDAH_MASUK,
                 'tgl_lapor'                => rev_tgl($this->input->post('tgl_lapor'), null),
                 'id_pend'                  => $log->id_pend,
-                'created_by'               => $this->session->user,
+                'created_by'               => auth()->id,
                 'maksud_tujuan_kedatangan' => $this->input->post('maksud_tujuan'),
             ];
 
-            $sql = $this->db->insert_string('log_penduduk', $log) . duplicate_key_update_str($log);
+            $sql = $this->db->insert_string('log_penduduk', $logPenduduk) . duplicate_key_update_str($logPenduduk);
             $this->db->query($sql);
+
+            // Log Keluarga jika kepala keluarga
+            $penduduk = Penduduk::select(['id', 'id_kk', 'kk_level'])->find($log->id_pend);
+            if ($penduduk->kk_level == SHDKEnum::KEPALA_KELUARGA) {
+                $logKeluarga = [
+                    'id_kk'         => $penduduk->id_kk,
+                    'id_peristiwa'  => LogKeluarga::KELUARGA_BARU_DATANG,
+                    'tgl_peristiwa' => rev_tgl($this->input->post('tgl_lapor'), null),
+                    'updated_by'    => auth()->id,
+                ];
+
+                $sql = $this->db->insert_string('log_keluarga', $logKeluarga) . duplicate_key_update_str($logKeluarga);
+                $this->db->query($sql);
+            }
+
+            session_success();
         }
     }
 
     /**
      * Kembalikan status dasar sekumpulan penduduk ke hidup
-     *
-     * @param
      *
      * @return void
      */
@@ -350,28 +418,50 @@ class Penduduk_log_model extends MY_Model
         $this->list_data_sql();
 
         switch ($o) {
-        case 1: $this->db->order_by('u.nik', 'ASC'); break;
+            case 1:
+                $this->db->order_by('u.nik', 'ASC');
+                break;
 
-        case 2: $this->db->order_by('u.nik', 'DESC'); break;
+            case 2:
+                $this->db->order_by('u.nik', 'DESC');
+                break;
 
-        case 3: $this->db->order_by('u.nama', 'ASC'); break;
+            case 3:
+                $this->db->order_by('u.nama', 'ASC');
+                break;
 
-        case 4: $this->db->order_by('u.nama', 'DESC'); break;
+            case 4:
+                $this->db->order_by('u.nama', 'DESC');
+                break;
 
-        case 5: $this->db->order_by('d.no_kk', 'ASC'); break;
+            case 5:
+                $this->db->order_by('d.no_kk', 'ASC');
+                break;
 
-        case 6: $this->db->order_by('d.no_kk', 'DESC'); break;
+            case 6:
+                $this->db->order_by('d.no_kk', 'DESC');
+                break;
 
-        case 7: $this->db->order_by('umur_pada_peristiwa', 'ASC'); break;
+            case 7:
+                $this->db->order_by('umur_pada_peristiwa', 'ASC');
+                break;
 
-        case 8: $this->db->order_by('umur_pada_peristiwa', 'DESC'); break;
-        // Untuk Log Penduduk
-        case 9:  $this->db->order_by('log.tgl_peristiwa', 'ASC'); break;
+            case 8:
+                $this->db->order_by('umur_pada_peristiwa', 'DESC');
+                break;
+                // Untuk Log Penduduk
+            case 9:
+                $this->db->order_by('log.tgl_peristiwa', 'ASC');
+                break;
 
-        case 10: $this->db->order_by('log.tgl_peristiwa', 'DESC'); break;
+            case 10:
+                $this->db->order_by('log.tgl_peristiwa', 'DESC');
+                break;
 
-        default:$this->db->order_by('log.tgl_lapor', 'DESC'); break;
-    }
+            default:
+                $this->db->order_by('log.tgl_lapor', 'DESC');
+                break;
+        }
 
         //Paging SQL
         if ($limit > 0) {
@@ -398,16 +488,19 @@ class Penduduk_log_model extends MY_Model
             }
 
             // Ambil Log Pergi Terakhir Penduduk
-            $this->db
-                ->select('lp.id')
-                ->from('log_penduduk lp')
-                ->where('lp.id_pend', $data[$i]['id'])
-                ->where('lp.kode_peristiwa', '6')
-                ->order_by('lp.id', 'DESC');
-            $log_pergi_terakhir = $this->db->get()->row();
+            $log_pergi_terakhir = LogPenduduk::select('id')
+                ->where('id_pend', $data[$i]['id'])
+                ->whereIn('kode_peristiwa', [LogPenduduk::PINDAH_KELUAR, LogPenduduk::TIDAK_TETAP_PERGI])
+                ->orderBy('id', 'desc')
+                ->first();
 
             $data[$i]['is_log_pergi_terakhir'] = ($log_pergi_terakhir->id == $data[$i]['id_log']);
             $data[$i]['no']                    = $j + 1;
+
+            // tampilkan hanya jika beda tanggal lapor
+            $tgl_lapor                  = Carbon::parse($data[$i]['tgl_lapor'])->format('m-Y');
+            $tgl_sekarang               = Carbon::now()->format('m-Y');
+            $data[$i]['kembali_datang'] = $tgl_lapor >= $tgl_sekarang ? false : true;
             $j++;
         }
 
@@ -421,5 +514,21 @@ class Penduduk_log_model extends MY_Model
             ->from('log_penduduk')
             ->where('DAYNAME(tgl_lapor) IS NOT NULL')
             ->get()->row()->thn;
+    }
+
+    public function get_log_penduduk($id_penduduk, $status_dasar = null)
+    {
+        $this->db
+            ->select("s.nama as status, s.id as status_id, date_format(tgl_peristiwa, '%d-%m-%Y') as tgl_peristiwa, kode_peristiwa, ref_pindah, catatan, date_format(tgl_lapor, '%d-%m-%Y') as tgl_lapor, alamat_tujuan, meninggal_di, p.alamat_sebelumnya, p.kelahiran_anak_ke AS anak_ke, l.jam_mati, l.sebab, l.penolong_mati, l.akta_mati")
+            ->where('p.id', $id_penduduk)
+            ->join('tweb_penduduk p', 'l.id_pend = p.id', 'left')
+            ->join('ref_peristiwa s', 's.id = l.kode_peristiwa', 'left');
+        $this->db->order_by('l.id', 'desc');
+
+        if ($status_dasar !== null) {
+            $this->db->where('kode_peristiwa', $status_dasar);
+        }
+
+        return $this->db->get('log_penduduk l')->row_array();
     }
 }

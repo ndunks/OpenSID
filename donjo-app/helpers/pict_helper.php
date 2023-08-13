@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,17 +29,18 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
-define('FOTO_DEFAULT_PRIA', base_url() . 'assets/images/pengguna/kuser.png');
-define('FOTO_DEFAULT_WANITA', base_url() . 'assets/images/pengguna/wuser.png');
+define('FOTO_DEFAULT_PRIA', 'assets/images/pengguna/kuser.png');
+define('FOTO_DEFAULT_WANITA', 'assets/images/pengguna/wuser.png');
 
 define('MIME_TYPE_SIMBOL', serialize([
-    'image/png',  'image/x-png', ]));
+    'image/png',  'image/x-png',
+]));
 
 define('EXT_SIMBOL', serialize([
     '.png',
@@ -58,7 +59,8 @@ define('MIME_TYPE_DOKUMEN', serialize([
     'application/powerpoint',
     'application/vnd.ms-powerpoint',
     'application/vnd.ms-excel',
-    'application/msexcel', ]));
+    'application/msexcel',
+]));
 
 define('EXT_DOKUMEN', serialize([
     '.pdf', '.ppt', '.pptx', '.pps', '.ppsx',
@@ -67,7 +69,8 @@ define('EXT_DOKUMEN', serialize([
 
 define('MIME_TYPE_GAMBAR', serialize([
     'image/jpeg', 'image/pjpeg',
-    'image/png',  'image/x-png', ]));
+    'image/png',  'image/x-png',
+]));
 
 define('EXT_GAMBAR', serialize([
     '.jpg', '.jpeg', '.png',
@@ -75,7 +78,8 @@ define('EXT_GAMBAR', serialize([
 
 define('MIME_TYPE_ARSIP', serialize([
     'application/rar', 'application/x-rar', 'application/x-rar-compressed', 'application/octet-stream',
-    'application/zip', 'application/x-zip', 'application/x-zip-compressed', ]));
+    'application/zip', 'application/x-zip', 'application/x-zip-compressed',
+]));
 
 define('EXT_ARSIP', serialize([
     '.zip', '.rar',
@@ -101,7 +105,7 @@ function tambahSuffixUniqueKeNamaFile($namaFile, $urlEncode = true, $delimiter =
     $namaFile           = is_string($namaFile) ? $namaFile : (string) $namaFile;
     $urlEncode          = is_bool($urlEncode) ? $urlEncode : true;
     $delimiterUniqueKey = (! is_string($delimiter) || empty($delimiter))
-    ? '__sid__' : $delimiter;
+        ? '__sid__' : $delimiter;
 
     // Pastikan nama file tidak mengandung string milik $this->delimiterUniqueKey
     $namaFile = str_replace($delimiterUniqueKey, '__', $namaFile);
@@ -112,7 +116,7 @@ function tambahSuffixUniqueKeNamaFile($namaFile, $urlEncode = true, $delimiter =
     $namaFileUnik = implode('.', $namaFileUnik);
 
     return urlencode($namaFileUnik) .
-    $delimiterUniqueKey . generator() . '.' . $ekstensiFile;
+        $delimiterUniqueKey . generator() . '.' . $ekstensiFile;
     // Contoh return:
     // - nama asli = 'kitten.jpg'
     // - nama unik = 'kitten__sid__xUCc8KO.jpg'
@@ -125,14 +129,14 @@ function AmbilFoto($foto, $ukuran = 'kecil_', $sex = '1')
 
     if ($foto == $file_foto) {
         $ukuran    = ($ukuran == 'kecil_') ? 'kecil_' : '';
-        $file_foto = base_url() . LOKASI_USER_PICT . $ukuran . $foto;
+        $file_foto = LOKASI_USER_PICT . $ukuran . $foto;
 
         if (! file_exists(FCPATH . LOKASI_USER_PICT . $ukuran . $foto)) {
             $file_foto = Foto_Default(null, $sex);
         }
     }
 
-    return $file_foto;
+    return to_base64($file_foto);
 }
 
 function Foto_Default($foto, $sex = 1)
@@ -158,18 +162,29 @@ function UploadGambarWidget($nama_file, $lokasi_file, $old_gambar)
     move_uploaded_file($lokasi_file, $file_upload);
 }
 
-function UploadFoto($fupload_name, $old_foto, $tipe_file = '')
+function UploadFoto($fupload_name, $old_foto)
 {
-    $tipe_file = TipeFile($_FILES['foto']);
-    $dimensi   = ['width' => 200, 'height' => 250];
+    $ci                      = &get_instance();
+    $config['upload_path']   = LOKASI_USER_PICT;
+    $config['allowed_types'] = 'jpg|png|jpeg';
+    $ci->load->library('MY_Upload', null, 'upload');
+    $ci->upload->initialize($config);
+
+    if (! $ci->upload->do_upload('foto')) {
+        session_error($ci->upload->display_errors());
+
+        redirect($_SERVER['HTTP_REFERER']);
+    }
+    $uploadedImage = $ci->upload->data();
     if ($old_foto != '') {
         // Hapus old_foto
         unlink(LOKASI_USER_PICT . $old_foto);
-        $old_foto = 'kecil_' . $old_foto;
     }
-    $nama_simpan = 'kecil_' . $fupload_name;
+    ResizeGambar($uploadedImage['full_path'], LOKASI_USER_PICT . $fupload_name, ['width' => 200, 'height' => 200]);
 
-    return UploadResizeImage(LOKASI_USER_PICT, $dimensi, 'foto', $fupload_name, $nama_simpan, $old_foto, $tipe_file);
+    unlink($uploadedImage['full_path']);
+
+    return true;
 }
 
 function UploadGambar($fupload_name, $old_gambar)
@@ -184,8 +199,8 @@ function UploadGambar($fupload_name, $old_gambar)
     move_uploaded_file($_FILES['gambar']['tmp_name'], $vfile_upload);
 
     $im_src     = imagecreatefromjpeg($vfile_upload);
-    $src_width  = imageSX($im_src);
-    $src_height = imageSY($im_src);
+    $src_width  = imagesx($im_src);
+    $src_height = imagesy($im_src);
     if (($src_width * 25) < ($src_height * 44)) {
         $dst_width  = 440;
         $dst_height = ($dst_width / $src_width) * $src_height;
@@ -213,7 +228,7 @@ function UploadGambar($fupload_name, $old_gambar)
 
 function AmbilGaleri($foto, $ukuran)
 {
-    return base_url() . LOKASI_GALERI . $ukuran . '_' . $foto;
+    return base_url(LOKASI_GALERI . $ukuran . '_' . $foto);
 }
 
 // $file_upload = $_FILES['<lokasi>']
@@ -273,22 +288,22 @@ function CekGambar($file_upload, $tipe_file)
 
 function UploadGallery($fupload_name, $old_foto = '', $tipe_file = '')
 {
-    $dimensi = ['width' => 440, 'height' => 440];
-    if (! empty($old_foto)) {
-        $old_foto_hapus = 'kecil_' . $old_foto;
-    }
-    $nama_simpan = 'kecil_' . $fupload_name;
-    $hasil1      = UploadResizeImage(LOKASI_GALERI, $dimensi, 'gambar', $fupload_name, $nama_simpan, $old_foto_hapus, $tipe_file);
-    $dimensi     = ['width' => 880, 'height' => 880];
-    if (! empty($old_foto)) {
-        $old_foto_hapus = 'sedang_' . $old_foto;
-    }
-    $nama_simpan = 'sedang_' . $fupload_name;
-    $hasil2      = UploadResizeImage(LOKASI_GALERI, $dimensi, 'gambar', $fupload_name, $nama_simpan, $old_foto_hapus, $tipe_file);
-    // Hapus upload file di sini, karena $_FILES["gambar"]["tmp_name"] dihapus sistem sesudah dipindahkan
-    unlink(LOKASI_GALERI . $fupload_name);
+    $ci                      = &get_instance();
+    $config['upload_path']   = LOKASI_GALERI;
+    $config['allowed_types'] = 'gif|jpg|png|jpeg';
+    $ci->load->library('upload');
+    $ci->upload->initialize($config);
 
-    return $hasil1 && $hasil2;
+    if (! $ci->upload->do_upload('gambar')) {
+        session_error($ci->upload->display_errors());
+    } else {
+        $uploadedImage = $ci->upload->data();
+        ResizeGambar($uploadedImage['full_path'], LOKASI_GALERI . 'kecil_' . $fupload_name, ['width' => 440, 'height' => 440]);
+        ResizeGambar($uploadedImage['full_path'], LOKASI_GALERI . 'sedang_' . $fupload_name, ['width' => 880, 'height' => 880]);
+    }
+    unlink($uploadedImage['full_path']);
+
+    return true;
 }
 
 function UploadSimbolx($fupload_name, $old_gambar)
@@ -303,8 +318,8 @@ function UploadSimbolx($fupload_name, $old_gambar)
     move_uploaded_file($_FILES['gambar']['tmp_name'], $vfile_upload);
 
     $im_src     = imagecreatefromjpeg($vfile_upload);
-    $src_width  = imageSX($im_src);
-    $src_height = imageSY($im_src);
+    $src_width  = imagesx($im_src);
+    $src_height = imagesy($im_src);
     if (($src_width * 20) < ($src_height * 44)) {
         $dst_width  = 440;
         $dst_height = ($dst_width / $src_width) * $src_height;
@@ -331,30 +346,27 @@ function UploadSimbolx($fupload_name, $old_gambar)
 
 function AmbilFotoArtikel($foto, $ukuran)
 {
-    return base_url() . LOKASI_FOTO_ARTIKEL . $ukuran . '_' . $foto;
+    return base_url(LOKASI_FOTO_ARTIKEL . $ukuran . '_' . $foto);
 }
 
-function UploadArtikel($fupload_name, $gambar, $fp, $tipe_file, $old_foto = '')
+function UploadArtikel($fupload_name, $gambar)
 {
-    $dimensi = ['width' => 440, 'height' => 440];
-    if (! empty($old_foto)) {
-        $old_foto_hapus = 'kecil_' . $old_foto;
-    }
-    $nama_simpan = 'kecil_' . $fupload_name;
-    $hasil1      = UploadResizeImage(LOKASI_FOTO_ARTIKEL, $dimensi, $gambar, $fupload_name, $nama_simpan, $old_foto_hapus, $tipe_file);
-    // Tidak perlu buat gambar sedang, jika jenis file sudah salah
-    if ($hasil1) {
-        $dimensi = ['width' => 880, 'height' => 880];
-        if (! empty($old_foto)) {
-            $old_foto_hapus = 'sedang_' . $old_foto;
-        }
-        $nama_simpan = 'sedang_' . $fupload_name;
-        $hasil2      = UploadResizeImage(LOKASI_FOTO_ARTIKEL, $dimensi, $gambar, $fupload_name, $nama_simpan, $old_foto_hapus, $tipe_file);
-    }
-    // Hapus upload file di sini, karena $_FILES["gambar"]["tmp_name"] dihapus sistem sesudah dipindahkan
-    unlink(LOKASI_FOTO_ARTIKEL . $fupload_name);
+    $ci                      = &get_instance();
+    $config['upload_path']   = LOKASI_FOTO_ARTIKEL;
+    $config['allowed_types'] = 'gif|jpg|png|jpeg';
+    $ci->load->library('upload');
+    $ci->upload->initialize($config);
 
-    return $hasil1 && $hasil2;
+    if (! $ci->upload->do_upload($gambar)) {
+        session_error($ci->upload->display_errors());
+    } else {
+        $uploadedImage = $ci->upload->data();
+        ResizeGambar($uploadedImage['full_path'], LOKASI_FOTO_ARTIKEL . 'kecil_' . $fupload_name, ['width' => 440, 'height' => 440]);
+        ResizeGambar($uploadedImage['full_path'], LOKASI_FOTO_ARTIKEL . 'sedang_' . $fupload_name, ['width' => 880, 'height' => 880]);
+    }
+    unlink($uploadedImage['full_path']);
+
+    return true;
 }
 
 function HapusArtikel($gambar)
@@ -368,181 +380,82 @@ function HapusArtikel($gambar)
     return true;
 }
 
-function UploadLokasi($fupload_name)
+function UploadPeta($fupload_name, $lokasi, $old_foto = null)
 {
-    $vdir_upload = LOKASI_FOTO_LOKASI;
+    $ci = &get_instance();
+    $ci->load->library('MY_Upload', null, 'upload');
+    $ci->upload->initialize([
+        'upload_path'   => $lokasi,
+        'allowed_types' => 'gif|jpg|png|jpeg',
+    ]);
 
-    $vfile_upload = $vdir_upload . $fupload_name;
+    if (! $ci->upload->do_upload('foto')) {
+        session_error($ci->upload->display_errors(null, null));
 
-    move_uploaded_file($_FILES['foto']['tmp_name'], $vfile_upload);
-
-    $im_src     = imagecreatefromjpeg($vfile_upload);
-    $src_width  = imageSX($im_src);
-    $src_height = imageSY($im_src);
-    if (($src_width / $src_height) < (12 / 10)) {
-        $dst_width  = 120;
-        $dst_height = ($dst_width / $src_width) * $src_height;
-        $cut_height = $dst_height - 100;
-
-        $im = imagecreatetruecolor(120, 100);
-        imagecopyresampled($im, $im_src, 0, 0, 0, $cut_height, $dst_width, $dst_height, $src_width, $src_height);
+        redirect($_SERVER['HTTP_REFERER']);
     } else {
-        $dst_height = 100;
-        $dst_width  = ($dst_height / $src_height) * $src_width;
-        $cut_width  = $dst_width - 120;
+        $uploadedImage = $ci->upload->data();
+        ResizeGambar($uploadedImage['full_path'], $lokasi . 'kecil_' . $fupload_name, ['width' => 120, 'height' => 100]);
+        ResizeGambar($uploadedImage['full_path'], $lokasi . 'sedang_' . $fupload_name, ['width' => 880, 'height' => 660]);
 
-        $im = imagecreatetruecolor(120, 100);
-        imagecopyresampled($im, $im_src, 0, 0, $cut_width, 0, $dst_width, $dst_height, $src_width, $src_height);
+        unlink($uploadedImage['full_path']);
+
+        // Hapus gambar lama
+        if ($old_foto) {
+            unlink($lokasi . 'kecil_' . $old_foto);
+            unlink($lokasi . 'sedang_' . $old_foto);
+        }
+
+        return $fupload_name;
     }
-    imagejpeg($im, $vdir_upload . 'kecil_' . $fupload_name);
-
-    imagedestroy($im_src);
-    imagedestroy($im);
-
-    $im_src     = imagecreatefromjpeg($vfile_upload);
-    $src_width  = imageSX($im_src);
-    $src_height = imageSY($im_src);
-    if (($src_width / $src_height) < (44 / 30)) {
-        $dst_width  = 880;
-        $dst_height = ($dst_width / $src_width) * $src_height;
-        $cut_height = $dst_height - 600;
-
-        $im = imagecreatetruecolor(880, 600);
-        imagecopyresampled($im, $im_src, 0, 0, 0, $cut_height, $dst_width, $dst_height, $src_width, $src_height);
-    } else {
-        $dst_height = 600;
-        $dst_width  = ($dst_height / $src_height) * $src_width;
-        $cut_width  = $dst_width - 880;
-
-        $im = imagecreatetruecolor(880, 600);
-        imagecopyresampled($im, $im_src, 0, 0, $cut_width, 0, $dst_width, $dst_height, $src_width, $src_height);
-    }
-    imagejpeg($im, $vdir_upload . 'sedang_' . $fupload_name);
-
-    imagedestroy($im_src);
-    imagedestroy($im);
-    unlink($vdir_upload . $fupload_name);
-
-    //unlink($vfile_upload);
-    return true;
 }
 
-function UploadGaris($fupload_name)
+function ResizeGambar($filename, $path, $dimensi)
 {
-    $vdir_upload = LOKASI_FOTO_GARIS;
+    $source_path = $filename;
+    $target_path = $path;
+    $imgdata     = exif_read_data($target_path, 'IFD0');
 
-    $vfile_upload = $vdir_upload . $fupload_name;
+    $config_manip = [
+        'image_library'  => 'gd2',
+        'source_image'   => $source_path,
+        'new_image'      => $target_path,
+        'maintain_ratio' => true,
+        'create_thumb'   => false,
+        'thumb_marker'   => '_thumb',
+        'width'          => $dimensi['width'],
+        'height'         => $dimensi['height'],
+    ];
+    $ci = &get_instance();
 
-    move_uploaded_file($_FILES['foto']['tmp_name'], $vfile_upload);
+    $ci->load->library('image_lib');
+    $ci->image_lib->initialize($config_manip);
+    if (! $ci->image_lib->resize()) {
+        session_error($ci->image_lib->display_errors());
 
-    $im_src     = imagecreatefromjpeg($vfile_upload);
-    $src_width  = imageSX($im_src);
-    $src_height = imageSY($im_src);
-    if (($src_width / $src_height) < (12 / 10)) {
-        $dst_width  = 120;
-        $dst_height = ($dst_width / $src_width) * $src_height;
-        $cut_height = $dst_height - 100;
-
-        $im = imagecreatetruecolor(120, 100);
-        imagecopyresampled($im, $im_src, 0, 0, 0, $cut_height, $dst_width, $dst_height, $src_width, $src_height);
-    } else {
-        $dst_height = 100;
-        $dst_width  = ($dst_height / $src_height) * $src_width;
-        $cut_width  = $dst_width - 120;
-
-        $im = imagecreatetruecolor(120, 100);
-        imagecopyresampled($im, $im_src, 0, 0, $cut_width, 0, $dst_width, $dst_height, $src_width, $src_height);
+        return false;
     }
-    imagejpeg($im, $vdir_upload . 'kecil_' . $fupload_name);
+    $ci->image_lib->clear();
 
-    imagedestroy($im_src);
-    imagedestroy($im);
+    //putar gambar
+    $config['image_library'] = 'gd2';
+    $config['source_image']  = $path;
 
-    $im_src     = imagecreatefromjpeg($vfile_upload);
-    $src_width  = imageSX($im_src);
-    $src_height = imageSY($im_src);
-    if (($src_width / $src_height) < (44 / 30)) {
-        $dst_width  = 880;
-        $dst_height = ($dst_width / $src_width) * $src_height;
-        $cut_height = $dst_height - 600;
+    switch($imgdata['Orientation']) {
+        case 3:
+            $config['rotation_angle'] = '180';
+            break;
 
-        $im = imagecreatetruecolor(880, 600);
-        imagecopyresampled($im, $im_src, 0, 0, 0, $cut_height, $dst_width, $dst_height, $src_width, $src_height);
-    } else {
-        $dst_height = 600;
-        $dst_width  = ($dst_height / $src_height) * $src_width;
-        $cut_width  = $dst_width - 880;
+        case 6:
+            $config['rotation_angle'] = '270';
+            break;
 
-        $im = imagecreatetruecolor(880, 600);
-        imagecopyresampled($im, $im_src, 0, 0, $cut_width, 0, $dst_width, $dst_height, $src_width, $src_height);
+        case 8:
+            $config['rotation_angle'] = '90';
+            break;
     }
-    imagejpeg($im, $vdir_upload . 'sedang_' . $fupload_name);
-
-    imagedestroy($im_src);
-    imagedestroy($im);
-    unlink($vdir_upload . $fupload_name);
-
-    //unlink($vfile_upload);
-    return true;
-}
-
-function UploadArea($fupload_name)
-{
-    $vdir_upload = LOKASI_FOTO_AREA;
-
-    $vfile_upload = $vdir_upload . $fupload_name;
-
-    move_uploaded_file($_FILES['foto']['tmp_name'], $vfile_upload);
-
-    $im_src     = imagecreatefromjpeg($vfile_upload);
-    $src_width  = imageSX($im_src);
-    $src_height = imageSY($im_src);
-    if (($src_width / $src_height) < (12 / 10)) {
-        $dst_width  = 120;
-        $dst_height = ($dst_width / $src_width) * $src_height;
-        $cut_height = $dst_height - 100;
-
-        $im = imagecreatetruecolor(120, 100);
-        imagecopyresampled($im, $im_src, 0, 0, 0, $cut_height, $dst_width, $dst_height, $src_width, $src_height);
-    } else {
-        $dst_height = 100;
-        $dst_width  = ($dst_height / $src_height) * $src_width;
-        $cut_width  = $dst_width - 120;
-
-        $im = imagecreatetruecolor(120, 100);
-        imagecopyresampled($im, $im_src, 0, 0, $cut_width, 0, $dst_width, $dst_height, $src_width, $src_height);
-    }
-    imagejpeg($im, $vdir_upload . 'kecil_' . $fupload_name);
-
-    imagedestroy($im_src);
-    imagedestroy($im);
-
-    $im_src     = imagecreatefromjpeg($vfile_upload);
-    $src_width  = imageSX($im_src);
-    $src_height = imageSY($im_src);
-    if (($src_width / $src_height) < (44 / 30)) {
-        $dst_width  = 880;
-        $dst_height = ($dst_width / $src_width) * $src_height;
-        $cut_height = $dst_height - 600;
-
-        $im = imagecreatetruecolor(880, 600);
-        imagecopyresampled($im, $im_src, 0, 0, 0, $cut_height, $dst_width, $dst_height, $src_width, $src_height);
-    } else {
-        $dst_height = 600;
-        $dst_width  = ($dst_height / $src_height) * $src_width;
-        $cut_width  = $dst_width - 880;
-
-        $im = imagecreatetruecolor(880, 600);
-        imagecopyresampled($im, $im_src, 0, 0, $cut_width, 0, $dst_width, $dst_height, $src_width, $src_height);
-    }
-    imagejpeg($im, $vdir_upload . 'sedang_' . $fupload_name);
-
-    imagedestroy($im_src);
-    imagedestroy($im);
-    unlink($vdir_upload . $fupload_name);
-
-    //unlink($vfile_upload);
-    return true;
+    $ci->image_lib->initialize($config);
+    $ci->image_lib->rotate();
 }
 
 // $dimensi = array("width"=>lebar, "height"=>tinggi)
@@ -564,8 +477,8 @@ function resizeImage($filepath_in, $tipe_file, $dimensi, $filepath_out = '')
     $is_png = ($tipe_file == 'image/png' || $tipe_file == 'image/x-png');
 
     $image      = ($is_png) ? imagecreatefrompng($filepath_in) : imagecreatefromjpeg($filepath_in);
-    $width      = imageSX($image);
-    $height     = imageSY($image);
+    $width      = imagesx($image);
+    $height     = imagesy($image);
     $new_width  = $dimensi['width'];
     $new_height = $dimensi['height'];
     if ($width > $new_width && $height > $new_height) {
@@ -642,21 +555,18 @@ function UploadResizeImage($lokasi, $dimensi, $jenis_upload, $fupload_name, $nam
     $is_png = ($tipe_file == 'image/png' || $tipe_file == 'image/x-png');
 
     $image      = ($is_png) ? imagecreatefrompng($filepath_in) : imagecreatefromjpeg($filepath_in);
-    $width      = imageSX($image);
-    $height     = imageSY($image);
+    $width      = imagesx($image);
+    $height     = imagesy($image);
     $new_width  = $dimensi['width'];
     $new_height = $dimensi['height'];
     if ($width > $new_width && $height > $new_height) {
-        if ($width < $height) {
-            $dst_width  = $new_width;
-            $dst_height = ($dst_width / $width) * $height;
-            $cut_height = $dst_height - $new_height;
-            $cut_width  = 0;
+        $ratio_orig = $width / $height;
+        $dst_width  = $new_width;
+        $dst_height = $new_height;
+        if ($new_width / $new_height > $ratio_orig) {
+            $dst_width = $new_height * $ratio_orig;
         } else {
-            $dst_height = $new_height;
-            $dst_width  = ($dst_height / $height) * $width;
-            $cut_width  = $dst_width - $new_width;
-            $cut_height = 0;
+            $dst_height = $new_width / $ratio_orig;
         }
 
         $image_p = imagecreatetruecolor($new_width, $new_height);
@@ -665,7 +575,7 @@ function UploadResizeImage($lokasi, $dimensi, $jenis_upload, $fupload_name, $nam
             imagealphablending($image_p, false);
             imagesavealpha($image_p, true);
         }
-        imagecopyresampled($image_p, $image, 0, 0, $cut_width, $cut_height, $dst_width, $dst_height, $width, $height);
+        imagecopyresampled($image_p, $image, 0, 0, 0, 0, $dst_width, $dst_height, $width, $height);
         if ($is_png) {
             imagepng($image_p, $filepath_out, 5);
         } else {
@@ -722,8 +632,8 @@ function UploadPengesahan($fupload_name)
     move_uploaded_file($_FILES['pengesahan']['tmp_name'], $vfile_upload);
 
     $im_src     = imagecreatefromjpeg($vfile_upload);
-    $src_width  = imageSX($im_src);
-    $src_height = imageSY($im_src);
+    $src_width  = imagesx($im_src);
+    $src_height = imagesy($im_src);
     if (($src_width / $src_height) < (12 / 10)) {
         $dst_width  = 120;
         $dst_height = ($dst_width / $src_width) * $src_height;
@@ -793,9 +703,12 @@ function periksa_file($upload, $mime_types, $exts)
     return '';
 }
 
-function qrcode_generate($pathqr, $namaqr, $isiqr, $logoqr, $sizeqr, $foreqr)
+function qrcode_generate(array $qrcode = [], $base64 = false)
 {
-    $barcodeobj = new TCPDF2DBarcode($isiqr, 'QRCODE,H');
+    $sizeqr = $qrcode['sizeqr'];
+    $foreqr = $qrcode['foreqr'];
+
+    $barcodeobj = new TCPDF2DBarcode($qrcode['isiqr'], 'QRCODE,H');
 
     if (! empty($foreqr)) {
         if ($foreqr[0] == '#') {
@@ -809,7 +722,7 @@ function qrcode_generate($pathqr, $namaqr, $isiqr, $logoqr, $sizeqr, $foreqr)
 
     //Hasilkan QRCode
     $imgData  = $barcodeobj->getBarcodePngData($sizeqr, $sizeqr, [$r, $g, $b]);
-    $filename = FCPATH . $pathqr . $namaqr . '.png';
+    $filename = sys_get_temp_dir() . '/qrcode_' . date('Y_m_d_H_i_s') . '_temp.png';
     file_put_contents($filename, $imgData);
 
     //Ubah backround transparan ke warna putih supaya terbaca qrcode scanner
@@ -827,7 +740,7 @@ function qrcode_generate($pathqr, $namaqr, $isiqr, $logoqr, $sizeqr, $foreqr)
     imagedestroy($backcol);
 
     //Tambah Logo
-    $logopath = $logoqr; // Logo yg tampil di tengah QRCode
+    $logopath = $qrcode['logoqr']; // Logo yg tampil di tengah QRCode
     $QR       = imagecreatefrompng($filename);
     $logo     = imagecreatefromstring(file_get_contents($logopath));
     imagecolortransparent($logo, imagecolorallocatealpha($logo, 0, 0, 0, 127));
@@ -840,9 +753,16 @@ function qrcode_generate($pathqr, $namaqr, $isiqr, $logoqr, $sizeqr, $foreqr)
     $logo_qr_width  = $QR_width / 4;
     $scale          = $logo_width / $logo_qr_width;
     $logo_qr_height = $logo_height / $scale;
-    imagecopyresampled($QR, $logo, $QR_width / 2.5, $QR_height / 2.5, 0, 0, $logo_qr_width, $logo_qr_height, $logo_width, $logo_height);
+    $from_width     = ($QR_width - $logo_qr_width) / 2;
+    imagecopyresampled($QR, $logo, $from_width, $from_width, 0, 0, $logo_qr_width, $logo_qr_height, $logo_width, $logo_height);
     imagepng($QR, $filename);
     imagedestroy($QR);
+
+    if ($base64) {
+        return 'data:image/png;base64,' . base64_encode(file_get_contents($filename));
+    }
+
+    return $filename;
 }
 
 function upload_foto_penduduk($nama_file = null)
@@ -875,4 +795,38 @@ function upload_foto_penduduk($nama_file = null)
     }
 
     return $nama_file;
+}
+
+function to_base64($file)
+{
+    $type = pathinfo($file, PATHINFO_EXTENSION);
+    $data = file_get_contents($file);
+
+    return 'data:image/' . $type . ';base64,' . base64_encode($data);
+}
+
+function home_noimage()
+{
+    return to_base64(LOKASI_FILES_LOGO . 'home.png');
+}
+
+function unggah_file($config = [], $old_file = null)
+{
+    $ci = &get_instance();
+    $ci->load->library('MY_Upload', null, 'upload');
+    $ci->upload->initialize($config);
+
+    if (! $ci->upload->do_upload('file')) {
+        session_error($ci->upload->display_errors(null, null));
+
+        redirect($_SERVER['HTTP_REFERER']);
+    }
+
+    $data = $ci->upload->data();
+
+    if ($old_file) {
+        unlink($config['upload_path'] . $old_file);
+    }
+
+    return $data['file_name'];
 }

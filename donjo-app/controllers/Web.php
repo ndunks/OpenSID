@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -60,7 +60,7 @@ class Web extends Admin_Controller
 
     public function clear()
     {
-        $this->session->unset_userdata(['cari, status']);
+        $this->session->unset_userdata(['cari', 'status']);
         $this->session->per_page = $this->_set_page[0];
         $this->session->kategori = -1;
         redirect('web');
@@ -106,7 +106,8 @@ class Web extends Admin_Controller
 
     public function form($id = 0)
     {
-        $this->redirect_hak_akses('u', $_SERVER['HTTP_REFERER']);
+        $id = decrypt($id);
+        $this->redirect_hak_akses('u');
         $cat = $this->session->kategori ?: 0;
 
         if ($id) {
@@ -146,7 +147,7 @@ class Web extends Admin_Controller
 
     public function insert()
     {
-        $this->redirect_hak_akses('u', $_SERVER['HTTP_REFERER']);
+        $this->redirect_hak_akses('u');
         $cat = $this->session->kategori ?: 0;
 
         $this->web_artikel_model->insert($cat);
@@ -155,7 +156,7 @@ class Web extends Admin_Controller
 
     public function update($id = 0)
     {
-        $this->redirect_hak_akses('u', $_SERVER['HTTP_REFERER']);
+        $this->redirect_hak_akses('u');
         $cat = $this->session->kategori ?: 0;
 
         if (! $this->web_artikel_model->boleh_ubah($id, $this->session->user)) {
@@ -173,7 +174,7 @@ class Web extends Admin_Controller
     public function delete($id = 0)
     {
         $this->redirect_hak_akses('h');
-        $this->web_artikel_model->delete($id);
+        $this->web_artikel_model->delete(decrypt($id));
         redirect('web');
     }
 
@@ -187,7 +188,7 @@ class Web extends Admin_Controller
     // TODO: Pindahkan ke controller kategori
     public function hapus()
     {
-        $this->redirect_hak_akses('u', $_SERVER['HTTP_REFERER']);
+        $this->redirect_hak_akses('u');
         $cat = $this->session->kategori ?: 0;
 
         $this->redirect_hak_akses('h');
@@ -199,7 +200,8 @@ class Web extends Admin_Controller
     // TODO: Pindahkan ke controller kategoris
     public function ubah_kategori_form($id = 0)
     {
-        $this->redirect_hak_akses('u', $_SERVER['HTTP_REFERER']);
+        $id = decrypt($id);
+        $this->redirect_hak_akses('u');
         if (! $this->web_artikel_model->boleh_ubah($id, $this->session->user)) {
             redirect('web');
         }
@@ -212,7 +214,7 @@ class Web extends Admin_Controller
 
     public function update_kategori($id = 0)
     {
-        $this->redirect_hak_akses('u', $_SERVER['HTTP_REFERER']);
+        $this->redirect_hak_akses('u');
         if (! $this->web_artikel_model->boleh_ubah($id, $this->session->user)) {
             redirect('web');
         }
@@ -225,28 +227,26 @@ class Web extends Admin_Controller
 
     public function artikel_lock($id = 0, $val = 1)
     {
-        $this->redirect_hak_akses('u', $_SERVER['HTTP_REFERER']);
         // Kontributor tidak boleh mengubah status aktif artikel
         $this->redirect_hak_akses('u');
 
-        $this->web_artikel_model->artikel_lock($id, $val);
+        $this->web_artikel_model->artikel_lock(decrypt($id), $val);
         redirect('web');
     }
 
     public function komentar_lock($id = 0, $val = 1)
     {
-        $this->redirect_hak_akses('u', $_SERVER['HTTP_REFERER']);
         // Kontributor tidak boleh mengubah status komentar artikel
         $this->redirect_hak_akses('u');
 
-        $this->web_artikel_model->komentar_lock($id, $val);
+        $this->web_artikel_model->komentar_lock(decrypt($id), $val);
         redirect('web');
     }
 
     // TODO: Pindahkan ke controller kategori
     public function ajax_add_kategori($cat = 1, $p = 1, $o = 0)
     {
-        $this->redirect_hak_akses('u', $_SERVER['HTTP_REFERER']);
+        $this->redirect_hak_akses('u');
         $data['form_action'] = site_url("web/insert_kategori/{$cat}/{$p}/{$o}");
         $this->load->view('web/artikel/ajax_add_kategori_form', $data);
     }
@@ -254,8 +254,7 @@ class Web extends Admin_Controller
     // TODO: Pindahkan ke controller kategori
     public function insert_kategori($cat = 1, $p = 1, $o = 0)
     {
-        $this->redirect_hak_akses('u', $_SERVER['HTTP_REFERER']);
-        redirect_hak_akses('u', "web/index/{$cat}/{$p}/{$o}", 'kategori');
+        $this->redirect_hak_akses('u', "web/index/{$cat}/{$p}/{$o}", 'kategori');
         $this->web_artikel_model->insert_kategori();
         redirect("web/index/{$cat}/{$p}/{$o}");
     }
@@ -265,7 +264,7 @@ class Web extends Admin_Controller
         // Kontributor tidak boleh melakukan ini
         $this->redirect_hak_akses('u');
 
-        $this->web_artikel_model->headline($id);
+        $this->web_artikel_model->headline(decrypt($id));
         redirect('web');
     }
 
@@ -274,7 +273,7 @@ class Web extends Admin_Controller
         // Kontributor tidak boleh melakukan ini
         $this->redirect_hak_akses('u');
 
-        $this->web_artikel_model->slide($id);
+        $this->web_artikel_model->slide(decrypt($id));
         redirect('web');
     }
 
@@ -312,7 +311,7 @@ class Web extends Admin_Controller
 
     public function reset()
     {
-        $this->redirect_hak_akses('u', $_SERVER['HTTP_REFERER']);
+        $this->redirect_hak_akses('u');
         $cat = $this->session->kategori ?: 0;
 
         if ($cat == 999) {

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Enums\SatuanWaktuEnum;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -43,7 +45,8 @@ class Admin_pembangunan extends Admin_Controller
     {
         parent::__construct();
         $this->modul_ini = 220;
-        $this->load->library('upload');
+        $this->load->library('zip');
+        $this->load->library('MY_Upload', null, 'upload');
         $this->load->model('pembangunan_model', 'pembangunan');
         $this->load->model('pembangunan_dokumentasi_model', 'dokumentasi');
         $this->load->model('wilayah_model');
@@ -65,11 +68,18 @@ class Admin_pembangunan extends Admin_Controller
 
             $this->pembangunan->set_tipe(''); // Ambil semua pembangunan
 
-            $this->json_output([
+            $data = $this->pembangunan->get_data($search, $tahun)->order_by($order, $dir)->limit($length, $start)->get()->result();
+            $data = collect($data)->map(static function ($item) {
+                $item->url_foto = to_base64(LOKASI_GALERI . $item->foto);
+
+                return $item;
+            })->toArray();
+
+            return json([
                 'draw'            => $this->input->post('draw'),
                 'recordsTotal'    => $this->pembangunan->get_data()->count_all_results(),
                 'recordsFiltered' => $this->pembangunan->get_data($search, $tahun)->count_all_results(),
-                'data'            => $this->pembangunan->get_data($search, $tahun)->order_by($order, $dir)->limit($length, $start)->get()->result(),
+                'data'            => $data,
             ]);
         }
 
@@ -90,8 +100,9 @@ class Admin_pembangunan extends Admin_Controller
             $data['form_action'] = site_url("{$this->controller}/insert");
         }
 
-        $data['list_lokasi'] = $this->wilayah_model->list_semua_wilayah();
-        $data['sumber_dana'] = $this->referensi_model->list_ref(SUMBER_DANA);
+        $data['list_lokasi']  = $this->wilayah_model->list_semua_wilayah();
+        $data['sumber_dana']  = $this->referensi_model->list_ref(SUMBER_DANA);
+        $data['satuan_waktu'] = SatuanWaktuEnum::all();
 
         $this->render(ADMIN . '/pembangunan/form', $data);
     }
@@ -154,13 +165,11 @@ class Admin_pembangunan extends Admin_Controller
 
     public function dialog_daftar($id = 0, $aksi = '')
     {
-        $this->load->view('global/ttd_pamong', [
-            'aksi'           => $aksi,
-            'pamong'         => $this->pamong_model->list_data(),
-            'pamong_ttd'     => $this->pamong_model->get_ub(),
-            'pamong_ketahui' => $this->pamong_model->get_ttd(),
-            'form_action'    => site_url("{$this->controller}/daftar/{$id}/{$aksi}"),
-        ]);
+        $data                = $this->modal_penandatangan();
+        $data['aksi']        = $aksi;
+        $data['form_action'] = site_url("{$this->controller}/daftar/{$id}/{$aksi}");
+
+        $this->load->view('global/ttd_pamong', $data);
     }
 
     public function daftar($id = 0, $aksi = '')
@@ -176,6 +185,7 @@ class Admin_pembangunan extends Admin_Controller
         $data['pamong_ttd']     = $this->pamong_model->get_data($request['pamong_ttd']);
         $data['pamong_ketahui'] = $this->pamong_model->get_data($request['pamong_ketahui']);
         $data['aksi']           = $aksi;
+        $data['ekstensi']       = 'doc';
         $data['file']           = 'Laporan Pembangunan';
         $data['isi']            = ADMIN . '/pembangunan/cetak';
 
@@ -214,11 +224,18 @@ class Admin_pembangunan extends Admin_Controller
             $order  = $this->dokumentasi::ORDER_ABLE[$this->input->post('order[0][column]')];
             $dir    = $this->input->post('order[0][dir]');
 
-            $this->json_output([
+            $data = $this->dokumentasi->get_data($id, $search)->order_by($order, $dir)->limit($length, $start)->get()->result();
+            $data = collect($data)->map(static function ($item) {
+                $item->url_gambar = to_base64(LOKASI_GALERI . $item->gambar);
+
+                return $item;
+            })->toArray();
+
+            return json([
                 'draw'            => $this->input->post('draw'),
                 'recordsTotal'    => $this->dokumentasi->get_data($id)->count_all_results(),
                 'recordsFiltered' => $this->dokumentasi->get_data($id, $search)->count_all_results(),
-                'data'            => $this->dokumentasi->get_data($id, $search)->order_by($order, $dir)->limit($length, $start)->get()->result(),
+                'data'            => $data,
             ]);
         }
 

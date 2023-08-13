@@ -37,8 +37,7 @@
 						<tr>
 							<td>Laporan Bulan</td>
 							<td width="3%">:</td>
-							<?php $bln = date('m'); ?>
-							<td><?= $bln?> </td>
+							<td><?= getBulan(date('m')) ?></td>
 							<td width="40%"></td>
 						</tr>
 						<?php if ($dusun): ?>
@@ -86,17 +85,17 @@
 					</thead>
 					<tbody>
 						<?php
-                            $bayi    = 0;
-                            $balita  = 0;
-                            $sd      = 0;
-                            $smp     = 0;
-                            $sma     = 0;
-                            $lansia  = 0;
-                            $cacat   = 0;
-                            $sakit_L = 0;
-                            $sakit_P = 0;
-                            $hamil   = 0;
-                        ?>
+                            $bayi = 0;
+		$balita                         = 0;
+		$sd                             = 0;
+		$smp                            = 0;
+		$sma                            = 0;
+		$lansia                         = 0;
+		$cacat                          = 0;
+		$sakit_L                        = 0;
+		$sakit_P                        = 0;
+		$hamil                          = 0;
+		?>
 						<?php foreach ($main as $data): ?>
 							<tr>
 								<td align="right"><?= $data['dusunnya']?></td>
@@ -115,17 +114,17 @@
 								<td align="right"><?= $data['sakit_P']?></td>
 								<td align="right"><?= $data['hamil']?></td>
 								<?php
-                                    $bayi    = $bayi + $data['bayi'];
-                                    $balita  = $balita + $data['balita'];
-                                    $sd      = $sd + $data['sd'];
-                                    $smp     = $smp + $data['smp'];
-                                    $sma     = $sma + $data['sma'];
-                                    $lansia  = $lansia + $data['lansia'];
-                                    $cacat   = $cacat + $data['cacat'];
-                                    $sakit_L = $sakit_L + $data['sakit_L'];
-                                    $sakit_P = $sakit_P + $data['sakit_P'];
-                                    $hamil   = $hamil + $data['hamil'];
-                                ?>
+		            $bayi = $bayi + $data['bayi'];
+						    $balita   = $balita + $data['balita'];
+						    $sd       = $sd + $data['sd'];
+						    $smp      = $smp + $data['smp'];
+						    $sma      = $sma + $data['sma'];
+						    $lansia   = $lansia + $data['lansia'];
+						    $cacat    = $cacat + $data['cacat'];
+						    $sakit_L  = $sakit_L + $data['sakit_L'];
+						    $sakit_P  = $sakit_P + $data['sakit_P'];
+						    $hamil    = $hamil + $data['hamil'];
+						    ?>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -103,6 +103,7 @@ class Dokumen extends Admin_Controller
         }
         $data['kat_nama']             = $this->web_dokumen_model->kat_nama($kat);
         $data['list_kategori_publik'] = $this->referensi_model->list_ref_flip(KATEGORI_PUBLIK);
+        $data['jenis_peraturan']      = $this->referensi_model->jenis_peraturan_desa();
 
         $this->render('dokumen/form', $data);
     }
@@ -186,10 +187,7 @@ class Dokumen extends Admin_Controller
     {
         $data['form_action']     = site_url("dokumen/cetak/{$kat}");
         $data['kat']             = $kat;
-        $data['jenis_peraturan'] = $this->referensi_model->list_ref(JENIS_PERATURAN_DESA);
-        $data['pamong']          = $this->pamong_model->list_data();
-        $data['pamong_ttd']      = $this->pamong_model->get_ub();
-        $data['pamong_ketahui']  = $this->pamong_model->get_ttd();
+        $data['jenis_peraturan'] = $this->referensi_model->jenis_peraturan_desa();
         $data['tahun_laporan']   = $this->web_dokumen_model->list_tahun($kat);
         $this->load->view('dokumen/dialog_cetak', $data);
     }
@@ -203,15 +201,17 @@ class Dokumen extends Admin_Controller
 
     private function data_cetak($kat)
     {
-        $post                   = $this->input->post();
-        $data['main']           = $this->web_dokumen_model->data_cetak($kat, $post['tahun'], $post['jenis_peraturan']);
-        $data['input']          = $post;
-        $data['pamong']         = $this->pamong_model->list_data();
-        $data['pamong_ttd']     = $this->pamong_model->get_data($_POST['pamong_ttd']);
-        $data['pamong_ketahui'] = $this->pamong_model->get_data($_POST['pamong_ketahui']);
-        $data['kat']            = $kat;
-        $data['tahun']          = $post['tahun'];
-        $data['desa']           = $this->config_model->get_data();
+        // Agar tidak terlalu banyak mengubah kode, karena menggunakan view global
+        $ttd                    = $this->modal_penandatangan();
+        $data['pamong_ttd']     = $this->pamong_model->get_data($ttd['pamong_ttd']->pamong_id);
+        $data['pamong_ketahui'] = $this->pamong_model->get_data($ttd['pamong_ketahui']->pamong_id);
+
+        $post          = $this->input->post();
+        $data['main']  = $this->web_dokumen_model->data_cetak($kat, $post['tahun'], $post['jenis_peraturan']);
+        $data['input'] = $post;
+        $data['kat']   = $kat;
+        $data['tahun'] = $post['tahun'];
+        $data['desa']  = $this->header['desa'];
         if ($kat == 1) {
             $data['kategori'] = 'Informasi Publik';
         } else {
@@ -233,10 +233,7 @@ class Dokumen extends Admin_Controller
     {
         $data['form_action']     = site_url("dokumen/excel/{$kat}");
         $data['kat']             = $kat;
-        $data['jenis_peraturan'] = $this->referensi_model->list_ref(JENIS_PERATURAN_DESA);
-        $data['pamong']          = $this->pamong_model->list_data();
-        $data['pamong_ttd']      = $this->pamong_model->get_ub();
-        $data['pamong_ketahui']  = $this->pamong_model->get_ttd();
+        $data['jenis_peraturan'] = $this->referensi_model->jenis_peraturan_desa();
         $data['tahun_laporan']   = $this->web_dokumen_model->list_tahun($kat);
         $this->load->view('dokumen/dialog_cetak', $data);
     }

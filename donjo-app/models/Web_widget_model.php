@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,16 +29,20 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Models\JamKerja;
+use Illuminate\Support\Facades\Schema;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Web_widget_model extends MY_Model
 {
+    private $tabel = 'widget';
     private $urut_model;
 
     public function __construct()
@@ -48,18 +52,20 @@ class Web_widget_model extends MY_Model
         $this->load->model('laporan_penduduk_model');
         $this->load->model('pamong_model');
         $this->load->model('keuangan_grafik_model');
+        $this->load->model('theme_model');
         require_once APPPATH . '/models/Urut_model.php';
-        $this->urut_model = new Urut_Model('widget');
+        $this->urut_model = new Urut_Model($this->tabel);
+        $this->cekFileWidget();
     }
 
     public function autocomplete()
     {
-        return $this->autocomplete_str('judul', 'widget');
+        return $this->autocomplete_str('judul', $this->tabel);
     }
 
     public function get_widget($id = '')
     {
-        $data          = $this->db->where('id', $id)->get('widget')->row_array();
+        $data          = $this->db->where('id', $id)->get($this->tabel)->row_array();
         $data['judul'] = htmlentities($data['judul']);
         $data['isi']   = $this->security->xss_clean($data['isi']);
 
@@ -94,7 +100,7 @@ class Web_widget_model extends MY_Model
 
         return $this->db->where('enabled', 1)
             ->order_by('urut')
-            ->get('widget')
+            ->get($this->tabel)
             ->result_array();
     }
 
@@ -183,7 +189,7 @@ class Web_widget_model extends MY_Model
     }
 
     /**
-     * @param $id Id widget
+     * @param $id   Id widget
      * @param $arah Arah untuk menukar dengan widget: 1) bawah, 2) atas
      *
      * @return int Nomer urut widget lain yang ditukar
@@ -193,10 +199,16 @@ class Web_widget_model extends MY_Model
         return $this->urut_model->urut($id, $arah);
     }
 
-    public function lock($id = '', $val = 0)
+    /**
+     * @param string $id
+     * @param int    $val (1) Ya, (2) Tidak
+     *
+     * @return void
+     */
+    public function lock($id = '', $val = 2)
     {
-        $sql = 'UPDATE widget SET enabled = ? WHERE id = ?';
-        $this->db->query($sql, [$val, $id]);
+        $outp = $this->db->where('id', $id)->update($this->tabel, ['enabled' => $val]);
+        status_sukses($outp);
     }
 
     public function insert()
@@ -206,7 +218,7 @@ class Web_widget_model extends MY_Model
         // Widget diberi urutan terakhir
         $data['urut'] = $this->urut_model->urut_max() + 1;
 
-        $outp = $this->db->insert('widget', $data);
+        $outp = $this->db->insert($this->tabel, $data);
 
         status_sukses($outp);
     }
@@ -230,7 +242,7 @@ class Web_widget_model extends MY_Model
         $data = $this->validasi($_POST);
 
         $this->db->where('id', $id);
-        $outp = $this->db->update('widget', $data);
+        $outp = $this->db->update($this->tabel, $data);
 
         status_sukses($outp);
     }
@@ -240,7 +252,7 @@ class Web_widget_model extends MY_Model
         // Data di kolom setting dalam format json
         $setting = $this->db->select('setting')
             ->where('isi', $widget . '.php')
-            ->get('widget')
+            ->get($this->tabel)
             ->row_array();
         $setting = json_decode($setting['setting'], true);
 
@@ -272,20 +284,33 @@ class Web_widget_model extends MY_Model
     private function upload_gambar_sinergi_program(&$setting)
     {
         foreach ($setting as $key => $value) {
-            $lokasi_file             = $_FILES['setting']['tmp_name'][$key]['gambar'];
-            $tipe_file               = $_FILES['setting']['type'][$key]['gambar'];
-            $nama_file               = $_FILES['setting']['name'][$key]['gambar'];
-            $fp                      = time();
-            $nama_file               = $fp . '_' . str_replace(' ', '-', $nama_file); 	 // normalkan nama file
+            $_FILES['file']['name']     = $_FILES['setting']['name'][$key]['gambar'];
+            $_FILES['file']['type']     = $_FILES['setting']['type'][$key]['gambar'];
+            $_FILES['file']['tmp_name'] = $_FILES['setting']['tmp_name'][$key]['gambar'];
+            $_FILES['file']['error']    = $_FILES['setting']['error'][$key]['gambar'];
+            $_FILES['file']['size']     = $_FILES['setting']['size'][$key]['gambar'];
+
             $old_gambar              = $value['old_gambar'];
             $setting[$key]['gambar'] = $old_gambar;
-            if (! empty($lokasi_file)) {
-                if (in_array($tipe_file, unserialize(MIME_TYPE_GAMBAR))) {
-                    UploadGambarWidget($nama_file, $lokasi_file, $old_gambar);
-                    $setting[$key]['gambar'] = $nama_file;
+
+            if (! empty($_FILES['file']['tmp_name'])) {
+                $this->load->library('MY_Upload', null, 'upload');
+                $this->upload->initialize([
+                    'upload_path'   => LOKASI_GAMBAR_WIDGET,
+                    'allowed_types' => 'jpg|png|jpeg',
+                    'max_size'      => 1024, // 1 MB
+                ]);
+
+                if ($this->upload->do_upload('file')) {
+                    $setting[$key]['gambar'] = $this->upload->data('file_name');
+
+                    if ($old_gambar) {
+                        unlink(LOKASI_GAMBAR_WIDGET . $old_gambar);
+                    }
                 } else {
-                    $_SESSION['success']   = -1;
-                    $_SESSION['error_msg'] = ' -> Jenis file ' . $nama_file . ' salah: ' . $tipe_file;
+                    session_error($this->upload->display_errors(null, null));
+
+                    redirect('web_widget/admin/sinergi_program');
                 }
             }
         }
@@ -305,13 +330,13 @@ class Web_widget_model extends MY_Model
                 usort($setting, [$this, 'sort_sinergi_program']);
                 break;
 
-                default:
+            default:
                 break;
         }
         // Simpan semua setting di kolom setting sebagai json
         $setting = json_encode($setting);
         $data    = ['setting' => $setting];
-        $outp    = $this->db->where('isi', $widget . '.php')->update('widget', $data);
+        $outp    = $this->db->where('isi', $widget . '.php')->update($this->tabel, $data);
 
         status_sukses($outp);
     }
@@ -322,7 +347,7 @@ class Web_widget_model extends MY_Model
             $this->session->success = 1;
         }
 
-        $outp = $this->db->where('id', $id)->where('jenis_widget <>', 1)->delete('widget');
+        $outp = $this->db->where('id', $id)->where('jenis_widget <>', 1)->delete($this->tabel);
 
         status_sukses($outp, true); //Tampilkan Pesan
     }
@@ -354,23 +379,27 @@ class Web_widget_model extends MY_Model
         $data['stat_widget']     = $this->laporan_penduduk_model->list_data(4);
         $data['sinergi_program'] = $this->get_setting('sinergi_program');
         $data['widget_keuangan'] = $this->keuangan_grafik_model->widget_keuangan();
+
+        $data['jam_kerja'] = Schema::hasTable('kehadiran_jam_kerja') ? JamKerja::get() : new stdClass();
     }
 
-    // widget statis di ambil dari folder desa/widget dan desa/themes/nama_tema/widgets
+    // widget statis di ambil dari folder desa/widget, vendor/themes/nama_tema/widgets dan desa/themes/nama_tema/widgets
     public function list_widget_baru()
     {
-        $this->load->model('theme_model');
         $tema_desa   = $this->theme_model->list_all();
         $list_widget = [];
         $widget_desa = $this->widget(LOKASI_WIDGET . '*.php');
         $list_widget = array_merge($list_widget, $widget_desa);
 
         foreach ($tema_desa as $tema) {
-            $tema = str_replace('desa/', '', $tema);
-
-            if ($tema !== 'klasik' || $tema !== 'hadakewa') {
-                $list = $this->widget('desa/themes/' . $tema . '/widgets/*.php');
+            if (preg_match('/desa/i', $tema)) {
+                $tema = str_replace('desa/', '', $tema);
+                $tema = 'desa/themes/' . $tema;
+            } else {
+                $tema = 'vendor/themes/' . $tema;
             }
+
+            $list = $this->widget($tema . '/widgets/*.php');
 
             $list_widget = array_merge($list_widget, $list);
         }
@@ -385,9 +414,7 @@ class Web_widget_model extends MY_Model
         $l_widget      = [];
 
         foreach ($list_widget as $widget) {
-            if (array_search($widget, $widget_statis, true) === false) {
-                $l_widget[] = $widget;
-            }
+            $l_widget[] = $widget;
         }
 
         return $l_widget;
@@ -395,11 +422,31 @@ class Web_widget_model extends MY_Model
 
     private function list_widget_statis()
     {
-        $data = $this->db->select('isi')
+        $data = $this->db
+            ->select('isi')
             ->where('jenis_widget', 2)
-            ->get('widget')
+            ->get($this->tabel)
             ->result_array();
 
         return array_column($data, 'isi');
+    }
+
+    public function cekFileWidget()
+    {
+        $data = $this->db->where('jenis_widget <>', 3)->where('enabled', 1)->get($this->tabel)->result_array();
+
+        if ($data) {
+            foreach ($data as $widget) {
+                if ($widget['jenis_widget'] == 1) {
+                    $widget['isi'] = "{$this->theme_model->folder}/{$this->theme_model->tema}/widgets/{$widget['isi']}";
+                }
+
+                if (! file_exists($widget['isi'])) {
+                    $this->lock($widget['id'], 2);
+                    $this->session->success   = 'error';
+                    $this->session->error_msg = "File widget {$widget['judul']} tidak ditemukan sehingga otomatis terkunci";
+                }
+            }
+        }
     }
 }

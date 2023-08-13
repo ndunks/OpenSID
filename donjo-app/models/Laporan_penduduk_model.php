@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -305,32 +305,42 @@ class Laporan_penduduk_model extends MY_Model
 
     protected function order_by($o, $lap)
     {
-
         //Ordering SQL
         switch (true) {
-            case $o == 1 && $lap == 'suku': $this->db->order_by($lap); break;
+            case $o == 1 && $lap == 'suku': $this->db->order_by($lap);
+                break;
 
-            case $o == 2 && $lap == 'suku': $this->db->order_by($lap . ' DESC'); break;
+            case $o == 2 && $lap == 'suku': $this->db->order_by($lap . ' DESC');
+                break;
 
             case $lap == 'bdt': break;
 
-            case $o == 1: $this->db->order_by('u.id'); break;
+            case $o == 1: $this->db->order_by('u.id');
+                break;
 
-            case $o == 1: $this->db->order_by('u.id'); break;
+            case $o == 1: $this->db->order_by('u.id');
+                break;
 
-            case $o == 2: $this->db->order_by('u.id DESC'); break;
+            case $o == 2: $this->db->order_by('u.id DESC');
+                break;
 
-            case $o == 3: $this->db->order_by('laki'); break;
+            case $o == 3: $this->db->order_by('laki');
+                break;
 
-            case $o == 4: $this->db->order_by('laki DESC'); break;
+            case $o == 4: $this->db->order_by('laki DESC');
+                break;
 
-            case $o == 5: $this->db->order_by('jumlah'); break;
+            case $o == 5: $this->db->order_by('jumlah');
+                break;
 
-            case $o == 6: $this->db->order_by('jumlah DESC'); break;
+            case $o == 6: $this->db->order_by('jumlah DESC');
+                break;
 
-            case $o == 7: $this->db->order_by('perempuan'); break;
+            case $o == 7: $this->db->order_by('perempuan');
+                break;
 
-            case $o == 8: $this->db->order_by('perempuan DESC'); break;
+            case $o == 8: $this->db->order_by('perempuan DESC');
+                break;
         }
     }
 
@@ -403,7 +413,7 @@ class Laporan_penduduk_model extends MY_Model
                     ->group_by('u.id');
                 break;
 
-            // RTM
+                // RTM
             case 'bdt':
                 // BDT
                 $this->db
@@ -416,7 +426,7 @@ class Laporan_penduduk_model extends MY_Model
                     ->where('u.bdt !=', null);
                 break;
 
-            // BANTUAN
+                // BANTUAN
             case 'bantuan_penduduk': $sql = 'SELECT u.*,
 				(SELECT COUNT(kartu_nik) FROM program_peserta WHERE program_id = u.id) AS jumlah,
 				(SELECT COUNT(k.kartu_nik) FROM program_peserta k INNER JOIN tweb_penduduk p ON k.kartu_nik=p.nik WHERE program_id = u.id AND p.sex = 1) AS laki,
@@ -424,7 +434,7 @@ class Laporan_penduduk_model extends MY_Model
 				FROM program u';
                 break;
 
-            // PENDUDUK
+                // PENDUDUK
             case 'hamil':
                 // Kehamilan
                 $this->db->where('p.sex', 2);
@@ -519,7 +529,6 @@ class Laporan_penduduk_model extends MY_Model
 
             default:
                 $this->select_jml_penduduk_per_kategori($statistik_penduduk['0']['id_referensi'], $statistik_penduduk['0']['tabel_referensi']);
-
         }
 
         return true;

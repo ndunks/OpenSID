@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -107,14 +107,17 @@ class Pembangunan_model extends MY_Model
         return $this->paginasi($page_number, $jml_data);
     }
 
-    public function list_lokasi_pembangunan()
+    public function list_lokasi_pembangunan($status = null)
     {
         $this->lokasi_pembangunan_query();
+
+        if (null !== $status) {
+            $this->db->where('p.status = 1');
+        }
 
         return $this->db
             ->select('p.*')
             ->from("{$this->table} p")
-            ->where('p.status = 1')
             ->join('tweb_wil_clusterdesa w', 'p.id_lokasi = w.id', 'left')
             ->get()
             ->result();
@@ -122,8 +125,9 @@ class Pembangunan_model extends MY_Model
 
     public function insert()
     {
-        $post = $this->input->post();
-        $data = $this->validasi($post);
+        $post               = $this->input->post();
+        $data               = $this->validasi($post);
+        $data['created_at'] = date('Y-m-d H:i:s');
 
         if (empty($data['foto'])) {
             unset($data['foto']);
@@ -138,9 +142,8 @@ class Pembangunan_model extends MY_Model
 
     public function update($id = 0)
     {
-        $post               = $this->input->post();
-        $data               = $this->validasi($post);
-        $data['updated_at'] = date('Y-m-d H:i:s');
+        $post = $this->input->post();
+        $data = $this->validasi($post);
 
         if (empty($data['foto'])) {
             unset($data['foto']);
@@ -154,6 +157,7 @@ class Pembangunan_model extends MY_Model
         status_sukses($outp);
     }
 
+    // TODO: Gunakan timestamps dan seragamkan.
     private function validasi($post, $id = null)
     {
         return [
@@ -162,6 +166,7 @@ class Pembangunan_model extends MY_Model
             'slug'                    => unique_slug($this->table, $post['judul'], $id),
             'volume'                  => $post['volume'],
             'waktu'                   => $post['waktu'],
+            'satuan_waktu'            => bilangan($post['satuan_waktu']),
             'tahun_anggaran'          => $post['tahun_anggaran'],
             'pelaksana_kegiatan'      => $post['pelaksana_kegiatan'],
             'id_lokasi'               => $post['lokasi'] ? null : $post['id_lokasi'],
@@ -176,17 +181,22 @@ class Pembangunan_model extends MY_Model
             'sumber_biaya_jumlah'     => $post['sumber_biaya_pemerintah'] + $post['sumber_biaya_provinsi'] + $post['sumber_biaya_kab_kota'] + $post['sumber_biaya_swadaya'],
             'manfaat'                 => $post['manfaat'],
             'sifat_proyek'            => $post['sifat_proyek'],
+            'updated_at'              => date('Y-m-d H:i:s'),
         ];
     }
 
     private function upload_gambar_pembangunan($jenis)
     {
-        $this->load->library('upload');
+        // Inisialisasi library 'upload'
+        $this->load->library('MY_Upload', null, 'upload');
         $this->uploadConfig = [
             'upload_path'   => LOKASI_GALERI,
-            'allowed_types' => 'gif|jpg|jpeg|png',
-            'max_size'      => max_upload() * 1024,
+            'allowed_types' => 'jpg|jpeg|png',
+            'max_size'      => 1024, // 1 MB
         ];
+        $this->upload->initialize($this->uploadConfig);
+
+        $uploadData = null;
         // Adakah berkas yang disertakan?
         $adaBerkas = ! empty($_FILES[$jenis]['name']);
         if ($adaBerkas !== true) {
@@ -199,16 +209,7 @@ class Pembangunan_model extends MY_Model
 
             return $this->input->post('old_foto');
         }
-        // Tes tidak berisi script PHP
-        if (isPHP($_FILES['logo']['tmp_name'], $_FILES[$jenis]['name'])) {
-            $this->session->success   = -1;
-            $this->session->error_msg = ' -> Jenis file ini tidak diperbolehkan ';
-            redirect('identitas_desa');
-        }
 
-        $uploadData = null;
-        // Inisialisasi library 'upload'
-        $this->upload->initialize($this->uploadConfig);
         // Upload sukses
         if ($this->upload->do_upload($jenis)) {
             $uploadData = $this->upload->data();
@@ -222,11 +223,15 @@ class Pembangunan_model extends MY_Model
             // Ganti nama di array upload jika file berhasil di-rename --
             // jika rename gagal, fallback ke nama asli
             $uploadData['file_name'] = $fileRenamed ? $namaFileUnik : $uploadData['file_name'];
+
+            // Hapus file lama
+            unlink(LOKASI_GALERI . $this->input->post('old_foto'));
         }
         // Upload gagal
         else {
-            $this->session->success   = -1;
-            $this->session->error_msg = $this->upload->display_errors(null, null);
+            session_error($this->upload->display_errors(null, null));
+
+            return redirect('admin_pembangunan');
         }
 
         return (! empty($uploadData)) ? $uploadData['file_name'] : null;
@@ -243,7 +248,14 @@ class Pembangunan_model extends MY_Model
 
     public function delete($id)
     {
-        return $this->db->where('id', $id)->delete($this->table);
+        $data = $this->find($id);
+
+        if ($outp = $this->db->where('id', $id)->delete($this->table)) {
+            // Hapus file
+            unlink(LOKASI_GALERI . $data->foto);
+        }
+
+        status_sukses($outp);
     }
 
     public function find($id)

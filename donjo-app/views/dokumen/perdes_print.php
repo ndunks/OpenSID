@@ -4,11 +4,7 @@
 		<title>Data Peraturan <?= ucwords($this->setting->sebutan_desa); ?></title>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<link href="<?= base_url()?>assets/css/report.css" rel="stylesheet" type="text/css">
-		<?php if (is_file(LOKASI_LOGO_DESA . 'favicon.ico')): ?>
-			<link rel="shortcut icon" href="<?= base_url()?><?= LOKASI_LOGO_DESA?>favicon.ico" />
-		<?php else: ?>
-			<link rel="shortcut icon" href="<?= base_url()?>favicon.ico" />
-		<?php endif; ?>
+		<link rel="shortcut icon" href="<?= favico_desa() ?>"/>
 		<!-- TODO: Pindahkan ke external css -->
 		<style>
 			.textx {
@@ -30,7 +26,7 @@
 		<div id="container">
 			<div id="body">
 				<div class="header" align="center">
-					<h3>A.1 BUKU PERATURAN <?= strtoupper($this->setting->sebutan_desa . ' ' . $desa['nama_desa'])?></h3>
+					<h3>BUKU PERATURAN DI <?= strtoupper($this->setting->sebutan_desa . ' ' . $desa['nama_desa'])?></h3>
 					<h3><?= strtoupper($this->setting->sebutan_kecamatan . ' ' . $desa['nama_kecamatan'] . ' ' . $this->setting->sebutan_kabupaten . ' ' . $desa['nama_kabupaten'])?></h3>
 					<h3><?= ! empty($tahun) ? 'TAHUN ' . $tahun : ''?></h3>
 					<br>

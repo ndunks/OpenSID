@@ -1,11 +1,11 @@
 <?php $data = $program[0]; ?>
 <div class="content-wrapper">
 	<section class="content-header">
-		<h1>Ubah Program Bantuan <?= $data['nama']; ?></h1>
+		<h1>Ubah Program Bantuan <?= $nama_excerpt; ?></h1>
 		<ol class="breadcrumb">
 			<li><a href="<?=site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
 			<li><a href="<?=site_url('program_bantuan')?>"> Daftar Program Bantuan</a></li>
-			<li class="active">Ubah Program Bantuan <?= $data['nama']; ?></li>
+			<li class="active">Ubah Program Bantuan <?= $nama_excerpt; ?></li>
 		</ol>
 	</section>
 	<section class="content" id="maincontent">
@@ -45,7 +45,8 @@
 							<textarea id="ndesc" name="ndesc" class="form-control input-sm required" placeholder="Isi Keterangan" maxlength="500" rows="8"><?= $data['ndesc']; ?></textarea>
 						</div>
 					</div>
-					<?php $data = $program[0]; $val = $data['asaldana']; ?>
+					<?php $data = $program[0];
+$val             = $data['asaldana']; ?>
 					<div class="form-group">
 						<label class="col-sm-3 control-label" for="asaldana">Asal Dana</label>
 						<div class="col-sm-3">
@@ -74,17 +75,6 @@
 								</div>
 								<input class="form-control input-sm pull-right" id="tgl_2" name="edate" placeholder="Tgl. Akhir" type="text" value="<?= date('d/m/Y', strtotime($data['edate'])); ?>">
 							</div>
-						</div>
-					</div>
-					<?php $data = $program[0]; $status = $data['status']; ?>
-					<div class="form-group">
-						<label class="col-sm-3 control-label" for="status">Status</label>
-						<div class="col-sm-3">
-							<select class="form-control input-sm required" name="status" id="status">
-								<option value="1" <?php selected($status, 1); ?>>Aktif</option>
-								<option value="0" <?php selected($status, 0); ?>>Tidak Aktif</option>
-								<!-- Default Value Aktif -->
-							</select>
 						</div>
 					</div>
 				</div>

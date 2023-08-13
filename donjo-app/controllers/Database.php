@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,64 +37,39 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
+use App\Libraries\FlxZipArchive;
+use App\Models\LogBackup;
+use App\Models\LogRestoreDesa;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Schema;
+use Symfony\Component\Process\Process;
 
 class Database extends Admin_Controller
 {
     public function __construct()
     {
         parent::__construct();
-        $this->load->model(['import_model', 'export_model', 'database_model']);
+        $this->load->model(['ekspor_model', 'database_model']);
+        $this->load->helper('number');
+        $this->load->library('OTP/OTP_manager', null, 'otp_library');
         $this->modul_ini     = 11;
         $this->sub_modul_ini = 45;
     }
 
-    public function clear()
-    {
-        redirect('export');
-    }
-
     public function index()
     {
-        // Untuk development: menghapus session tracking. Tidak ada kaitan dengan database.
-        // Di sini untuk kemudahan saja.
-        // TODO: cari tempat yang lebih cocok
-        if (defined('ENVIRONMENT') && ENVIRONMENT == 'development') {
-            log_message('debug', 'Reset tracking');
-            unset($_SESSION['track_web'], $_SESSION['track_admin'], $_SESSION['siteman_timeout']);
-        }
+        $data = [
+            'act_tab'     => 1,
+            'content'     => 'database/backup',
+            'form_action' => site_url('database/restore'),
+            'size_folder' => byte_format(dirSize(DESAPATH)),
+            'size_sql'    => byte_format(getSizeDB()->size),
+            'act_tab'     => 1,
+            'inkremental' => Schema::hasTable('log_backup') ? LogBackup::where('status', '<', 2)->latest()->first() : null,
+            'restore'     => Schema::hasTable('log_restore_desa') ? LogRestoreDesa::where('status', '=', 0)->exists() : false,
+        ];
 
-        $data['act_tab'] = 1;
-        $data['content'] = 'export/exp';
-        $this->load->view('database/database.tpl.php', $data);
-    }
-
-    public function import()
-    {
-        if (config_item('demo_mode')) {
-            redirect($this->controller);
-        }
-
-        $data['form_action']          = site_url('database/import_dasar');
-        $data['form_action3']         = site_url('database/ppls_individu');
-        $data['boleh_hapus_penduduk'] = $this->import_model->boleh_hapus_penduduk();
-
-        $data['act_tab'] = 2;
-        $data['content'] = 'import/imp';
-        $this->load->view('database/database.tpl.php', $data);
-    }
-
-    public function import_bip()
-    {
-        if (config_item('demo_mode')) {
-            redirect($this->controller);
-        }
-
-        $data['form_action']          = site_url('database/import_data_bip');
-        $data['boleh_hapus_penduduk'] = $this->import_model->boleh_hapus_penduduk();
-
-        $data['act_tab'] = 3;
-        $data['content'] = 'import/bip';
         $this->load->view('database/database.tpl.php', $data);
     }
 
@@ -102,223 +77,96 @@ class Database extends Admin_Controller
     {
         $data['form_action'] = site_url('database/migrasi_db_cri');
 
-        $data['act_tab'] = 5;
+        $data['act_tab'] = 2;
         $data['content'] = 'database/migrasi_cri';
         $this->load->view('database/database.tpl.php', $data);
-    }
-
-    public function backup()
-    {
-        $data['form_action'] = site_url('database/restore');
-
-        $data['act_tab'] = 4;
-        $data['content'] = 'database/backup';
-        $this->load->view('database/database.tpl.php', $data);
-    }
-
-    public function kosongkan()
-    {
-        if (config_item('demo_mode')) {
-            redirect($this->controller);
-        }
-
-        $data['act_tab'] = 6;
-        $data['content'] = 'database/kosongkan';
-        $this->load->view('database/database.tpl.php', $data);
-    }
-
-    // $opendk - tidak kosong untuk header sesuai dengan format impor OpenDK
-    public function export_excel()
-    {
-        $writer = WriterEntityFactory::createXLSXWriter();
-
-        //Nama File
-        $tgl      = date('d_m_Y');
-        $fileName = 'penduduk_' . $tgl . '.xlsx';
-        $writer->openToBrowser($fileName); // stream data directly to the browser
-
-        //Header Tabel
-        $daftar_kolom = [
-            ['Alamat', 'alamat'],
-            ['Dusun', 'dusun'],
-            ['RW', 'rw'],
-            ['RT', 'rt'],
-            ['Nama', 'nama'],
-            ['Nomor KK', 'nomor_kk'],
-            ['Nomor NIK', 'nomor_nik'],
-            ['Jenis Kelamin', 'jenis_kelamin'],
-            ['Tempat Lahir', 'tempat_lahir'],
-            ['Tanggal Lahir', 'tanggal_lahir'],
-            ['Agama', 'agama'],
-            ['Pendidikan (dlm KK)', 'pendidikan_dlm_kk'],
-            ['Pendidikan (sdg ditempuh)', 'pendidikan_sdg_ditempuh'],
-            ['Pekerjaan', 'pekerjaan'],
-            ['Kawin', 'kawin'],
-            ['Hub. Keluarga', 'hubungan_keluarga'],
-            ['Kewarganegaraan', 'kewarganegaraan'],
-            ['Nama Ayah', 'nama_ayah'],
-            ['Nama Ibu', 'nama_ibu'],
-            ['Gol. Darah', 'gol_darah'],
-            ['Akta Lahir', 'akta_lahir'],
-            ['Nomor Dokumen Paspor', 'nomor_dokumen_pasport'],
-            ['Tanggal Akhir Paspor', 'tanggal_akhir_pasport'],
-            ['Nomor Dokumen KITAS', 'nomor_dokumen_kitas'],
-            ['NIK Ayah', 'nik_ayah'],
-            ['NIK Ibu', 'nik_ibu'],
-            ['Nomor Akta Perkawinan', 'nomor_akta_perkawinan'],
-            ['Tanggal Perkawinan', 'tanggal_perkawinan'],
-            ['Nomor Akta Perceraian', 'nomor_akta_perceraian'],
-            ['Tanggal Perceraian', 'tanggal_perceraian'],
-            ['Cacat', 'cacat'],
-            ['Cara KB', 'cara_kb'],
-            ['Hamil', 'hamil'],
-            ['KTP-el', 'ktp_el'],
-            ['Status Rekam', 'status_rekam'],
-            ['Alamat Sekarang', 'alamat_sekarang'],
-            ['Status Dasar', 'status_dasar'],
-            ['Suku', 'suku'],
-            ['Tag ID Card', 'tag_id_card'],
-            ['Asuransi', 'asuransi'],
-            ['No Asuransi', 'no_asuransi'],
-        ];
-
-        $judul  = array_column($daftar_kolom, 0);
-        $header = WriterEntityFactory::createRowFromArray($judul);
-        $writer->addRow($header);
-
-        //Isi Tabel
-        $get = $this->export_model->export_excel();
-
-        foreach ($get as $row) {
-            $penduduk = [
-                $row->alamat,
-                $row->dusun,
-                $row->rw,
-                $row->rt,
-                $row->nama,
-                $row->no_kk,
-                $row->nik,
-                $row->sex,
-                $row->tempatlahir,
-                $row->tanggallahir,
-                $row->agama_id,
-                $row->pendidikan_kk_id,
-                $row->pendidikan_sedang_id,
-                $row->pekerjaan_id,
-                $row->status_kawin,
-                $row->kk_level,
-                $row->warganegara_id,
-                $row->nama_ayah,
-                $row->nama_ibu,
-                $row->golongan_darah_id,
-                $row->akta_lahir,
-                $row->dokumen_pasport,
-                $row->tanggal_akhir_pasport,
-                $row->dokumen_kitas,
-                $row->ayah_nik,
-                $row->ibu_nik,
-                $row->akta_perkawinan,
-                $row->tanggalperkawinan,
-                $row->akta_perceraian,
-                $row->tanggalperceraian,
-                $row->cacat_id,
-                $row->cara_kb_id,
-                $row->hamil,
-                $row->ktp_el,
-                $row->status_rekam,
-                $row->alamat_sekarang,
-                $row->status_dasar,
-                $row->suku,
-                $row->tag_id_card,
-                $row->asuransi,
-                $row->no_asuransi,
-            ];
-            $rowFromValues = WriterEntityFactory::createRowFromArray($penduduk);
-            $writer->addRow($rowFromValues);
-        }
-        $writer->close();
-    }
-
-    public function export_dasar()
-    {
-        $this->export_model->export_dasar();
-    }
-
-    public function import_dasar()
-    {
-        $this->redirect_hak_akses('u');
-        $hapus = isset($_POST['hapus_data']);
-        $this->import_model->import_excel($hapus);
-        redirect('database/import');
-    }
-
-    public function import_data_bip()
-    {
-        $this->redirect_hak_akses('u');
-        $hapus = isset($_POST['hapus_data']);
-        $this->import_model->import_bip($hapus);
-        redirect('database/import_bip');
     }
 
     public function migrasi_db_cri()
     {
         $this->redirect_hak_akses('u');
-        $this->session->unset_userdata(['success, error_msg']);
+        $this->session->unset_userdata(['success', 'error_msg']);
         $this->database_model->migrasi_db_cri();
         redirect('database/migrasi_cri');
     }
 
-    public function kosongkan_db()
-    {
-        $this->redirect_hak_akses('h');
-        $this->database_model->kosongkan_db();
-        redirect('database/kosongkan');
-    }
-
-    // Impor Pengelompokan Data Rumah Tangga
-    public function ppls_individu()
-    {
-        $this->redirect_hak_akses('u');
-        $this->import_model->pbdt_individu(isset($_POST['hapus_rtm']));
-        redirect("{$this->controller}/import");
-    }
-
     public function exec_backup()
     {
-        $this->export_model->backup();
+        $this->ekspor_model->backup();
     }
 
     public function desa_backup()
     {
-        $this->load->library('zip');
+        $za = new FlxZipArchive();
+        $za->read_dir(DESAPATH);
+        $za->download('backup_folder_desa_' . date('Y_m_d') . '.zip');
+    }
 
-        $backup_folder = FCPATH . 'desa/'; // Folder yg akan di backup
-        $this->zip->read_dir($backup_folder, false);
-        $this->zip->download('backup_folder_desa_' . date('Y_m_d') . '.zip');
+    public function desa_inkremental()
+    {
+        if ($this->input->is_ajax_request()) {
+            return datatables(LogBackup::query())
+                ->addIndexColumn()
+                ->make();
+        }
+
+        return view('admin.database.inkremental');
+    }
+
+    public function inkremental_job()
+    {
+        // cek tanggal
+        // job hanya bisa dilakukan 1 hari 1 kali
+        $now    = Carbon::now()->format('Y-m-d');
+        $last   = LogBackup::where('status', '<', 2)->latest()->first();
+        $lokasi = $this->input->post('lokasi');
+
+        if ($last != null && $now == $last->created_at->format('Y-m-d')) {
+            return json([
+                'status'  => false,
+                'message' => 'Anda sudah melakukan Backup inkremental hari ini',
+            ]);
+        }
+
+        $process = new Process(['php', '-f', FCPATH . 'index.php', 'job', 'backup_inkremental', $lokasi]);
+        $process->disableOutput()->setOptions(['create_new_console' => true]);
+        $process->start();
+
+        return json([
+            'status'  => true,
+            'message' => 'Backup inkremental sedang berlangsung',
+        ]);
+    }
+
+    public function inkremental_download()
+    {
+        $file = LogBackup::latest()->first();
+        $file->update(['downloaded_at' => Carbon::now(), 'status' => 2]);
+        $za           = new FlxZipArchive();
+        $za->tmp_file = $file->path;
+        $za->download('backup_inkremental' . $file->created_at->format('Y_m-d') . '.zip');
     }
 
     public function restore()
     {
         $this->redirect_hak_akses('h');
 
+        if (config_item('demo_mode')) {
+            redirect($this->controller);
+        }
+
         try {
             $this->session->success        = 1;
             $this->session->error_msg      = '';
             $this->session->sedang_restore = 1;
-            $this->export_model->restore();
+            $this->ekspor_model->restore();
         } catch (Exception $e) {
             $this->session->success   = -1;
             $this->session->error_msg = $e->getMessage();
         } finally {
             $this->session->sedang_restore = 0;
-            redirect('database/backup');
+            redirect('database');
         }
-    }
-
-    public function export_csv()
-    {
-        $data['main'] = $this->export_model->export_csv();
-        $this->load->view('export/penduduk_csv', $data);
     }
 
     // Dikhususkan untuk server yg hanya digunakan untuk web publik
@@ -352,23 +200,179 @@ class Database extends Admin_Controller
         $this->redirect_hak_akses('u');
         $this->load->model('sinkronisasi_model');
 
-        $this->load->library('upload');
-
-        $config['upload_path']   = LOKASI_SINKRONISASI_ZIP;
-        $config['allowed_types'] = 'zip';
-        $config['overwrite']     = true;
-        //$config['max_size']				= max_upload() * 1024;
-        $config['file_name'] = namafile('sinkronisasi');
-
-        $this->upload->initialize($config);
+        $this->load->library('MY_Upload', null, 'upload');
+        $this->upload->initialize([
+            'upload_path'   => sys_get_temp_dir(),
+            'allowed_types' => 'zip',
+            'overwrite'     => true,
+            'file_name'     => namafile('Sinkronisasi'),
+        ]);
 
         if (! $this->upload->do_upload('sinkronkan')) {
             status_sukses(false, false, $this->upload->display_errors());
             redirect($_SERVER['HTTP_REFERER']);
         }
 
-        $hasil = $this->sinkronisasi_model->sinkronkan();
+        $upload = $this->upload->data();
+
+        $hasil = $this->sinkronisasi_model->sinkronkan($upload['full_path']);
         status_sukses($hasil);
         redirect($_SERVER['HTTP_REFERER']);
+    }
+
+    public function batal_backup()
+    {
+        $this->load->library('job_prosess');
+        // ambil semua data pid yang masih dalam prosess
+        $last_backup = LogBackup::where('status', '=', 0)->get();
+
+        foreach ($last_backup as $key => $value) {
+            $this->job_prosess->kill($value->pid_process);
+            $value->status = 3;
+            $value->save();
+        }
+        redirect($this->controller);
+    }
+
+    public function kirim_otp()
+    {
+        $method                  = $this->input->post('method');
+        $this->session->kode_otp = null;
+
+        if (! in_array($method, ['telegram', 'email'])) {
+            return json([
+                'status'  => false,
+                'message' => 'Metode tidak ditemukan',
+            ]);
+        }
+
+        $user = User::when($method == 'telegram', static fn ($query) => $query->whereNotNull('telegram_verified_at'))
+            ->when($method == 'email', static fn ($query) => $query->whereNotNull('email_verified_at'))
+            ->first();
+
+        if ($user == null) {
+            return json([
+                'status'  => false,
+                'message' => "{$method} belum terverifikasi",
+            ]);
+        }
+
+        try {
+            $token           = hash('sha256', $raw_token = mt_rand(100000, 999999));
+            $user->token     = $token;
+            $user->token_exp = date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . ' +5 minutes'));
+            $user->save();
+            if ($method == 'telegram') {
+                $this->otp_library->driver('telegram')->kirim_otp($user->id_telegram, $raw_token);
+            } else {
+                $this->otp_library->driver('email')->kirim_otp($user->email, $raw_token);
+            }
+
+            return json([
+                'status'  => true,
+                'message' => "OTP sudah Terkirim ke {$method}",
+            ]);
+        } catch (Exception $e) {
+            return json([
+                'status'   => false,
+                'messages' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function verifikasi_otp()
+    {
+        if ($this->input->post()) {
+            $otp = $this->input->post('otp');
+            if ($this->cek_otp($otp)) {
+                $this->session->kode_otp = $otp;
+
+                return json([
+                    'status'  => true,
+                    'message' => 'Verifikasi berhasil',
+                ]);
+            }
+
+            return json([
+                'status'  => false,
+                'message' => 'Kode OTP Salah',
+            ]);
+        }
+
+        show_404();
+    }
+
+    public function upload_restore()
+    {
+        if (! $this->cek_otp(bilangan($this->session->kode_otp))) {
+            return json([
+                'status'  => false,
+                'message' => 'Kode OTP Salah',
+            ]);
+        }
+
+        $this->session->kode_otp = null;
+        $config                  = [
+            'upload_path'   => sys_get_temp_dir(),
+            'allowed_types' => 'zip',
+            'file_ext'      => 'zip',
+            'max_size'      => max_upload() * 1024,
+            'check_script'  => false,
+        ];
+        $this->load->library('MY_Upload', null, 'upload');
+        $this->upload->initialize($config);
+
+        try {
+            if (! $this->upload->do_upload('file')) {
+                return json([
+                    'status'  => false,
+                    'message' => $this->upload->display_errors(null, null),
+                ]);
+            }
+            $uploadData = $this->upload->data();
+
+            $id = LogRestoreDesa::create([
+                'ukuran'     => $uploadData['file_name'],
+                'path'       => $uploadData['full_path'],
+                'restore_at' => date('Y-m-d H:i:s'),
+                'status'     => 0,
+            ])->id;
+
+            $process = new Process(['php', '-f', FCPATH . 'index.php', 'job', 'restore_desa', $id]);
+            $process->disableOutput()->setOptions(['create_new_console' => true]);
+            $process->start();
+
+            return json([
+                'status'  => true,
+                'message' => 'upload file berhasil. restore dijalankan melalui job background',
+            ]);
+        } catch (Exception $e) {
+            return json([
+                'status'   => false,
+                'messages' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function batal_restore()
+    {
+        $this->load->library('job_prosess');
+        // ambil semua data pid yang masih dalam prosess
+        $last_restore = LogRestoreDesa::where('status', '=', 0)->get();
+
+        foreach ($last_restore as $key => $value) {
+            $this->job_prosess->kill($value->pid_process);
+            $value->status = 3;
+            $value->save();
+        }
+        redirect($this->controller);
+    }
+
+    private function cek_otp($otp)
+    {
+        return User::where('id', '=', auth()->id)
+            ->where('token_exp', '>', date('Y-m-d H:i:s'))
+            ->where('token', '=', hash('sha256', bilangan($otp)))
+            ->exists();
     }
 }

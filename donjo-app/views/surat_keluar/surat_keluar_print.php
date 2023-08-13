@@ -4,11 +4,7 @@
 		<title>Agenda Surat Keluar</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<link href="<?= base_url()?>assets/css/report.css" rel="stylesheet" type="text/css">
-		<?php if (is_file(LOKASI_LOGO_DESA . 'favicon.ico')): ?>
-			<link rel="shortcut icon" href="<?= base_url()?><?= LOKASI_LOGO_DESA?>favicon.ico" />
-		<?php else: ?>
-			<link rel="shortcut icon" href="<?= base_url()?>favicon.ico" />
-		<?php endif; ?>
+		<link rel="shortcut icon" href="<?= favico_desa() ?>"/>
 	</head>
 	<body>
 		<div id="container">
@@ -52,27 +48,27 @@
 					<tr>
 						<td colspan="6">&nbsp;</td>
 					</tr>
-					<tr>
+					<tr class="text-center">
 						<td colspan="1">&nbsp;</td>
-						<td colspan="2">Mengetahui</td>
+						<td colspan="2">MENGETAHUI</td>
 						<td colspan="2">&nbsp;</td>
-						<td><?= ucwords($this->setting->sebutan_desa)?> <?= $desa['nama_desa']?>, <?= tgl_indo(date('Y m d'))?></td>
+						<td><?= strtoupper($desa['nama_desa'] . ', ' . tgl_indo(date('Y m d'))) ?></td>
 					</tr>
-					<tr>
+					<tr class="text-center">
 						<td colspan="1">&nbsp;</td>
-						<td colspan="2"><?= $pamong_ketahui['jabatan']?> <?= $desa['nama_desa']?></td>
+						<td colspan="2"><?= strtoupper($pamong_ketahui['jabatan'] . ' ' . $desa['nama_desa']) ?></td>
 						<td colspan="2">&nbsp;</td>
-						<td><?= $pamong_ttd['jabatan']?> <?= $desa['nama_desa']?></td>
+						<td><?= strtoupper($pamong_ttd['jabatan'] . ' ' . $desa['nama_desa']) ?></td>
 					</tr>
 					<tr><td colspan="6">&nbsp;</td>
 					<tr><td colspan="6">&nbsp;</td>
 					<tr><td colspan="6">&nbsp;</td>
 					<tr><td colspan="6">&nbsp;</td>
-					<tr>
+					<tr class="text-center">
 						<td colspan="1">&nbsp;</td>
-						<td colspan="2">( <?= $pamong_ketahui['nama']?> )</td>
+						<td colspan="2"><u><?= strtoupper($pamong_ketahui['nama']) ?></u></td>
 						<td colspan="2">&nbsp;</td>
-						<td>( <?= $pamong_ttd['nama']?> )</td>
+						<td><u><?= strtoupper($pamong_ttd['nama']) ?></u></td>
 					</tr>
 				</table>
 			</div>

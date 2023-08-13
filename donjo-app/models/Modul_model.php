@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -75,7 +75,7 @@ class Modul_model extends CI_Model
 
         for ($i = 0; $i < count($data); $i++) {
             if ($this->ada_sub_modul($data[$i]['id'])) {
-                $data[$i]['modul']    = str_ireplace('[desa]', ucwords($this->setting->sebutan_desa), $data[$i]['modul']);
+                $data[$i]['modul']    = str_replace('[Pemerintah Desa]', ucwords(setting('sebutan_pemerintah_desa')), SebutanDesa($data[$i]['modul']));
                 $data[$i]['submodul'] = $this->list_sub_modul_aktif($data[$i]['id']);
                 // Kelompok submenu yg kosong tidak dimasukkan
                 if (! empty($data[$i]['submodul']) || ! empty($data[$i]['url'])) {
@@ -84,7 +84,7 @@ class Modul_model extends CI_Model
             } else {
                 // Modul yang tidak boleh diakses tidak dimasukkan
                 if ($this->user_model->hak_akses($_SESSION['grup'], $data[$i]['url'], 'b')) {
-                    $data[$i]['modul'] = str_ireplace('[desa]', ucwords($this->setting->sebutan_desa), $data[$i]['modul']);
+                    $data[$i]['modul'] = str_replace('[Pemerintah Desa]', ucwords(setting('sebutan_pemerintah_desa')), SebutanDesa($data[$i]['modul']));
                     $aktif[]           = $data[$i];
                 }
             }
@@ -123,7 +123,19 @@ class Modul_model extends CI_Model
     // Menampilkan tabel sub modul
     public function list_sub_modul($modul_id)
     {
-        $data = $this->db->select('*')
+        // jangan aktifkan jika demo dan di domain whitelist
+        if (config_item('demo_mode') && in_array(get_domain(APP_URL), WEBSITE_DEMO)) {
+            // $this->db->where_not_in('slug', [
+            //     'layanan-pelanggan',
+            //     'pendaftaran-kerjasama',
+            // ]);
+            $this->db->where_not_in('id', [
+                313,
+                331,
+            ]);
+        }
+
+        $data = $this->db
             ->where('parent', $modul_id)
             ->where('hidden <>', 2)
             ->order_by('urut')
@@ -132,7 +144,7 @@ class Modul_model extends CI_Model
 
         for ($i = 0; $i < count($data); $i++) {
             $data[$i]['no']    = $i + 1;
-            $data[$i]['modul'] = str_ireplace('[desa]', ucwords($this->setting->sebutan_desa), $data[$i]['modul']);
+            $data[$i]['modul'] = str_replace('[Pemerintah Desa]', ucwords(setting('sebutan_pemerintah_desa')), SebutanDesa($data[$i]['modul']));
         }
 
         return $data;
@@ -197,6 +209,8 @@ class Modul_model extends CI_Model
 
     private function set_aktif_submodul($id, $aktif)
     {
+        $outp = true;
+
         $submodul      = $this->db->select('id')->where('parent', $id)->get('setting_modul')->result_array();
         $list_submodul = array_column($submodul, 'id');
         if (empty($list_submodul)) {
@@ -208,8 +222,10 @@ class Modul_model extends CI_Model
             $list_submodul = array_merge($list_submodul, array_column($sub, 'id'));
         }
         $list_id = implode(',', $list_submodul);
-        $this->db->where('id IN (' . $list_id . ')')->update('setting_modul', ['aktif' => $aktif]);
+        $outp    = $outp && $this->db->where('id IN (' . $list_id . ')')->update('setting_modul', ['aktif' => $aktif]);
         $this->cache->hapus_cache_untuk_semua('_cache_modul');
+
+        return $outp;
     }
 
     /*
@@ -231,16 +247,18 @@ class Modul_model extends CI_Model
     */
     public function default_server()
     {
+        $outp = true;
+
         switch ($this->setting->penggunaan_server) {
             case '1':
             case '5':
-                $this->db->update('setting_modul', ['aktif' => 1]);
+                $outp = $outp && $this->db->update('setting_modul', ['aktif' => 1]);
                 // Kalau web tidak diaktifkan sama sekali, non-aktifkan modul Admin Web
                 if ($this->setting->offline_mode == 2) {
                     $modul_web = 13;
-                    $this->db->where('id', $modul_web)
+                    $outp      = $outp && $this->db->where('id', $modul_web)
                         ->update('setting_modul', ['aktif' => 0]);
-                    $this->set_aktif_submodul($modul_web, 0);
+                    $outp = $outp && $this->set_aktif_submodul($modul_web, 0);
                 }
                 break;
 
@@ -248,22 +266,24 @@ class Modul_model extends CI_Model
                 // Online digunakan hanya untuk publikasi web; admin penduduk dan lain-lain
                 // dilakukan offline di kantor desa. Yaitu, hanya modul Admin Web yang aktif
                 // Kecuali Pengaturan selalu aktif
-                    $modul_pengaturan = 11;
-                    $this->db->where('id <>', $modul_pengaturan)
-                        ->where('parent <>', $modul_pengaturan)
-                        ->update('setting_modul', ['aktif' => 0]);
-                    $modul_web = 13;
-                    $this->db->where('id', $modul_web)
-                        ->update('setting_modul', ['aktif' => 1]);
-                    $this->set_aktif_submodul($modul_web, 1);
+                $modul_pengaturan = 11;
+                $outp             = $outp && $this->db->where('id <>', $modul_pengaturan)
+                    ->where('parent <>', $modul_pengaturan)
+                    ->update('setting_modul', ['aktif' => 0]);
+                $modul_web = 13;
+                $outp      = $outp && $this->db->where('id', $modul_web)
+                    ->update('setting_modul', ['aktif' => 1]);
+                $outp = $outp && $this->set_aktif_submodul($modul_web, 1);
                 break;
 
             default:
                 // semua modul aktif
-                $this->db->update('setting_modul', ['aktif' => 1]);
+                $outp = $outp && $this->db->update('setting_modul', ['aktif' => 1]);
                 break;
         }
         $this->cache->hapus_cache_untuk_semua('_cache_modul');
+
+        status_sukses($outp);
     }
 
     public function modul_aktif($controller)
@@ -288,16 +308,18 @@ class Modul_model extends CI_Model
     }
 
     /**
-     * @param $id id
+     * @param $id  id
      * @param $val status : 1 = Unlock, 2 = Lock
      */
     public function lock($id, $val)
     {
-        $this->db
+        $outp = $this->db
             ->where('id', $id)
             ->or_where('parent', $id)
             ->update('setting_modul', ['aktif' => $val]);
         $this->cache->hapus_cache_untuk_semua('_cache_modul');
+
+        status_sukses($outp);
     }
 
     public function list_icon()
@@ -309,9 +331,8 @@ class Modul_model extends CI_Model
         if (file_exists($file)) {
             $list_icon = file_get_contents($file);
             $list_icon = explode('.', $list_icon);
-            $list_icon = array_map(static function ($a) { return explode(':', $a)[0]; }, $list_icon);
 
-            return $list_icon;
+            return array_map(static function ($a) { return explode(':', $a)[0]; }, $list_icon);
         }
 
         return false;

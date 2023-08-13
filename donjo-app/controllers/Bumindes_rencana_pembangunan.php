@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,14 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Enums\SatuanWaktuEnum;
+use App\Models\Pembangunan;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -61,7 +64,7 @@ class Bumindes_rencana_pembangunan extends Admin_Controller
             $dir    = $this->input->post('order[0][dir]');
             $tahun  = $this->input->post('tahun');
 
-            return $this->json_output([
+            return json([
                 'draw'            => $this->input->post('draw'),
                 'recordsTotal'    => $this->model->get_data()->count_all_results(),
                 'recordsFiltered' => $this->model->get_data($search, $tahun)->count_all_results(),
@@ -72,6 +75,7 @@ class Bumindes_rencana_pembangunan extends Admin_Controller
         $this->render('bumindes/pembangunan/main', [
             'tipe'         => ucwords($this->tipe),
             'list_tahun'   => $this->model->list_filter_tahun(),
+            'satuan_waktu' => SatuanWaktuEnum::all(),
             'selected_nav' => $this->tipe,
             'subtitle'     => 'Buku ' . ucwords($this->tipe) . ' Pembangunan',
             'main_content' => 'bumindes/pembangunan/' . $this->tipe . '/index',
@@ -94,18 +98,19 @@ class Bumindes_rencana_pembangunan extends Admin_Controller
     {
         $tahun = $this->input->post('tahun');
 
-        $data = [
-            'aksi'           => $aksi,
-            'config'         => $this->header['desa'],
-            'tahun'          => $tahun,
-            'pamong_ketahui' => $this->pamong_model->get_ttd(),
-            'pamong_ttd'     => $this->pamong_model->get_ub(),
-            'main'           => $this->model->get_data('', $tahun)->get()->result(),
-            'tgl_cetak'      => $this->input->post('tgl_cetak'),
-            'file'           => 'Buku ' . ucwords($this->tipe) . ' Kerja Pembangunan',
-            'isi'            => 'bumindes/pembangunan/' . $this->tipe . '/cetak',
-            'letak_ttd'      => ['1', '1', '3'],
-        ];
+        $data           = $this->modal_penandatangan();
+        $data['aksi']   = $aksi;
+        $data['main']   = $this->model->get_data('', $tahun)->get()->result();
+        $data['config'] = $this->header['desa'];
+        if ($tahun == 'semua') {
+            $tahun_pembangunan = Pembangunan::selectRaw('MIN(CAST(tahun_anggaran AS CHAR)) as awal, MAX(CAST(tahun_anggaran AS CHAR)) as akhir ')->first();
+            $data['tahun']     = ($tahun_pembangunan->awal == $tahun_pembangunan->akhir) ? $tahun_pembangunan->awal : "{$tahun_pembangunan->awal} -  {$tahun_pembangunan->akhir}";
+        }
+        $data['satuan_waktu'] = SatuanWaktuEnum::all();
+        $data['tgl_cetak']    = $this->input->post('tgl_cetak');
+        $data['file']         = 'Buku ' . ucwords($this->tipe) . ' Kerja Pembangunan';
+        $data['isi']          = 'bumindes/pembangunan/' . $this->tipe . '/cetak';
+        $data['letak_ttd']    = ['1', '1', '3'];
 
         $this->load->view('global/format_cetak', $data);
     }

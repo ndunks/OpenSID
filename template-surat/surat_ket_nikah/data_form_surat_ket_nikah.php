@@ -75,6 +75,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 	$data['pekerjaan'] = $this->penduduk_model->list_pekerjaan();
 	$data['laki'] = $this->surat_model->list_penduduk_laki();
 	$data['nomor'] = $this->input->post('nomor_main');
+
 	if (isset($this->session->id_pria))
 	{
 		$id = $this->session->id_pria;
@@ -86,6 +87,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 	{
 		$data['pria']['status_kawin_pria'] = $status_kawin_pria[$data['pria']['status_kawin']];
 	}
+
 	if (isset($this->session->id_wanita))
 	{
 		$id = $this->session->id_wanita;

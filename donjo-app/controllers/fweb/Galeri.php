@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -58,7 +58,7 @@ class Galeri extends Web_Controller
         $data['end_paging']   = min($data['paging']->end_link, $p + $data['paging_range']);
         $data['pages']        = range($data['start_paging'], $data['end_paging']);
         $data['gallery']      = $this->first_gallery_m->gallery_show($data['paging']->offset, $data['paging']->per_page);
-        $data['paging_page']  = 'index';
+        $data['paging_page']  = 'galeri/index';
 
         $this->_get_common_data($data);
         $this->set_template('layouts/gallery.tpl.php');
@@ -76,7 +76,7 @@ class Galeri extends Web_Controller
         $data['pages']        = range($data['start_paging'], $data['end_paging']);
         $data['gallery']      = $this->first_gallery_m->sub_gallery_show($parent, $data['paging']->offset, $data['paging']->per_page);
         $data['parent']       = $this->first_gallery_m->get_parent($parent);
-        $data['paging_page']  = "{$parent}/index";
+        $data['paging_page']  = "galeri/{$parent}/index";
 
         $this->_get_common_data($data);
         $this->set_template('layouts/sub_gallery.tpl.php');

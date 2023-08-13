@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -126,19 +126,25 @@ class Web_artikel_model extends MY_Model
     public function list_data($cat = 0, $o = 0, $offset = 0, $limit = 500)
     {
         switch ($o) {
-        case 1: $order_sql = ' ORDER BY judul'; break;
+            case 1: $order_sql = ' ORDER BY judul';
+                break;
 
-        case 2: $order_sql = ' ORDER BY judul DESC'; break;
+            case 2: $order_sql = ' ORDER BY judul DESC';
+                break;
 
-        case 3: $order_sql = ' ORDER BY hit'; break;
+            case 3: $order_sql = ' ORDER BY hit';
+                break;
 
-        case 4: $order_sql = ' ORDER BY hit DESC'; break;
+            case 4: $order_sql = ' ORDER BY hit DESC';
+                break;
 
-        case 5: $order_sql = ' ORDER BY tgl_upload'; break;
+            case 5: $order_sql = ' ORDER BY tgl_upload';
+                break;
 
-        case 6: $order_sql = ' ORDER BY tgl_upload DESC'; break;
+            case 6: $order_sql = ' ORDER BY tgl_upload DESC';
+                break;
 
-        default:$order_sql = ' ORDER BY id DESC';
+            default:$order_sql = ' ORDER BY id DESC';
         }
 
         $paging_sql = ' LIMIT ' . $offset . ',' . $limit;
@@ -318,11 +324,9 @@ class Web_artikel_model extends MY_Model
 
     public function update($cat, $id = 0)
     {
-        $this->group_akses();
+        session_error_clear();
 
-        $_SESSION['success']   = 1;
-        $_SESSION['error_msg'] = '';
-        $data                  = $_POST;
+        $data = $_POST;
         if (empty($data['judul']) || empty($data['isi'])) {
             $_SESSION['error_msg'] .= ' -> Data harus diisi';
             $_SESSION['success'] = -1;
@@ -341,7 +345,7 @@ class Web_artikel_model extends MY_Model
 
             if (! empty($lokasi_file)) {
                 $tipe_file = TipeFile($_FILES[$gambar]);
-                $hasil     = UploadArtikel($nama_file, $gambar, $fp, $tipe_file);
+                $hasil     = UploadArtikel($nama_file, $gambar);
                 if ($hasil) {
                     $data[$gambar] = $nama_file;
                     HapusArtikel($data['old_' . $gambar]);
@@ -362,7 +366,6 @@ class Web_artikel_model extends MY_Model
         }
 
         // Upload dokumen lampiran
-
         $lokasi_file = $_FILES['dokumen']['tmp_name'];
         $tipe_file   = TipeFile($_FILES['dokumen']);
         $nama_file   = $_FILES['dokumen']['name'];
@@ -401,21 +404,20 @@ class Web_artikel_model extends MY_Model
 
         $data['slug'] = unique_slug('artikel', $data['judul'], $id);
 
+        $this->group_akses();
+
         if ($cat == AGENDA) {
             $outp = $this->update_agenda($id, $data);
         } else {
             $this->db->where('a.id', $id);
             $outp = $this->db->update('artikel a', $data);
         }
-        if (! $outp) {
-            $_SESSION['success'] = -1;
-        }
+
+        status_sukses($outp);
     }
 
     private function update_agenda($id_artikel, $data)
     {
-        $this->group_akses();
-
         $agenda = $this->ambil_data_agenda($data);
         $id     = $data['id_agenda'];
         unset($data['id_agenda']);
@@ -528,9 +530,6 @@ class Web_artikel_model extends MY_Model
         }
 
         $data['judul'] = $this->security->xss_clean($data['judul']);
-        if (empty($this->setting->user_admin) || $data['id_user'] != $this->setting->user_admin) {
-            $data['isi'] = $this->security->xss_clean($data['isi']);
-        }
 
         // Digunakan untuk timepicker
         $tempTgl            = date_create_from_format('Y-m-d H:i:s', $data['tgl_upload']);
@@ -611,11 +610,6 @@ class Web_artikel_model extends MY_Model
         }
 
         status_sukses($outp); //Tampilkan Pesan
-    }
-
-    public function jml_artikel()
-    {
-        return $this->db->select('count(*) as jml')->get('artikel')->row()->jml;
     }
 
     public function boleh_ubah($id, $user)

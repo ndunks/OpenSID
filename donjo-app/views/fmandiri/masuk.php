@@ -10,11 +10,7 @@
 	<meta name="robots" content="noindex">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-	<?php if (is_file(LOKASI_LOGO_DESA . 'favicon.ico')) : ?>
-		<link rel="shortcut icon" href="<?= base_url(LOKASI_LOGO_DESA . 'favicon.ico') ?>" />
-	<?php else : ?>
-		<link rel="shortcut icon" href="<?= base_url('favicon.ico') ?>" />
-	<?php endif ?>
+	<link rel="shortcut icon" href="<?= favico_desa() ?>" />
 	<link rel="stylesheet" href="<?= asset('css/login-style.css') ?>" media="screen">
 	<link rel="stylesheet" href="<?= asset('css/login-form-elements.css') ?>" media="screen">
 	<link rel="stylesheet" href="<?= asset('css/daftar-form-elements.css') ?>" media="screen">
@@ -25,11 +21,12 @@
 	<?php if (is_file('desa/pengaturan/siteman/siteman_mandiri.css')) : ?>
 		<link rel='Stylesheet' href="<?= base_url('desa/pengaturan/siteman/siteman_mandiri.css') ?>">
 	<?php endif; ?>
-	<link rel="stylesheet" href="<?= asset('css/mandiri_video.css') ?>">
 	<!-- Font Awesome -->
 	<link rel="stylesheet" href="<?= asset('bootstrap/css/font-awesome.min.css') ?>">
 	<!-- Google Font -->
+	<?php if (cek_koneksi_internet()): ?>
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
+	<?php endif ?>
 	<script src="<?= asset('bootstrap/js/jquery.min.js') ?>"></script>
 
 	<?php if ($cek_anjungan) : ?>
@@ -39,39 +36,16 @@
 	<?php endif; ?>
 
 	<?php $this->load->view('head_tags') ?>
-	<?php if ($latar_login_mandiri) : ?>
-		<style type="text/css">
-			body.login {
-				background: url('<?= base_url($latar_login_mandiri) ?>');
-			}
-		</style>
-	<?php endif; ?>
-
+	<style type="text/css">
+        body.login {
+            background-image: url('<?= default_file(LATAR_LOGIN . $this->setting->latar_login_mandiri, DEFAULT_LATAR_KEHADIRAN) ?>');
+        }
+    </style>
+	<?php if (cek_koneksi_internet()): ?>
 	<!-- Form Wizard - smartWizard -->
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/smartwizard@5/dist/css/smart_wizard_all.min.css">
+	<?php endif ?>
 </head>
-
-<?php if ($this->setting->tampilan_anjungan == 1 && ! empty($this->setting->tampilan_anjungan_slider)) : ?>
-	<div id="sliderv" class="video-internal" style="display: none;">
-		<div id="myCarousel" class="carousel slide" data-ride="carousel">
-			<div class="carousel-inner">
-				<?php foreach ($daftar_album as $key => $data) : ?>
-					<div class="item <?= jecho($key, 0, 'active') ?> ">
-						<img src="<?= AmbilGaleri($data['gambar'], 'sedang') ?>" alt="Los Angeles" style="width:100%;">
-					</div>
-				<?php endforeach; ?>
-			</div>
-		</div>
-	</div>
-<?php endif; ?>
-
-<?php if ($this->setting->tampilan_anjungan == 2 && ! empty($this->setting->tampilan_anjungan_video)) : ?>
-	<div class="video-internal" id="videov" style="display: none;">
-		<video loop <?= jecho($this->setting->tampilan_anjungan_audio, 0, 'muted') ?> poster="<?= base_url($latar_login_mandiri) ?>" class="video-internal-bg" id="videona">
-			<source src="<?= $this->setting->tampilan_anjungan_video; ?>" type="video/mp4">
-		</video>
-	</div>
-<?php endif; ?>
 
 <body class="login">
 	<div class="top-content">
@@ -90,11 +64,12 @@
 									<br /><?= $header['alamat_kantor'] ?>
 									<br />Kodepos <?= $header['kode_pos'] ?>
 									<br /><br />Silakan hubungi operator desa untuk mendapatkan kode PIN anda.
-									<?php if (! $cek_anjungan) : ?>
-										<br /><br /><br />IP Address: <?= $this->input->ip_address() ?>
-									<?php else : ?>
-										<br /><br /><br />IP Address : <?= $cek_anjungan['ip_address'] ?>
-										<br />Mac Address : <?= $cek_anjungan['mac_address'] ?>
+									<br /><br /><br />IP Address: <?= $this->input->ip_address() ?>
+									<br />ID Pengunjung : <span id="pengunjung"></span>&nbsp;<span><a href="#" class="copy" title="Copy" style="color: white"><i class="fa fa-copy"></i></a></span>
+									<?php if ($cek_anjungan) : ?>
+										<?php if ($cek_anjungan['mac_address']): ?>
+											<br />Mac Address : <?= $cek_anjungan['mac_address'] ?>
+										<?php endif; ?>
 										<br />Anjungan Mandiri
 										<?= jecho($cek_anjungan['keyboard'] == 1, true, ' | Virtual Keyboard : Aktif') ?>
 									<?php endif; ?>
@@ -203,6 +178,13 @@
 													<button type="button" class="btn btn-block bg-green"><b>LUPA PIN</b></button>
 												</a>
 											</div>
+											<?php if ($cek_anjungan['tipe'] == 1): ?>
+												<div class="form-group">
+													<a href="<?= site_url('layanan-mandiri') ?>">
+														<button type="button" class="btn btn-block bg-green"><b>ANJUNGAN</b></button>
+													</a>
+												</div>
+											<?php endif ?>
 										</form>
 									<?php endif; ?>
 								<?php endif; ?>
@@ -238,8 +220,10 @@
 	<script src="<?= asset('js/validasi.js') ?>"></script>
 	<script src="<?= asset('js/localization/messages_id.js') ?>"></script>
 
+	<?php if (cek_koneksi_internet()): ?>
 	<!-- Form Wizard - jquery.smartWizard -->
 	<script src="https://cdn.jsdelivr.net/npm/smartwizard@5/dist/js/jquery.smartWizard.min.js" type="text/javascript"></script>
+	<?php endif ?>
 
 	<?php if ($cek_anjungan) : ?>
 		<!-- keyboard widget css & script -->
@@ -248,8 +232,13 @@
 		<script src="<?= asset('js/jquery.keyboard.extension-all.min.js') ?>"></script>
 		<script src="<?= asset('front/js/mandiri-keyboard.js') ?>"></script>
 	<?php endif; ?>
+	<script src="<?= asset('js/id_browser.js') ?>"></script>
 	<script type="text/javascript">
 		$('document').ready(function() {
+
+			var ektp = '<?= $this->session->login_ektp ?>';
+			var anjungan = '<?= $cek_anjungan ?>';
+
 			$('#daftar_tgl_lahir').datetimepicker({
 				format: 'DD-MM-YYYY',
 				locale: 'id',
@@ -259,9 +248,6 @@
 				var tgllahir = parseInt($('#daftar_tgl_lahir').val().substring(6, 10));
 			};
 			$("#daftar_tgl_lahir").on('change keyup paste click keydown', addOrRemoveRequiredAttribute);
-
-			var ektp = '<?= $this->session->login_ektp ?>';
-			var anjungan = '<?= $cek_anjungan ?>';
 
 			if (ektp) {
 				if (anjungan) {
@@ -289,45 +275,6 @@
 					$(this).remove();
 				});
 			}, 5000);
-
-			var videona = document.getElementById("videona");
-			videona.pause();
-			var IDLE_TIMEOUT = <?= $this->setting->tampilan_anjungan_waktu; ?>; //seconds
-			var _idleSecondsCounter = 0;
-			document.onclick = function() {
-				_idleSecondsCounter = 0;
-			};
-			document.onmousemove = function() {
-				_idleSecondsCounter = 0;
-			};
-			document.onkeypress = function() {
-				_idleSecondsCounter = 0;
-			};
-			window.setInterval(CheckIdleTime, 500);
-
-			function CheckIdleTime() {
-				_idleSecondsCounter++;
-				var video = document.getElementById("videov");
-				var slider = document.getElementById("sliderv");
-				var tampil_anjungan = '<?= $this->setting->tampilan_anjungan; ?>';
-				var tampil_anjungan_video = '<?= $this->setting->tampilan_anjungan_video; ?>';
-				var tampil_anjungan_slider = '<?= $this->setting->tampilan_anjungan_slider; ?>';
-				if (_idleSecondsCounter >= IDLE_TIMEOUT) {
-					if (tampil_anjungan == 2 && tampil_anjungan_video) {
-						videona.play();
-						video.style.display = "block";
-					} else if (tampil_anjungan == 1 && tampil_anjungan_slider) {
-						slider.style.display = "block";
-					}
-				} else {
-					if (tampil_anjungan == 2 && tampil_anjungan_video) {
-						videona.pause();
-						video.style.display = "none";
-					} else if (tampil_anjungan == 1 && tampil_anjungan_slider) {
-						slider.style.display = "none";
-					}
-				}
-			}
 		});
 
 		function start_countdown() {
@@ -347,7 +294,7 @@
 				} else {
 					document.getElementById("countdown").innerHTML = "<b>Gagal 3 kali silakan coba kembali dalam " + menit + " MENIT " + detik + " DETIK </b>";
 				}
-			}, 500);
+			}, 1000);
 		}
 
 		function show(elem) {
@@ -373,6 +320,7 @@
 			});
 		<?php endif; ?>
 	</script>
+</script>
 </body>
 
 </html>

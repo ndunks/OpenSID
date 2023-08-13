@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -43,20 +43,6 @@ class First extends Web_Controller
     {
         parent::__construct();
         parent::clear_cluster_session();
-
-        // Jika offline_mode dalam level yang menyembunyikan website,
-        // tidak perlu menampilkan halaman website
-        if ($this->setting->offline_mode == 2) {
-            redirect('main');
-        } elseif ($this->setting->offline_mode == 1) {
-            // Hanya tampilkan website jika user mempunyai akses ke menu admin/web
-            // Tampilkan 'maintenance mode' bagi pengunjung website
-            $this->load->model('user_model');
-            $grup = $this->user_model->sesi_grup($_SESSION['sesi']);
-            if (! $this->user_model->hak_akses($grup, 'web', 'b')) {
-                redirect('main/maintenance_mode');
-            }
-        }
 
         // Load library statistik pengunjung
         $this->load->library('statistik_pengunjung');
@@ -95,15 +81,15 @@ class First extends Web_Controller
         // $data['pages']        = range($data['start_paging'], $data['end_paging']);
         // $data['artikel']      = $this->first_artikel_m->artikel_show($data['paging']->offset, $data['paging']->per_page);
 
-        // $data['headline'] = $this->first_artikel_m->get_headline();
-        // $data['cari']     = htmlentities($this->input->get('cari'));
-        // if ($this->setting->covid_rss) {
-        //     $data['feed'] = [
-        //         'items' => $this->first_artikel_m->get_feed(),
-        //         'title' => 'BERITA COVID19.GO.ID',
-        //         'url'   => 'https://www.covid19.go.id',
-        //     ];
-        // }
+        $data['headline'] = $this->first_artikel_m->get_headline();
+        $data['cari']     = $this->input->get('cari', true);
+        if ($this->setting->covid_rss) {
+            $data['feed'] = [
+                'items' => $this->first_artikel_m->get_feed(),
+                'title' => 'BERITA COVID19.GO.ID',
+                'url'   => 'https://www.covid19.go.id',
+            ];
+        }
 
         // if ($this->setting->apbdes_footer) {
         //     $data['transparansi'] = $this->setting->apbdes_manual_input
@@ -113,11 +99,11 @@ class First extends Web_Controller
 
         // $data['covid'] = $this->laporan_penduduk_model->list_data('covid');
 
-        // $cari = trim($this->input->get('cari'));
-        // if (! empty($cari)) {
-        //     // Judul artikel bisa digunakan untuk serangan XSS
-        //     $data['judul_kategori'] = htmlentities('Hasil pencarian : ' . substr($cari, 0, 50));
-        // }
+        $cari = trim($this->input->get('cari', true));
+        if (! empty($cari)) {
+            // Judul artikel bisa digunakan untuk serangan XSS
+            $data['judul_kategori'] = htmlentities('Hasil pencarian : ' . substr($cari, 0, 50));
+        }
 
         $this->_get_common_data($data);
         // $this->track_model->track_desa('first');
@@ -128,7 +114,7 @@ class First extends Web_Controller
     | Artikel bisa ditampilkan menggunakan parameter pertama sebagai id, dan semua parameter lainnya dikosongkan. url artikel/:id
     | Kalau menggunakan slug, dipanggil menggunakan url artikel/:thn/:bln/:hri/:slug
     */
-    public function artikel($url)
+    public function artikel($thn, $bln, $hr, $url)
     {
         if (is_numeric($url)) {
             $data_artikel = $this->first_artikel_m->get_artikel_by_id($url);
@@ -140,7 +126,7 @@ class First extends Web_Controller
         $this->load->model('shortcode_model');
         $data = $this->includes;
         $this->first_artikel_m->hit($url); // catat artikel diakses
-        $data['single_artikel'] = $this->first_artikel_m->get_artikel($url);
+        $data['single_artikel'] = $this->first_artikel_m->get_artikel($thn, $bln, $hr, $url);
         $id                     = $data['single_artikel']['id'];
 
         // replace isi artikel dengan shortcodify
@@ -255,7 +241,7 @@ class First extends Web_Controller
             show_404();
         }
 
-        $master = $this->input->get('master');
+        $master = $this->input->get('master', true);
 
         $data                     = $this->includes;
         $data['master_indikator'] = $this->first_penduduk_m->master_indikator();
@@ -319,45 +305,6 @@ class First extends Web_Controller
         $this->load->view($this->template, $data);
     }
 
-    public function peraturan_desa()
-    {
-        if (! $this->web_menu_model->menu_aktif('peraturan_desa')) {
-            show_404();
-        }
-
-        $data = $this->includes;
-
-        $data['kategori']       = $this->referensi_model->list_data('ref_dokumen', 1);
-        $data['tahun']          = $this->web_dokumen_model->tahun_dokumen();
-        $data['heading']        = 'Produk Hukum';
-        $data['title']          = $data['heading'];
-        $data['halaman_statis'] = 'web/halaman_statis/peraturan_desa';
-        $this->_get_common_data($data);
-
-        $this->set_template('layouts/halaman_statis.tpl.php');
-        $this->load->view($this->template, $data);
-    }
-
-    public function ajax_table_peraturan()
-    {
-        $kategori_dokumen = '';
-        $tahun_dokumen    = '';
-        $tentang_dokumen  = '';
-        $data             = $this->web_dokumen_model->all_peraturan($kategori_dokumen, $tahun_dokumen, $tentang_dokumen);
-        echo json_encode($data);
-    }
-
-    // function filter peraturan
-    public function filter_peraturan()
-    {
-        $kategori_dokumen = $this->input->post('kategori');
-        $tahun_dokumen    = $this->input->post('tahun');
-        $tentang_dokumen  = $this->input->post('tentang');
-
-        $data = $this->web_dokumen_model->all_peraturan($kategori_dokumen, $tahun_dokumen, $tentang_dokumen);
-        echo json_encode($data);
-    }
-
     public function informasi_publik()
     {
         if (! $this->web_menu_model->menu_aktif('informasi_publik')) {
@@ -387,11 +334,20 @@ class First extends Web_Controller
             $no++;
             $row   = [];
             $row[] = $no;
-            $row[] = "<a href='" . site_url('dokumen_web/unduh_berkas/') . $baris['id'] . "' target='_blank'>" . $baris['nama'] . '</a>';
+            if ($baris['tipe'] == 1) {
+                $row[] = "<a href='" . site_url('dokumen_web/unduh_berkas/') . $baris['id'] . "' target='_blank'>" . $baris['nama'] . '</a>';
+            } else {
+                $row[] = "<a href='" . $baris['url'] . "' target='_blank'>" . $baris['nama'] . '</a>';
+            }
             $row[] = $baris['tahun'];
             // Ambil judul kategori
-            $row[]  = $this->referensi_model->list_ref_flip(KATEGORI_PUBLIK)[$baris['kategori_info_publik']];
-            $row[]  = $baris['tgl_upload'];
+            $row[] = $this->referensi_model->list_ref_flip(KATEGORI_PUBLIK)[$baris['kategori_info_publik']];
+            $row[] = $baris['tgl_upload'];
+            if ($baris['tipe'] == 1) {
+                $row[] = "<a href='" . site_url('first/tampilkan/') . $baris['id'] . "' class='btn btn-primary btn-block pdf'>Lihat Dokumen </a>";
+            } else {
+                $row[] = "<a href='" . $baris['url'] . "' class='btn btn-primary btn-block pdf'>Lihat Dokumen </a>";
+            }
             $data[] = $row;
         }
 
@@ -401,6 +357,23 @@ class First extends Web_Controller
             'data'            => $data,
         ];
         echo json_encode($output);
+    }
+
+    public function tampilkan($id_dokumen, $id_pend = 0)
+    {
+        $this->load->model('Web_dokumen_model');
+        $berkas = $this->web_dokumen_model->get_nama_berkas($id_dokumen, $id_pend);
+
+        if (! $id_dokumen || ! $berkas || ! file_exists(LOKASI_DOKUMEN . $berkas)) {
+            $data['link_berkas'] = null;
+        } else {
+            $data = [
+                'link_berkas' => site_url("dokumen/tampilkan_berkas/{$id_dokumen}/{$id_pend}"),
+                'tipe'        => get_extension($berkas),
+                'link_unduh'  => site_url("dokumen/unduh_berkas/{$id_dokumen}/{$id_pend}"),
+            ];
+        }
+        $this->load->view('global/tampilkan', $data);
     }
 
     public function kategori($id, $p = 1)
@@ -426,16 +399,17 @@ class First extends Web_Controller
     {
         $this->load->library('form_validation');
         $this->form_validation->set_rules('komentar', 'Komentar', 'required');
-        $this->form_validation->set_rules('owner', 'Nama', 'required');
-        $this->form_validation->set_rules('no_hp', 'No HP', 'numeric|required');
-        $this->form_validation->set_rules('email', 'Email', 'valid_email');
+        $this->form_validation->set_rules('owner', 'Nama', 'required|max_length[50]');
+        $this->form_validation->set_rules('no_hp', 'No HP', 'numeric|required|max_length[15]');
+        $this->form_validation->set_rules('email', 'Email', 'valid_email|max_length[50]');
+
+        $post = $this->input->post();
 
         if ($this->form_validation->run() == true) {
             // Periksa isian captcha
             include FCPATH . 'securimage/securimage.php';
             $securimage = new Securimage();
 
-            $post = $this->input->post();
             if ($securimage->check($_POST['captcha_code']) == false) {
                 $respon = [
                     'status' => -1, // Notif gagal
@@ -480,40 +454,6 @@ class First extends Web_Controller
         redirect($_SERVER['HTTP_REFERER'] . '#kolom-komentar');
     }
 
-    public function peta()
-    {
-        if (! $this->web_menu_model->menu_aktif('peta')) {
-            show_404();
-        }
-
-        $this->load->model('wilayah_model');
-        $this->load->model('data_persil_model');
-        $this->load->model('pembangunan_model');
-
-        $data = $this->includes;
-
-        $data['list_dusun']         = $this->wilayah_model->list_dusun();
-        $data['wilayah']            = $this->wilayah_model->list_wil();
-        $data['desa']               = $this->config_model->get_data();
-        $data['title']              = 'Peta ' . ucwords($this->setting->sebutan_desa . ' ' . $data['desa']['nama_desa']);
-        $data['dusun_gis']          = $data['list_dusun'];
-        $data['rw_gis']             = $this->wilayah_model->list_rw();
-        $data['rt_gis']             = $this->wilayah_model->list_rt();
-        $data['list_ref']           = $this->referensi_model->list_ref(STAT_PENDUDUK);
-        $data['covid']              = $this->laporan_penduduk_model->list_data('covid');
-        $data['lokasi']             = $this->plan_lokasi_model->list_lokasi();
-        $data['garis']              = $this->plan_garis_model->list_garis();
-        $data['area']               = $this->plan_area_model->list_area();
-        $data['lokasi_pembangunan'] = $this->pembangunan_model->list_lokasi_pembangunan();
-        $data['persil']             = $this->data_persil_model->list_data();
-
-        $data['halaman_peta'] = 'web/halaman_statis/peta';
-        $this->_get_common_data($data);
-
-        $this->set_template('layouts/peta_statis.tpl.php');
-        $this->load->view($this->template, $data);
-    }
-
     public function load_apbdes()
     {
         $data['transparansi'] = $this->keuangan_grafik_model->grafik_keuangan_tema();
@@ -553,70 +493,16 @@ class First extends Web_Controller
         $this->load->view('gis/aparatur_wilayah', $data);
     }
 
-    public function ambil_data_covid()
-    {
-        if ($content = getUrlContent($this->input->post('endpoint'))) {
-            echo $content;
-        }
-    }
-
-    public function status_idm(int $tahun)
-    {
-        if (! $this->web_menu_model->menu_aktif('status-idm/' . $tahun)) {
-            show_404();
-        }
-
-        $data = $this->includes;
-        $this->load->library('data_publik');
-        $this->_get_common_data($data);
-        $kode_desa = $data['desa']['kode_desa'];
-        $cache     = 'idm_' . $tahun . '_' . $kode_desa;
-
-        if (cek_koneksi_internet()) {
-            $this->data_publik->set_api_url("https://idm.kemendesa.go.id/open/api/desa/rumusan/{$kode_desa}/{$tahun}", $cache)
-                ->set_interval(7)
-                ->set_cache_folder($this->config->item('cache_path'));
-
-            $idm = $this->data_publik->get_url_content();
-            if ($idm->body->error) {
-                $idm->body->mapData->error_msg = $idm->body->message . ' : <a href="' . $idm->header->url . ' ">' . $idm->header->url . '<br><br> Periksa Kode Desa di Identitas Desa. Masukkan kode lengkap, contoh : 3507012006 <br>';
-            }
-
-            $data['idm'] = $idm->body->mapData;
-        }
-
-        $data['halaman_statis'] = 'home/idm';
-
-        $this->set_template('layouts/halaman_statis_lebar.tpl.php');
-        $this->load->view($this->template, $data);
-    }
-
-    public function status_sdgs()
-    {
-        if (! $this->web_menu_model->menu_aktif('status-sdgs')) {
-            show_404();
-        }
-
-        $this->load->model('data_eksternal_model');
-        $data = $this->includes;
-        $this->_get_common_data($data);
-        $kode_desa              = $data['desa']['kode_desa'];
-        $data['evaluasi']       = $this->data_eksternal_model->sdgs_kemendes($kode_desa);
-        $data['halaman_statis'] = '../../' . $this->theme_folder . '/' . $this->theme . '/partials/kemendes_sdgs.php';
-        $this->set_template('layouts/halaman_statis_lebar.tpl.php');
-        $this->load->view($this->template, $data);
-    }
-
     public function get_form_info()
     {
-        $redirect_link = $this->input->get('redirectLink');
+        $redirect_link = $this->input->get('redirectLink', true);
 
         if ($this->session->inside_retry == false) {
             // Untuk kondisi SEBELUM autentikasi dan SETELAH RETRY hit API
-            if ($this->input->get('outsideRetry') == 'true') {
+            if ($this->input->get('outsideRetry', true) == 'true') {
                 $this->session->inside_retry = true;
             }
-            $this->session->google_form_id = $this->input->get('formId');
+            $this->session->google_form_id = $this->input->get('formId', true);
             $result                        = $this->analisis_import_model->import_gform($redirect_link);
 
             echo json_encode($result);
@@ -626,7 +512,7 @@ class First extends Web_Controller
 
             $this->session->unset_userdata(['inside_retry', 'inside_redirect_link']);
 
-            header('Location: ' . $redirect_link . '?outsideRetry=true&code=' . $this->input->get('code') . '&formId=' . $this->session->google_form_id);
+            header('Location: ' . $redirect_link . '?outsideRetry=true&code=' . $this->input->get('code', true) . '&formId=' . $this->session->google_form_id);
         }
     }
 }

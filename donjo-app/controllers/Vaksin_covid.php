@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Models\Pamong;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -66,6 +68,7 @@ class Vaksin_covid extends Admin_Controller
     public function search()
     {
         $cari = $this->input->post('cari');
+
         if ($cari != '') {
             $this->session->cari = $cari;
         } else {
@@ -95,6 +98,7 @@ class Vaksin_covid extends Admin_Controller
             'list_vaksin'  => $this->vaksin_covid_model->jenis_vaksin(),
             'paging'       => $this->vaksin_covid_model->paging($p),
             'per_page'     => $this->session->per_page,
+            'cari'         => $this->session->cari,
             'func'         => 'index',
             'p'            => $p,
             'selected_nav' => 'daftar',
@@ -121,11 +125,20 @@ class Vaksin_covid extends Admin_Controller
         $this->render('covid19/vaksin/form', $data);
     }
 
-    public function berkas($id_penduduk, $vaksin_ke, $form = false)
+    public function tampil_sertifikat($id_penduduk)
+    {
+        $data = [
+            'penduduk' => $this->vaksin_covid_model->data_penduduk($id_penduduk),
+        ];
+
+        $this->render('covid19/vaksin/sertifkat', $data);
+    }
+
+    public function berkas($id_penduduk, $vaksin_ke, $form = false, $tampil = false)
     {
         $data = $this->vaksin_covid_model->data_penduduk($id_penduduk);
         $url  = $this->controller . '/vaksin_covid/' . ($form) ?: "form?terdata={$id_penduduk}";
-        ambilBerkas($data->{$vaksin_ke}, $url, null, LOKASI_VAKSIN);
+        ambilBerkas($data->{$vaksin_ke}, $url, null, LOKASI_VAKSIN, $tampil);
     }
 
     public function update()
@@ -143,7 +156,7 @@ class Vaksin_covid extends Admin_Controller
 
     public function laporan_penduduk()
     {
-        $pamong = $this->pamong_model->list_data();
+        $pamong = Pamong::penandaTangan()->get();
 
         $data = [
             'selected_nav' => 'laporan',
@@ -184,7 +197,7 @@ class Vaksin_covid extends Admin_Controller
         $rekap         = $this->rekap($penduduk);
         $sasaran       = $this->vaksin_covid_model->rekap($umur);
         $rekap_sasaran = $this->rekap($sasaran);
-        $pamong        = $this->pamong_model->list_data();
+        $pamong        = Pamong::penandaTangan()->get();
         $data          = [
             'selected_nav' => 'rekap',
             'main'         => $rekap,
@@ -246,5 +259,18 @@ class Vaksin_covid extends Admin_Controller
         }
 
         return $rekap;
+    }
+
+    public function autocomplete()
+    {
+        return json($this->vaksin_covid_model->autocomplete($this->input->post('cari')));
+    }
+
+    public function impor()
+    {
+        $this->redirect_hak_akses('u');
+        $this->vaksin_covid_model->impor();
+
+        redirect('vaksin_covid');
     }
 }

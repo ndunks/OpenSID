@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Models\Config;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -45,7 +47,6 @@ class Shortcode_model extends CI_Model
         $this->load->model('keuangan_grafik_model');
         $this->load->model('keuangan_grafik_manual_model');
         $this->load->model('laporan_penduduk_model');
-        $this->load->model('config_model');
         $this->load->model('pamong_model');
     }
 
@@ -55,9 +56,9 @@ class Shortcode_model extends CI_Model
         $regex = '/\\[\\[(.*?)\\]\\]/';
 
         return preg_replace_callback($regex, function ($matches) {
-            $result = [];
+            $result         = [];
             $params_explode = explode(',', $matches[1]);
-            $fnName = 'extract_shortcode';
+            $fnName         = 'extract_shortcode';
 
             return $this->extract_shortcode($params_explode[0], $params_explode[1], $params_explode[2]);
         }, $str);
@@ -121,7 +122,7 @@ class Shortcode_model extends CI_Model
     private function tabel_rp_apbd($type, $thn, $smt1)
     {
         $data              = $this->keuangan_grafik_model->lap_rp_apbd($thn, $smt1);
-        $desa              = $this->config_model->get_data();
+        $desa              = Config::first();
         $pendapatan        = $data['pendapatan'];
         $belanja           = $data['belanja'];
         $belanja_bidang    = $data['belanja_bidang'];
@@ -140,7 +141,7 @@ class Shortcode_model extends CI_Model
     private function tabel_rp_apbd_bidang($type, $thn, $smt1)
     {
         $data              = $this->keuangan_grafik_model->lap_rp_apbd($thn, $smt1);
-        $desa              = $this->config_model->get_data();
+        $desa              = Config::first();
         $pendapatan        = $data['pendapatan'];
         $belanja           = $data['belanja'];
         $belanja_bidang    = $data['belanja_bidang'];
@@ -172,7 +173,7 @@ class Shortcode_model extends CI_Model
     private function tabel_rp_apbd_bidang_manual($type, $thn)
     {
         $data              = $this->keuangan_grafik_manual_model->lap_rp_apbd($thn);
-        $desa              = $this->config_model->get_data();
+        $desa              = Config::first();
         $pendapatan        = $data['pendapatan'];
         $belanja           = $data['belanja'];
         $belanja_bidang    = $data['belanja_bidang'];
@@ -250,7 +251,7 @@ class Shortcode_model extends CI_Model
 
     private function sotk_w_bpd()
     {
-        $desa    = $this->config_model->get_data();
+        $desa    = Config::first();
         $bagan   = $this->pamong_model->list_bagan();
         $ada_bpd = true;
 
@@ -263,7 +264,7 @@ class Shortcode_model extends CI_Model
 
     private function sotk_wo_bpd()
     {
-        $desa    = $this->config_model->get_data();
+        $desa    = Config::first();
         $bagan   = $this->pamong_model->list_bagan();
         $ada_bpd = false;
 
@@ -283,7 +284,7 @@ class Shortcode_model extends CI_Model
             $result = [];
 
             $params_explode = explode(',', $matches[1]);
-            $fnName = 'converted_sc_list';
+            $fnName         = 'converted_sc_list';
 
             return $this->converted_sc_list($params_explode[0], $params_explode[1], $params_explode[2]);
         }, $str);

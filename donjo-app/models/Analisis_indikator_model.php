@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -126,17 +126,23 @@ class Analisis_indikator_model extends MY_Model
     public function list_data($o = 0, $offset = 0, $limit = 500)
     {
         switch ($o) {
-            case 1: $order_sql = ' ORDER BY LPAD(u.nomor, 10, " ")'; break;
+            case 1: $order_sql = ' ORDER BY LPAD(u.nomor, 10, " ")';
+                break;
 
-            case 2: $order_sql = ' ORDER BY LPAD(u.nomor, 10, " ") DESC'; break;
+            case 2: $order_sql = ' ORDER BY LPAD(u.nomor, 10, " ") DESC';
+                break;
 
-            case 3: $order_sql = ' ORDER BY u.pertanyaan'; break;
+            case 3: $order_sql = ' ORDER BY u.pertanyaan';
+                break;
 
-            case 4: $order_sql = ' ORDER BY u.pertanyaan DESC'; break;
+            case 4: $order_sql = ' ORDER BY u.pertanyaan DESC';
+                break;
 
-            case 5: $order_sql = ' ORDER BY u.id_kategori'; break;
+            case 5: $order_sql = ' ORDER BY u.id_kategori';
+                break;
 
-            case 6: $order_sql = ' ORDER BY u.id_kategori DESC'; break;
+            case 6: $order_sql = ' ORDER BY u.id_kategori DESC';
+                break;
 
             default:$order_sql = ' ORDER BY LPAD(u.nomor, 10, " ")';
         }
@@ -237,10 +243,6 @@ class Analisis_indikator_model extends MY_Model
         }
 
         $data = $this->validasi_data($this->input->post());
-
-        if (($data['id_tipe'] == 1 || $data['id_tipe'] == 2) && ! $data['referensi']) {
-            $this->db->where('id_indikator', $id)->delete('analisis_parameter');
-        }
 
         $data['id_master'] = $this->session->analisis_master;
         $outp              = $this->db->where('id', $id)->update('analisis_indikator', $data);
@@ -635,7 +637,7 @@ class Analisis_indikator_model extends MY_Model
                 ];
                 break;
 
-            // Keluarga
+                // Keluarga
             case 2:
                 $data = [
                     'nik_kepala' => [
@@ -656,11 +658,11 @@ class Analisis_indikator_model extends MY_Model
                 ];
                 break;
 
-            // Desa
+                // Desa
             default:
 
-            $desa   = $this->setting->sebutan_desa;
-            $kepala = $this->setting->sebutan_kepala_desa;
+                $desa   = $this->setting->sebutan_desa;
+                $kepala = $this->setting->sebutan_kepala_desa;
 
                 $data = [
 

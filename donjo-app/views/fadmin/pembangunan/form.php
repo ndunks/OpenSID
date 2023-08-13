@@ -1,48 +1,3 @@
-<?php
-
-defined('BASEPATH') || exit('No direct script access allowed');
-
-/*
- * File ini:
- *
- * View untuk modul Pembangunan
- *
- * donjo-app/views/pembangunan/fadmin/form.php,
- */
-
-/*
- * File ini bagian dari:
- *
- * OpenSID
- *
- * Sistem informasi desa sumber terbuka untuk memajukan desa
- *
- * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
- *
- * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- *
- * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
- * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
- * tanpa batasan, termasuk hak untuk menggunakan, menyalin, mengubah dan/atau mendistribusikan,
- * asal tunduk pada syarat berikut:
- *
- * Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan dalam
- * setiap salinan atau bagian penting Aplikasi Ini. Barang siapa yang menghapus atau menghilangkan
- * pemberitahuan ini melanggar ketentuan lisensi Aplikasi Ini.
- *
- * PERANGKAT LUNAK INI DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN, BAIK TERSURAT MAUPUN
- * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
- * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
- *
- * @copyright	  Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright	  Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
- *
- * @see 	https://github.com/OpenSID/OpenSID
- */
-?>
-
 <div class="content-wrapper">
 	<section class="content-header">
 		<h1>
@@ -74,7 +29,18 @@ defined('BASEPATH') || exit('No direct script access allowed');
 							</div>
 							<div class="form-group">
 								<label class="control-label" style="text-align:left;">Waktu</label>
-								<input maxlength="50" class="form-control number input-sm required" name="waktu" id="waktu" value="<?= $main->waktu ?>" type="text" placeholder="Lamanya pembangunan (bulan)" />
+								<div class="row">
+									<div class="col-sm-8">
+										<input maxlength="50" class="form-control number input-sm required" name="waktu" id="waktu" value="<?= $main->waktu ?>" type="text" placeholder="Lamanya pembangunan" />
+									</div>
+									<div class="col-sm-4">
+										<select class="form-control input-sm select2 required" name="satuan_waktu">
+											<?php foreach ($satuan_waktu as $key => $value) : ?>
+												<option value="<?= $key ?>" <?= selected($key, $main->satuan_waktu) ?>><?= $value ?></option>
+											<?php endforeach; ?>
+										</select>
+									</div>
+								</div>
 							</div>
 							<div class="form-group">
 								<label class="control-label" for="sumber_dana">Sumber Dana</label>
@@ -89,8 +55,8 @@ defined('BASEPATH') || exit('No direct script access allowed');
 									<div class="form-group">
 										<label class="control-label" for="tahun_anggaran">Tahun Anggaran</label>
 										<select class="form-control input-sm select2" id="tahun_anggaran" name="tahun_anggaran" style="width:100%;">
-											<?php foreach (tahun(1999) as $value): ?>
-												<option value="<?= $value ?>" <?= selected($value, $main->tahun_anggaran) ?> ><?= $value ?></option>
+											<?php foreach (tahun(1999) as $value) : ?>
+												<option value="<?= $value ?>" <?= selected($value, $main->tahun_anggaran) ?>><?= $value ?></option>
 											<?php endforeach; ?>
 										</select>
 									</div>
@@ -98,7 +64,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 								<div class="col-sm-6">
 									<div class="form-group">
 										<label class="control-label" style="text-align:left;">Anggaran</label>
-										<input class="form-control input-sm" readonly name="anggaran" id="anggaran" min="0" value="<?= $main->anggaran ?>" type="number" placeholder="Anggaran" />
+										<input class="form-control input-sm required bilangan" name="anggaran" id="anggaran" value="<?= $main->anggaran; ?>" type="text" placeholder="Anggaran" readonly />
 									</div>
 								</div>
 							</div>
@@ -106,13 +72,13 @@ defined('BASEPATH') || exit('No direct script access allowed');
 								<div class="col-sm-6">
 									<div class="form-group">
 										<label class="control-label" for="sumber_biaya_pemerintah">Sumber Biaya Pemerintah</label>
-										<input id="sumber_biaya_pemerintah" name="sumber_biaya_pemerintah" min="0" max="10000000000" step="1000" onkeyup="cek()" class="form-control input-sm required" type="number" placeholder="Sumber Biaya Pemerintah" minlength="1" maxlength="100" value="<?= $main->sumber_biaya_pemerintah; ?>"></input>
+										<input id="sumber_biaya_pemerintah" name="sumber_biaya_pemerintah" onkeyup="cek()" class="form-control input-sm required bilangan" maxlength="12" type="text" placeholder="Sumber Biaya Pemerintah" value="<?= $main->sumber_biaya_pemerintah; ?>"></input>
 									</div>
 								</div>
 								<div class="col-sm-6">
 									<div class="form-group">
 										<label class="control-label" for="sumber_biaya_provinsi">Sumber Biaya Provinsi</label>
-										<input id="sumber_biaya_provinsi" name="sumber_biaya_provinsi" min="0" max="10000000000" step="1000" onkeyup="cek()" class="form-control input-sm required" type="number" placeholder="Sumber Biaya Provinsi" minlength="1" maxlength="100" value="<?= $main->sumber_biaya_provinsi; ?>"></input>
+										<input id="sumber_biaya_provinsi" name="sumber_biaya_provinsi" onkeyup="cek()" class="form-control input-sm required bilangan" maxlength="12" type="text" placeholder="Sumber Biaya Provinsi" value="<?= $main->sumber_biaya_provinsi; ?>"></input>
 									</div>
 								</div>
 							</div>
@@ -120,13 +86,13 @@ defined('BASEPATH') || exit('No direct script access allowed');
 								<div class="col-sm-6">
 									<div class="form-group">
 										<label class="control-label" for="sumber_biaya_kab_kota">Sumber Biaya Kab / Kota</label>
-										<input id="sumber_biaya_kab_kota" name="sumber_biaya_kab_kota" class="form-control input-sm required" min="0" max="10000000000" step="1000" onkeyup="cek()" type="number" placeholder="Sumber Biaya Kab / Kota" minlength="1" maxlength="100" value="<?= $main->sumber_biaya_kab_kota; ?>"></input>
+										<input id="sumber_biaya_kab_kota" name="sumber_biaya_kab_kota" class="form-control input-sm required bilangan" maxlength="12" onkeyup="cek()" type="text" placeholder="Sumber Biaya Kab / Kota" value="<?= $main->sumber_biaya_kab_kota; ?>"></input>
 									</div>
 								</div>
 								<div class="col-sm-6">
 									<div class="form-group">
 										<label class="control-label" for="sumber_biaya_swadaya">Sumber Biaya Swadaya</label>
-										<input id="sumber_biaya_swadaya" name="sumber_biaya_swadaya" class="form-control input-sm required" type="number" min="0" max="10000000000" step="1000" onkeyup="cek()" placeholder="Sumber Biaya Swadaya" minlength="1" maxlength="100" value="<?= $main->sumber_biaya_swadaya; ?>"></input>
+										<input id="sumber_biaya_swadaya" name="sumber_biaya_swadaya" class="form-control input-sm required bilangan" maxlength="12" type="text" onkeyup="cek()" placeholder="Sumber Biaya Swadaya" value="<?= $main->sumber_biaya_swadaya; ?>"></input>
 									</div>
 								</div>
 							</div>
@@ -196,14 +162,14 @@ defined('BASEPATH') || exit('No direct script access allowed');
 							<center>
 								<div class="form-group">
 									<?php if (is_file(LOKASI_GALERI . $main->foto)) : ?>
-										<img class="img-responsive" src="<?= base_url(LOKASI_GALERI . $main->foto); ?>" alt="Gambar Utama Pembangunan">
+										<img class="img-responsive" src="<?= to_base64(LOKASI_GALERI . $main->foto); ?>" alt="Gambar Utama Pembangunan">
 									<?php else : ?>
-										<img class="img-responsive" src="<?= base_url('assets/images/404-image-not-found.jpg') ?>" alt="Gambar Utama Pembangunan" />
+										<img class="img-responsive" src="<?= to_base64('assets/images/404-image-not-found.jpg') ?>" alt="Gambar Utama Pembangunan" />
 									<?php endif; ?>
 									<div class="input-group input-group-sm">
 										<input type="hidden" name="old_foto" value="<?= $main->foto; ?>">
 										<input type="text" class="form-control" id="file_path">
-										<input type="file" class="hidden" id="file" name="foto">
+										<input type="file" class="hidden" id="file" name="foto" accept=".jpg,.jpeg,.png">
 										<span class="input-group-btn">
 											<button type="button" class="btn btn-info btn-flat" id="file_browser"><i class="fa fa-search"></i></button>
 										</span>
@@ -269,6 +235,5 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 	$(document).ready(function() {
 		pilih_lokasi(<?= (null === $main->id_lokasi && $main) ? 2 : 1 ?>);
-		// alert($main->id_lokasi);
 	});
 </script>

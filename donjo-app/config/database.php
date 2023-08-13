@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -119,14 +119,14 @@ $db['default']['port']         = 3306;
 $db['default']['stricton']     = true;
 $db['default']['dbdriver']     = 'mysqli';
 $db['default']['dbprefix']     = '';
-$db['default']['pconnect']     = true;
+$db['default']['pconnect']     = false;
 $db['default']['db_debug']     = true;
 $db['default']['cache_on']     = false;
 $db['default']['cachedir']     = '';
 $db['default']['char_set']     = 'utf8';
 $db['default']['dbcollat']     = 'utf8_general_ci';
 $db['default']['swap_pre']     = '';
-$db['default']['autoinit']     = true;
+$db['default']['autoinit']     = false;
 $db['default']['encrypt']      = false;
 $db['default']['compress']     = false;
 $db['default']['failover']     = [];
@@ -134,3 +134,5 @@ $db['default']['save_queries'] = true;
 
 // Ganti pegaturan basisdata sesuai yg ada pada file desa/config/database.php
 include LOKASI_CONFIG_DESA . 'database.php';
+
+require_once 'eloquent.php';

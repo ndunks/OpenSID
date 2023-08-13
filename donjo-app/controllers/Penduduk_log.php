@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -190,6 +190,8 @@ class Penduduk_log extends Admin_Controller
         $this->redirect_hak_akses('u');
         $data['log_status_dasar'] = $this->penduduk_log_model->get_log($id);
         $data['list_ref_pindah']  = $this->referensi_model->list_data('ref_pindah');
+        $data['sebab']            = $this->referensi_model->list_ref(SEBAB);
+        $data['penolong_mati']    = $this->referensi_model->list_ref(PENOLONG_MATI);
         $data['form_action']      = site_url("{$this->controller}/update/{$p}/{$o}/{$id}");
 
         $this->load->view('penduduk_log/ajax_edit', $data);

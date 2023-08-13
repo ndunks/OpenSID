@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -44,13 +44,6 @@ class Sinkronisasi_model extends CI_model
     public function __construct()
     {
         parent::__construct();
-        $this->load->library('upload');
-        $this->load->helper('donjolib');
-        $this->uploadConfig = [
-            'upload_path'   => LOKASI_SINKRONISASI_ZIP,
-            'allowed_types' => 'zip',
-            'max_size'      => max_upload() * 1024,
-        ];
     }
 
     // $file = nama file yg akan diproses
@@ -68,7 +61,7 @@ class Sinkronisasi_model extends CI_model
         return $data;
     }
 
-    public function sinkronkan()
+    public function sinkronkan($file = null)
     {
         $hasil = true;
 
@@ -81,7 +74,7 @@ class Sinkronisasi_model extends CI_model
             ->get('ref_sinkronisasi')->result_array();
 
         // Proses tabel yg berlaku untuk jenis penggunaan server
-        $this->zip_file = $this->upload->upload_path . $this->upload->file_name;
+        $this->zip_file = $file;
 
         foreach ($list_tabel as $tabel) {
             $nama_tabel        = $tabel['tabel'];
@@ -118,15 +111,15 @@ class Sinkronisasi_model extends CI_model
     {
         foreach ($data_tabel as &$item) {
             switch ($tabel) {
-        case 'tweb_keluarga':
-          unset($item['no_kk']);
-          break;
+                case 'tweb_keluarga':
+                    unset($item['no_kk']);
+                    break;
 
-        case 'tweb_penduduk':
-          unset($item['nama'], $item['nik']);
+                case 'tweb_penduduk':
+                    unset($item['nama'], $item['nik']);
 
-          break;
-      }
+                    break;
+            }
         }
 
         return $data_tabel;

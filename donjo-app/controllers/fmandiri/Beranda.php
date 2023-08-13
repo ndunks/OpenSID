@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -61,7 +61,6 @@ class Beranda extends Mandiri_Controller
         $data = [
             'penduduk' => $this->penduduk_model->get_penduduk($this->is_login->id_pend),
             'kelompok' => $this->penduduk_model->list_kelompok($this->is_login->id_pend),
-            'dokumen'  => $this->penduduk_model->list_dokumen($this->is_login->id_pend),
         ];
 
         $this->render('profil', $data);
@@ -87,7 +86,7 @@ class Beranda extends Mandiri_Controller
             ];
             $this->session->set_flashdata('notif', $respon);
 
-            redirect('layanan-mandiri');
+            redirect('layanan-mandiri/beranda');
         }
 
         $data = $this->keluarga_model->get_data_cetak_kk($this->is_login->id_kk);
@@ -109,28 +108,14 @@ class Beranda extends Mandiri_Controller
 
     public function proses_ganti_pin()
     {
-        $data = $this->mandiri_model->ganti_pin();
+        $this->mandiri_model->ganti_pin();
         redirect('layanan-mandiri/ganti-pin');
     }
 
     public function keluar()
     {
         $this->mandiri_model->logout();
-        redirect(site_url());
-    }
-
-    /**
-     * Unduh berkas berdasarkan kolom dokumen.id
-     *
-     * @param int $id_dokumen Id berkas pada koloam dokumen.id
-     *
-     * @return void
-     */
-    public function unduh_berkas($id_dokumen = '')
-    {
-        // Ambil nama berkas dari database
-        $berkas = $this->web_dokumen_model->get_nama_berkas($id_dokumen, $this->is_login->id_pend);
-        ambilBerkas($berkas, null, null, LOKASI_DOKUMEN);
+        redirect('layanan-mandiri/masuk');
     }
 
     public function pendapat(int $pilihan = 1)

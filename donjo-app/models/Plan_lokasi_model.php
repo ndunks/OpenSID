@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Models\Lokasi;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -126,13 +128,17 @@ class Plan_lokasi_model extends MY_Model
     public function list_data($o = 0, $offset = 0, $limit = 1000)
     {
         switch ($o) {
-            case 1: $order_sql = ' ORDER BY nama'; break;
+            case 1: $order_sql = ' ORDER BY nama';
+                break;
 
-            case 2: $order_sql = ' ORDER BY nama DESC'; break;
+            case 2: $order_sql = ' ORDER BY nama DESC';
+                break;
 
-            case 3: $order_sql = ' ORDER BY enabled'; break;
+            case 3: $order_sql = ' ORDER BY enabled';
+                break;
 
-            case 4: $order_sql = ' ORDER BY enabled DESC'; break;
+            case 4: $order_sql = ' ORDER BY enabled DESC';
+                break;
 
             default:$order_sql = ' ORDER BY id';
         }
@@ -172,49 +178,37 @@ class Plan_lokasi_model extends MY_Model
 
     public function insert()
     {
-        $data        = $this->validasi($this->input->post());
-        $lokasi_file = $_FILES['foto']['tmp_name'];
-        $tipe_file   = $_FILES['foto']['type'];
-        $nama_file   = $_FILES['foto']['name'];
-        $nama_file   = str_replace(' ', '-', $nama_file); 	 // normalkan nama file
-        if (! empty($lokasi_file)) {
-            if ($tipe_file == 'image/jpg' || $tipe_file == 'image/jpeg') {
-                UploadLokasi($nama_file);
-                $data['foto'] = $nama_file;
-                $outp         = $this->db->insert('lokasi', $data);
-            }
+        $data       = $this->validasi($this->input->post());
+        $garis_file = $_FILES['foto']['tmp_name'];
+        $nama_file  = $_FILES['foto']['name'];
+        $nama_file  = time() . '-' . str_replace(' ', '-', $nama_file);
+        if (! empty($garis_file)) {
+            $data['foto'] = UploadPeta($nama_file, LOKASI_FOTO_LOKASI);
         } else {
             unset($data['foto']);
-            $outp = $this->db->insert('lokasi', $data);
         }
 
-        if ($outp) {
-            $_SESSION['success'] = 1;
-        } else {
-            $_SESSION['success'] = -1;
-        }
+        $outp = $this->db->insert('lokasi', $data);
+
+        status_sukses($outp);
     }
 
     public function update($id = 0)
     {
-        $data        = $this->validasi($this->input->post());
-        $lokasi_file = $_FILES['foto']['tmp_name'];
-        $tipe_file   = $_FILES['foto']['type'];
-        $nama_file   = $_FILES['foto']['name'];
-        $nama_file   = str_replace(' ', '-', $nama_file); 	 // normalkan nama file
-        if (! empty($lokasi_file)) {
-            if ($tipe_file == 'image/jpg' || $tipe_file == 'image/jpeg') {
-                UploadLokasi($nama_file);
-                $data['foto'] = $nama_file;
-                $this->db->where('id', $id);
-                $outp = $this->db->update('lokasi', $data);
-            }
+        $data       = $this->validasi($this->input->post());
+        $old_foto   = $this->input->post('old_foto');
+        $garis_file = $_FILES['foto']['tmp_name'];
+        $nama_file  = $_FILES['foto']['name'];
+        $nama_file  = time() . '-' . str_replace(' ', '-', $nama_file);      // normalkan nama file
+        if (! empty($garis_file)) {
+            $data['foto'] = UploadPeta($nama_file, LOKASI_FOTO_LOKASI, $old_foto);
         } else {
             unset($data['foto']);
-            $this->db->where('id', $id);
-            $outp = $this->db->update('lokasi', $data);
         }
-        status_sukses($outp); //Tampilkan Pesan
+
+        $outp = $this->db->where('id', $id)->update('lokasi', $data);
+
+        status_sukses($outp);
     }
 
     public function delete($id = '', $semua = false)
@@ -223,9 +217,17 @@ class Plan_lokasi_model extends MY_Model
             $this->session->success = 1;
         }
 
-        $outp = $this->db->where('id', $id)->delete('lokasi');
+        $garis = Lokasi::findOrFail($id);
+        $outp  = $garis->delete();
 
-        status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
+        if ($outp) {
+            if ($garis->foto_kecil || $garis->foto_sedang) {
+                unlink(FCPATH . $garis->foto_kecil);
+                unlink(FCPATH . $garis->foto_sedang);
+            }
+        }
+
+        status_sukses($outp, true);
     }
 
     public function delete_all()
@@ -235,7 +237,7 @@ class Plan_lokasi_model extends MY_Model
         $id_cb = $_POST['id_cb'];
 
         foreach ($id_cb as $id) {
-            $this->delete($id, $semua = true);
+            $this->delete($id, true);
         }
     }
 
@@ -277,7 +279,7 @@ class Plan_lokasi_model extends MY_Model
         $sql  = 'UPDATE lokasi SET enabled = ? WHERE id = ?';
         $outp = $this->db->query($sql, [$val, $id]);
 
-        status_sukses($outp); //Tampilkan Pesan
+        status_sukses($outp);
     }
 
     public function get_lokasi($id = 0)
@@ -293,19 +295,25 @@ class Plan_lokasi_model extends MY_Model
         $this->db->where('id', $id);
         $outp = $this->db->update('lokasi', $data);
 
-        status_sukses($outp); //Tampilkan Pesan
+        status_sukses($outp);
     }
 
-    public function list_lokasi()
+    public function list_lokasi($status = null)
     {
+        if (null !== $status) {
+            $this->db
+                ->where('l.enabled', $status)
+                ->where('p.enabled', $status)
+                ->where('m.enabled', $status);
+        }
+
         return $this->db
             ->select('l.*, p.nama AS kategori, m.nama AS jenis, p.simbol AS simbol')
             ->from('lokasi l')
             ->join('point p', 'l.ref_point = p.id', 'left')
             ->join('point m', 'p.parrent = m.id', 'left')
-            ->where('l.enabled = 1')
-            ->where('p.enabled = 1')
-            ->where('m.enabled = 1')
-            ->get()->result_array();
+            ->where('l.ref_point !=', 0)
+            ->get()
+            ->result_array();
     }
 }

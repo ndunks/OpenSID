@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -180,70 +180,70 @@ class Curly
 
         switch (strtolower($method)) {
             case 'get':
-            $url .= $query ? '?' . $query : '';
-            curl_setopt($curl, CURLOPT_HTTPGET, 1);
-            break;
+                $url .= $query ? '?' . $query : '';
+                curl_setopt($curl, CURLOPT_HTTPGET, 1);
+                break;
 
             case 'post':
-            if ($query) {
-                curl_setopt($curl, CURLOPT_POSTFIELDS, $query);
-            }
+                if ($query) {
+                    curl_setopt($curl, CURLOPT_POSTFIELDS, $query);
+                }
 
-                            // Check if user passes custom options to the $options parameter.
-                            // Then add a proper Content-Type header to our query string.
-            if (isset($options[CURLOPT_HTTPHEADER]) && is_array($options[CURLOPT_HTTPHEADER])) {
-                $options[CURLOPT_HTTPHEADER] = array_merge(
-                    $options[CURLOPT_HTTPHEADER],
-                    ['Content-Type: application/x-www-form-urlencoded']
-                );
-            } else {
-                $options[CURLOPT_HTTPHEADER] = ['Content-Type: application/x-www-form-urlencoded'];
-            }
+                // Check if user passes custom options to the $options parameter.
+                // Then add a proper Content-Type header to our query string.
+                if (isset($options[CURLOPT_HTTPHEADER]) && is_array($options[CURLOPT_HTTPHEADER])) {
+                    $options[CURLOPT_HTTPHEADER] = array_merge(
+                        $options[CURLOPT_HTTPHEADER],
+                        ['Content-Type: application/x-www-form-urlencoded']
+                    );
+                } else {
+                    $options[CURLOPT_HTTPHEADER] = ['Content-Type: application/x-www-form-urlencoded'];
+                }
 
-            curl_setopt($curl, CURLOPT_POST, 1);
-            break;
+                curl_setopt($curl, CURLOPT_POST, 1);
+                break;
 
             case 'put':
-            if ($query) {
-                curl_setopt($curl, CURLOPT_POSTFIELDS, $query);
-            }
+                if ($query) {
+                    curl_setopt($curl, CURLOPT_POSTFIELDS, $query);
+                }
 
-                            // Check if user passes custom options to the $options parameter.
-                            // Then add a proper Content-Type header to our query string.
-            if (isset($options[CURLOPT_HTTPHEADER]) && is_array($options[CURLOPT_HTTPHEADER])) {
-                $options[CURLOPT_HTTPHEADER] = array_merge(
-                    $options[CURLOPT_HTTPHEADER],
-                    ['Content-Type: application/x-www-form-urlencoded']
-                );
-            } else {
-                $options[CURLOPT_HTTPHEADER] = ['Content-Type: application/x-www-form-urlencoded'];
-            }
+                // Check if user passes custom options to the $options parameter.
+                // Then add a proper Content-Type header to our query string.
+                if (isset($options[CURLOPT_HTTPHEADER]) && is_array($options[CURLOPT_HTTPHEADER])) {
+                    $options[CURLOPT_HTTPHEADER] = array_merge(
+                        $options[CURLOPT_HTTPHEADER],
+                        ['Content-Type: application/x-www-form-urlencoded']
+                    );
+                } else {
+                    $options[CURLOPT_HTTPHEADER] = ['Content-Type: application/x-www-form-urlencoded'];
+                }
 
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PUT');
-            break;
+                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PUT');
+                break;
 
             case 'delete':
-            if ($query) {
-                curl_setopt($curl, CURLOPT_POSTFIELDS, $query);
-            }
+                if ($query) {
+                    curl_setopt($curl, CURLOPT_POSTFIELDS, $query);
+                }
 
-                            // Check if the programmer passes custom options to the $options parameter.
-                            // Then add a proper Content-Type header to our query string.
-            if (isset($options[CURLOPT_HTTPHEADER]) && is_array($options[CURLOPT_HTTPHEADER])) {
-                $options[CURLOPT_HTTPHEADER] = array_merge(
-                    $options[CURLOPT_HTTPHEADER],
-                    ['Content-Type: application/x-www-form-urlencoded']
-                );
-            } else {
-                $options[CURLOPT_HTTPHEADER] = ['Content-Type: application/x-www-form-urlencoded'];
-            }
+                // Check if the programmer passes custom options to the $options parameter.
+                // Then add a proper Content-Type header to our query string.
+                if (isset($options[CURLOPT_HTTPHEADER]) && is_array($options[CURLOPT_HTTPHEADER])) {
+                    $options[CURLOPT_HTTPHEADER] = array_merge(
+                        $options[CURLOPT_HTTPHEADER],
+                        ['Content-Type: application/x-www-form-urlencoded']
+                    );
+                } else {
+                    $options[CURLOPT_HTTPHEADER] = ['Content-Type: application/x-www-form-urlencoded'];
+                }
 
-            curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
-            break;
+                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
+                break;
 
             default:
-            throw new Exception('Usupported request method: ' . strtoupper($method));
-            break;
+                throw new Exception('Usupported request method: ' . strtoupper($method));
+                break;
         }
 
         if (! empty($options)) {

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -117,7 +117,7 @@ class Pendapat_model extends MY_Model
                 ];
                 break;
 
-            // Kemarin
+                // Kemarin
             case 2:
                 $judul = 'Kemarin ( ' . tgl_indo2($this->op_tgl('-1 days', $tgl)) . ')';
                 $where = [
@@ -125,7 +125,7 @@ class Pendapat_model extends MY_Model
                 ];
                 break;
 
-            // Minggu ini
+                // Minggu ini
             case 3:
                 $judul = 'Dari tanggal ' . tgl_indo2($this->op_tgl('-6 days', $tgl)) . ' - ' . tgl_indo2($tgl);
                 $where = [
@@ -134,32 +134,32 @@ class Pendapat_model extends MY_Model
                 ];
                 break;
 
-            // Bulan ini
+                // Bulan ini
             case 4:
                 $judul = 'Bulan ' . ucwords(getBulan($bln)) . ' ' . $thn;
                 $where = [
                     'MONTH(`tanggal`) = ' => $bln,
                     'YEAR(`tanggal`)  = ' => $thn,
                 ];
-            break;
+                break;
 
-            // Tahun ini
+                // Tahun ini
             case 5:
                 $lblx  = 'BULAN';
                 $judul = 'Tahun ' . $thn;
                 $where = [
                     'YEAR(tanggal) = ' => $thn,
                 ];
-            break;
+                break;
 
-            // Semua jumlah pendapat
+                // Semua jumlah pendapat
             default:
                 $lblx  = 'TAHUN';
                 $judul = 'Setiap Tahun';
                 $where = [
                     'tanggal != ' => 'NOT NULL',
                 ];
-            break;
+                break;
         }
 
         return [

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -49,7 +49,7 @@ class MY_Exceptions extends CI_Exceptions
      *
      * @var array
      */
-    protected $db_error_codes = [1029, 1051, 1054, 1062, 1067, 1072, 1109, 1138, 1146, 1166, 1169, 1173, 1176, 1364, 1406, 1978];
+    protected $db_error_codes = [1029, 1049, 1051, 1054, 1062, 1067, 1072, 1109, 1138, 1146, 1166, 1169, 1173, 1176, 1265, 1271, 1364, 1406, 1978];
 
     public function __construct()
     {
@@ -67,6 +67,31 @@ class MY_Exceptions extends CI_Exceptions
     }
 
     /**
+     * Untuk menangkap exception yg khusus untuk kasus2 tidak otomatis, misalnya bukan exception database
+     * Lihat contoh di list_persil_kelas() di donjo-app/models/Data_persil_model.php
+     *
+     * @param mixed $severity
+     * @param mixed $message
+     * @param mixed $filepath
+     * @param mixed $line
+     */
+    public function log_exception($severity, $message, $filepath, $line)
+    {
+        parent::log_exception($severity, $message, $filepath, $line);
+        if (preg_match('/\\[PERIKSA\\]/', $message)) {
+            $this->ci->session->db_error = [
+                'code'    => 99001,
+                'message' => '<p>' . $message . '</p>',
+            ];
+            $this->ci->session->heading           = 'Error ditemukan pada isi data';
+            $this->ci->session->message_query     = '<p>Error ditemukan di file' . $filepath . 'pada baris ' . $line . '</p>';
+            $this->ci->session->message_exception = strip_tags((new \Exception())->getTraceAsString());
+
+            redirect('periksa');
+        }
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function show_error($heading, $message, $template = 'error_general', $status_code = 500)
@@ -76,13 +101,29 @@ class MY_Exceptions extends CI_Exceptions
         }
 
         if ( $this->ci && ! empty($error = $this->ci->db->error()) && in_array($error['code'], $this->db_error_codes)) {
+            if (preg_match('/Aplikasi tidak bisa terhubung ke database/', $message[0])) {
+                $this->ci->session->error_koneksi = true;
+                $error['code']                    = 1049;
+                $error['message']                 = 'Aplikasi tidak bisa terhubung ke database';
+            }
+        }
+
+        $error = $error ?: $this->ci->db->error();
+        if (! empty($error) && in_array($error['code'], $this->db_error_codes)) {
             $this->ci->session->db_error          = $error;
             $this->ci->session->message           = '<p>' . (is_array($error) ? implode('</p><p>', $error) : $error) . '</p>';
             $this->ci->session->heading           = $heading;
             $this->ci->session->message_query     = '<p>' . (is_array($message) ? implode('</p><p>', $message) : $message) . '</p>';
             $this->ci->session->message_exception = strip_tags((new \Exception())->getTraceAsString());
+            /*
+            | 1049 adalah kode koneksi database gagal. Dalam hal ini tampilkan halaman khusus
+            | menjelaskan langkah yang dapat dilakukan untuk mengatasi.
+            */
+            if ($error['code'] === 1049) {
+                redirect('koneksi-database');
+            }
 
-            return redirect('periksa');
+            redirect('periksa');
         }
 
         return parent::show_error($heading, $message, $template, $status_code);

@@ -185,11 +185,11 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 					<div class="form-group">
 						<label>Nilai Anggaran</label>
-						<input type="text" class="form-control input-sm bilangan required" maxlength="50" id="Nilai_Anggaran" name="Nilai_Anggaran" placeholder="Nilai Anggaran"/>
+						<input type="text" class="form-control input-sm bilangan_titik required" maxlength="50" id="Nilai_Anggaran" name="Nilai_Anggaran" placeholder="Nilai Anggaran"/>
 					</div>
 					<div class="form-group">
 						<label>Nilai Realisasi</label>
-						<input type="text" class="form-control input-sm bilangan required" maxlength="50" id="Nilai_Realisasi" name="Nilai_Realisasi" placeholder="Nilai Realisasi"/>
+						<input type="text" class="form-control input-sm bilangan_titik required" maxlength="50" id="Nilai_Realisasi" name="Nilai_Realisasi" placeholder="Nilai Realisasi"/>
 					</div>
 				</div>
 
@@ -211,7 +211,6 @@ defined('BASEPATH') || exit('No direct script access allowed');
 				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
 				<h4 class="modal-title" id="myModalLabel">Ubah Anggaran / Realisasi</h4>
 			</div>
-
 			<form id="form-edit">
 				<div class="modal-body">
 
@@ -264,11 +263,11 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 					<div class="form-group">
 						<label>Nilai Anggaran</label>
-						<input type="text" class="form-control input-sm bilangan required" maxlength="50" id="Nilai_Anggaran2" name="Nilai_Anggaran_edit" placeholder="Nilai Anggaran"/>
+						<input type="text" class="form-control input-sm bilangan_titik required" maxlength="50" id="Nilai_Anggaran2" name="Nilai_Anggaran_edit" placeholder="Nilai Anggaran"/>
 					</div>
 					<div class="form-group">
 						<label>Nilai Realisasi</label>
-						<input type="text" class="form-control input-sm bilangan required" maxlength="50" id="Nilai_Realisasi2" name="Nilai_Realisasi_edit" placeholder="Nilai Realisasi"/>
+						<input type="text" class="form-control input-sm bilangan_titik required" maxlength="50" id="Nilai_Realisasi2" name="Nilai_Realisasi_edit" placeholder="Nilai Realisasi"/>
 					</div>
 
 				</div>
@@ -331,5 +330,25 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 		//MISC
 		tools();
+
+		//ENTER KEY UP
+		//ADD
+		$('#form-tambah').bind("enterKey",function(e){
+			$('#btn_simpan').click();
+		});
+		$('#form-tambah').keyup(function(e){
+			if(e.keyCode == 13){
+				$(this).trigger("enterKey");
+			}
+		});
+		//UPDATE
+		$('#form-edit').bind("enterKey",function(e){
+			$('#btn_update').click();
+		});
+		$('#form-edit').keyup(function(e){
+			if(e.keyCode == 13){
+				$(this).trigger("enterKey");
+			}
+		});
 	});
 </script>

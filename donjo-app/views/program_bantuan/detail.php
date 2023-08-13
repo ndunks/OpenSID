@@ -1,20 +1,11 @@
-<script>
-	$(function() {
-		var keyword = <?= $keyword != '' ? $keyword : '""' ?> ;
-		$("#cari").autocomplete( {
-			source: keyword,
-			maxShowItems: 10,
-		});
-	});
-</script>
 <?php $detail = $program[0]; ?>
 <div class="content-wrapper">
 	<section class="content-header">
-		<h1>Program Bantuan <?= $detail['nama']; ?></h1>
+		<h1>Program Bantuan <?= $nama_excerpt; ?></h1>
 		<ol class="breadcrumb">
 			<li><a href="<?= site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
 			<li><a href="<?= site_url('program_bantuan')?>"> Daftar Program Bantuan</a></li>
-			<li class="active">Program Bantuan <?= $detail['nama']; ?></li>
+			<li class="active">Program Bantuan <?= $nama_excerpt; ?></li>
 		</ol>
 	</section>
 	<section class="content" id="maincontent">
@@ -37,12 +28,10 @@
 					<?php if ($this->CI->cek_hak_akses('h')): ?>
 						<a href="#confirm-delete" title="Hapus Data Terpilih" onclick="deleteAllBox('mainform', '<?=site_url("program_bantuan/delete_all/{$detail['id']}")?>')" class="btn btn-social btn-flat btn-danger btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block hapus-terpilih"><i class='fa fa-trash-o'></i> Hapus Data Terpilih</a>
 					<?php endif; ?>
-					<a href="<?= site_url("program_bantuan/daftar/{$detail['id']}/cetak")?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak" target="_blank"><i class="fa fa-print"></i> Cetak
-					</a>
-					<a href="<?= site_url("program_bantuan/daftar/{$detail['id']}/unduh")?>" class="btn btn-social btn-flat bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Unduh" target="_blank"><i class="fa fa-download"></i> Unduh
-					</a>
-					<a href="<?= site_url('program_bantuan')?>" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Program Bantuan"><i class="fa fa-arrow-circle-o-left"></i> Kembali Ke Daftar Program Bantuan
-					</a>
+					<a href="<?= site_url("program_bantuan/daftar/{$detail['id']}/cetak")?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak" target="_blank"><i class="fa fa-print"></i> Cetak</a>
+					<a href="<?= site_url("program_bantuan/daftar/{$detail['id']}/unduh")?>" class="btn btn-social btn-flat bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Unduh" target="_blank"><i class="fa fa-download"></i> Unduh</a>
+					<a href="<?= site_url("{$this->controller}/detail_clear/{$detail['id']}"); ?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-refresh"></i>Bersihkan</a>
+					<a href="<?= site_url('program_bantuan/clear')?>" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Program Bantuan"><i class="fa fa-arrow-circle-o-left"></i> Kembali Ke Daftar Program Bantuan</a>
 				</div>
 				<div class="box-body">
 					<div class="row">
@@ -82,7 +71,7 @@
 															<th rowspan="2" nowrap class="text-center"><?= $detail['judul_peserta_plus']?></th>
 														<?php endif; ?>
 														<th rowspan="2" nowrap><?= $detail['judul_peserta_info']?></th>
-														<th colspan="7">Identitas di Kartu Peserta</th>
+														<th colspan="8">Identitas di Kartu Peserta</th>
 													</tr>
 													<tr>
 														<th rowspan="2" class="padat">No. Kartu Peserta</th>
@@ -92,6 +81,7 @@
 														<th>Tanggal Lahir</th>
 														<th>Jenis Kelamin</th>
 														<th>Alamat</th>
+														<th>Keterangan</th>
 													</tr>
 												</thead>
 												<tbody>
@@ -125,6 +115,7 @@
 																<td nowrap><?= tgl_indo_out($item['kartu_tanggal_lahir']); ?></td>
 																<td nowrap><?= $item['sex']; ?></td>
 																<td nowrap><?= $item['kartu_alamat']; ?></td>
+																<td nowrap><?= $item['status_dasar']; ?></td>
 															</tr>
 														<?php endforeach; ?>
 													<?php else: ?>
@@ -189,7 +180,15 @@
 		</div>
 	</div>
 	<script type="text/javascript">
-		$(window).on('load', function() {
+		$(document).ready(function() {
+			$('#cari').focus();
+
+			var keyword = <?= $keyword ?> ;
+			$("#cari").autocomplete( {
+				source: keyword,
+				maxShowItems: 10,
+			});
+
 			$('#notif-box').modal('show');
 		});
 	</script>

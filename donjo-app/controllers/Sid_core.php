@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -83,11 +83,9 @@ class Sid_core extends Admin_Controller
     // $aksi = cetak/unduh
     public function dialog($aksi = 'cetak')
     {
-        $data['aksi']           = $aksi;
-        $data['pamong']         = $this->pamong_model->list_data();
-        $data['pamong_ttd']     = $this->pamong_model->get_ub();
-        $data['pamong_ketahui'] = $this->pamong_model->get_ttd();
-        $data['form_action']    = site_url("{$this->controller}/daftar/{$aksi}");
+        $data                = $this->modal_penandatangan();
+        $data['aksi']        = $aksi;
+        $data['form_action'] = site_url("{$this->controller}/daftar/{$aksi}");
         $this->load->view('global/ttd_pamong', $data);
     }
 
@@ -149,10 +147,9 @@ class Sid_core extends Admin_Controller
     //Delete dusun/rw/rt tergantung tipe
     public function delete($tipe = '', $id = '')
     {
-        $kembali = $_SERVER['HTTP_REFERER'];
         $this->redirect_hak_akses('h');
         $this->wilayah_model->delete($tipe, $id);
-        redirect($kembali);
+        redirect($_SERVER['HTTP_REFERER']);
     }
 
     public function sub_rw($id_dusun = '', $p = 1, $o = 0)
@@ -579,17 +576,21 @@ class Sid_core extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
         $this->wilayah_model->kosongkan_path($id);
-        redirect($_SERVER['HTTP_REFERER']);
+
+        redirect($this->controller);
     }
 
     public function urut($tipe = '', $p = 1, $id = 0, $arah = 0, $id_dusun = 0, $id_rw = 0)
     {
         switch ($tipe) {
-            case 'dusun': $url = "index/{$p}"; break;
+            case 'dusun': $url = "index/{$p}";
+                break;
 
-            case 'rw': $url = "sub_rw/{$id_dusun}/{$p}"; break;
+            case 'rw': $url = "sub_rw/{$id_dusun}/{$p}";
+                break;
 
-            case 'rt': $url = "sub_rt/{$id_dusun}/{$id_rw}/{$p}"; break;
+            case 'rt': $url = "sub_rt/{$id_dusun}/{$id_rw}/{$p}";
+                break;
 
             default:
                 // code...

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -237,18 +237,24 @@ class Covid19_model extends CI_Model
     {
         $tujuan_mudik = $this->referensi_model->list_ref_flip(TUJUAN_MUDIK);
 
-        return [
-            'tanggal_datang'    => $post['tanggal_tiba'],
-            'asal_mudik'        => alfanumerik_spasi($post['asal_pemudik']),
-            'durasi_mudik'      => $post['durasi_pemudik'],
-            'tujuan_mudik'      => $tujuan_mudik[$post['tujuan_pemudik']],
-            'no_hp'             => bilangan_spasi($post['hp_pemudik']),
-            'email'             => strip_tags($post['email_pemudik']),
-            'status_covid'      => $post['status_covid'],
-            'is_wajib_pantau'   => $post['wajib_pantau'],
+        $data = [
+            'pantau'            => (int) $post['pantau'],
+            'status_covid'      => (int) $post['status_covid'],
+            'is_wajib_pantau'   => (int) $post['wajib_pantau'],
             'keluhan_kesehatan' => alfanumerik_spasi($post['keluhan']),
             'keterangan'        => alfanumerik_spasi($post['keterangan']),
         ];
+
+        if ($data['pantau'] == 1) {
+            $data['tanggal_datang'] = $post['tanggal_tiba'];
+            $data['asal_mudik']     = alfanumerik_spasi($post['asal_pemudik']);
+            $data['durasi_mudik']   = bilangan($post['durasi_pemudik']);
+            $data['tujuan_mudik']   = $tujuan_mudik[$post['tujuan_pemudik']];
+            $data['no_hp']          = bilangan_spasi($post['hp_pemudik']);
+            $data['email']          = strip_tags($post['email_pemudik']);
+        }
+
+        return $data;
     }
 
     public function update_pemudik_by_id($post, $id)
