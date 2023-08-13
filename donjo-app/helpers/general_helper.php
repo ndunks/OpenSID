@@ -468,7 +468,7 @@ if (! function_exists('case_replace')) {
             }
 
             // Normal
-            if (ctype_upper($matches[0][0]) && ctype_upper($matches[0][strlen($matches) - 1])) {
+            if (ctype_upper($matches[0][0]) && ctype_upper($matches[0][count($matches) - 1])) {
                 return $ke;
             }
 

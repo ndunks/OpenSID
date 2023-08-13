@@ -150,6 +150,12 @@
 						});
 					});
 				</script>
+				<script type="text/javascript">
+					// fix when csrf disabled
+					if(!window['addCsrfField']){
+						var addCsrfField = function(){console.warn('addCsrfField: CSRF disabled')}
+					}
+				</script>
 				<?php session_error_clear(); ?>
 
 				</body>

@@ -181,7 +181,7 @@ class Surat_master extends Admin_Controller
 
             return datatables(SyaratSurat::query())
                 ->addColumn('ceklist', static function ($row) use ($suratMaster) {
-                    $checked = in_array($row->ref_syarat_id, json_decode($suratMaster->syarat_surat)) ? 'checked' : '';
+                    $checked = in_array($row->ref_syarat_id, json_decode($suratMaster->syarat_surat) ?? []) ? 'checked' : '';
 
                     return '<input type="checkbox" name="id_cb[]" value="' . $row->ref_syarat_id . '" ' . $checked . ' />';
                 })
