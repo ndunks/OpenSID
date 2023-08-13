@@ -54,16 +54,8 @@ class MY_Exceptions extends CI_Exceptions
     public function __construct()
     {
         parent::__construct();
-        if( class_exists('CI_Controller') ) {
-            $this->ci = get_instance();
-            if( $this->ci && $this->ci->session ){
-                $this->ci->session->unset_userdata(['db_error', 'message', 'message_query', 'heading', 'message_exception']);
-            }
-        }else {
-            if(!defined('VERSION')){
-                include __DIR__ . "/../helpers/opensid_helper.php";
-            }
-        }
+
+        $this->ci = get_instance();
     }
 
     /**
@@ -100,12 +92,10 @@ class MY_Exceptions extends CI_Exceptions
             return parent::show_error($heading, $message, $template, $status_code);
         }
 
-        if ( $this->ci && ! empty($error = $this->ci->db->error()) && in_array($error['code'], $this->db_error_codes)) {
-            if (preg_match('/Aplikasi tidak bisa terhubung ke database/', $message[0])) {
-                $this->ci->session->error_koneksi = true;
-                $error['code']                    = 1049;
-                $error['message']                 = 'Aplikasi tidak bisa terhubung ke database';
-            }
+        if (preg_match('/Aplikasi tidak bisa terhubung ke database/', $message[0])) {
+            $this->ci->session->error_koneksi = true;
+            $error['code']                    = 1049;
+            $error['message']                 = 'Aplikasi tidak bisa terhubung ke database';
         }
 
         $error = $error ?: $this->ci->db->error();
