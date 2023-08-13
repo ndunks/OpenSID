@@ -231,7 +231,7 @@
 														<a href="<?= site_url("modul/lock/{$data['id']}/1")?>" class="btn bg-navy btn-flat btn-sm"  title="Aktifkan"><i class="fa fa-lock">&nbsp;</i></a>
 													<?php endif ?>
 												<?php endif; ?>
-												<?php if (count($data['submodul']) > 0): ?>
+												<?php if (count($data['submodul'] ?? []) > 0): ?>
 													<a href="<?=site_url("modul/sub_modul/{$data['id']}")?>" class="btn bg-olive btn-flat btn-sm" title="Lihat Sub Modul" ><i class="fa fa-list"></i></a>
 												<?php endif; ?>
 											</td>

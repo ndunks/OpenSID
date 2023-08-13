@@ -144,7 +144,8 @@ class Web_Controller extends MY_Controller
 
         // Variabel untuk tema
         $this->set_template();
-        $this->includes['folder_themes'] = "../../{$this->theme_folder}/{$this->theme}";
+        $this->folder_themes_ref = "../../{$this->theme_folder}/{$this->theme}";
+        $this->includes['folder_themes'] = &$this->folder_themes_ref;
 
         $this->load->model('web_menu_model');
     }
@@ -159,6 +160,13 @@ class Web_Controller extends MY_Controller
     public function set_template($template_file = 'template')
     {
         $this->template = "../../{$this->theme_folder}/{$this->theme}/{$template_file}";
+        if( $template_file != 'template' && !file_exists($this->template)){
+            // fallback to vendor themes
+            $this->theme_folder = 'vendor/themes';
+            $this->theme = 'esensi';
+            $this->template = "../../{$this->theme_folder}/{$this->theme}/{$template_file}";
+            $this->folder_themes_ref = "../../{$this->theme_folder}/{$this->theme}";
+        }
     }
 
     public function _get_common_data(&$data)

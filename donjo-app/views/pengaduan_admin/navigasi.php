@@ -68,7 +68,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 				<span class="info-box-number"><?= $status1 ?></span>
 
 				<div class="progress">
-					<div class="progress-bar" style="width: <?= $status1 / $allstatus * 100; ?>%"></div>
+					<div class="progress-bar" style="width: <?= $allstatus > 0 ? $status1 / $allstatus * 100: 0; ?>%"></div>
 				</div>
 				<span class="progress-description">Total bulan ini: <b><?= $m_status1 ?></b></span>
 			</div>
@@ -82,7 +82,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 				<span class="info-box-number"><?= $status2 ?></span>
 
 				<div class="progress">
-					<div class="progress-bar" style="width: <?= $status2 / $allstatus * 100; ?>%"></div>
+					<div class="progress-bar" style="width: <?= $allstatus > 0 ? $status2 / $allstatus * 100: 0; ?>%"></div>
 				</div>
 				<span class="progress-description">Total bulan ini: <b><?= $m_status2 ?></b></span>
 			</div>
@@ -96,7 +96,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 				<span class="info-box-number"><?= $status3 ?></span>
 
 				<div class="progress">
-					<div class="progress-bar" style="width: <?= $status3 / $allstatus * 100; ?>%"></div>
+					<div class="progress-bar" style="width: <?= $allstatus > 0 ? $status3 / $allstatus * 100: 0; ?>%"></div>
 				</div>
 				<span class="progress-description">Total bulan ini: <b><?= $m_status3 ?></b></span>
 			</div>

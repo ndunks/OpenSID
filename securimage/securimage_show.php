@@ -48,7 +48,7 @@
 // error_reporting(E_ALL); ini_set('display_errors', 1);
 
 require_once dirname(__FILE__) . '/securimage.php';
-
+define('BASEPATH', 'Securimage-faked');
 $img = new Securimage();
 
 // You can customize the image by making changes below, some examples are included - remove the "//" to uncomment
