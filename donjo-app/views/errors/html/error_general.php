@@ -32,7 +32,7 @@
 				<p>
 					<?= $message; ?>
 
-					Versi <?= config_item('nama_aplikasi') . ' ' . AmbilVersi() ?>. PHP versi <?= preg_split('/-/', PHP_VERSION)[0] ?>.
+					Versi <?= config_item('nama_aplikasi') . ' ' . AmbilVersi() ?>.
 
 					<?php if ($status_code >= 500) : ?>
 						<br><br>
