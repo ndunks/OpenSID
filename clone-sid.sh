@@ -26,7 +26,6 @@ find . -maxdepth 1 -printf "%P\n" | while read name; do
 	if ln -s "$SRC/$name" "$DST/$name"; then
 		echo "OK"
 	fi
-	fi
 done
 
 # don't link index.php, these setup FCPATH must
