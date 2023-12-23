@@ -15,19 +15,19 @@ echo "Cloning FROM $SRC to $DST"
 
 find . -maxdepth 1 -printf "%P\n" | while read name; do
 	echo -n "- $name .."
-	if [[ $name == "storage" ]] || [[ $name == ".git"]] || [[ $name == "desa" ]]; then
+	if [[ -z "$name" ]] || [[ $name == "storage" ]] || [[ $name == ".git" ]] || [[ $name == "desa" ]]; then
 		echo "Ignored"
 		continue
 	fi
-	if [ -e "$DST/$name" ]; then
-		echo "Exists"
-		continue
-	fi
 	if [[ $name == "index.php" ]]; then
-		if ln "$SRC/$name" "$DST/$name"; then
+		if ln -f "$SRC/$name" "$DST/$name"; then
 			echo "Hardlinked"
 		fi
 	else
+		if [ -e "$DST/$name" ]; then
+			echo "Exists"
+			continue
+		fi
 		if ln -s "$SRC/$name" "$DST/$name"; then
 			echo "OK"
 		fi
