@@ -15,7 +15,7 @@ echo "Cloning FROM $SRC to $DST"
 
 find . -maxdepth 1 -printf "%P\n" | while read name; do
 	echo -n "- $name .."
-	if [ $name = "storage" ] || [ $name = ".git" ] || [ $name = "desa" ]; then
+	if [[ $name == "storage" ]] || [[ $name == ".git"] ] || [[ $name == "desa" ]]; then
 		echo "Ignored"
 		continue
 	fi
