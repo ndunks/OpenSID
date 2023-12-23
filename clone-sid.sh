@@ -19,12 +19,18 @@ find . -maxdepth 1 -printf "%P\n" | while read name; do
 		echo "Ignored"
 		continue
 	fi
-	if [ -e "$DST/$name" ]; then
-		echo "Exists"
-		continue
-	fi
-	if ln -s "$SRC/$name" "$DST/$name"; then
-		echo "OK"
+	if [[ $name == "index.php" ]]; then
+		if cp -fa "$SRC/$name" "$DST/$name"; then
+			echo "COPIED"
+		fi
+	else
+		if [ -e "$DST/$name" ]; then
+			echo "Exists"
+			continue
+		fi
+		if ln -s "$SRC/$name" "$DST/$name"; then
+			echo "OK"
+		fi
 	fi
 done
 
