@@ -23,10 +23,18 @@ find . -maxdepth 1 -printf "%P\n" | while read name; do
 		echo "Exists"
 		continue
 	fi
-	if ln -s "$SRC/$name" "$DST/$name"; then
-		echo "OK"
+	if [[ $name == "index.php" ]]; then
+		if ln "$SRC/$name" "$DST/$name"; then
+			echo "Hardlinked"
+		fi
+	else
+		if ln -s "$SRC/$name" "$DST/$name"; then
+			echo "OK"
+		fi
 	fi
 done
+
+# don't link index.php, these setup FCPATH must
 
 if [ ! -d "$DST/storage" ]; then
 	echo "Copying storage.."
