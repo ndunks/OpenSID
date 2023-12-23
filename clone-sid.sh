@@ -19,18 +19,13 @@ find . -maxdepth 1 -printf "%P\n" | while read name; do
 		echo "Ignored"
 		continue
 	fi
-	if [[ $name == "index.php" ]]; then
-		if ln -f "$SRC/$name" "$DST/$name"; then
-			echo "Hardlinked"
-		fi
-	else
-		if [ -e "$DST/$name" ]; then
-			echo "Exists"
-			continue
-		fi
-		if ln -s "$SRC/$name" "$DST/$name"; then
-			echo "OK"
-		fi
+	if [ -e "$DST/$name" ]; then
+		echo "Exists"
+		continue
+	fi
+	if ln -s "$SRC/$name" "$DST/$name"; then
+		echo "OK"
+	fi
 	fi
 done
 
