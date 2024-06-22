@@ -164,7 +164,7 @@ class Impor_model extends CI_Model
 
             return false;
         }
-        $mime_type_excel = ['application/octet-stream', 'application/vnd.ms-excel', 'application/x-csv', 'text/x-csv', 'text/csv', 'application/csv', 'application/excel', 'application/vnd.msexcel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel.sheet.macroenabled.12'];
+        $mime_type_excel = ['application/octet-stream', 'application/wps-office.xlsx', 'application/vnd.ms-excel', 'application/x-csv', 'text/x-csv', 'text/csv', 'application/csv', 'application/excel', 'application/vnd.msexcel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel.sheet.macroenabled.12'];
         if (! in_array(strtolower($_FILES['userfile']['type']), $mime_type_excel)) {
             set_session('error', ' -> Jenis file salah: ' . $_FILES['userfile']['type']);
 
