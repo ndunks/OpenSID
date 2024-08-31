@@ -2,7 +2,7 @@
     <section class="content-header">
         <h1>Pengelolaan Data Persil <?=ucwords($this->setting->sebutan_desa)?> <?= $desa['nama_desa']; ?></h1>
         <ol class="breadcrumb">
-            <li><a href="<?=site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
+            <li><a href="<?=site_url('beranda')?>"><i class="fa fa-home"></i> Beranda</a></li>
             <li><a href="<?=site_url('data_persil/clear')?>"> Daftar Persil</a></li>
             <li class="active">Pengelolaan Data Persil</li>
         </ol>
@@ -66,7 +66,9 @@
                                     <select class="form-control input-sm required" id="kelas" name="cdesa_awal" type="text" <?php $persil && print 'disabled'?> placeholder="C-Desa pemilik awal persil ini" >
                                         <option value="">-- Pilih C-Desa Pemilik Awal --</option>
                                         <?php foreach ($list_cdesa as $cdesa): ?>
-                                            <option value="<?= $cdesa['id_cdesa'] ?>" <?php (($id_cdesa && $id_cdesa == $cdesa['id_cdesa']) || ($cdesa['id_cdesa'] && $cdesa['id_cdesa'] == $persil['cdesa_awal'])) && print 'selected'; ?>><?= $cdesa['nomor'] . ' - ' . $cdesa['namapemilik']?></option>
+                                            <option value="<?= $cdesa['id_cdesa'] ?>" <?php if (($id_cdesa && $id_cdesa == $cdesa['id_cdesa']) || ($cdesa['id_cdesa'] && $cdesa['id_cdesa'] == $persil['cdesa_awal'])) {
+                                                echo 'selected';
+                                            } ?>><?= $cdesa['nomor'] . ' - ' . $cdesa['namapemilik']?></option>
                                         <?php endforeach; ?>
                                     </select>
                                 </div>
@@ -90,7 +92,7 @@
                                     <div class="col-sm-4" >
                                         <select class="form-control input-sm select2 required" id="id_wilayah" name="id_wilayah">
                                             <option value='' >-- Pilih Lokasi Tanah--</option>
-                                            <?php foreach ($persil_lokasi as $key => $item): ?>
+                                            <?php foreach ($persil_lokasi as $item): ?>
                                                 <option value="<?= $item['id'] ?>" <?php selected($item['id'], $persil['id_wilayah']) ?>><?= strtoupper($item['dusun']) ?> <?= empty($item['rw']) ? '' : " - RW {$item['rw']}" ?> <?= empty($item['rt']) ? '' : " / RT {$item['rt']}" ?></option>
                                             <?php endforeach; ?>
                                         </select>
@@ -120,7 +122,7 @@
                                 <div class="col-sm-4" >
                                     <select class="form-control input-sm select2" id="id_peta" name="id_peta">
                                         <option value='' >-- Pilih Area--</option>
-                                        <?php foreach ($peta as $key => $item): ?>
+                                        <?php foreach ($peta as $item): ?>
                                             <option value="<?= $item['id'] ?>" <?php selected($item['id'], $persil['id_peta']) ?>><?= $item['nama'] ?></option>
                                         <?php endforeach ?>
                                     </select>
@@ -146,7 +148,6 @@
         </div>
     </section>
 </div>
-
 <script>
     function pilih_lokasi(pilih) {
         if (pilih == 1) {
@@ -176,12 +177,7 @@
             var zoom = 4;
         <?php endif; ?>
 
-        var options = {
-            maxZoom: <?= setting('max_zoom_peta') ?>,
-            minZoom: <?= setting('min_zoom_peta') ?>,
-        };
-
-        var peta_area = L.map('map', options).setView(posisi, zoom);
+        var peta_area = L.map('map', pengaturan_peta).setView(posisi, zoom);
 
         //1. Menampilkan overlayLayers Peta Semua Wilayah
         var marker_desa = [];
@@ -192,47 +188,47 @@
 
         //OVERLAY WILAYAH DESA
         <?php if (! empty($desa['path'])): ?>
-            set_marker_desa(marker_desa, <?=json_encode($desa)?>, "<?=ucwords($this->setting->sebutan_desa) . ' ' . $desa['nama_desa']?>", "<?= favico_desa()?>");
+            set_marker_desa(marker_desa, <?=json_encode($desa, JSON_THROW_ON_ERROR)?>, "<?=ucwords($this->setting->sebutan_desa) . ' ' . $desa['nama_desa']?>", "<?= favico_desa()?>");
         <?php endif; ?>
 
-        //OVERLAY WILAYAH DUSUN
+        // OVERLAY WILAYAH DUSUN
         <?php if (! empty($dusun_gis)): ?>
-            set_marker(marker_dusun, '<?=addslashes(json_encode($dusun_gis))?>', '#FFFF00', '<?=ucwords($this->setting->sebutan_dusun)?>', 'dusun');
+            set_marker_multi(marker_dusun, '<?=addslashes(json_encode($dusun_gis, JSON_THROW_ON_ERROR))?>', '<?=ucwords($this->setting->sebutan_dusun)?>', 'dusun', "<?= favico_desa()?>");
         <?php endif; ?>
 
-        //OVERLAY WILAYAH RW
+        // OVERLAY WILAYAH RW
         <?php if (! empty($rw_gis)): ?>
-            set_marker(marker_rw, '<?=addslashes(json_encode($rw_gis))?>', '#8888dd', 'RW', 'rw');
+            set_marker(marker_rw, '<?=addslashes(json_encode($rw_gis, JSON_THROW_ON_ERROR))?>', 'RW', 'rw', "<?= favico_desa()?>");
         <?php endif; ?>
 
-        //OVERLAY WILAYAH RT
+        // OVERLAY WILAYAH RT
         <?php if (! empty($rt_gis)): ?>
-            set_marker(marker_rt, '<?=addslashes(json_encode($rt_gis))?>', '#008000', 'RT', 'rt');
+            set_marker(marker_rt, '<?=addslashes(json_encode($rt_gis, JSON_THROW_ON_ERROR))?>', 'RT', 'rt', "<?= favico_desa()?>");
         <?php endif; ?>
 
-        //Menampilkan overlayLayers Peta Semua Wilayah
+        // Menampilkan overlayLayers Peta Semua Wilayah
         <?php if (! empty($wil_atas['path'])): ?>
             var overlayLayers = overlayWil(marker_desa, marker_dusun, marker_rw, marker_rt,"<?=ucwords($this->setting->sebutan_desa)?>", "<?=ucwords($this->setting->sebutan_dusun)?>");
         <?php else: ?>
             var overlayLayers = {};
         <?php endif; ?>
 
-        //Menampilkan BaseLayers Peta
+        // Menampilkan BaseLayers Peta
         var baseLayers = getBaseLayers(peta_area, MAPBOX_KEY, JENIS_PETA);
 
-            if ($('input[name="path"]').val() !== '' ) {
-                var wilayah = JSON.parse($('input[name="path"]').val());
-                showCurrentArea(wilayah, peta_area, TAMPIL_LUAS);
-            }
+        if ($('input[name="path"]').val() !== '' ) {
+            var wilayah = JSON.parse($('input[name="path"]').val());
+            showCurrentArea(wilayah, peta_area, TAMPIL_LUAS);
+        }
 
-            //Menambahkan zoom scale ke peta
+        // Menambahkan zoom scale ke peta
         L.control.scale().addTo(peta_area);
 
         <?php if ($this->CI->cek_hak_akses('u')): ?>
-            //Export/Import Peta dari file GPX
+            // Export/Import Peta dari file GPX
             eximGpxRegion(peta_area);
 
-            //Import Peta dari file SHP
+            // Import Peta dari file SHP
             eximShp(peta_area);
         <?php endif; ?>
 
@@ -243,17 +239,17 @@
         addPetaPoly(peta_area);
 
         // deklrasi variabel agar mudah di baca
-        var all_area = '<?= addslashes(json_encode($all_area)) ?>';
-        var all_garis = '<?= addslashes(json_encode($all_garis)) ?>';
-        var all_lokasi = '<?= addslashes(json_encode($all_lokasi)) ?>';
-        var all_lokasi_pembangunan = '<?= addslashes(json_encode($all_lokasi_pembangunan)) ?>';
-        var all_persil = '<?= addslashes(json_encode($persil))?>';
+        var all_area = '<?= addslashes(json_encode($all_area, JSON_THROW_ON_ERROR)) ?>';
+        var all_garis = '<?= addslashes(json_encode($all_garis, JSON_THROW_ON_ERROR)) ?>';
+        var all_lokasi = '<?= addslashes(json_encode($all_lokasi, JSON_THROW_ON_ERROR)) ?>';
+        var all_lokasi_pembangunan = '<?= addslashes(json_encode($all_lokasi_pembangunan, JSON_THROW_ON_ERROR)) ?>';
+        var all_persil = '<?= addslashes(json_encode($persil, JSON_THROW_ON_ERROR))?>';
         var LOKASI_SIMBOL_LOKASI = '<?= base_url() . LOKASI_SIMBOL_LOKASI ?>';
         var favico_desa = '<?= favico_desa() ?>';
-        var LOKASI_FOTO_AREA = '<?= base_url() . LOKASI_FOTO_AREA ?>';
-        var LOKASI_FOTO_GARIS = '<?= base_url() . LOKASI_FOTO_GARIS ?>';
-        var LOKASI_FOTO_LOKASI = '<?= base_url() . LOKASI_FOTO_LOKASI ?>';
-        var LOKASI_GALERI = '<?= base_url() . LOKASI_GALERI ?>';
+        var LOKASI_FOTO_AREA = '<?= base_url(LOKASI_FOTO_AREA) ?>';
+        var LOKASI_FOTO_GARIS = '<?= base_url(LOKASI_FOTO_GARIS) ?>';
+        var LOKASI_FOTO_LOKASI = '<?= base_url(LOKASI_FOTO_LOKASI) ?>';
+        var LOKASI_GALERI = '<?= base_url(LOKASI_GALERI) ?>';
         var info_pembangunan = '<?= site_url('pembangunan/')?>';
 
         // Menampilkan OverLayer Area, Garis, Lokasi plus Lokasi Pembangunan

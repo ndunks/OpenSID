@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,7 +37,7 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-class Tanah_kas_desa_model extends CI_Model
+class Tanah_kas_desa_model extends MY_Model
 {
     public const ORDER_ABLE = [
         2 => 'nama_pemilik_asal',
@@ -46,14 +46,9 @@ class Tanah_kas_desa_model extends CI_Model
 
     protected $table = 'tanah_kas_desa';
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function get_data(string $search = '')
     {
-        $builder = $this->db
+        $builder = $this->config_id('tkd')
             ->select('tkd.id,
 					atk.nama,
 					tkd.letter_c,
@@ -68,32 +63,28 @@ class Tanah_kas_desa_model extends CI_Model
             ->join('ref_persil_kelas p', 'tkd.kelas = p.id')
             ->where('tkd.visible', 1);
 
-        if (empty($search)) {
-            $search = $builder;
-        } else {
-            $search = $builder
-                ->group_start()
-                ->like('tkd.nama_pemilik_asal', $search)
-                ->or_like('tkd.letter_c', $search)
-                ->group_end();
+        if ($search === '') {
+            return $builder;
         }
 
-        return $search;
+        return $builder
+            ->group_start()
+            ->like('tkd.nama_pemilik_asal', $search)
+            ->or_like('tkd.letter_c', $search)
+            ->group_end();
     }
 
     public function view_tanah_kas_desa_by_id($id)
     {
-        $this->db
+        return $this->config_id('tkd')
             ->select('*')
             ->from("{$this->table} tkd")
-            ->where('tkd.id', $id);
-
-        return $this->db
+            ->where('tkd.id', $id)
             ->get()
             ->row();
     }
 
-    public function add_tanah_kas_desa()
+    public function add_tanah_kas_desa(): void
     {
         unset($this->session->validation_error, $this->session->success);
 
@@ -113,6 +104,7 @@ class Tanah_kas_desa_model extends CI_Model
         }
 
         $result = [
+            'config_id'            => identitas('id'),
             'nama_pemilik_asal'    => $data['nama_pemilik_asal'],
             'letter_c'             => $data['letter_c'],
             'kelas'                => $data['kelas'],
@@ -145,13 +137,13 @@ class Tanah_kas_desa_model extends CI_Model
         status_sukses($hasil);
     }
 
-    public function delete_tanah_kas_desa($id)
+    public function delete_tanah_kas_desa($id): void
     {
-        $hasil = $this->db->update($this->table, ['visible' => 0], ['id' => $id]);
+        $hasil = $this->config_id()->update($this->table, ['visible' => 0], ['id' => $id]);
         status_sukses($hasil);
     }
 
-    public function update_tanah_kas_desa()
+    public function update_tanah_kas_desa(): void
     {
         unset($this->session->validation_error, $this->session->success);
 
@@ -200,7 +192,7 @@ class Tanah_kas_desa_model extends CI_Model
         ];
 
         $id    = $data['id'];
-        $hasil = $this->db->update($this->table, $result, ['id' => $id]);
+        $hasil = $this->config_id()->update($this->table, $result, ['id' => $id]);
         status_sukses($hasil);
     }
 
@@ -211,7 +203,7 @@ class Tanah_kas_desa_model extends CI_Model
         // add
         if ($id == 0) {
             $check_letterc_persil = $this->check_letterc_persil($data['letter_c_persil']);
-            if (count($check_letterc_persil) > 0) {
+            if (count($check_letterc_persil ?? []) > 0) {
                 $valid[] = "Letter C / Persil {$data['letter_c_persil']} sudah digunakan";
             }
         } else {
@@ -243,7 +235,6 @@ class Tanah_kas_desa_model extends CI_Model
         $data['tidak_ada_patok']      = bilangan($data['tidak_ada_patok']);
         $data['ada_papan_nama']       = bilangan($data['ada_papan_nama']);
         $data['tidak_ada_papan_nama'] = bilangan($data['tidak_ada_papan_nama']);
-        $data['tanggal_perolehan']    = $data['tanggal_perolehan'];
         $data['lokasi']               = strip_tags($data['lokasi']);
         $data['peruntukan']           = strip_tags($data['peruntukan']);
         $data['mutasi']               = strip_tags($data['mutasi']);
@@ -252,7 +243,7 @@ class Tanah_kas_desa_model extends CI_Model
         $data['updated_by']           = $this->session->user;
         $data['visible']              = 1;
 
-        if (! empty($valid)) {
+        if ($valid !== []) {
             $this->session->validation_error = true;
         }
 
@@ -261,12 +252,11 @@ class Tanah_kas_desa_model extends CI_Model
 
     private function check_old_letterc_persil($letterC_persil, $id)
     {
-        $this->db
+        $data = $this->config_id('tkd')
             ->select('tkd.letter_c')
             ->from("{$this->table} tkd")
             ->where((['tkd.visible' => 1, 'tkd.id' => $id]))
-            ->limit(1);
-        $data = $this->db
+            ->limit(1)
             ->get()
             ->row();
 
@@ -275,61 +265,51 @@ class Tanah_kas_desa_model extends CI_Model
 
     private function check_letterc_persil($letterC_persil)
     {
-        $this->db
+        return $this->config_id('tkd')
             ->select('tkd.letter_c')
             ->from("{$this->table} tkd")
             ->where((['tkd.visible' => 1, 'tkd.letter_c' => $letterC_persil]))
-            ->limit(1);
-
-        return $this->db
+            ->limit(1)
             ->get()
             ->row();
     }
 
     public function cetak_tanah_kas_desa()
     {
-        $this->db
+        return $this->config_id('tkd')
             ->select('tkd.*, atk.nama as asal, p.kode, ptk.nama as peruntukan_tanah')
             ->from("{$this->table} tkd")
             ->join('ref_asal_tanah_kas atk', 'tkd.nama_pemilik_asal = atk.id')
             ->join('ref_persil_kelas p', 'tkd.kelas = p.id')
             ->join('ref_peruntukan_tanah_kas ptk', 'tkd.peruntukan = ptk.id')
-            ->where('tkd.visible', 1);
-
-        return $this->db
+            ->where('tkd.visible', 1)
             ->get()
             ->result_array();
     }
 
     public function list_letter_c()
     {
-        $this->db
+        return $this->config_id('c')
             ->select('c.id, c.nomor, c.nama_kepemilikan')
-            ->from('cdesa c');
-
-        return $this->db
+            ->from('cdesa c')
             ->get()
             ->result_array();
     }
 
     public function list_asal_tanah_kas()
     {
-        $this->db
-            ->select('atk.*')
-            ->from('ref_asal_tanah_kas atk');
-
         return $this->db
+            ->select('atk.*')
+            ->from('ref_asal_tanah_kas atk')
             ->get()
             ->result_array();
     }
 
     public function list_peruntukan_tanah_kas()
     {
-        $this->db
-            ->select('ptk.*')
-            ->from('ref_peruntukan_tanah_kas ptk');
-
         return $this->db
+            ->select('ptk.*')
+            ->from('ref_peruntukan_tanah_kas ptk')
             ->get()
             ->result_array();
     }

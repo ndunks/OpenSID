@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -49,12 +49,12 @@ class Api_informasi_publik extends Api_Controller
         $this->load->model('web_dokumen_model');
     }
 
-    public function index()
+    public function index(): void
     {
         redirect('ppid');
     }
 
-    public function ppid()
+    public function ppid(): void
     {
         $this->log_request();
         $get      = $this->input->get();
@@ -77,6 +77,6 @@ class Api_informasi_publik extends Api_Controller
             ];
         }
         header('Content-Type: application/json');
-        echo json_encode($json_send);
+        echo json_encode($json_send, JSON_THROW_ON_ERROR);
     }
 }

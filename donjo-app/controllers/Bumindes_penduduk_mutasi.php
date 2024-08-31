@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,18 +29,20 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Models\LogPenduduk;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Bumindes_penduduk_mutasi extends Admin_Controller
 {
-    private $_set_page;
-    private $_list_session;
+    private array $_set_page     = ['10', '20', '50', '100'];
+    private array $_list_session = ['tgl_lengkap', 'filter_tahun', 'filter_bulan', 'filter', 'kode_peristiwa', 'status_dasar', 'cari', 'status', 'status_penduduk'];
 
     public function __construct()
     {
@@ -49,11 +51,10 @@ class Bumindes_penduduk_mutasi extends Admin_Controller
         $this->modul_ini          = 'buku-administrasi-desa';
         $this->sub_modul_ini      = 'administrasi-penduduk';
         $this->header['kategori'] = 'data_lengkap';
-        $this->_set_page          = ['10', '20', '50', '100'];
-        $this->_list_session      = ['tgl_lengkap', 'filter_tahun', 'filter_bulan', 'filter', 'kode_peristiwa', 'status_dasar', 'cari', 'status', 'status_penduduk'];
+        $this->logpenduduk        = new LogPenduduk();
     }
 
-    public function index($page_number = 1, $order_by = 0)
+    public function index($page_number = 1, $order_by = 0): void
     {
         $per_page = $this->input->post('per_page');
         if (isset($per_page)) {
@@ -64,25 +65,25 @@ class Bumindes_penduduk_mutasi extends Admin_Controller
         $this->session->kode_peristiwa = [2, 3, 5];
         // Menampilkan hanya status penduduk TETAP
         $this->session->status_penduduk = 1;
+        $tanggal_lengkap                = $this->logpenduduk::min('tgl_lapor');
 
         $data = [
-            'main_content'      => 'bumindes/penduduk/mutasi/content_mutasi',
-            'subtitle'          => 'Buku Mutasi Penduduk Desa',
-            'selected_nav'      => 'mutasi',
-            'p'                 => $page_number,
-            'o'                 => $order_by,
-            'cari'              => $this->session->cari ? $this->session->cari : '',
-            'filter'            => $this->session->filter ? $this->session->filter : '',
-            'per_page'          => $this->session->per_page,
-            'bulan'             => $this->session->filter_bulan ? $this->session->filter_bulan : null,
-            'tahun'             => $this->session->filter_tahun ? $this->session->filter_tahun : null,
-            'func'              => 'index',
-            'set_page'          => $this->_set_page,
-            'tgl_lengkap'       => $this->setting->tgl_data_lengkap ? rev_tgl($this->setting->tgl_data_lengkap) : null,
-            'tgl_lengkap_aktif' => $this->setting->tgl_data_lengkap_aktif,
-            'paging'            => $this->penduduk_log_model->paging($page_number),
-            'tahun_lengkap'     => (new DateTime($this->setting->tgl_data_lengkap))->format('Y'),
-            'data_hapus'        => $this->penduduk_log_model->list_data_hapus(),
+            'main_content'  => 'bumindes/penduduk/mutasi/content_mutasi',
+            'subtitle'      => 'Buku Mutasi Penduduk Desa',
+            'selected_nav'  => 'mutasi',
+            'p'             => $page_number,
+            'o'             => $order_by,
+            'cari'          => $this->session->cari ?: '',
+            'filter'        => $this->session->filter ?: '',
+            'per_page'      => $this->session->per_page,
+            'bulan'         => $this->session->filter_bulan ?: null,
+            'tahun'         => $this->session->filter_tahun ?: null,
+            'func'          => 'index',
+            'set_page'      => $this->_set_page,
+            'tgl_lengkap'   => $tanggal_lengkap,
+            'paging'        => $this->penduduk_log_model->paging($page_number),
+            'tahun_lengkap' => (new DateTime($tanggal_lengkap))->format('Y'),
+            'data_hapus'    => $this->penduduk_log_model->list_data_hapus(),
         ];
 
         $data['main'] = $this->penduduk_log_model->list_data($order_by, $data['paging']->offset, $data['paging']->per_page);
@@ -94,13 +95,13 @@ class Bumindes_penduduk_mutasi extends Admin_Controller
         $this->render('bumindes/penduduk/main', $data);
     }
 
-    private function clear_session()
+    private function clear_session(): void
     {
         $this->session->unset_userdata($this->_list_session);
         $this->session->per_page = $this->_set_page[0];
     }
 
-    public function clear()
+    public function clear(): void
     {
         $this->clear_session();
         // Set default filter ke tahun dan bulan sekarang
@@ -109,7 +110,7 @@ class Bumindes_penduduk_mutasi extends Admin_Controller
         redirect('bumindes_penduduk_mutasi');
     }
 
-    public function ajax_cetak($o = 0, $aksi = '')
+    public function ajax_cetak($o = 0, $aksi = ''): void
     {
         // pengaturan data untuk dialog cetak/unduh
         $data = [
@@ -122,7 +123,7 @@ class Bumindes_penduduk_mutasi extends Admin_Controller
         $this->load->view('global/dialog_cetak', $data);
     }
 
-    public function cetak($o = 0, $aksi = '', $privasi_nik = 0)
+    public function cetak($o = 0, $aksi = '', $privasi_nik = 0): void
     {
         $data              = $this->modal_penandatangan();
         $data['aksi']      = $aksi;
@@ -138,13 +139,13 @@ class Bumindes_penduduk_mutasi extends Admin_Controller
         $this->load->view('global/format_cetak', $data);
     }
 
-    public function autocomplete()
+    public function autocomplete(): void
     {
         $data = $this->penduduk_model->autocomplete($this->input->post('cari'));
-        $this->output->set_content_type('application/json')->set_output(json_encode($data));
+        $this->output->set_content_type('application/json')->set_output(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    public function filter($filter)
+    public function filter($filter): void
     {
         $value = $this->input->post($filter);
         if ($value != '') {

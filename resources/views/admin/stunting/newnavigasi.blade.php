@@ -8,7 +8,7 @@
 
 <div class="row">
 
-    <a href="{{ route('stunting.index') }}">
+    <a href="{{ ci_route('stunting.index') }}">
         <div class="col-lg-3 col-sm-6 col-xs-6">
             <div class="info-box bg-aqua">
                 <span class="info-box-icon"><i class="ion ion-location"></i></span>
@@ -25,7 +25,7 @@
         </div>
     </a>
 
-    <a href="{{ route('stunting.anak') }}">
+    <a href="{{ ci_route('stunting.anak') }}">
         <div class="col-lg-3 col-sm-6 col-xs-6">
             <div class="info-box bg-green">
                 <span class="info-box-icon"><i class="ion ion-stats-bars"></i></span>
@@ -42,7 +42,7 @@
         </div>
     </a>
 
-    <a href="{{ route('stunting.ibu_hamil') }}">
+    <a href="{{ ci_route('stunting.ibu_hamil') }}">
         <div class="col-lg-3 col-sm-6 col-xs-6">
             <div class="info-box bg-yellow">
                 <span class="info-box-icon"><i class="ion ion-stats-bars"></i></span>
@@ -59,7 +59,7 @@
         </div>
     </a>
 
-    <a href="{{ route('stunting.ibu_hamil') }}">
+    <a href="{{ ci_route('stunting.ibu_hamil') }}">
         <div class="col-lg-3 col-sm-6 col-xs-6">
             <div class="info-box bg-red">
                 <span class="info-box-icon"><i class="ion ion-stats-bars"></i></span>
@@ -83,15 +83,13 @@
             <div class="box-header">
                 <h3 class="box-title">Pemantauan</h3>
                 <div class="box-tools">
-                    <button type="button" class="btn btn-box-tool" data-widget="collapse"><i
-                            class="fa fa-minus"></i></button>
+                    <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
                 </div>
             </div>
             <div class="box-body no-padding">
                 <div class="box-footer no-padding">
                     <ul class="nav nav-stacked">
-                        <li class="@active($title === 'Pemantauan Bulanan Ibu Hamil')"><a
-                                href="{{ site_url('stunting/pemantauan_ibu_hamil') }}">Bulanan
+                        <li class="@active($title === 'Pemantauan Bulanan Ibu Hamil')"><a href="{{ site_url('stunting/pemantauan_ibu_hamil') }}">Bulanan
                                 Ibu
                                 Hamil</a></li>
                         <li class="@active($title === 'Pemantauan Bulanan Anak 0 - 2 Tahun')"><a href="{{ site_url('stunting/bulanan_anak') }}">Bulanan
@@ -110,8 +108,7 @@
             <div class="box-header">
                 <h3 class="box-title">Rekapitulasi</h3>
                 <div class="box-tools">
-                    <button type="button" class="btn btn-box-tool" data-widget="collapse"><i
-                            class="fa fa-minus"></i></button>
+                    <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
                 </div>
             </div>
             <div class="box-body no-padding">
@@ -119,8 +116,7 @@
                     <ul class="nav nav-stacked">
                         <li class="@active($title === 'Rekapitulasi Hasil Pemantauan 3 Bulananan Bagi Ibu Hamil')"><a href="{{ site_url('stunting/rekapitulasi_ibu_hamil') }}">3
                                 Bulanan Ibu Hamil</a></li>
-                        <li class="@active($title === 'Rekapitulasi Hasil Pemantauan 3 Bulananan Bagi Anak 0-2 Tahun')"><a
-                                href="{{ site_url('stunting/rekapitulasi_bulanan_anak') }}">3
+                        <li class="@active($title === 'Rekapitulasi Hasil Pemantauan 3 Bulananan Bagi Anak 0-2 Tahun')"><a href="{{ site_url('stunting/rekapitulasi_bulanan_anak') }}">3
                                 Bulanan Anak 0-2 Tahun</a></li>
                     </ul>
                 </div>
@@ -130,8 +126,7 @@
             <div class="box-body no-padding">
                 <div class="box-footer no-padding">
                     <ul class="nav nav-stacked">
-                        <li class="@active($title === 'Scorcard Konvergensi Desa')"><a
-                                href="{{ site_url('stunting/scorecard_konvergensi') }}">Scorecard
+                        <li class="@active($title === 'Scorcard Konvergensi Desa')"><a href="{{ site_url('stunting/scorecard_konvergensi') }}">Scorecard
                                 Konvergensi
                                 Desa</a></li>
                     </ul>

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -120,6 +120,7 @@ class MY_Upload extends CI_Upload
                     break;
 
                 case UPLOAD_ERR_NO_FILE:
+                default:
                     $this->set_error('upload_no_file_selected', 'debug');
                     break;
 
@@ -133,10 +134,6 @@ class MY_Upload extends CI_Upload
 
                 case UPLOAD_ERR_EXTENSION:
                     $this->set_error('upload_stopped_by_extension', 'debug');
-                    break;
-
-                default:
-                    $this->set_error('upload_no_file_selected', 'debug');
                     break;
             }
 
@@ -264,12 +261,10 @@ class MY_Upload extends CI_Upload
          * we'll use move_uploaded_file(). One of the two should
          * reliably work in most environments
          */
-        if (! @copy($this->file_temp, $this->upload_path . $this->file_name)) {
-            if (! @move_uploaded_file($this->file_temp, $this->upload_path . $this->file_name)) {
-                $this->set_error('upload_destination_error', 'error');
+        if (! @copy($this->file_temp, $this->upload_path . $this->file_name) && ! @move_uploaded_file($this->file_temp, $this->upload_path . $this->file_name)) {
+            $this->set_error('upload_destination_error', 'error');
 
-                return false;
-            }
+            return false;
         }
 
         /*

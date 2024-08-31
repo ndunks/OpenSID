@@ -26,7 +26,7 @@
 
     <div class="box box-info">
         <div class="box-header with-border">
-            {!! form_open(route('status_desa'), 'class="form-inline" id="mainform" name="mainform"') !!}
+            {!! form_open(ci_route('status_desa'), 'class="form-inline" id="mainform" name="mainform"') !!}
             <label for="tahun">IDM Tahun </label>
             <select class="form-control input-sm" name="tahun" onchange="$('#mainform').submit()">
                 <option value="" disabled>Pilih Tahun</option>
@@ -34,11 +34,11 @@
                     <option value="{{ $thn }}" @selected($tahun === $thn)>{{ $thn }}</option>
                 @endforeach
             </select>
-            <a class="btn btn-social btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"
-                {!! cek_koneksi_internet() == false || is_null($idm->error_msg) ? 'disabled title="Perangkat tidak terhubung dengan jaringan"' : 'href="' . route('status_desa.perbarui_idm', $tahun) . '"' !!}><i class="fa fa-refresh"></i>Perbarui</a>
-            @if (empty($idm->error_msg))
-                <a class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"
-                    href="{{ route('status_desa.simpan', $tahun) }}"><i class="fa fa-check-circle"></i>Simpan</a>
+            @if (can('u'))
+                <a class="btn btn-social btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" {!! cek_koneksi_internet() == false || is_null($idm->error_msg) ? 'disabled title="Perangkat tidak terhubung dengan jaringan"' : 'href="' . ci_route('status_desa.perbarui_idm', $tahun) . '"' !!}><i class="fa fa-refresh"></i>Perbarui</a>
+                @if (empty($idm->error_msg))
+                    <a class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" href="{{ ci_route('status_desa.simpan', $tahun) }}"><i class="fa fa-check-circle"></i>Simpan</a>
+                @endif
             @endif
             </form>
         </div>
@@ -175,7 +175,7 @@
                                             <td>{{ $data->KAB }}</td>
                                             <td>{{ $data->DESA }}</td>
                                             <td>{{ $data->CSR }}</td>
-                                            <td>{{ $data->SKOR[INDIKATOR['IKS 2020']] }}</td>
+                                            <td>{{ $data->LAINNYA }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

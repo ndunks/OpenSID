@@ -41,17 +41,17 @@
 			</div>
 		</div>
 		<div class="modal-footer">
-			<button type="button" class="btn btn-social btn-flat btn-danger btn-sm" data-dismiss="modal"><i class='fa fa-sign-out'></i> Tutup</button>
-			<button type="submit" class="btn btn-social btn-flat btn-info btn-sm" id="btn-ok" >
+			<?= batal() ?>
+			<button type="submit" class="btn btn-social btn-info btn-sm" id="btn-ok" >
 				<i class='fa fa-download'></i> Unduh
 			</button>
 		</div>
 	</div>
 </form>
-<script type="text/javascript" src="<?= base_url()?>assets/js/script.js"></script>
-<script type="text/javascript" src="<?= base_url()?>assets/js/jquery.validate.min.js"></script>
-<script type="text/javascript" src="<?= base_url()?>assets/js/validasi.js"></script>
-<script type="text/javascript" src="<?= base_url()?>assets/js/localization/messages_id.js"></script>
+<script type="text/javascript" src="<?= asset('js/script.js') ?>"></script>
+<script type="text/javascript" src="<?= asset('js/jquery.validate.min.js') ?>"></script>
+<script type="text/javascript" src="<?= asset('js/validasi.js') ?>"></script>
+<script type="text/javascript" src="<?= asset('js/localization/messages_id.js') ?>"></script>
 <script type="text/javascript">
 	$('document').ready(function()
 	{

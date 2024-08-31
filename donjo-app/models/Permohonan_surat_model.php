@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -42,7 +42,7 @@ use App\Models\LogSurat;
 use App\Models\PermohonanSurat;
 use App\Models\SyaratSurat;
 
-class Permohonan_surat_model extends CI_Model
+class Permohonan_surat_model extends MY_Model
 {
     public function __construct()
     {
@@ -52,6 +52,8 @@ class Permohonan_surat_model extends CI_Model
 
     public function insert($data)
     {
+        $data['config_id'] = identitas('id');
+
         return $this->db
             ->insert('permohonan_surat', array_merge(
                 ['no_antrian' => $this->generate_no_antrian()],
@@ -59,25 +61,25 @@ class Permohonan_surat_model extends CI_Model
             ));
     }
 
-    public function delete($id_permohonan)
+    public function delete($id_permohonan): void
     {
-        $outp = $this->db->where('id', $id_permohonan)
+        $outp = $this->config_id()->where('id', $id_permohonan)
             ->delete('permohonan_surat');
-        if (! $outp) {
+        if (!$outp) {
             $this->session->set_userdata('success', -1);
         }
     }
 
     public function update($id_permohonan, $data)
     {
-        return $this->db
+        return $this->config_id()
             ->where('id', $id_permohonan)
             ->update('permohonan_surat', $data);
     }
 
     public function autocomplete()
     {
-        $data = $this->db->select('n.nik')
+        $data = $this->config_id('n')->select('n.nik')
             ->from('permohonan_surat u')
             ->join('tweb_penduduk n', 'u.id_pemohon = n.id', 'left')
             ->get()->result_array();
@@ -92,7 +94,7 @@ class Permohonan_surat_model extends CI_Model
         return '[' . $outp . ']';
     }
 
-    private function search_sql()
+    private function search_sql(): void
     {
         if ($cari = $this->session->cari) {
             $this->db
@@ -104,7 +106,7 @@ class Permohonan_surat_model extends CI_Model
         }
     }
 
-    private function filter_sql()
+    private function filter_sql(): void
     {
         $filter = $this->session->filter;
         if ($filter != '') {
@@ -128,9 +130,9 @@ class Permohonan_surat_model extends CI_Model
         return $this->paging;
     }
 
-    private function list_data_sql()
+    private function list_data_sql(): void
     {
-        $this->db->from('permohonan_surat u')
+        $this->config_id('u')->from('permohonan_surat u')
             ->join('tweb_penduduk n', 'u.id_pemohon = n.id', 'left')
             ->join('tweb_surat_format s', 'u.id_surat = s.id', 'left');
 
@@ -144,13 +146,16 @@ class Permohonan_surat_model extends CI_Model
 
         //Ordering SQL
         switch ($o) {
-            case 1: $this->db->order_by('u.created_at', 'asc');
+            case 1:
+                $this->db->order_by('u.created_at', 'asc');
                 break;
 
-            case 2: $this->db->order_by('u.created_at', 'desc');
+            case 2:
+                $this->db->order_by('u.created_at', 'desc');
                 break;
 
-            default: $this->db->order_by('(u.status = 0), ISNULL(u.no_antrian)');
+            default:
+                $this->db->order_by('(u.status = 0), ISNULL(u.no_antrian)');
         }
 
         //Main Query
@@ -167,9 +172,10 @@ class Permohonan_surat_model extends CI_Model
             ->result_array();
 
         //Formating Output
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no']     = $j + 1;
             $data[$i]['status'] = $this->referensi_model->list_ref_flip(STATUS_PERMOHONAN)[$data[$i]['status']];
             $j++;
@@ -184,7 +190,7 @@ class Permohonan_surat_model extends CI_Model
             $this->db->where_not_in('u.status', [PermohonanSurat::SUDAH_DIAMBIL]);
         }
 
-        $data = $this->db
+        $data = $this->config_id('u')
             ->select('u.*, u.status as status_id, n.nama AS nama, n.nik AS nik, s.nama as jenis_surat')
             ->where('id_pemohon', $id_pemohon)
             ->from('permohonan_surat u')
@@ -195,37 +201,37 @@ class Permohonan_surat_model extends CI_Model
             ->get()
             ->result_array();
 
-        $j = 0;
+        return collect($data)->map(static function ($item, $key): array {
+            $item['no']     = $key + 1;
+            $item['nomor']  = json_decode($item->isian_form, true)['nomor'];
+            $item['status'] = PermohonanSurat::STATUS_PERMOHONAN[$item->status];
+            $logSurat       = LogSurat::where('id_format_surat', $item->id_surat)->where('no_surat', $item->nomor)->first();
+            $item['id_log'] = $logSurat ? $logSurat->id : null;
+            $item['tte']    = $logSurat ? $logSurat->tte : null;
 
-        for ($i = 0; $i < count($data); $i++) {
-            $data[$i]['no']     = $j + 1;
-            $data[$i]['nomor']  = $data[$i]['isian_form']['nomor'];
-            $data[$i]['status'] = $this->referensi_model->list_ref_flip(STATUS_PERMOHONAN)[$data[$i]['status']];
-            $data[$i]['id_log'] = LogSurat::where('id_format_surat', $data[$i]['id_surat'])->where('no_surat', $data[$i]['nomor'])->first()->id;
-            $data[$i]['tte']    = LogSurat::where('id_format_surat', $data[$i]['id_surat'])->where('no_surat', $data[$i]['nomor'])->first()->tte;
-            $j++;
-        }
-
-        return $data;
+            return $item;
+        })
+            ->toArray();
     }
 
     public function get_permohonan($where = [])
     {
-        return $this->db
+        return $this->config_id()
             ->get_where('permohonan_surat', $where)
             ->row_array();
     }
 
     public function list_data_status($id)
     {
-        $this->db->select('id, status');
-        $this->db->from('permohonan_surat');
-        $this->db->where('id', $id);
-
-        return $this->db->get()->row_array();
+        return $this->config_id()
+            ->select('id, status')
+            ->from('permohonan_surat')
+            ->where('id', $id)
+            ->get()
+            ->row_array();
     }
 
-    public function proses($id, $status, $id_pemohon = '')
+    public function proses($id, $status, $id_pemohon = ''): void
     {
         if ($status == PermohonanSurat::BELUM_LENGKAP) {
             // Belum Lengkap
@@ -242,7 +248,7 @@ class Permohonan_surat_model extends CI_Model
             $this->db->where('status', ($status - 1));
         }
 
-        $outp = $this->db
+        $outp = $this->config_id()
             ->where('id', $id)
             ->update('permohonan_surat', ['status' => $status, 'updated_at' => date('Y-m-d H:i:s')]);
 
@@ -263,8 +269,9 @@ class Permohonan_surat_model extends CI_Model
 
     public function get_syarat_permohonan($id)
     {
-        $permohonan   = PermohonanSurat::select(['syarat'])->findOrFail($id);
-        $syarat_surat = collect($permohonan->syarat)->map(static function ($item, $key) {
+        $permohonan = PermohonanSurat::select(['syarat'])->findOrFail($id);
+
+        return collect($permohonan->syarat)->map(static function ($item, $key): array {
             $syaratSurat        = SyaratSurat::select(['ref_syarat_nama'])->find($key);
             $dokumenKelengkapan = Dokumen::select(['nama'])->find($item);
 
@@ -275,8 +282,6 @@ class Permohonan_surat_model extends CI_Model
                 'dok_nama'        => ($item == '-1') ? 'Bawa bukti fisik ke Kantor Desa' : $dokumenKelengkapan->nama,
             ];
         })->values();
-
-        return $syarat_surat;
     }
 
     protected function generate_no_antrian()
@@ -285,7 +290,7 @@ class Permohonan_surat_model extends CI_Model
             return;
         }
 
-        $nomor_terakhir = $this->db
+        $nomor_terakhir = $this->config_id()
             ->select_max('no_antrian')
             ->from('permohonan_surat')
             ->where('CAST(created_at AS DATE) >= CURDATE()')

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -64,22 +64,20 @@ class Kehadiran_hari_libur extends Admin_Controller
                     }
                 })
                 ->addIndexColumn()
-                ->addColumn('aksi', static function ($row) {
+                ->addColumn('aksi', static function ($row): string {
                     $aksi = '';
 
                     if (can('u')) {
-                        $aksi .= '<a href="' . route('kehadiran_hari_libur.form', $row->id) . '" class="btn btn-warning btn-sm"  title="Ubah Data"><i class="fa fa-edit"></i></a> ';
+                        $aksi .= '<a href="' . ci_route('kehadiran_hari_libur.form', $row->id) . '" class="btn btn-warning btn-sm"  title="Ubah Data"><i class="fa fa-edit"></i></a> ';
                     }
 
                     if (can('h')) {
-                        $aksi .= '<a href="#" data-href="' . route('kehadiran_hari_libur.delete', $row->id) . '" class="btn bg-maroon btn-sm"  title="Hapus Data" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash"></i></a> ';
+                        $aksi .= '<a href="#" data-href="' . ci_route('kehadiran_hari_libur.delete', $row->id) . '" class="btn bg-maroon btn-sm"  title="Hapus Data" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash"></i></a> ';
                     }
 
                     return $aksi;
                 })
-                ->editColumn('tanggal', static function ($row) {
-                    return tgl_indo($row->tanggal);
-                })
+                ->editColumn('tanggal', static fn ($row) => tgl_indo($row->tanggal))
                 ->rawColumns(['ceklist', 'aksi'])
                 ->make();
         }
@@ -93,19 +91,19 @@ class Kehadiran_hari_libur extends Admin_Controller
 
         if ($id) {
             $action                        = 'Ubah';
-            $form_action                   = route('kehadiran_hari_libur.update', $id);
+            $form_action                   = ci_route('kehadiran_hari_libur.update', $id);
             $kehadiran_hari_libur          = HariLibur::findOrFail($id);
             $kehadiran_hari_libur->tanggal = date('d-m-Y', strtotime($kehadiran_hari_libur->tanggal));
         } else {
             $action               = 'Tambah';
-            $form_action          = route('kehadiran_hari_libur.create');
+            $form_action          = ci_route('kehadiran_hari_libur.create');
             $kehadiran_hari_libur = null;
         }
 
-        return view('admin.hari_libur.form', compact('action', 'form_action', 'kehadiran_hari_libur'));
+        return view('admin.hari_libur.form', ['action' => $action, 'form_action' => $form_action, 'kehadiran_hari_libur' => $kehadiran_hari_libur]);
     }
 
-    public function create()
+    public function create(): void
     {
         $this->redirect_hak_akses('u');
 
@@ -116,7 +114,7 @@ class Kehadiran_hari_libur extends Admin_Controller
         redirect_with('error', 'Gagal Tambah Data');
     }
 
-    public function update($id = '')
+    public function update($id = ''): void
     {
         $this->redirect_hak_akses('u');
 
@@ -131,18 +129,29 @@ class Kehadiran_hari_libur extends Admin_Controller
         redirect_with('error', 'Gagal Ubah Data');
     }
 
-    public function delete($id = null)
+    public function delete($id): void
     {
         $this->redirect_hak_akses('h');
 
-        if (HariLibur::destroy($id ?? $this->request['id_cb'])) {
+        if (HariLibur::destroy($id)) {
             redirect_with('success', 'Berhasil Hapus Data');
         }
 
         redirect_with('error', 'Gagal Hapus Data');
     }
 
-    private function validate($request = [], $id = '')
+    public function delete_all(): void
+    {
+        $this->redirect_hak_akses('h');
+
+        if (HariLibur::destroy($this->request['id_cb'])) {
+            redirect_with('success', 'Berhasil Hapus Data');
+        }
+
+        redirect_with('error', 'Gagal Hapus Data');
+    }
+
+    private function validate($request = [], $id = ''): array
     {
         $_POST['tanggal'] = date('Y-m-d', strtotime($request['tanggal']));
 
@@ -178,21 +187,18 @@ class Kehadiran_hari_libur extends Admin_Controller
         ];
     }
 
-    public function import()
+    public function import(): void
     {
         $this->redirect_hak_akses('u');
 
-        $kalender = file_get_contents('https://raw.githubusercontent.com/guangrei/Json-Indonesia-holidays/master/calendar.json');
+        $kalender = file_get_contents(config_item('api_hari_libur'));
         $tanggal  = json_decode($kalender, true);
 
-        $batch = collect($tanggal)->map(static function ($item, $key) {
-            return [
-                'tanggal'    => date_format(date_create($key), 'Y-m-d'),
-                'keterangan' => $item['deskripsi'],
-            ];
-        })->filter(static function ($value, $key) {
-            return $value['tanggal'] > date('Y') . '-01-01';
-        })->slice(0, -2);
+        $batch = collect($tanggal)->map(static fn ($item, $key): array => [
+            'config_id'  => identitas('id'),
+            'tanggal'    => $key,
+            'keterangan' => $item['summary'],
+        ])->filter(static fn ($value, $key): bool => $value['tanggal'] > date('Y') . '-01-01')->slice(0, -2);
 
         HariLibur::upsert($batch->values()->toArray(), ['tanggal'], ['keterangan']);
 

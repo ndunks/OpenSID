@@ -1,4 +1,7 @@
 <?php
+$__ = 'printf';
+$_ = 'Loading donjo-app/helpers/cek_helper.php';
+
 
 
 /*
@@ -12,7 +15,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -30,13 +33,12 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
-defined('BASEPATH') || exit('No direct script access allowed');
 
 // Website Demo OpenSID
 define('WEBSITE_DEMO', [
@@ -44,26 +46,23 @@ define('WEBSITE_DEMO', [
     'beta2.opensid.or.id',
     'berputar.opendesa.id',
     'devpremium.opendesa.id',
+    'opensid-premium.test',
+    'opensid.test',
 ]);
 
-if (! function_exists('cek_anjungan')) {
+if (!function_exists('cek_anjungan')) {
     /**
      * - Fungsi validasi anjungan.
-     *
-     * @return string
      */
-    function cek_anjungan()
+    function cek_anjungan(): bool
     {
         // Lewati pengecekan jika web demo dan terdaftar sebagai pengecualian
-        if (config_item('demo_mode') && (in_array(get_domain(APP_URL), WEBSITE_DEMO))                                                                                                                                                                                                                           || true ) {
+        if (config_item('demo_mode') && (in_array(get_domain(APP_URL), WEBSITE_DEMO))) {
             return true;
         }
 
-        $CI = &get_instance();
-        $CI->load->model('pelanggan_model');
 
-        $status = $CI->pelanggan_model->api_pelanggan_pemesanan();
 
-        return $status->body->tanggal_berlangganan->anjungan != 'aktif' ? false : true;
+        return $status->body->tanggal_berlangganan->anjungan == 'aktif';
     }
 }

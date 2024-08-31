@@ -1,10 +1,9 @@
-<script src="<?= base_url()?>assets/js/jquery.validate.min.js"></script>
-<script src="<?= base_url()?>assets/js/localization/messages_id.js"></script>
+<?php $this->load->view('global/validasi_form'); ?>
 <div class="content-wrapper">
 	<section class="content-header">
 		<h1>Tambah Program Bantuan</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?=site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?=site_url('beranda')?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li><a href="<?=site_url('program_bantuan')?>"> Daftar Program Bantuan</a></li>
 			<li class="active">Tambah Program Bantuan</li>
 		</ol>
@@ -59,7 +58,7 @@
 								<div class="input-group-addon">
 									<i class="fa fa-calendar"></i>
 								</div>
-								<input class="form-control input-sm pull-right required" id="tgl_1" name="sdate" placeholder="Tgl. Mulai" type="text">
+								<input class="form-control input-sm pull-right required" id="tgl_mulai" name="sdate" placeholder="Tgl. Mulai" type="text">
 							</div>
 						</div>
 						<div class="col-sm-4">
@@ -67,7 +66,7 @@
 								<div class="input-group-addon">
 									<i class="fa fa-calendar"></i>
 								</div>
-								<input class="form-control input-sm pull-right required" id="tgl_2" name="edate" placeholder="Tgl. Akhir" type="text">
+								<input class="form-control input-sm pull-right required" id="tgl_akhir" name="edate" placeholder="Tgl. Akhir" type="text">
 							</div>
 						</div>
 					</div>

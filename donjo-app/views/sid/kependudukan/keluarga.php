@@ -22,7 +22,7 @@
 	<section class="content-header">
 		<h1>Data Keluarga</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda')?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li class="active">Data Keluarga</li>
 		</ol>
 	</section>
@@ -37,13 +37,13 @@
 								<a href="<?= site_url('keluarga/form_peristiwa/5')?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Data Penduduk Masuk"><i class="fa fa-plus"></i> Tambah Penduduk Masuk</a>
 							</li>
 							<li>
-								<a href="<?= site_url('keluarga/form_old')?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Data KK dari keluarga yang sudah ter-input" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Tambah Data Kepala Keluarga"><i class="fa fa-plus"></i> Dari Penduduk Sudah Ada</a>
+								<a href="<?= site_url("keluarga/form_old/{$p}/{$o}/0")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Data KK dari keluarga yang sudah ter-input" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Tambah Data Kepala Keluarga"><i class="fa fa-plus"></i> Dari Penduduk Sudah Ada</a>
 							</li>
 						</ul>
 					</div>
 				<?php endif; ?>
-				<a href="<?= site_url("keluarga/ajax_cetak/{$o}/cetak")?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Cetak Data" target="_blank"><i class="fa fa-print"></i> Cetak</a>
-				<a href="<?= site_url("keluarga/ajax_cetak/{$o}/unduh")?>" class="btn btn-social btn-flat bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Unduh Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Unduh Data" target="_blank"><i class="fa fa-download"></i> Unduh</a>
+				<a id="cetak_id" href="<?= site_url("keluarga/ajax_cetak/{$p}/{$o}/cetak")?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Cetak Data" target="_blank"><i class="fa fa-print"></i> Cetak</a>
+				<a id="unduh_id" href="<?= site_url("keluarga/ajax_cetak/{$p}/{$o}/unduh")?>" class="btn btn-social btn-flat bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Unduh Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Unduh Data" target="_blank"><i class="fa fa-download"></i> Unduh</a>
 				<div class="btn-group btn-group-vertical">
 					<a class="btn btn-social btn-flat bg-maroon btn-sm" data-toggle="dropdown"><i class='fa fa-arrow-circle-down'></i> Aksi Data Terpilih</a>
 					<ul class="dropdown-menu" role="menu">
@@ -53,6 +53,11 @@
 						<li>
 							<a href="" class="btn btn-social btn-flat btn-block btn-sm aksi-terpilih" title="Unduh Kartu Keluarga" onclick="formAction('mainform','<?= site_url('keluarga/doc_kk_all')?>'); return false;"><i class="fa fa-download"></i> Unduh Kartu Keluarga</a>
 						</li>
+						<?php if ($this->CI->cek_hak_akses('u')): ?>
+							<li>
+								<a id="pindah_kolektif" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Pindah Wilayah Kolektif" class="btn btn-social btn-flat btn-block btn-sm aksi-terpilih" title="Pindah Wilayah Kolektif"><i class="fa fa-random"></i> Pindah Wilayah Kolektif</a>
+							</li>
+						<?php endif; ?>
 						<?php if ($this->CI->cek_hak_akses('h')): ?>
 							<li>
 								<a href="#confirm-delete" class="btn btn-social btn-flat btn-block btn-sm hapus-terpilih" title="Hapus Data" onclick="deleteAllBox('mainform', '<?=site_url('keluarga/delete_all')?>')"><i class="fa fa-trash-o"></i> Hapus Data Terpilih</a>
@@ -130,7 +135,7 @@
 							<table class="table table-bordered dataTable table-striped table-hover tabel-daftar">
 								<thead class="bg-gray disabled color-palette">
 									<tr>
-										<th><input type="checkbox" id="checkall"/></th>
+										<th><input type="checkbox" id="checkall" <?= data_lengkap() ? '' : 'disabled' ?>/></th>
 										<th>No</th>
 										<th>Aksi</th>
 										<th>Foto</th>
@@ -138,7 +143,7 @@
 										<th><?= url_order($o, "{$this->controller}/index/{$p}", 3, 'Kepala Keluarga'); ?></th>
 										<th>NIK</th>
 										<th>Tag ID Card</th>
-										<th>Jumlah Anggota</th>
+										<th><?= url_order($o, "{$this->controller}/index/{$p}", 9, 'Jumlah Anggota'); ?></th>
 										<th>Jenis Kelamin</th>
 										<th>Alamat</th>
 										<th><?= ucwords($this->setting->sebutan_dusun)?></th>
@@ -149,9 +154,10 @@
 									</tr>
 								</thead>
 								<tbody>
+									<?php if($main): ?>
 									<?php foreach ($main as $data): ?>
-										<tr <?= jecho(get_nokk($data['no_kk']), '0', 'class="danger"') ?>>
-											<td class="padat"><input type="checkbox" name="id_cb[]" value="<?= $data['id']?>" /></td>
+										<tr <?= valid_nik_nokk($data['no_kk']) ?>>
+											<td class="padat"><input type="checkbox" name="id_cb[]" value="<?= $data['id']?>" <?= data_lengkap() ? '' : 'disabled' ?> /></td>
 											<td class="padat"><?= $data['no']?></td>
 											<td class="aksi">
 												<a href="<?= site_url("keluarga/anggota/{$p}/{$o}/{$data['id']}")?>" class="btn bg-purple btn-flat btn-sm" title="Rincian Anggota Keluarga (KK)"><i class="fa fa-list-ol"></i></a>
@@ -165,6 +171,9 @@
 															<li>
 																<a href="<?= site_url("keluarga/form_peristiwa_a/5/{$p}/{$o}/{$data['id']}")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Anggota Keluarga Masuk"><i class="fa fa-plus"></i> Anggota Keluarga Masuk</a>
 															</li>
+															<li>
+																<a href="<?= site_url("keluarga/ajax_add_anggota/{$p}/{$o}/{$data['id']}")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Anggota Dari Penduduk Yang Sudah Ada" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Tambah Anggota Keluarga"><i class="fa fa-plus"></i> Dari Penduduk Sudah Ada</a>
+															</li>
 														</ul>
 													</div>
 												<?php endif; ?>
@@ -175,7 +184,9 @@
 														<?php if ($data['jumlah_anggota'] > 0): ?>
 															<a href="<?= site_url("keluarga/form_pecah_semua/{$data['id']}")?>" title="Pecah semua anggota ke keluarga baru" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Pecah menjadi keluarga baru" class="btn bg-purple btn-flat btn-sm"><i class="fa fa-cut"></i></a>
 														<?php endif; ?>
-														<a href="<?= site_url("keluarga/edit_nokk/{$p}/{$o}/{$data['id']}")?>" title="Lihat Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Data KK" class="btn bg-info btn-flat btn-sm"><i class="fa fa-eye"></i></a>
+														<?php if (! empty($data['kepala_kk'])): ?>
+															<a href="<?= site_url("keluarga/edit_nokk/{$p}/{$o}/{$data['id']}")?>" title="Lihat Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Data KK" class="btn bg-info btn-flat btn-sm"><i class="fa fa-eye"></i></a>
+														<?php endif; ?>
 													<?php endif; ?>
 												<?php endif; ?>
 												<?php if ($this->CI->cek_hak_akses('h') && $data['boleh_hapus']): ?>
@@ -189,7 +200,7 @@
 											<td nowrap><?= strtoupper($data['kepala_kk'])?></td>
 											<td><a href="<?= site_url("penduduk/detail/1/0/{$data['id_pend']}")?>"><?= strtoupper($data['nik'])?></a></td>
 											<td><?= $data['tag_id_card']?></td>
-											<td class="padat"><a href="<?= site_url("keluarga/anggota/{$p}/{$o}/{$data['id']}")?>"><?= $data['jumlah_anggota']?></a></td>
+											<td class="padat"><?= $data['jumlah_anggota'] ?></td>
 											<td class="padat"><?= strtoupper($data['sex']) ?></td>
 											<td><?= strtoupper($data['alamat'])?></td>
 											<td><?= strtoupper($data['dusun'])?></td>
@@ -199,6 +210,7 @@
 											<td class="padat"><?= tgl_indo($data['tgl_cetak_kk'])?></td>
 										</tr>
 									<?php endforeach; ?>
+									<?php else: tidak_ada_data(16); endif; ?>
 								</tbody>
 							</table>
 						</div>
@@ -210,3 +222,18 @@
 	</section>
 </div>
 <?php $this->load->view('global/confirm_delete'); ?>
+
+<script>
+	$("input[type=checkbox]").change(function () {
+		var id = $('input[name="id_cb[]"]:checked').map(function () {
+			return this.value;
+		}).get().join(',');
+
+		$("#cetak_id").attr("href", `<?= site_url("keluarga/ajax_cetak/{$p}/{$o}/cetak") ?>?id_cb=${id}`);
+		$("#unduh_id").attr("href", `<?= site_url("keluarga/ajax_cetak/{$p}/{$o}/unduh") ?>?id_cb=${id}`);
+
+		var newHref = SITE_URL + "keluarga/pindah_kolektif?id_cb=" + id;
+
+		$("#pindah_kolektif").attr("href", newHref);
+	});
+</script>

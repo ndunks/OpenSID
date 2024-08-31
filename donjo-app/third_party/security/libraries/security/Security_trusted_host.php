@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -49,7 +49,7 @@ class Security_trusted_host
         $this->config = &get_config();
     }
 
-    public function handle()
+    public function handle(): void
     {
         if (! isset($_SERVER['HTTP_HOST']) || empty($this->config['trusted_hosts'])) {
             return;
@@ -67,10 +67,17 @@ class Security_trusted_host
         foreach ($trustedHosts as $trustedHost) {
             $parsedUrl       = parse_url(trim($trustedHost));
             $realTrustedHost = trim($parsedUrl['host'] ?? '');
-
-            if ($realTrustedHost && preg_match('/^((.*?)\\.)?' . preg_quote($realTrustedHost) . '$/i', $_SERVER['HTTP_HOST'])) {
-                return;
+            if ($realTrustedHost === '') {
+                continue;
             }
+            if ($realTrustedHost === '0') {
+                continue;
+            }
+            if (! preg_match('/^((.*?)\\.)?' . preg_quote($realTrustedHost) . '$/i', $_SERVER['HTTP_HOST'])) {
+                continue;
+            }
+
+            return;
         }
 
         log_message('error', sprintf('Untrusted Host "%s".', htmlspecialchars($_SERVER['HTTP_HOST'], ENT_QUOTES, 'UTF-8')));

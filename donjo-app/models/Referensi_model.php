@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -100,6 +100,7 @@ define('STAT_PENDUDUK', serialize([
     'suku'             => 'Suku / Etnis',
     'bpjs-tenagakerja' => 'BPJS Ketenagakerjaan',
     'hamil'            => 'Status Kehamilan',
+    'buku-nikah'       => 'Buku Nikah',
 ]));
 
 // Statistik Keluarga
@@ -214,14 +215,14 @@ define('PENOLONG_MATI', serialize([
     '4' => 'Lainnya',
 ]));
 
-class Referensi_model extends CI_Model
+class Referensi_model extends MY_Model
 {
     public function list_nama($tabel)
     {
         $data = $this->list_data($tabel);
         $list = [];
 
-        foreach ($data as $key => $value) {
+        foreach ($data as $value) {
             $list[$value['id']] = $value['nama'];
         }
 
@@ -256,7 +257,8 @@ class Referensi_model extends CI_Model
 
     public function list_by_id($tabel, $id = 'id')
     {
-        $data = $this->db->order_by($id)
+        $data = $this->config_id()
+            ->order_by($id)
             ->get($tabel)
             ->result_array();
 
@@ -285,6 +287,6 @@ class Referensi_model extends CI_Model
     {
         $dafault = $this->list_ref(JENIS_PERATURAN_DESA);
 
-        return collect($dafault)->unique()->values();
+        return collect($dafault)->transform(static fn ($item) => str_replace(['Desa', 'desa'], ucwords(setting('sebutan_desa')), $item))->unique()->values();
     }
 }

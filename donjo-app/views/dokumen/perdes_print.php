@@ -3,7 +3,7 @@
 	<head>
 		<title>Data Peraturan <?= ucwords($this->setting->sebutan_desa); ?></title>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<link href="<?= base_url()?>assets/css/report.css" rel="stylesheet" type="text/css">
+		<link href="<?= asset('css/report.css') ?>" rel="stylesheet" type="text/css">
 		<link rel="shortcut icon" href="<?= favico_desa() ?>"/>
 		<!-- TODO: Pindahkan ke external css -->
 		<style>
@@ -28,21 +28,21 @@
 				<div class="header" align="center">
 					<h3>BUKU PERATURAN DI <?= strtoupper($this->setting->sebutan_desa . ' ' . $desa['nama_desa'])?></h3>
 					<h3><?= strtoupper($this->setting->sebutan_kecamatan . ' ' . $desa['nama_kecamatan'] . ' ' . $this->setting->sebutan_kabupaten . ' ' . $desa['nama_kabupaten'])?></h3>
-					<h3><?= ! empty($tahun) ? 'TAHUN ' . $tahun : ''?></h3>
+					<h3><?= empty($tahun) ? '' : 'TAHUN ' . $tahun?></h3>
 					<br>
 				</div>
 				<table class="border thick">
 					<thead>
 						<tr class="border thick">
 							<th>NOMOR URUT</th>
-							<th>JENIS PERATURAN DI DESA</th>
+							<th>JENIS PERATURAN DI <?= strtoupper(setting('sebutan_desa')) ?></th>
 							<th>NOMOR DAN TANGGAL DITETAPKAN</th>
 							<th>TENTANG</th>
 							<th>URAIAN SINGKAT</th>
-							<th>TANGGAL KESEPAKATAN PERATURAN DESA</th>
+							<th>TANGGAL KESEPAKATAN PERATURAN <?= strtoupper(setting('sebutan_desa')) ?></th>
 							<th>NOMOR DAN TANGGAL DILAPORKAN</th>
-							<th>NOMOR DAN TANGGAL DIUNDANGKAN DALAM LEMBARAN DESA</th>
-							<th>NOMOR DAN TANGGAL DIUNDANGKAN DALAM BERITA DESA</th>
+							<th>NOMOR DAN TANGGAL DIUNDANGKAN DALAM LEMBARAN <?=strtoupper($this->setting->sebutan_desa)?></th>
+							<th>NOMOR DAN TANGGAL DIUNDANGKAN DALAM BERITA <?=strtoupper($this->setting->sebutan_desa)?></th>
 							<th>KET.</th>
 						</tr>
 						<tr class="border thick">

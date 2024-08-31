@@ -3,7 +3,7 @@
 		<thead class="bg-gray color-palette">
 			<tr>
 				<th rowspan="3">No</th>
-				<th rowspan="3">Dusun</th>
+				<th rowspan="3"><?= ucwords(setting('sebutan_dusun')) ?></th>
 				<th rowspan="3">Jumlah Penduduk</th>
 				<th rowspan="3">Jumlah Sasaran</th>
 				<th rowspan="1" colspan="5">Sasaran Vaksin</th>
@@ -28,8 +28,8 @@
 			<?php foreach ($main['detail'] as $key => $data) : ?>
 				<?php
                     $sasaran_vaksin = $sasaran['detail'][$key];
-			    $i++;
-			    ?>
+                $i++;
+                ?>
 				<tr>
 					<td class="padat"><?= $i ?></td>
 					<td><?= $key ?></td>

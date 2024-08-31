@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -45,28 +45,20 @@ class Bumindes_umum extends Admin_Controller
         $this->modul_ini = 'buku-administrasi-desa';
     }
 
-    public function index()
+    public function index(): void
     {
         redirect('dokumen_sekretariat/peraturan_desa/3');
     }
 
     // TABLES
-    public function tables($page = 'peraturan', $page_number = 1, $offset = 0)
+    public function tables($page = 'peraturan', $page_number = 1, $offset = 0): void
     {
         $this->sub_modul_ini = 'administrasi-umum';
 
         // set session
-        if (isset($_SESSION['cari'])) {
-            $data['cari'] = $_SESSION['cari'];
-        } else {
-            $data['cari'] = '';
-        }
+        $data['cari'] = $_SESSION['cari'] ?? '';
 
-        if (isset($_SESSION['filter'])) {
-            $data['filter'] = $_SESSION['filter'];
-        } else {
-            $data['filter'] = '';
-        }
+        $data['filter'] = $_SESSION['filter'] ?? '';
 
         if (isset($_POST['per_page'])) {
             $_SESSION['per_page'] = $_POST['per_page'];
@@ -75,7 +67,7 @@ class Bumindes_umum extends Admin_Controller
         // set session END
 
         // load data for displaying at tables
-        $data = array_merge($data, $this->load_data_tables($page, $page_number, $offset));
+        $data = array_merge($data, $this->load_data_tables($page));
 
         $header = $this->header_model->get_data();
 
@@ -85,28 +77,26 @@ class Bumindes_umum extends Admin_Controller
         $this->load->view('footer');
     }
 
-    private function load_data_tables($page, $page_number, $offset)
+    private function load_data_tables($page)
     {
         $data['selected_nav'] = $page;
 
         switch (strtolower($page)) {
             case 'ekspedisi':
-                $data = array_merge($data, $this->load_ekspedisi_data_tables($page_number, $offset));
+
+            default:
+                $data = array_merge($data, $this->load_ekspedisi_data_tables());
                 break;
 
             case 'berita':
-                $data = array_merge($data, $this->load_berita_data_tables($page_number, $offset));
-                break;
-
-            default:
-                $data = array_merge($data, $this->load_ekspedisi_data_tables($page_number, $offset));
+                $data = array_merge($data, $this->load_berita_data_tables());
                 break;
         }
 
         return $data;
     }
 
-    private function load_ekspedisi_data_tables($page_number = 1, $offset = 0)
+    private function load_ekspedisi_data_tables()
     {
         $data['main_content'] = 'bumindes/umum/content_ekspedisi';
         $data['subtitle']     = 'Buku Ekspedisi';
@@ -114,17 +104,18 @@ class Bumindes_umum extends Admin_Controller
         return $data;
     }
 
-    private function load_berita_data_tables($page_number = 1, $offset = 0)
+    private function load_berita_data_tables()
     {
+        $sebutan_desa         = ucwords(setting('sebutan_desa'));
         $data['main_content'] = 'bumindes/umum/content_berita';
-        $data['subtitle']     = 'Buku Lembaran Desa dan Berita Desa';
+        $data['subtitle']     = "Buku Lembaran {$sebutan_desa} dan Berita {$sebutan_desa}";
 
         return $data;
     }
     // TABLES END
 
     // FORM
-    public function form($page = 'peraturan', $page_number = 1, $offset = 0, $key = null)
+    public function form($page = 'peraturan', $page_number = 1, $offset = 0, $key = null): void
     {
         $this->sub_modul_ini = 'administrasi-umum';
 
@@ -163,27 +154,23 @@ class Bumindes_umum extends Admin_Controller
         return $data;
     }
 
-    public function load_form_ekspedisi($page_number, $offset, $key)
+    public function load_form_ekspedisi($page_number, $offset, $key): void
     {
     }
 
-    public function load_form_berita($page_number, $offset, $key)
+    public function load_form_berita($page_number, $offset, $key): void
     {
     }
 
     // FORM END
 
     // INSERT
-    public function insert($page)
+    public function insert($page): void
     {
         switch (strtolower($page)) {
             case 'ekspedisi':
 
-                break;
-
             case 'berita':
-
-                break;
 
             default:
 
@@ -193,16 +180,12 @@ class Bumindes_umum extends Admin_Controller
     // INSERT END
 
     // DELETE
-    public function delete($page, $p = 1, $o = 0, $id = '')
+    public function delete($page, $p = 1, $o = 0, $id = ''): void
     {
         switch (strtolower($page)) {
             case 'ekspedisi':
 
-                break;
-
             case 'berita':
-
-                break;
 
             default:
 
@@ -210,16 +193,12 @@ class Bumindes_umum extends Admin_Controller
         }
     }
 
-    public function delete_all($page, $p = 1, $o = 0)
+    public function delete_all($page, $p = 1, $o = 0): void
     {
         switch (strtolower($page)) {
             case 'ekspedisi':
 
-                break;
-
             case 'berita':
-
-                break;
 
             default:
 
@@ -228,16 +207,12 @@ class Bumindes_umum extends Admin_Controller
     }
 
     // UPDATE
-    public function update($page, $p = 1, $o = 0, $id = '')
+    public function update($page, $p = 1, $o = 0, $id = ''): void
     {
         switch (strtolower($page)) {
             case 'ekspedisi':
 
-                break;
-
             case 'berita':
-
-                break;
 
             default:
 

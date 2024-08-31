@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,11 +39,6 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Ekspedisi_model extends Surat_keluar_model
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function autocomplete()
     {
         $this->db->where('ekspedisi', 1);
@@ -69,10 +64,8 @@ class Ekspedisi_model extends Surat_keluar_model
      * Update data di tabel surat_keluar untuk ekspedisi
      *
      * @param int $id Id surat_keluar untuk query ke database
-     *
-     * @return void
      */
-    public function update($id)
+    public function update($id): void
     {
         // Ambil semua data dari var. global $_POST
         $post = $this->input->post();
@@ -99,7 +92,7 @@ class Ekspedisi_model extends Surat_keluar_model
         $this->db->trans_start();
 
         // Ada lampiran file
-        if ($ada_berkas === true) {
+        if ($ada_berkas) {
             // Tes tidak berisi script PHP
             if (isPHP($_FILES['foto']['tmp_name'], $_FILES['tanda_terima']['name'])) {
                 $this->session->error_msg .= ' -> Jenis file ini tidak diperbolehkan ';
@@ -136,7 +129,7 @@ class Ekspedisi_model extends Surat_keluar_model
                 $data['tanda_terima'] = $berkas_direname ? $nama_file_unik : $upload_data['file_name'];
                 // Update database dengan `tanda_terima` berisi nama unik
                 $this->db->where('id', $id);
-                $hasil = $this->db->update('surat_keluar', $data);
+                $hasil = $this->config_id()->update('surat_keluar', $data);
                 if (! $hasil) {
                     $this->session->error_msg .= ' -> Gagal memperbarui data di database';
                 }
@@ -156,7 +149,7 @@ class Ekspedisi_model extends Surat_keluar_model
                 }
             }
             $this->db->where('id', $id);
-            $hasil = $this->db->update('surat_keluar', $data);
+            $hasil = $this->config_id()->update('surat_keluar', $data);
             if (! $hasil) {
                 $this->session->error_msg .= ' -> Gagal memperbarui data di database';
             }
@@ -177,7 +170,7 @@ class Ekspedisi_model extends Surat_keluar_model
 
     public function get_tanda_terima($id)
     {
-        return $this->db
+        return $this->config_id()
             ->select('tanda_terima')
             ->where('id', $id)
             ->get('surat_keluar')

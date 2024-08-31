@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,13 +37,8 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-class First_penduduk_m extends CI_Model
+class First_penduduk_m extends MY_Model
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function wilayah()
     {
         $sql = "SELECT u.*, a.nama AS nama_kadus, a.nik AS nik_kadus,
@@ -55,20 +50,39 @@ class First_penduduk_m extends CI_Model
 		(SELECT COUNT(p.id) FROM tweb_keluarga k inner join tweb_penduduk p ON k.nik_kepala = p.id  WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa WHERE dusun = u.dusun) AND p.kk_level = 1 and status_dasar = 1) AS jumlah_kk
 		FROM tweb_wil_clusterdesa u LEFT JOIN tweb_penduduk a ON u.id_kepala = a.id WHERE u.rt = '0' AND u.rw = '0'  ";
 
-        $query = $this->db->query($sql);
-        $data  = $query->result_array();
+        $this->db->query($sql);
+        $data = $this->config_id()
+            ->select("
+                u.*, a.nama AS nama_kadus, a.nik AS nik_kadus,
+                (SELECT COUNT(rw.id) FROM tweb_wil_clusterdesa rw WHERE rw.config_id = u.config_id AND dusun = u.dusun AND rw <> '-' AND rt = '-') AS jumlah_rw,
+                (SELECT COUNT(v.id) FROM tweb_wil_clusterdesa v WHERE v.config_id = u.config_id AND dusun = u.dusun AND v.rt <> '0' AND v.rt <> '-') AS jumlah_rt,
+                (SELECT COUNT(p.id) FROM tweb_penduduk p WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa c WHERE c.config_id = u.config_id AND c.dusun = u.dusun) and status_dasar=1) AS jumlah_warga,
+                (SELECT COUNT(p.id) FROM tweb_penduduk p WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa c WHERE c.config_id = u.config_id AND c.dusun = u.dusun) AND p.sex = 1 and status_dasar = 1) AS jumlah_warga_l,
+                (SELECT COUNT(p.id) FROM tweb_penduduk p WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa c WHERE c.config_id = u.config_id AND c.dusun = u.dusun) AND p.sex = 2 and status_dasar = 1) AS jumlah_warga_p,
+                (SELECT COUNT(p.id) FROM tweb_keluarga k inner join tweb_penduduk p ON k.nik_kepala = p.id  WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa c WHERE c.config_id = u.config_id AND dusun = u.dusun) AND p.kk_level = 1 and status_dasar = 1) AS jumlah_kk
+            ")
+            ->from('tweb_wil_clusterdesa u')
+            ->join('tweb_penduduk a', 'u.id_kepala = a.id', 'left')
+            ->where('u.rt', '0')
+            ->where('u.rw', '0')
+            ->order_by('u.dusun')
+            ->get()
+            ->result_array();
+        //Formating Output
+        $counter = count($data);
 
         //Formating Output
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $i + 1;
         }
 
         return $data;
     }
 
+    // TODO: OpenKAB - Sesuaikan jika Modul Admin sudah disesuaikan
     public function master_indikator()
     {
-        return $this->db
+        return $this->config_id('u')
             ->select('m.id, m.nama AS master, m.subjek_tipe, s.subjek, p.nama AS periode, p.tahun_pelaksanaan AS tahun,  p.id AS id_periode')
             ->distinct()
             ->from('analisis_indikator u')
@@ -78,16 +92,18 @@ class First_penduduk_m extends CI_Model
             ->where('u.is_publik', 1)
             ->where('p.aktif', 1)
             ->order_by('m.nama')
-            ->get()->result_array();
+            ->get()
+            ->result_array();
     }
 
+    // TODO: OpenKAB - Sesuaikan jika Modul Admin sudah disesuaikan
     public function list_indikator($master = null)
     {
         if (empty($master)) {
             $master = $this->master_indikator()[0]['id'];
         }
 
-        $data = $this->db
+        $data = $this->config_id('u')
             ->select('u.id, u.nomor, u.id_master, u.pertanyaan AS indikator, s.subjek, p.nama AS periode, p.tahun_pelaksanaan AS tahun, m.nama AS master, m.subjek_tipe, p.id AS id_periode')
             ->from('analisis_indikator u')
             ->join('analisis_master m', 'u.id_master = m.id', 'left')
@@ -97,33 +113,40 @@ class First_penduduk_m extends CI_Model
             ->where('p.aktif', 1)
             ->where('u.id_master', $master)
             ->order_by('LPAD(u.nomor, 10, " ")')
-            ->get()->result_array();
+            ->get()
+            ->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $i + 1;
         }
 
         return $data;
     }
 
+    // TODO: OpenKAB - Sesuaikan jika Modul Admin sudah disesuaikan
     public function get_indikator($id = 0)
     {
-        return $this->db
+        return $this->config_id()
             ->select('id_master, pertanyaan')
             ->from('analisis_indikator')
             ->where('id', $id)
             ->get()->row_array();
     }
 
+    // TODO: OpenKAB - Sesuaikan jika Modul Admin sudah disesuaikan
     public function list_jawab($id = 0, $sb = 0, $per = 0)
     {
-        $data = $this->db->select('*')
+        $data = $this->db
+            ->select('*')
             ->from('analisis_parameter')
             ->where('id_indikator', $id)
             ->order_by('kode_jawaban ASC')
-            ->get()->result_array();
+            ->get()
+            ->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             switch ($sb) {
                 case 1: $this->db->join('tweb_penduduk p', 'r.id_subjek = p.id', 'left')
                     ->join('tweb_wil_clusterdesa a', 'p.id_cluster = a.id', 'left');
@@ -150,7 +173,9 @@ class First_penduduk_m extends CI_Model
                 ->from('analisis_respon r')
                 ->where('r.id_parameter', $data[$i]['id'])
                 ->where('r.id_periode', $per)
-                ->get()->row()->jml;
+                ->get()
+                ->row()
+                ->jml;
             $data[$i]['nilai'] = $jml;
             $data[$i]['no']    = $i + 1;
         }

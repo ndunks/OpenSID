@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,7 +37,6 @@
 
 use App\Models\AnjunganMenu;
 use App\Models\Artikel;
-use App\Models\Config;
 use App\Models\Galery;
 use Carbon\Carbon;
 
@@ -66,7 +65,6 @@ class Anjungan extends Web_Controller
         $jumlah_artikel = setting('anjungan_layar') == 1 ? 4 : 6;
 
         $data = [
-            'header'        => $this->header,
             'cek_anjungan'  => $this->cek_anjungan,
             'arsip_terkini' => Artikel::arsip()->orderBy('tgl_upload', 'DESC')->limit($jumlah_artikel)->get(),
             'arsip_populer' => Artikel::arsip()->orderBy('hit', 'DESC')->limit($jumlah_artikel)->get(),
@@ -75,7 +73,6 @@ class Anjungan extends Web_Controller
             'slides'        => count($menu) > 5 ? 5 : count($menu),
             'teks_berjalan' => setting('anjungan_teks_berjalan'),
             'gambar'        => Galery::where('parrent', setting('anjungan_slide'))->where('enabled', 1)->get(),
-            'nama_desa'     => Config::first()->nama_desa,
             'pamong'        => $this->pamong_model->list_aparatur_desa()['daftar_perangkat'],
         ];
 

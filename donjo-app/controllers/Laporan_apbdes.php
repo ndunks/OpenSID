@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -52,6 +52,15 @@ class Laporan_apbdes extends Admin_Controller
 
     public function index()
     {
+        $this->render('opendk/index', [
+            'judul' => ($this->tipe == 'laporan_apbdes') ? 'Laporan APBDes' : 'Laporan Penduduk',
+            'kolom' => ($this->tipe == 'laporan_apbdes') ? 'Semester' : 'Bulan',
+            'tahun' => $this->sinkronisasi->get_tahun(),
+        ]);
+    }
+
+    public function datatables()
+    {
         if ($this->input->is_ajax_request()) {
             $start  = $this->input->post('start');
             $length = $this->input->post('length');
@@ -68,18 +77,14 @@ class Laporan_apbdes extends Admin_Controller
             ]);
         }
 
-        $this->render('opendk/index', [
-            'judul' => ($this->tipe == 'laporan_apbdes') ? 'Laporan APBDes' : 'Laporan Penduduk',
-            'kolom' => ($this->tipe == 'laporan_apbdes') ? 'Semester' : 'Bulan',
-            'tahun' => $this->sinkronisasi->get_tahun(),
-        ]);
+        return show_404();
     }
 
-    public function form(int $id = 0)
+    public function form(?int $id = 0): void
     {
         $this->redirect_hak_akses('u');
 
-        if ($id) {
+        if ($id !== 0) {
             $data['main']        = $this->sinkronisasi->find($id) ?? show_404();
             $data['form_action'] = site_url("{$this->controller}/update/{$id}");
         } else {
@@ -92,34 +97,34 @@ class Laporan_apbdes extends Admin_Controller
         $this->load->view("opendk/form_{$this->tipe}", $data);
     }
 
-    public function insert()
+    public function insert(): void
     {
         $this->redirect_hak_akses('u');
         $this->sinkronisasi->insert();
         redirect($this->controller);
     }
 
-    public function update(int $id = 0)
+    public function update(int $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $this->sinkronisasi->update($id);
         redirect($this->controller);
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->redirect_hak_akses('h');
         $this->sinkronisasi->delete_all();
         redirect($this->controller);
     }
 
-    public function unduh(int $id = 0)
+    public function unduh(int $id = 0): void
     {
         $nama_file = $this->sinkronisasi->find($id)->nama_file;
         ambilBerkas($nama_file, $this->controller, null, LOKASI_DOKUMEN);
     }
 
-    public function kirim()
+    public function kirim(): void
     {
         $this->redirect_hak_akses('u');
 
@@ -144,7 +149,7 @@ class Laporan_apbdes extends Admin_Controller
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST  => 'POST',
-            CURLOPT_POSTFIELDS     => json_encode(['desa_id' => $desa_id, $this->tipe => $this->sinkronisasi->opendk($id)]),
+            CURLOPT_POSTFIELDS     => json_encode(['desa_id' => $desa_id, $this->tipe => $this->sinkronisasi->opendk($id)], JSON_THROW_ON_ERROR),
             CURLOPT_HTTPHEADER     => [
                 'Accept: application/json',
                 'Content-Type: application/json',
@@ -152,10 +157,10 @@ class Laporan_apbdes extends Admin_Controller
             ],
         ]);
 
-        $response  = json_decode(curl_exec($curl));
+        $response  = json_decode(curl_exec($curl), null);
         $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
-        if (! curl_errno($curl) && $http_code !== 422) {
+        if (!curl_errno($curl) && $http_code !== 422) {
             // Ubah tgl kirim
             $this->sinkronisasi->kirim($id);
         }

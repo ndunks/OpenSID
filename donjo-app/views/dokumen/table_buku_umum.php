@@ -10,7 +10,7 @@
 <div class="box box-info">
 	<div class="box-header with-border">
 		<?php if ($this->CI->cek_hak_akses('u')) : ?>
-			<a href="<?= site_url("{$this->controller}/form/{$kat}") ?>" class="btn btn-social btn-flat btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Tambah <?= $kat_nama ?>"><i class="fa fa-plus"></i>Tambah <?= $kat_nama ?></a>
+			<a href="<?= site_url("{$this->controller}/form/{$kat}") ?>" class="btn btn-social btn-flat btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Tambah"><i class="fa fa-plus"></i>Tambah</a>
 		<?php endif; ?>
 		<?php if ($this->CI->cek_hak_akses('h')) : ?>
 			<a href="#confirm-delete" title="Hapus Data" onclick="deleteAllBox('mainform', '<?= site_url("{$this->controller}/delete_all/{$kat}/{$p}/{$o}") ?>')" class="btn btn-social btn-flat btn-danger btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block hapus-terpilih"><i class='fa fa-trash-o'></i> Hapus Data Terpilih</a>
@@ -104,6 +104,7 @@
 									</tr>
 								</thead>
 								<tbody>
+									<?php if($main): ?>
 									<?php foreach ($main as $data) : ?>
 										<tr>
 											<td><input type="checkbox" name="id_cb[]" value="<?= $data['id'] ?>" /></td>
@@ -143,6 +144,7 @@
 											<td nowrap><?= tgl_indo2($data['tgl_upload']) ?></td>
 										</tr>
 									<?php endforeach; ?>
+									<?php else: tidak_ada_data(16); endif; ?>
 								</tbody>
 							</table>
 						</div>

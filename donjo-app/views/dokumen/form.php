@@ -1,12 +1,12 @@
 <div class="content-wrapper">
 	<section class="content-header">
-		<h1>Pengaturan <?= $kat_nama ?></h1>
+		<h1>Pengaturan <?= $kat_nama ?> Di <?= ucwords(setting('sebutan_desa')) ?></h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda') ?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<?php if (in_array($kat, ['2', '3'])) : ?>
-				<li><a href="<?= $kembali_ke ?: site_url("{$this->controller}/peraturan_desa/{$kat}"); ?>"><i class="fa fa-dashboard"></i> Daftar <?= $kat_nama ?></a></li>
+				<li><a href="<?= $kembali_ke ?: site_url("{$this->controller}/peraturan_desa/{$kat}"); ?>"> Daftar <?= $kat_nama ?></a></li>
 			<?php else : ?>
-				<li><a href="<?= site_url("{$this->controller}/index/{$kat}"); ?>"><i class="fa fa-dashboard"></i> Daftar <?= $kat_nama ?></a></li>
+				<li><a href="<?= site_url("{$this->controller}/index/{$kat}"); ?>"> Daftar <?= $kat_nama ?></a></li>
 			<?php endif; ?>
 			<li class="active">Pengaturan <?= $kat_nama ?></li>
 		</ol>
@@ -17,11 +17,11 @@
 				<div class="box-header with-border">
 					<?php if (in_array($kat, ['2', '3'])) : ?>
 						<a href="<?= $kembali_ke ?: site_url("{$this->controller}/peraturan_desa/{$kat}"); ?>" class="btn btn-social btn-flat btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Tambah Artikel">
-							<i class="fa fa-arrow-circle-left "></i>Kembali Ke Daftar <?= $kat_nama ?>
+							<i class="fa fa-arrow-circle-left "></i>Kembali Ke Daftar <?= $kat_nama ?> Di <?= ucwords(setting('sebutan_desa')) ?>
 						</a>
 					<?php else : ?>
 						<a href="<?= site_url("{$this->controller}/index/{$kat}"); ?>" class="btn btn-social btn-flat btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Tambah Artikel">
-							<i class="fa fa-arrow-circle-left "></i>Kembali Ke Daftar <?= $kat_nama ?>
+							<i class="fa fa-arrow-circle-left "></i>Kembali Ke Daftar <?= $kat_nama ?> Di <?= ucwords(setting('sebutan_desa')) ?>
 						</a>
 					<?php endif; ?>
 				</div>
@@ -47,7 +47,7 @@
 								<label class="col-sm-4 control-label">Dokumen</label>
 								<div class="col-sm-4">
 									<input type="hidden" name="old_file" value="">
-									 <i class="fa fa-file-pdf-o pop-up-pdf" aria-hidden="true" style="font-size: 60px;" data-title="Berkas <?= $dokumen['nomor_surat']?>" data-url="<?= site_url() . $this->controller . '/berkas/' . $dokumen['id'] . '/1/1'?>"></i>
+									 <i class="fa fa-file-pdf-o pop-up-pdf" aria-hidden="true" style="font-size: 60px;" data-title="Berkas <?= $dokumen['nomor_surat']?>" data-url="<?= site_url("{$this->controller}/berkas/{$dokumen['id']}/1/1")?>"></i>
 
 								</div>
 							</div>
@@ -83,7 +83,7 @@
                     } else {
                         $this->load->view('dokumen/_informasi_publik');
                     }
-		?>
+        ?>
 				</div>
 				<div class='box-footer'>
 					<button type='reset' class='btn btn-social btn-flat btn-danger btn-sm'><i class='fa fa-times'></i> Batal</button>

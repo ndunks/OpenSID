@@ -12,7 +12,7 @@
 	<section class="content-header">
 		<h1>Biodata Penduduk</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda')?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li><a href="<?= site_url('penduduk/clear')?>"> Daftar Penduduk</a></li>
 			<li class="active">Biodata Penduduk</li>
 		</ol>
@@ -24,11 +24,13 @@
 					<div class="box box-info">
 						<div class="box-header">
 							<a href="<?= site_url("penduduk/dokumen/{$penduduk['id']}")?>" class="btn btn-social btn-flat btn-success btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Manajemen Dokumen Penduduk" ><i class="fa fa-book"></i> Manajemen Dokumen</a>
-							<?php if ($penduduk['status_dasar_id'] == 1): ?>
-								<a href="<?= site_url("penduduk/form/{$p}/{$o}/{$penduduk['id']}")?>" class="btn btn-social btn-flat btn-warning btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Ubah Biodata" ><i class="fa fa-edit"></i> Ubah Biodata</a>
+							<?php if (can('u')): ?>
+								<?php if ($penduduk['status_dasar_id'] == 1): ?>
+									<a href="<?= site_url("penduduk/form/{$p}/{$o}/{$penduduk['id']}")?>" class="btn btn-social btn-flat btn-warning btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Ubah Biodata" ><i class="fa fa-edit"></i> Ubah Biodata</a>
+								<?php endif; ?>
 							<?php endif; ?>
 							<a href="<?= site_url("penduduk/cetak_biodata/{$penduduk['id']}")?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak Biodata" target="_blank"><i class="fa fa-print"></i>Cetak Biodata</a>
-							<?php if ($penduduk['status_dasar_id'] == 1 && ! empty($penduduk['id_kk'])): ?>
+							<?php if ($penduduk['no_kk'] && $penduduk['status_dasar_id'] == 1 && ! empty($penduduk['id_kk'])): ?>
 								<a href="<?= site_url("keluarga/anggota/{$p}/{$o}/{$penduduk['id_kk']}")?>" class="btn btn-social btn-flat btn-danger btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Anggota Keluarga" ><i class="fa fa-users"></i> Anggota Keluarga</a>
 							<?php endif; ?>
 							<?php if (can('u')): ?>
@@ -322,7 +324,7 @@
 																				<tr>
 																					<td class="text-center"><?= $key + 1?></td>
 																					<td><?= fTampilTgl($item['sdate'], $item['edate']); ?></td>
-																					<td><a href="<?= site_url("program_bantuan/data_peserta/{$item['peserta_id']}"); ?>"><?= $item['nama']; ?></a></td>
+																					<td><a href="<?= site_url("peserta_bantuan/data_peserta/{$item['peserta_id']}"); ?>"><?= $item['nama']; ?></a></td>
 																					<td><?= $item['ndesc']; ?></td>
 																				</tr>
 																			<?php endforeach; ?>

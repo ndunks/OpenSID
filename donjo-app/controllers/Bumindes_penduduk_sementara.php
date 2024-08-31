@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,8 +39,8 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Bumindes_penduduk_sementara extends Admin_Controller
 {
-    private $_set_page;
-    private $_list_session;
+    private array $_set_page     = ['10', '20', '50', '100'];
+    private array $_list_session = ['filter_tahun', 'filter_bulan', 'filter', 'status_dasar', 'sex', 'agama', 'dusun', 'rw', 'rt', 'cari', 'umur_min', 'umur_max', 'umurx', 'pekerjaan_id', 'status', 'pendidikan_sedang_id', 'pendidikan_kk_id', 'status_penduduk', 'judul_statistik', 'cacat', 'cara_kb_id', 'akta_kelahiran', 'status_ktp', 'id_asuransi', 'status_covid', 'bantuan_penduduk', 'log', 'warganegara', 'menahun', 'hubungan', 'golongan_darah', 'hamil', 'kumpulan_nik'];
 
     public function __construct()
     {
@@ -50,12 +50,9 @@ class Bumindes_penduduk_sementara extends Admin_Controller
 
         $this->modul_ini     = 'buku-administrasi-desa';
         $this->sub_modul_ini = 'administrasi-penduduk';
-
-        $this->_set_page     = ['10', '20', '50', '100'];
-        $this->_list_session = ['filter_tahun', 'filter_bulan', 'filter', 'status_dasar', 'sex', 'agama', 'dusun', 'rw', 'rt', 'cari', 'umur_min', 'umur_max', 'umurx', 'pekerjaan_id', 'status', 'pendidikan_sedang_id', 'pendidikan_kk_id', 'status_penduduk', 'judul_statistik', 'cacat', 'cara_kb_id', 'akta_kelahiran', 'status_ktp', 'id_asuransi', 'status_covid', 'bantuan_penduduk', 'log', 'warganegara', 'menahun', 'hubungan', 'golongan_darah', 'hamil', 'kumpulan_nik'];
     }
 
-    public function index($page_number = 1, $order_by = 0)
+    public function index($page_number = 1, $order_by = 0): void
     {
         // hanya menampilkan data status_dasar 1 (Hidup) dan status_penduduk 2 (Tidak Tetap)
         $this->session->status_dasar    = [1, 6];
@@ -72,8 +69,8 @@ class Bumindes_penduduk_sementara extends Admin_Controller
             'selected_nav' => 'sementara',
             'p'            => $page_number,
             'o'            => $order_by,
-            'cari'         => (isset($this->session->cari)) ? $this->session->cari : '',
-            'filter'       => (isset($this->session->filter)) ? $this->session->filter : '',
+            'cari'         => $this->session->cari ?? '',
+            'filter'       => $this->session->filter ?? '',
             'per_page'     => $this->session->per_page,
             'bulan'        => (! isset($this->session->filter_bulan)) ?: $this->session->filter_bulan,
             'tahun'        => (! isset($this->session->filter_tahun)) ?: $this->session->filter_tahun,
@@ -88,14 +85,14 @@ class Bumindes_penduduk_sementara extends Admin_Controller
         $this->render('bumindes/penduduk/main', $data);
     }
 
-    private function clear_session()
+    private function clear_session(): void
     {
         $this->session->unset_userdata($this->_list_session);
         $this->session->status_dasar = 1; // default status dasar = hidup
         $this->session->per_page     = $this->_set_page[0];
     }
 
-    public function clear()
+    public function clear(): void
     {
         $this->clear_session();
         // Set default filter ke tahun dan bulan sekarang
@@ -104,7 +101,7 @@ class Bumindes_penduduk_sementara extends Admin_Controller
         redirect('bumindes_penduduk_sementara');
     }
 
-    public function ajax_cetak($o = 0, $aksi = '')
+    public function ajax_cetak($o = 0, $aksi = ''): void
     {
         $data = [
             'o'                   => $o,
@@ -117,7 +114,7 @@ class Bumindes_penduduk_sementara extends Admin_Controller
         $this->load->view('global/dialog_cetak', $data);
     }
 
-    public function cetak($o = 0, $aksi = '', $privasi_nik = 0)
+    public function cetak($o = 0, $aksi = '', $privasi_nik = 0): void
     {
         $data              = $this->modal_penandatangan();
         $data['aksi']      = $aksi;
@@ -137,13 +134,13 @@ class Bumindes_penduduk_sementara extends Admin_Controller
         $this->load->view('global/format_cetak', $data);
     }
 
-    public function autocomplete()
+    public function autocomplete(): void
     {
         $data = $this->penduduk_model->autocomplete($this->input->post('cari'));
-        $this->output->set_content_type('application/json')->set_output(json_encode($data));
+        $this->output->set_content_type('application/json')->set_output(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    public function filter($filter)
+    public function filter($filter): void
     {
         $value = $this->input->post($filter);
         if ($value != '') {

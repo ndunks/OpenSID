@@ -7,8 +7,11 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
+    'CURLStringFile' => $vendorDir . '/symfony/polyfill-php81/Resources/stubs/CURLStringFile.php',
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
     'Datamatrix' => $vendorDir . '/tecnickcom/tcpdf/include/barcodes/datamatrix.php',
+    'FPDF' => $vendorDir . '/karriere/pdf-merge/tcpi/tcpdi.php',
+    'FPDF_TPL' => $vendorDir . '/karriere/pdf-merge/tcpi/fpdf_tpl.php',
     'Google_AccessToken_Revoke' => $vendorDir . '/google/apiclient/src/aliases.php',
     'Google_AccessToken_Verify' => $vendorDir . '/google/apiclient/src/aliases.php',
     'Google_AuthHandler_AuthHandlerFactory' => $vendorDir . '/google/apiclient/src/aliases.php',
@@ -34,6 +37,7 @@ return array(
     'PDF417' => $vendorDir . '/tecnickcom/tcpdf/include/barcodes/pdf417.php',
     'PhpToken' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
     'QRcode' => $vendorDir . '/tecnickcom/tcpdf/include/barcodes/qrcode.php',
+    'ReturnTypeWillChange' => $vendorDir . '/symfony/polyfill-php81/Resources/stubs/ReturnTypeWillChange.php',
     'Stringable' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
     'TCPDF' => $vendorDir . '/tecnickcom/tcpdf/tcpdf.php',
     'TCPDF2DBarcode' => $vendorDir . '/tecnickcom/tcpdf/tcpdf_barcodes_2d.php',
@@ -46,10 +50,8 @@ return array(
     'TCPDF_IMPORT' => $vendorDir . '/tecnickcom/tcpdf/tcpdf_import.php',
     'TCPDF_PARSER' => $vendorDir . '/tecnickcom/tcpdf/tcpdf_parser.php',
     'TCPDF_STATIC' => $vendorDir . '/tecnickcom/tcpdf/include/tcpdf_static.php',
+    'TCPDI' => $vendorDir . '/karriere/pdf-merge/tcpi/tcpdi.php',
     'UnhandledMatchError' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
     'ValueError' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/ValueError.php',
-    'simplehtmldom\\Debug' => $vendorDir . '/simplehtmldom/simplehtmldom/Debug.php',
-    'simplehtmldom\\HtmlDocument' => $vendorDir . '/simplehtmldom/simplehtmldom/HtmlDocument.php',
-    'simplehtmldom\\HtmlNode' => $vendorDir . '/simplehtmldom/simplehtmldom/HtmlNode.php',
-    'simplehtmldom\\HtmlWeb' => $vendorDir . '/simplehtmldom/simplehtmldom/HtmlWeb.php',
+    'tcpdi_parser' => $vendorDir . '/karriere/pdf-merge/tcpi/tcpdi_parser.php',
 );

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,27 +29,45 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
 use App\Models\LoginAttempts;
+use App\Models\LogLogin;
+use App\Models\Modul;
 use App\Models\User;
+use App\Models\UserGrup;
 use Carbon\Carbon;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-class User_model extends CI_Model
+/**
+ * @property CI_Benchmark        $benchmark
+ * @property CI_Config           $config
+ * @property CI_DB_query_builder $db
+ * @property CI_DB_forge         $dbforge
+ * @property CI_Input            $input
+ * @property CI_Lang             $lang
+ * @property CI_Loader           $load
+ * @property CI_Loader           $loader
+ * @property CI_log              $log
+ * @property CI_Output           $output
+ * @property CI_Router           $router
+ * @property CI_Security         $security
+ * @property CI_Session          $session
+ * @property CI_URI              $uri
+ * @property CI_Utf8             $utf8
+ */
+class User_model extends MY_Model
 {
-    public const GROUP_REDAKSI = 3;
-
-    private $_username;
-    private $_password;
+    private ?string $_username = null;
+    private ?string $_password = null;
 
     // Konfigurasi untuk library 'upload'
-    protected $uploadConfig  = [];
+    protected array $uploadConfig;
     protected $larangan_demo = [
         'database' => ['h'],
     ];
@@ -58,7 +76,7 @@ class User_model extends CI_Model
     {
         parent::__construct();
         // Untuk dapat menggunakan library upload
-        $this->load->library('upload');
+        $this->load->library('MY_Upload', null, 'upload');
         $this->uploadConfig = [
             'upload_path'   => LOKASI_USER_PICT,
             'allowed_types' => 'gif|jpg|jpeg|png',
@@ -79,7 +97,7 @@ class User_model extends CI_Model
 
         if (config_item('demo_mode') && ($username == config_item('demo_user')['username'] && $password == config_item('demo_user')['password'])) {
             // Ambil data user pertama yang merupakan admin
-            $user = User::first();
+            $user = User::superAdmin()->first();
 
             return $this->setLogin($user);
         }
@@ -95,10 +113,7 @@ class User_model extends CI_Model
         $user = User::where('username', $username)->status()->first();
 
         // Cek hasil query ke db, ada atau tidak data user ybs.
-        $pwMasihMD5 = $user ?
-            (
-                (strlen($user->password) == 32) && (stripos($user->password, '$') === false)
-            ) : false;
+        $pwMasihMD5 = $user && ((strlen($user->password) == 32) && (stripos($user->password, '$') === false));
 
         $authLolos = $pwMasihMD5
             ? (md5($password) == $user->password)
@@ -115,31 +130,29 @@ class User_model extends CI_Model
 
         if ($pwMasihMD5) {
             // Ganti pass md5 jadi bcrypt
-            $pwBcrypt = $this->generatePasswordHash($password);
+            $pwBcrypt = generatePasswordHash($password);
 
             // Modifikasi panjang karakter di kolom user.password menjadi 100 untuk -
             // backward compatibility dengan kolom di database lama yang hanya 40 karakter.
             // Hal ini menyebabkan string bcrypt (yang default lengthnya 60 karakter) jadi -
             // terpotong sehingga $authLolos selalu mereturn FALSE.
-            $sql = 'ALTER TABLE user MODIFY COLUMN password VARCHAR(100) NOT NULL';
-            $this->db->query($sql);
+            $this->db->query('ALTER TABLE user MODIFY COLUMN password VARCHAR(100) NOT NULL');
             // Lanjut ke update password di database
-            $sql = 'UPDATE user SET password = ? WHERE id = ?';
-            $this->db->query($sql, [$pwBcrypt, $user->id]);
+            $this->config_id()->where('id', $user->id)->update('user', ['password' => $pwBcrypt]);
         }
         // Lanjut set session
         if ($this->db->table_exists('login_attempts')) {
             $this->clear_login_attempts($this->_username, $ip_address);
         }
 
-        if (($user->id_grup == self::GROUP_REDAKSI) && ($this->setting->offline_mode >= 2)) {
+        if (($user->id_grup == $this->user_model->id_grup(UserGrup::REDAKSI)) && ($this->setting->offline_mode >= 2)) {
             $this->session->siteman = -2;
         } else {
             return $this->setLogin($user);
         }
     }
 
-    private function setLogin($user)
+    private function setLogin($user): void
     {
         $this->session->siteman      = 1;
         $this->session->sesi         = $user->session;
@@ -153,8 +166,31 @@ class User_model extends CI_Model
         $this->session->isAdmin      = $user;
         $this->last_login($user->id);
 
-        if (! empty($this->setting->telegram_token) && cek_koneksi_internet()) {
+        $log_login = LogLogin::create([
+            'username'   => $user->nama,
+            'ip_address' => $this->input->ip_address(),
+            'user_agent' => $this->input->user_agent(),
+            'referer'    => $_SERVER['HTTP_REFERER'],
+            'lainnya'    => geoip_info($this->input->ip_address()),
+        ]);
+
+        if (setting('telegram_notifikasi') && cek_koneksi_internet()) {
             $this->load->library('Telegram/telegram');
+            $country = $log_login->lainnya['country'] ?? ' tidak diketahui';
+
+            if ($country != 'Indonesia') {
+                try {
+                    $this->telegram->sendMessage([
+                        'text' => <<<EOD
+                                Terindefikasi login mencurigakan dari {$user->nama} dengan lokasi {$country}.
+                            EOD,
+                        'parse_mode' => 'Markdown',
+                        'chat_id'    => $this->setting->telegram_user_id,
+                    ]);
+                } catch (Exception $e) {
+                    log_message('error', $e->getMessage());
+                }
+            }
 
             try {
                 $this->telegram->sendMessage([
@@ -171,7 +207,7 @@ class User_model extends CI_Model
     private function set_fm_key($key = null)
     {
         $fmHash = $key . date('Ymdhis');
-        $salt   = mt_rand(100000, 999999);
+        $salt   = random_int(100000, 999999);
         $salt   = strrev($salt);
 
         return md5($fmHash . 'OpenSID' . $salt);
@@ -180,7 +216,7 @@ class User_model extends CI_Model
     //mengupdate waktu login
     private function last_login($id = '')
     {
-        return User::find($id)->update(['last_login' => Carbon::now()]);
+        return User::where('id', $id)->update(['last_login' => Carbon::now()]);
     }
 
     //Harus 8 sampai 20 karakter dan sekurangnya berisi satu angka dan satu huruf besar dan satu huruf kecil dan satu karakter khusus
@@ -191,353 +227,36 @@ class User_model extends CI_Model
 
     public function sesi_grup($sesi = '')
     {
-        $sql   = 'SELECT id_grup FROM user WHERE session = ?';
-        $query = $this->db->query($sql, [$sesi]);
-        $row   = $query->row_array();
-
-        return $row['id_grup'];
+        return $this->config_id()
+            ->select('id_grup')
+            ->where('session', $sesi)
+            ->get('user')
+            ->row()
+            ->id_grup;
     }
 
-    public function logout()
+    public function id_grup($nama)
+    {
+        return $this->config_id()
+            ->select('id')
+            ->where('slug', $nama)
+            ->get('user_grup')
+            ->row()
+            ->id;
+    }
+
+    public function logout(): void
     {
         // Hapus session -- semua session variable akan terhapus
         $this->session->sess_destroy();
-    }
-
-    public function autocomplete()
-    {
-        $sql   = 'SELECT username FROM user UNION SELECT nama FROM user';
-        $query = $this->db->query($sql);
-        $data  = $query->result_array();
-
-        $out = '';
-
-        for ($i = 0; $i < count($data); $i++) {
-            $out .= ",'" . $data[$i]['username'] . "'";
-        }
-
-        return '[' . strtolower(substr($out, 1)) . ']';
-    }
-
-    private function search_sql()
-    {
-        if (isset($_SESSION['cari'])) {
-            $keyword    = $_SESSION['cari'];
-            $keyword    = '%' . $this->db->escape_like_str($keyword) . '%';
-            $search_sql = " AND (u.username LIKE '{$keyword}' OR u.nama LIKE '{$keyword}')";
-
-            return $search_sql;
-        }
-    }
-
-    private function filter_sql()
-    {
-        if (isset($_SESSION['filter'])) {
-            $filter = $_SESSION['filter'];
-
-            switch ($filter) {
-                case 'active':
-                    $filter_sql = ' AND u.active = 1';
-                    break;
-
-                case 'inactive':
-                    $filter_sql = ' AND u.active = 0';
-                    break;
-
-                case 'all':
-                    $filter_sql = ' AND (u.active = 0 OR u.active = 1)';
-                    break;
-
-                default:
-                    $filter_sql = " AND u.id_grup = {$filter}";
-                    break;
-            }
-
-            return $filter_sql;
-        }
-    }
-
-    public function paging($page = 1, $o = 0)
-    {
-        $sql      = 'SELECT COUNT(*) AS jml ' . $this->list_data_sql();
-        $query    = $this->db->query($sql);
-        $row      = $query->row_array();
-        $jml_data = $row['jml'];
-
-        $this->load->library('paging');
-        $cfg['page']     = $page;
-        $cfg['per_page'] = $this->session->per_page;
-        $cfg['num_rows'] = $jml_data;
-        $this->paging->init($cfg);
-
-        return $this->paging;
-    }
-
-    private function list_data_sql()
-    {
-        $sql = ' FROM user u LEFT JOIN tweb_desa_pamong p ON u.pamong_id = p.pamong_id, user_grup g WHERE u.id_grup = g.id ';
-        $sql .= $this->search_sql();
-        $sql .= $this->filter_sql();
-
-        return $sql;
-    }
-
-    public function list_data($order = 0, $offset = 0, $limit = 500)
-    {
-        // Ordering sql
-        switch ($order) {
-            case 1:
-                $order_sql = ' ORDER BY u.username';
-                break;
-
-            case 2:
-                $order_sql = ' ORDER BY u.username DESC';
-                break;
-
-            case 3:
-                $order_sql = ' ORDER BY u.nama';
-                break;
-
-            case 4:
-                $order_sql = ' ORDER BY u.nama DESC';
-                break;
-
-            case 5:
-                $order_sql = ' ORDER BY g.nama';
-                break;
-
-            case 6:
-                $order_sql = ' ORDER BY g.nama DESC';
-                break;
-
-            default:
-                $order_sql = ' ORDER BY u.username';
-        }
-        // Paging sql
-        $paging_sql = ' LIMIT ' . $offset . ',' . $limit;
-        // Query utama
-        $sql = 'SELECT u.*, p.pamong_status, g.nama as grup ' . $this->list_data_sql();
-        $sql .= $order_sql;
-        $sql .= $paging_sql;
-        // var_dump ($sql);
-        // die();
-        $query = $this->db->query($sql);
-        $data  = $query->result_array();
-
-        // Formating output
-        $j = $offset;
-
-        for ($i = 0; $i < count($data); $i++) {
-            $data[$i]['no'] = $j + 1;
-            $j++;
-        }
-
-        return $data;
-    }
-
-    /**
-     * Insert user baru ke database
-     *
-     * @return void
-     */
-    public function insert()
-    {
-        $this->session->error_msg = null;
-        $this->session->success   = 1;
-
-        $data = $this->sterilkan_input($this->input->post());
-
-        if (empty($data['pamong_id'])) {
-            $data['pamong_id'] = null;
-        }
-
-        $pwHash           = $this->generatePasswordHash($data['password']);
-        $data['password'] = $pwHash;
-        $data['session']  = md5(now());
-
-        $data['foto']           = $this->urusFoto();
-        $data['nama']           = strip_tags($data['nama']);
-        $data['notif_telegram'] = (int) $data['notif_telegram'];
-        $data['id_telegram']    = (int) $data['id_telegram'];
-
-        if (! $this->db->insert('user', $data)) {
-            $this->session->success   = -1;
-            $this->session->error_msg = ' -> Gagal memperbarui data di database';
-        }
-    }
-
-    private function sterilkan_input($post)
-    {
-        $data             = [];
-        $data['password'] = $post['password'];
-        $data['active']   = (int) $post['aktif'];
-        if (isset($post['username']) && ! empty($post['username'])) {
-            $data['username'] = alfanumerik($post['username']);
-        }
-        if (isset($post['nama'])) {
-            $data['nama'] = nama($post['nama']);
-        }
-        if (isset($post['email'])) {
-            $data['phone'] = htmlentities($post['phone']);
-        }
-        if (isset($post['email']) && ! empty($post['email'])) {
-            $data['email'] = htmlentities($post['email']);
-        }
-        if (isset($post['id_grup'])) {
-            $data['id_grup'] = $post['id_grup'];
-        }
-        if (isset($post['pamong_id'])) {
-            $data['pamong_id'] = $post['pamong_id'];
-        }
-        if (isset($post['foto'])) {
-            $data['foto'] = $post['foto'];
-        }
-
-        if (isset($post['notif_telegram'])) {
-            $data['notif_telegram'] = (int) $post['notif_telegram'];
-        }
-
-        if (isset($post['id_telegram'])) {
-            $data['id_telegram'] = (int) $post['id_telegram'];
-        }
-
-        return $data;
-    }
-
-    /**
-     * Update data user
-     *
-     * @param int $idUser Id user di database
-     *
-     * @return void
-     */
-    public function update($idUser)
-    {
-        $this->session->error_msg = null;
-        $this->session->success   = 1;
-
-        $data = $this->sterilkan_input($this->input->post());
-
-        if (empty($data['pamong_id'])) {
-            $data['pamong_id'] = null;
-        }
-
-        if (empty($idUser)) {
-            session_error(' -> Pengguna tidak ditemukan datanya.');
-            redirect('man_user');
-        }
-
-        if (empty($data['username']) || empty($data['nama']) || ! in_array((int) ($data['id_grup']), $this->grup_model->list_id_grup())) {
-            session_error(' -> Nama, Username dan Kata Sandi harus diisi');
-            redirect('man_user');
-        }
-
-        // radiisi menandakan password tidak diubah
-        if ($data['password'] == '') {
-            unset($data['password']);
-        }
-        // Untuk demo jangan ubah username atau password
-        if ($idUser == 1 && (config_item('demo_mode') || ENVIRONMENT === 'development')) {
-            unset($data['username'], $data['password']);
-        }
-        if ($data['password']) {
-            $pwHash           = $this->generatePasswordHash($data['password']);
-            $data['password'] = $pwHash;
-        }
-
-        // cek pamong apakah sudah mempunyai user atau belum
-        if ($data['pamong_id'] != null && $data['pamong_id'] != '') {
-            $pamong = $this->db->where('pamong_id', (int) $data['pamong_id'])->where('id != ', $idUser)->get('user')->num_rows();
-            if ($pamong > 0) {
-                session_error(' -> Pamong sudah dipilih oleh user lainnya. Silahkan pilih Pamong Lainnya');
-                redirect('man_user');
-            }
-        }
-
-        $data['foto'] = $this->urusFoto($idUser);
-        if (! $this->db->where('id', $idUser)->update('user', $data)) {
-            session_error(' -> Gagal memperbarui data di database');
-        }
-        $this->cache->file->delete("{$idUser}_cache_modul");
-    }
-
-    public function delete($idUser = '', $semua = false)
-    {
-        // Jangan hapus admin
-        if ($idUser == 1) {
-            return;
-        }
-
-        if (! $semua) {
-            $this->session->success   = 1;
-            $this->session->error_msg = '';
-        }
-
-        $foto  = $this->db->get_where('user', ['id' => $idUser])->row()->foto;
-        $hasil = $this->db->where('id', $idUser)->delete('user');
-        // Cek apakah pengguna berhasil dihapus
-        if ($hasil) {
-            // Cek apakah pengguna memiliki foto atau tidak
-            if ($foto != 'kuser.png') {
-                // Ambil nama foto
-                $foto = basename(AmbilFoto($foto));
-                // Cek penghapusan foto pengguna
-                if (! unlink(LOKASI_USER_PICT . $foto)) {
-                    $this->session->error_msg = 'Gagal menghapus foto pengguna';
-                    $this->session->success   = -1;
-                }
-            }
-        } else {
-            $this->session->error_msg = 'Gagal menghapus pengguna';
-            $this->session->success   = -1;
-        }
-    }
-
-    public function delete_all()
-    {
-        $this->session->success   = 1;
-        $this->session->error_msg = '';
-
-        $id_cb = $_POST['id_cb'];
-
-        foreach ($id_cb as $id) {
-            $this->delete($id, $semua = true);
-        }
-    }
-
-    public function user_lock($id = '', $val = 0)
-    {
-        $sql                    = 'UPDATE user SET active = ? WHERE id = ?';
-        $hasil                  = $this->db->query($sql, [$val, $id]);
-        $this->session->success = ($hasil === true ? 1 : -1);
     }
 
     public function get_user($id = 0)
     {
         $sql   = 'SELECT * FROM user WHERE id = ?';
         $query = $this->db->query($sql, $id);
-        $data  = $query->row_array();
-        // Formating output
-        $data['password'] = 'radiisi';
 
-        return $data;
-    }
-
-    /**
-     * Update password
-     *
-     * @param int $id Id user di database
-     *
-     * @return void
-     */
-    public function update_password($id = 0)
-    {
-        $data = $this->periksa_input_password($id);
-        if (! empty($data)) {
-            $hasil = $this->db->where('id', $id)
-                ->update('user', $data);
-            status_sukses($hasil, $gagal_saja = true);
-        }
+        return $query->row_array();
     }
 
     private function periksa_input_password($id)
@@ -550,20 +269,20 @@ class User_model extends CI_Model
         $data                     = [];
 
         // Jangan edit password admin apabila di situs demo
-        if ($id == 1 && config_item('demo_mode')) {
+        if ($id == $this->user_model->id_grup(UserGrup::ADMINISTRATOR) && config_item('demo_mode')) {
             unset($data['password']);
 
             return $data;
         }
 
         // Ganti password
-        if (
-            $this->input->post('pass_lama') != ''
-            || $pass_baru != '' || $pass_baru1 != ''
-        ) {
-            $sql   = 'SELECT password,username,id_grup,session FROM user WHERE id = ?';
-            $query = $this->db->query($sql, [$id]);
-            $row   = $query->row();
+        if ($this->input->post('pass_lama') != '' || $pass_baru != '' || $pass_baru1 != '') {
+            $row = $this->config_id()
+                ->select('password, username, id_grup, session')
+                ->where('id', $id)
+                ->get('user')
+                ->row();
+
             // Cek input password
             if (password_verify($password, $row->password) === false) {
                 $this->session->error_msg .= ' -> Kata sandi lama salah<br />';
@@ -577,14 +296,14 @@ class User_model extends CI_Model
                 $this->session->error_msg .= ' -> Kata sandi baru tidak cocok<br />';
             }
 
-            if (! empty($this->session->error_msg)) {
+            if ($this->session->error_msg !== '') {
                 $this->session->success = -1;
             }
             // Cek input password lolos
             else {
                 $this->session->success = 1;
                 // Buat hash password
-                $pwHash = $this->generatePasswordHash($pass_baru);
+                $pwHash = generatePasswordHash($pass_baru);
                 // Cek kekuatan hash lolos, simpan ke array data
                 $data['password'] = $pwHash;
             }
@@ -597,10 +316,8 @@ class User_model extends CI_Model
      * Update user's settings
      *
      * @param int $id Id user di database
-     *
-     * @return void
      */
-    public function update_setting($id = 0)
+    public function update_setting($id = 0): void
     {
         $data = $this->periksa_input_password($id);
 
@@ -610,7 +327,7 @@ class User_model extends CI_Model
 
         // Update foto
         $data['foto'] = $this->urusFoto($id);
-        $hasil        = $this->db->where('id', $id)->update('user', $data);
+        $hasil        = $this->config_id()->where('id', $id)->update('user', $data);
 
         // Untuk Blade
         $this->session->isAdmin = User::findOrFail($id);
@@ -618,38 +335,9 @@ class User_model extends CI_Model
         status_sukses($hasil, true);
     }
 
-    public function list_grup()
-    {
-        $sql   = 'SELECT * FROM user_grup';
-        $query = $this->db->query($sql);
-
-        return $query->result_array();
-    }
-
     //!===========================================================
     //! Helper Methods
     //!===========================================================
-
-    /**
-     * Buat hash password (bcrypt) dari string sebuah password
-     *
-     * @param  [type]  $string  [description]
-     *
-     * @return  [type]  [description]
-     */
-    private function generatePasswordHash($string)
-    {
-        // Pastikan inputnya adalah string
-        $string = is_string($string) ? $string : (string) $string;
-        // Buat hash password
-        $pwHash = password_hash($string, PASSWORD_BCRYPT);
-        // Cek kekuatan hash, regenerate jika masih lemah
-        if (password_needs_rehash($pwHash, PASSWORD_BCRYPT)) {
-            $pwHash = password_hash($string, PASSWORD_BCRYPT);
-        }
-
-        return $pwHash;
-    }
 
     /**
      * - success: nama berkas yang diunggah
@@ -657,10 +345,10 @@ class User_model extends CI_Model
      *
      * @param mixed $idUser
      */
-    private function urusFoto($idUser = '')
+    public function urusFoto($idUser = '')
     {
         if ($idUser) {
-            $berkasLama       = $this->db->select('foto')->where('id', $idUser)->get('user')->row();
+            $berkasLama       = $this->config_id()->select('foto')->where('id', $idUser)->get('user')->row();
             $berkasLama       = is_object($berkasLama) ? $berkasLama->foto : 'kuser.png';
             $lokasiBerkasLama = $this->uploadConfig['upload_path'] . 'kecil_' . $berkasLama;
             $lokasiBerkasLama = str_replace('/', DIRECTORY_SEPARATOR, FCPATH . $lokasiBerkasLama);
@@ -668,7 +356,7 @@ class User_model extends CI_Model
             $berkasLama = 'kuser.png';
         }
 
-        $nama_foto = $this->uploadFoto('gif|jpg|jpeg|png', LOKASI_USER_PICT, 'foto', 'man_user');
+        $nama_foto = $this->uploadFoto('foto', 'man_user');
 
         if (! empty($nama_foto)) {
             // Ada foto yang berhasil diunggah --> simpan ukuran 100 x 100
@@ -700,28 +388,19 @@ class User_model extends CI_Model
      * - success: nama berkas yang diunggah
      * - fail: NULL
      *
-     * @param mixed $allowed_types
-     * @param mixed $upload_path
      * @param mixed $lokasi
      * @param mixed $redirect
      */
-    private function uploadFoto($allowed_types, $upload_path, $lokasi, $redirect)
+    private function uploadFoto(string $lokasi, string $redirect)
     {
         // Adakah berkas yang disertakan?
         $adaBerkas = ! empty($_FILES[$lokasi]['name']);
-        if ($adaBerkas !== true) {
+        if (! $adaBerkas) {
             return null;
-        }
-        // Tes tidak berisi script PHP
-        if (isPHP($_FILES[$lokasi]['tmp_name'], $_FILES[$lokasi]['name'])) {
-            $this->session->error_msg .= ' -> Jenis file ini tidak diperbolehkan ';
-            $this->session->success = -1;
-            redirect($redirect);
         }
 
         if ((strlen($_FILES[$lokasi]['name']) + 20) >= 100) {
-            $this->session->success   = -1;
-            $this->session->error_msg = ' -> Nama berkas foto terlalu panjang, maksimal 80 karakter';
+            set_session('error', 'Nama berkas foto terlalu panjang, maksimal 80 karakter. ' . session('flash_error_msg'));
             redirect($redirect);
         }
 
@@ -749,7 +428,7 @@ class User_model extends CI_Model
             $this->session->error_msg = $this->upload->display_errors(null, null);
         }
 
-        return (! empty($uploadData)) ? $uploadData['file_name'] : null;
+        return (empty($uploadData)) ? null : $uploadData['file_name'];
     }
 
     // Hak akses setiap controller.
@@ -763,31 +442,27 @@ class User_model extends CI_Model
     {
         $controller = explode('/', $url_modul);
         // Demo tidak boleh mengakses menu tertentu
-        if (config_item('demo_mode')) {
-            if (in_array($akses, $this->larangan_demo[$controller[0]])) {
-                log_message('error', '==Akses Demo Terlarang: ' . print_r($_SERVER, true));
+        if (config_item('demo_mode') && is_array($this->larangan_demo[$controller[0]]) && in_array($akses, $this->larangan_demo[$controller[0]] ?? [])) {
+            log_message('error', '==Akses Demo Terlarang: ' . print_r($_SERVER, true));
 
-                return false;
-            }
+            return false;
         }
 
         // Group admin punya akses global
         // b = baca; u = ubah; h= hapus
-        if ($group == 1) {
+        if ($group == $this->user_model->id_grup(UserGrup::ADMINISTRATOR)) {
             return true;
         }
         // Controller yang boleh diakses oleh semua pengguna yg telah login
-        if ($group && in_array($controller[0], ['user_setting', 'wilayah', 'notif', 'pengguna', 'tte', 'sign', 'surat_kecamatan'])) {
+        if ($group && in_array($controller[0], Modul::SELALU_AKTIF)) {
             return true;
         }
 
         if ($pakai_url) {
-            $ada_akses = $this->grup_model->ada_akses_url($group, $url_modul, $akses);
-        } else {
-            $ada_akses = $this->grup_model->ada_akses($group, $controller[0], $akses);
+            return $this->grup_model->ada_akses_url($group, $url_modul, $akses);
         }
 
-        return $ada_akses;
+        return $this->grup_model->ada_akses($group, $controller[0], $akses);
     }
 
     /**
@@ -839,20 +514,37 @@ class User_model extends CI_Model
      *
      * @param string $identity   User's identity
      * @param mixed  $ip_address
-     *
-     * @return bool
      */
-    public function increase_login_attempts($identity, $ip_address)
+    public function increase_login_attempts($identity, $ip_address): void
     {
         if ($this->db->table_exists('login_attempts')) {
-            $data = ['username' => $identity, 'time' => time(), 'ip_address' => $ip_address];
-            LoginAttempts::insert($data);
+            LoginAttempts::create([
+                'config_id'  => $this->config_id,
+                'username'   => $identity,
+                'time'       => time(),
+                'ip_address' => $ip_address,
+            ]);
             $count   = $this->get_attempts_num($identity, $ip_address);
             $message = 'LOGIN GAGAL.<br>NAMA PENGGUNA ATAU KATA SANDI YANG ANDA MASUKKAN SALAH!<br>KESEMPATAN MENCOBA ' . (config_item('maximum_login_attempts') - $count) . ' KALI LAGI';
 
             if ($this->is_max_login_attempts_exceeded($identity, $ip_address)) {
                 $this->session->set_flashdata('time_block', $this->get_last_attempt_time($this->_username, $ip_address));
                 $message = 'LOGIN GAGAL.<br>NAMA PENGGUNA ATAU KATA SANDI YANG ANDA MASUKKAN SALAH!';
+                if (setting('telegram_notifikasi') && cek_koneksi_internet()) {
+                    $this->load->library('Telegram/telegram');
+
+                    try {
+                        $this->telegram->sendMessage([
+                            'text' => <<<EOD
+                                    Percobaan login gagal sebanyak 3 kali dengan input nama pengguna {$identity} dan IP Address {$ip_address}.
+                                EOD,
+                            'parse_mode' => 'Markdown',
+                            'chat_id'    => $this->setting->telegram_user_id,
+                        ]);
+                    } catch (Exception $e) {
+                        log_message('error', $e->getMessage());
+                    }
+                }
             }
             $this->session->set_flashdata('attempts_error', $message);
         }
@@ -877,5 +569,16 @@ class User_model extends CI_Model
         if ($this->db->table_exists('login_attempts')) {
             return LoginAttempts::where('username', $identity)->where('ip_address', $ip_address)->delete();
         }
+    }
+
+    // get super admin
+    public function get_super_admin()
+    {
+        return $this->config_id()
+            ->select('id')
+            ->where('id_grup', $this->user_model->id_grup(UserGrup::ADMINISTRATOR))
+            ->get('user')
+            ->row()
+            ->id;
     }
 }

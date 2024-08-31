@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -38,10 +38,13 @@
 namespace App\Models;
 
 use App\Enums\JenisKelaminEnum;
+use App\Traits\ConfigId;
 use Illuminate\Support\Facades\DB;
 
 class BukuTamu extends BaseModel
 {
+    use ConfigId;
+
     /**
      * The table associated with the model.
      *
@@ -76,26 +79,6 @@ class BukuTamu extends BaseModel
     }
 
     /**
-     * Define a one-to-one relationship.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\hasOne
-     */
-    public function bidang()
-    {
-        return $this->hasOne(RefJabatan::class, 'id', 'id_bidang');
-    }
-
-    /**
-     * Define a one-to-one relationship.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\hasOne
-     */
-    public function keperluan()
-    {
-        return $this->hasOne(BukuKeperluan::class, 'id', 'id_keperluan');
-    }
-
-    /**
      * Getter untuk url_foto
      *
      * @return string
@@ -105,16 +88,10 @@ class BukuTamu extends BaseModel
         $lokasi = LOKASI_FOTO_BUKU_TAMU . $this->foto;
 
         if (null === $this->foto || ! file_exists(FCPATH . $lokasi)) {
-            if ($this->jenis_kelamin == JenisKelaminEnum::LAKI_LAKI) {
-                $lokasi = FOTO_DEFAULT_PRIA;
-            } else {
-                $lokasi = FOTO_DEFAULT_WANITA;
-            }
-        } else {
-            $lokasi = base_url($lokasi);
+            return $this->jenis_kelamin == JenisKelaminEnum::LAKI_LAKI ? FOTO_DEFAULT_PRIA : FOTO_DEFAULT_WANITA;
         }
 
-        return $lokasi;
+        return base_url($lokasi);
     }
 
     public function scopeFilters($query, array $filters)
@@ -125,5 +102,25 @@ class BukuTamu extends BaseModel
         }
 
         return $query;
+    }
+
+    /**
+     * Setter untuk bidang
+     *
+     * @param mixed $value
+     */
+    public function setBidangAttribute($value): void
+    {
+        $this->attributes['bidang'] = RefJabatan::find($value)->nama ?? null;
+    }
+
+    /**
+     * Setter untuk keperluan
+     *
+     * @param mixed $value
+     */
+    public function setKeperluanAttribute($value): void
+    {
+        $this->attributes['keperluan'] = BukuKeperluan::find($value)->keperluan ?? null;
     }
 }

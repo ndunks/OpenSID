@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -65,7 +65,7 @@ class Kader_model extends MY_Model
             ->select("kd.*, (SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(tanggallahir)), '%Y')+0 FROM tweb_penduduk WHERE id = p.id) AS umur")
             ->select("IF(p.sex=1, 'L', 'P') AS jk, p.nama, pd.nama AS pendidikan")
             ->select("(
-                case when (p.id_kk IS NULL or p.id_kk = 0)
+                case when (p.id_kk IS NULL)
                     then
                         case when (cp.dusun = '-' or cp.dusun = '')
                             then CONCAT(COALESCE(p.alamat_sekarang, ''), ' RT ', cp.rt, ' / RW ', cp.rw)
@@ -84,6 +84,8 @@ class Kader_model extends MY_Model
             ->join('tweb_wil_clusterdesa ck', 'k.id_cluster = ck.id', 'left')
             ->join('tweb_penduduk_pendidikan_kk pd', 'p.pendidikan_kk_id = pd.id', 'left');
 
+        $this->config_id('kd');
+
         if ($search) {
             $this->db
                 ->group_start()
@@ -98,14 +100,17 @@ class Kader_model extends MY_Model
 
     public function find($id = 0)
     {
-        return $this->db->get_where($this->table, ['id' => $id])->row_array();
+        return $this->config_id()->get_where($this->table, ['id' => $id])->row_array();
     }
 
+    /**
+     * @param mixed $id
+     */
     public function list_penduduk($id = 0)
     {
-        $this->db->where("id NOT IN (SELECT penduduk_id FROM kader_pemberdayaan_masyarakat WHERE penduduk_id != {$id})");
+        $this->db->where("id NOT IN (SELECT penduduk_id FROM kader_pemberdayaan_masyarakat WHERE penduduk_id != {$id} AND config_id = {$this->config_id})");
 
-        return $this->db->select('id, nik, nama')->get('penduduk_hidup')->result_array();
+        return $this->config_id()->select('id, nik, nama')->get('penduduk_hidup')->result_array();
     }
 
     public function get_kursus($nama = null)
@@ -115,9 +120,8 @@ class Kader_model extends MY_Model
         }
 
         $kursus = array_column($this->referensi_model->list_data('ref_penduduk_kursus'), 'nama');
-
-        $new = [];
-        if ($list_data = $this->db->select('kursus')->get($this->table)->result_array()) {
+        $new    = [];
+        if ($list_data = $this->config_id()->select('kursus')->get($this->table)->result_array()) {
             $data = '';
 
             foreach ($list_data as $value) {
@@ -139,7 +143,7 @@ class Kader_model extends MY_Model
             }
         }
 
-        return array_unique(array_merge($kursus, $new));
+        return array_unique([...$kursus, ...$new]);
     }
 
     public function get_bidang($nama = null)
@@ -151,7 +155,7 @@ class Kader_model extends MY_Model
         $bidang = array_column($this->referensi_model->list_data('ref_penduduk_bidang'), 'nama');
 
         $new = [];
-        if ($list_data = $this->db->select('bidang')->get($this->table)->result_array()) {
+        if ($list_data = $this->config_id()->select('bidang')->get($this->table)->result_array()) {
             $data = '';
 
             foreach ($list_data as $value) {
@@ -173,38 +177,40 @@ class Kader_model extends MY_Model
             }
         }
 
-        return array_unique(array_merge($bidang, $new));
+        return array_unique([...$bidang, ...$new]);
     }
 
-    public function tambah()
+    public function tambah(): void
     {
         $data = $this->validasi();
+
+        $data['config_id'] = identitas('id');
 
         $outp = $this->db->insert($this->table, $data);
 
         status_sukses($outp);
     }
 
-    public function ubah($id = 0)
+    public function ubah($id = 0): void
     {
         $data = $this->validasi();
 
-        $outp = $this->db->where('id', $id)->update($this->table, $data);
+        $outp = $this->config_id()->where('id', $id)->update($this->table, $data);
 
         status_sukses($outp);
     }
 
-    public function hapus($id = 0)
+    public function hapus($id = 0): void
     {
-        $outp = $this->db->delete($this->table, ['id' => $id]);
+        $outp = $this->config_id()->delete($this->table, ['id' => $id]);
 
         status_sukses($outp);
     }
 
-    public function hapus_semua()
+    public function hapus_semua(): void
     {
         $id   = $this->input->post('id_cb');
-        $outp = $this->db->where_in('id', $id)->delete($this->table);
+        $outp = $this->config_id()->where_in('id', $id)->delete($this->table);
 
         status_sukses($outp);
     }

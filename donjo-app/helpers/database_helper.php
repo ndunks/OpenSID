@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -41,17 +41,14 @@
  * Saat ini pemisah menggunakan ','
  * Acuan: https://stackoverflow.com/questions/4249432/export-to-csv-via-php
  *
- * @param	string	nama tabel yang akan diekspor
+ * @param string	nama tabel yang akan diekspor
  * @param mixed $table
  *
  * @return string
  */
 function tulis_csv($table)
 {
-    $CI = &get_instance();
-    $CI->load->database();
-
-    $data = $CI->db->get($table)->result_array();
+    $data = get_instance()->db->where('config_id', identitas('id'))->get($table)->result_array();
     if (count($data) == 0) {
         return null;
     }
@@ -92,8 +89,10 @@ function tulis_csv($table)
  *
  * @param mixed $zip_file
  * @param mixed $file_in_zip
+ *
+ * @return mixed[]
  */
-function get_csv($zip_file, $file_in_zip)
+function get_csv($zip_file, $file_in_zip): array
 {
     // read the file's data:
     $path      = sprintf('zip://%s#%s', $zip_file, $file_in_zip);
@@ -101,23 +100,28 @@ function get_csv($zip_file, $file_in_zip)
     //$file_data = preg_split('/[\r\n]{1,2}(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))/', $file_data);
     $file_data = preg_split('/\r*\n+|\r+/', $file_data);
     $csv       = array_map('str_getcsv', $file_data);
-    array_walk($csv, static function (&$a) use ($csv) {
-        $a = array_combine($csv[0], $a);
-    });
-    array_shift($csv); // remove column header
+    $result    = [];
+    $header    = $csv[0];
 
-    return $csv;
+    foreach ($csv as $key => $value) {
+        if (!$key) {
+            continue;
+        }
+        if (count($header) === count($value)) {
+            $result[] = array_combine($csv[0], $value);
+        }
+    }
+
+    return $result;
 }
 
 /**
  * Paksa download file
  *
- * @param	string	nama file untuk didownload
+ * @param string	nama file untuk didownload
  * @param mixed $filename
- *
- * @return string
  */
-function download_send_headers($filename)
+function download_send_headers($filename): void
 {
     // disable caching
     $now = gmdate('D, d M Y H:i:s');
@@ -135,7 +139,7 @@ function download_send_headers($filename)
     header('Content-Transfer-Encoding: binary');
 }
 
-function duplicate_key_update_str($data)
+function duplicate_key_update_str($data): string
 {
     $update_str = '';
 

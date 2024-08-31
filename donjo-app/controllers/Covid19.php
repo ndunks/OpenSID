@@ -11,6 +11,44 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ *
+ * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
+ * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
+ * tanpa batasan, termasuk hak untuk menggunakan, menyalin, mengubah dan/atau mendistribusikan,
+ * asal tunduk pada syarat berikut:
+ *
+ * Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan dalam
+ * setiap salinan atau bagian penting Aplikasi Ini. Barang siapa yang menghapus atau menghilangkan
+ * pemberitahuan ini melanggar ketentuan lisensi Aplikasi Ini.
+ *
+ * PERANGKAT LUNAK INI DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN, BAIK TERSURAT MAUPUN
+ * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
+ * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
+ *
+ * @package   OpenSID
+ * @author    Tim Pengembang OpenDesa
+ * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @license   http://www.gnu.org/licenses/gpl.html GPL V3
+ * @link      https://github.com/OpenSID/OpenSID
+ *
+ */
+
+use App\Models\CovidPemudik;
+use App\Models\Penduduk;
+
+/*
+ *
+ * File ini bagian dari:
+ *
+ * OpenSID
+ *
+ * Sistem informasi desa sumber terbuka untuk memajukan desa
+ *
+ * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
+ *
+ * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
  * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
@@ -48,12 +86,12 @@ class Covid19 extends Admin_Controller
         $this->modul_ini = 'kesehatan';
     }
 
-    public function index()
+    public function index(): void
     {
         $this->data_pemudik(1);
     }
 
-    public function data_pemudik($page = 1)
+    public function data_pemudik($page = 1): void
     {
         $this->sub_modul_ini = 'pendataan';
 
@@ -69,7 +107,7 @@ class Covid19 extends Admin_Controller
         $this->render('covid19/data_pemudik', $data);
     }
 
-    public function form_pemudik()
+    public function form_pemudik(): void
     {
         $this->redirect_hak_akses('u');
         $this->sub_modul_ini = 'pendataan';
@@ -79,11 +117,7 @@ class Covid19 extends Admin_Controller
 
         $data['list_penduduk'] = $this->covid19_model->get_penduduk_not_in_pemudik();
 
-        if (isset($_POST['terdata'])) {
-            $data['individu'] = $this->covid19_model->get_penduduk_by_id($_POST['terdata']);
-        } else {
-            $data['individu'] = null;
-        }
+        $data['individu'] = isset($_POST['terdata']) ? $this->covid19_model->get_penduduk_by_id($_POST['terdata']) : null;
 
         $data['select_tujuan_mudik'] = $this->covid19_model->list_tujuan_mudik();
 
@@ -104,14 +138,42 @@ class Covid19 extends Admin_Controller
         $this->render('covid19/form_pemudik', $data);
     }
 
-    public function insert_penduduk()
+    public function apipendudukpemudik()
+    {
+        if ($this->input->is_ajax_request()) {
+            $cari    = $this->input->get('q');
+            $pemudik = CovidPemudik::pluck('id_terdata');
+
+            $penduduk = Penduduk::select(['id', 'nik', 'nama', 'id_cluster'])
+                ->when($cari, static function ($query) use ($cari): void {
+                    $query->orWhere('nik', 'like', "%{$cari}%")
+                        ->orWhere('nama', 'like', "%{$cari}%");
+                })
+                ->whereNotIn('id', $pemudik)
+                ->paginate(10);
+
+            return json([
+                'results' => collect($penduduk->items())
+                    ->map(static fn ($item): array => [
+                        'id'   => $item->id,
+                        'text' => 'NIK : ' . $item->nik . ' - ' . $item->nama . ' RT-' . $item->wilayah->rt . ', RW-' . $item->wilayah->rw . ', ' . strtoupper(setting('sebutan_dusun')) . ' ' . $item->wilayah->dusun,
+                    ]),
+                'pagination' => [
+                    'more' => $penduduk->currentPage() < $penduduk->lastPage(),
+                ],
+            ]);
+        }
+
+        return show_404();
+    }
+
+    public function insert_penduduk(): void
     {
         $this->redirect_hak_akses('u');
-        $callback_url = $_POST['callback_url'];
         unset($_POST['callback_url']);
 
         $this->session->jenis_peristiwa = 5; // pindah masuk
-        $id                             = $this->penduduk_model->insert();
+        $this->penduduk_model->insert();
         if ($_SESSION['success'] == -1) {
             $_SESSION['dari_internal'] = true;
         }
@@ -119,7 +181,7 @@ class Covid19 extends Admin_Controller
         redirect("{$this->controller}/form_pemudik");
     }
 
-    public function add_pemudik()
+    public function add_pemudik(): void
     {
         $this->redirect_hak_akses('u');
         $this->covid19_model->add_pemudik($_POST);
@@ -127,7 +189,7 @@ class Covid19 extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function hapus_pemudik($id_pemudik)
+    public function hapus_pemudik($id_pemudik): void
     {
         $this->redirect_hak_akses('h');
         $this->covid19_model->delete_pemudik_by_id($id_pemudik);
@@ -135,7 +197,7 @@ class Covid19 extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function edit_pemudik_form($id = 0)
+    public function edit_pemudik_form($id = 0): void
     {
         $this->redirect_hak_akses('u');
         $data                        = $this->covid19_model->get_pemudik_by_id($id);
@@ -146,7 +208,7 @@ class Covid19 extends Admin_Controller
         $this->load->view('covid19/edit_pemudik', $data);
     }
 
-    public function edit_pemudik($id = 0)
+    public function edit_pemudik($id = 0): void
     {
         $this->redirect_hak_akses('u');
         $this->covid19_model->update_pemudik_by_id($this->input->post(), $id);
@@ -154,7 +216,7 @@ class Covid19 extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function detil_pemudik($id = 0)
+    public function detil_pemudik($id = 0): void
     {
         $nav['act'] = 206;
 
@@ -181,7 +243,7 @@ class Covid19 extends Admin_Controller
         $this->render('covid19/detil_pemudik', $data);
     }
 
-    public function update_penduduk($id_pend, $id_pemudik)
+    public function update_penduduk($id_pend, $id_pemudik): void
     {
         $this->redirect_hak_akses('u');
         $this->penduduk_model->update($id_pend);
@@ -192,7 +254,7 @@ class Covid19 extends Admin_Controller
         redirect("{$this->controller}/detil_pemudik/{$id_pemudik}");
     }
 
-    public function pantau($page = 1, $filter_tgl = null, $filter_nik = null)
+    public function pantau($page = 1, $filter_tgl = null, $filter_nik = null): void
     {
         $this->sub_modul_ini = 'pemantauan';
 
@@ -234,7 +296,7 @@ class Covid19 extends Admin_Controller
         $this->render('covid19/pantau_pemudik', $data);
     }
 
-    public function add_pantau()
+    public function add_pantau(): void
     {
         $this->redirect_hak_akses('u', '', 'covid19/pantau');
         $this->covid19_model->add_pantau_pemudik($_POST);
@@ -243,7 +305,7 @@ class Covid19 extends Admin_Controller
         redirect($url);
     }
 
-    public function hapus_pantau($id_pantau_pemudik, $page = null, $h_plus = null)
+    public function hapus_pantau($id_pantau_pemudik, $page = null, $h_plus = null): void
     {
         $this->redirect_hak_akses('h', '', 'covid19/pantau');
         $this->covid19_model->delete_pantau_pemudik_by_id($id_pantau_pemudik);
@@ -256,7 +318,7 @@ class Covid19 extends Admin_Controller
     }
 
     // $aksi = cetak/unduh
-    public function daftar($aksi = '', $filter_tgl = null, $filter_nik = null)
+    public function daftar($aksi = '', $filter_tgl = null, $filter_nik = null): void
     {
         $this->session->set_userdata('per_page', 0); // Unduh semua data
 

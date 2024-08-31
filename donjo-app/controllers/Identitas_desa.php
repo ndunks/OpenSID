@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -40,66 +40,47 @@ defined('BASEPATH') || exit('No direct script access allowed');
 use App\Models\Config;
 use App\Models\Pamong;
 use App\Models\Wilayah;
-use Illuminate\Support\Facades\Schema;
 
 class Identitas_desa extends Admin_Controller
 {
     private $cek_kades;
+    protected $identitas_desa;
 
     public function __construct()
     {
         parent::__construct();
         $this->modul_ini     = 'info-desa';
         $this->sub_modul_ini = 'identitas-desa';
-
-        if (Schema::hasTable('ref_jabatan')) {
-            $this->cek_kades = Pamong::kepalaDesa()->exists();
-        }
+        isCan('b');
+        $this->cek_kades = Pamong::kepalaDesa()->exists();
+        // TODO: Cek bagian ini selalu bermasalah jika model penduduk atau pamong aktifkan global observer config_id
+        $config               = Config::appKey()->first();
+        $this->identitas_desa = $config ? $config->toArray() : null;
     }
 
     /**
      * View index identitas desa
-     *
-     * @return void
      */
-    public function index()
+    public function index(): void
     {
-        $main = null;
-
-        if (Schema::hasTable('ref_jabatan')) {
-            $main = Config::first();
-        }
-
-        return view('admin.identitas_desa.index', [
-            'main'      => $main,
+        view('admin.identitas_desa.index', [
+            'main'      => $this->identitas_desa,
             'cek_kades' => $this->cek_kades,
         ]);
     }
 
     /**
      * View form ubah identitas desa
-     *
-     * @return void
      */
-    public function form()
+    public function form(): void
     {
-        $this->redirect_hak_akses('u');
+        isCan('u');
+        $data['main']          = $this->identitas_desa;
+        $data['cek_kades']     = $this->cek_kades;
+        $data['form_action']   = ci_route('identitas_desa.update');
+        $data['status_pantau'] = checkWebsiteAccessibility(config_item('server_pantau')) ? 1 : 0;
 
-        $main = null;
-
-        if (Schema::hasTable('ref_jabatan')) {
-            $main = Config::first();
-        }
-
-        if ($main) {
-            $form_action = route('identitas_desa.update', $main->id);
-        } else {
-            $form_action = route('identitas_desa.insert');
-        }
-
-        $cek_kades = $this->cek_kades;
-
-        return view('admin.identitas_desa.form', compact('main', 'form_action', 'cek_kades'));
+        view('admin.identitas_desa.form', $data);
     }
 
     /**
@@ -109,9 +90,9 @@ class Identitas_desa extends Admin_Controller
      */
     public function insert()
     {
-        $this->redirect_hak_akses('u');
+        isCan('u');
 
-        if (Config::create($this->validate($this->request))) {
+        if (Config::create(static::validate($this->request))) {
             return json([
                 'status' => true,
             ]);
@@ -125,37 +106,32 @@ class Identitas_desa extends Admin_Controller
     /**
      * Proses ubah identitas desa
      *
-     * @param int $id
-     *
      * @return void
      */
-    public function update($id = 0)
+    public function update()
     {
-        $this->redirect_hak_akses('u');
+        isCan('u');
 
-        $data = Config::findOrFail($id);
+        $id       = $this->identitas_desa['id'];
+        $config   = Config::find($id);
+        $validate = static::validate($this->request, $config);
+        $cek      = $this->cek_kode_wilayah($validate);
 
-        if ($data->update(static::validate($this->request))) {
-            return json([
-                'status' => true,
-            ]);
+        if ($cek['status'] && $config->update($validate)) {
+            return json(['status' => true]);
         }
 
-        return json([
-            'status' => false,
-        ]);
+        return json(['status' => false, 'message' => $cek['message']]);
     }
 
     /**
      * View Form Ubah Peta
      *
      * @param string $tipe
-     *
-     * @return void
      */
-    public function maps($tipe = 'kantor')
+    public function maps($tipe = 'kantor'): void
     {
-        $data_desa            = Config::first();
+        $data_desa            = $this->identitas_desa;
         $data['desa']         = $data_desa;
         $data['poly']         = ($tipe == 'wilayah') ? 'multi' : 'poly';
         $data['wil_ini']      = $data_desa;
@@ -163,40 +139,37 @@ class Identitas_desa extends Admin_Controller
         $data['dusun_gis']    = Wilayah::dusun()->get();
         $data['rw_gis']       = Wilayah::rw()->get();
         $data['rt_gis']       = Wilayah::rt()->get();
-        $data['nama_wilayah'] = ucwords($this->setting->sebutan_desa . ' ' . $data_desa->nama_desa);
-        $data['wilayah']      = ucwords($this->setting->sebutan_desa . ' ' . $data_desa->nama_desa);
+        $data['nama_wilayah'] = ucwords(setting('sebutan_desa') . ' ' . $data_desa->nama_desa);
+        $data['wilayah']      = ucwords(setting('sebutan_desa') . ' ' . $data_desa->nama_desa);
         $data['breadcrumb']   = [
-            ['link' => route('identitas_desa'), 'judul' => 'Identitas ' . ucwords($this->setting->sebutan_desa)],
+            ['link' => ci_route('identitas_desa'), 'judul' => 'Identitas ' . ucwords(setting('sebutan_desa'))],
         ];
 
-        $data['form_action'] = route('identitas_desa.update_maps', $tipe);
-
-        $this->render('sid/wilayah/maps_' . $tipe, $data);
+        $data['form_action']     = ci_route('identitas_desa.update_maps', $tipe);
+        $data['route_kosongkan'] = ci_route('identitas_desa.kosongkan');
+        view('admin.wilayah.maps_' . $tipe, $data);
     }
 
     /**
      * Proses ubah peta
      *
      * @param string $tipe
-     *
-     * @return void
      */
-    public function update_maps($tipe = 'kantor')
+    public function update_maps($tipe = 'kantor'): void
     {
-        $this->redirect_hak_akses('u');
+        isCan('u');
 
-        $data       = Config::first();
-        $data->zoom = bilangan($this->request['zoom']);
+        $data['zoom'] = bilangan($this->request['zoom']);
 
         if ($tipe == 'kantor') {
-            $data->lat = koordinat($this->request['lat']);
-            $data->lng = koordinat($this->request['lng']);
+            $data['lat'] = koordinat($this->request['lat']);
+            $data['lng'] = koordinat($this->request['lng']);
         } else {
-            $data->path  = htmlentities($this->request['path']);
-            $data->warna = warna($this->request['warna']);
+            $data['path']  = htmlentities($this->request['path']);
+            $data['warna'] = warna($this->request['warna']);
         }
 
-        if ($data->save()) {
+        if (Config::find($this->identitas_desa['id'])->update($data)) {
             redirect_with('success', 'Berhasil Ubah Peta ' . ucwords($tipe));
         }
 
@@ -207,47 +180,42 @@ class Identitas_desa extends Admin_Controller
      * Proses kosongkan path peta
      *
      * @param string $id
-     *
-     * @return void
      */
-    public function kosongkan()
+    public function kosongkan(): void
     {
-        $this->redirect_hak_akses('u');
+        isCan('u');
 
-        $data       = Config::first();
-        $data->path = null;
-
-        if ($data->save()) {
+        if (Config::find($this->identitas_desa['id'])->update(['path' => null])) {
             redirect_with('success', 'Berhasil Kosongkan Peta');
         }
         redirect_with('error', 'Gagal Kosongkan Peta');
     }
 
     // Hanya filter inputan
-    protected static function validate($request = [])
+    protected static function validate($request = [], $old = null)
     {
         if ($request['ukuran'] == '') {
             $request['ukuran'] = 100;
         }
 
         return [
-            'logo'              => static::unggah('logo', true, bilangan($request['ukuran'])) ?? $request['old_logo'],
-            'kantor_desa'       => static::unggah('kantor_desa') ?? $request['old_kantor_desa'],
+            'logo'              => static::unggah('logo', true, bilangan($request['ukuran'])) ?? $old->logo,
+            'kantor_desa'       => static::unggah('kantor_desa') ?? $old->kantor_desa,
             'nama_desa'         => nama_desa($request['nama_desa']),
-            'kode_desa'         => bilangan($request['kode_desa']),
+            'kode_desa'         => substr(bilangan($request['kode_desa']), 0, 10),
             'kode_pos'          => bilangan($request['kode_pos']),
             'alamat_kantor'     => alamat($request['alamat_kantor']),
             'email_desa'        => email($request['email_desa']),
             'telepon'           => bilangan($request['telepon']),
             'website'           => alamat_web($request['website']),
             'nama_kecamatan'    => nama_desa($request['nama_kecamatan']),
-            'kode_kecamatan'    => bilangan($request['kode_kecamatan']),
+            'kode_kecamatan'    => substr(bilangan($request['kode_kecamatan']), 0, 6),
             'nama_kepala_camat' => nama($request['nama_kepala_camat']),
             'nip_kepala_camat'  => nomor_surat_keputusan($request['nip_kepala_camat']),
             'nama_kabupaten'    => nama($request['nama_kabupaten']),
-            'kode_kabupaten'    => bilangan($request['kode_kabupaten']),
+            'kode_kabupaten'    => substr(bilangan($request['kode_kabupaten']), 0, 4),
             'nama_propinsi'     => nama_terbatas($request['nama_propinsi']),
-            'kode_propinsi'     => bilangan($request['kode_propinsi']),
+            'kode_propinsi'     => substr(bilangan($request['kode_propinsi']), 0, 2),
             'nomor_operator'    => bilangan($request['nomor_operator']),
         ];
     }
@@ -291,7 +259,7 @@ class Identitas_desa extends Admin_Controller
             redirect_with('error', $CI->upload->display_errors(null, null));
         }
 
-        if (! empty($uploadData)) {
+        if (!empty($uploadData)) {
             if ($resize) {
                 $tipe_file = TipeFile($_FILES['logo']);
                 $dimensi   = ['width' => $ukuran, 'height' => $ukuran];
@@ -303,5 +271,51 @@ class Identitas_desa extends Admin_Controller
         }
 
         return null;
+    }
+
+    private function cek_kode_wilayah(array $request = [])
+    {
+        $status = false;
+        $config = new Config();
+
+        switch (true) {
+            case $config->count() <= 1:
+            default:
+                $status = true;
+                break;
+
+            case $request['kode_propinsi'] != $config->first()->kode_propinsi:
+                $message = 'Kode Provinsi Tidak Sesuai, Pastikan Kode Provinsi Sesuai Dengan Lingkup Wilayah Penggunaan.';
+                break;
+
+            case $request['kode_kabupaten'] != $config->first()->kode_kabupaten:
+                $message = 'Kode Kabupaten Tidak Sesuai, Pastikan Kode Kabupaten Sesuai Dengan Lingkup Wilayah Penggunaan.';
+                break;
+
+                // TODO: Saat ini penggunaan validassi hanya sampai tingkat kabupaten
+                // case $request['kode_kecamatan'] != $config->first()->kode_kecamatan:
+                //     $message = 'Kode Kecamatan Tidak Sesuai, Pastikan Kode Kecamatan Sesuai Dengan Lingkup Wilayah Penggunaan.';
+                //     break;
+
+            case in_array($request['kode_desa'], $config->where('kode_desa', '!=', $this->identitas_desa['kode_desa'])->pluck('kode_desa')->toArray()):
+                $message = 'Kode Desa Sudah Digunakan';
+                break;
+        }
+
+        return ['status' => $status, 'message' => $message];
+    }
+
+    public function reset(): void
+    {
+        isCan('u');
+
+        if (null === $this->identitas_desa) {
+            unlink(DESAPATH . 'app_key');
+            cache()->forget('identitas_desa');
+
+            set_session('error', 'Berhasil Reset AppKey, Silahkan Tentukan Identitas Desa');
+        }
+
+        redirect('identitas_desa');
     }
 }

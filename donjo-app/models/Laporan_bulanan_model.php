@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -57,26 +57,26 @@ class Laporan_bulanan_model extends MY_Model
     public function list_data()
     {
         $sql = "select c.id as id_cluster,c.rt,c.rw,c.dusun as dusunnya,
-			(select count(id) from penduduk_hidup where sex='1' and id_cluster=c.id) as L,
-			(select count(id) from penduduk_hidup where sex='2' and id_cluster=c.id) as P,
-			(select count(id) from penduduk_hidup where (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)<1 and id_cluster=c.id ) as bayi,
-			(select count(id) from penduduk_hidup where (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)>=1 and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)<=5  and id_cluster=c.id ) as balita,
-			(select count(id) from penduduk_hidup where (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)>=6 and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)<=12  and id_cluster=c.id ) as sd,
-			(select count(id) from penduduk_hidup where (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)>=13 and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)<=15  and id_cluster=c.id ) as smp,
-			(select count(id) from penduduk_hidup where (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)>=16 and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)<=18  and id_cluster=c.id ) as sma,
-			(select count(id) from penduduk_hidup where (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)>60 and id_cluster=c.id ) as lansia,
-			(select count(id) from penduduk_hidup where id_cluster=c.id and cacat_id in (1,2,3,4,5,6)) as cacat,
-			(select count(id) from penduduk_hidup where id_cluster=c.id and cacat_id='1') as cacat_fisik,
-			(select count(id) from penduduk_hidup where id_cluster=c.id and cacat_id='2') as cacat_netra,
-			(select count(id) from penduduk_hidup where id_cluster=c.id and cacat_id='3') as cacat_rungu,
-			(select count(id) from penduduk_hidup where id_cluster=c.id and cacat_id='4') as cacat_mental,
-			(select count(id) from penduduk_hidup where id_cluster=c.id and cacat_id='5') as cacat_fisik_mental,
-			(select count(id) from penduduk_hidup where id_cluster=c.id and cacat_id='6') as cacat_lainnya,
-			(select count(id) from penduduk_hidup where id_cluster=c.id and (cacat_id IS NULL OR cacat_id='7')) as tidak_cacat,
-			(select count(id) from penduduk_hidup where sakit_menahun_id is not null and sakit_menahun_id <>'0' and sakit_menahun_id <>'14' and id_cluster=c.id and sex='1') as sakit_L,
-			(select count(id) from penduduk_hidup where sakit_menahun_id is not null and sakit_menahun_id <>'0' and sakit_menahun_id <>'14' and id_cluster=c.id and sex='2') as sakit_P,
-			(select count(id) from penduduk_hidup where hamil='1' and id_cluster=c.id) as hamil
-			from  tweb_wil_clusterdesa c WHERE rw<>'0' AND rt<>'0' AND (select count(id) from tweb_penduduk where id_cluster=c.id)>0 ";
+            (select count(id) from penduduk_hidup where config_id=c.config_id and sex='1' and id_cluster=c.id) as L,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and sex='2' and id_cluster=c.id) as P,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)<1 and id_cluster=c.id ) as bayi,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)>=1 and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)<=5  and id_cluster=c.id ) as balita,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)>=6 and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)<=12  and id_cluster=c.id ) as sd,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)>=13 and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)<=15  and id_cluster=c.id ) as smp,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)>=16 and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)<=18  and id_cluster=c.id ) as sma,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and (DATE_FORMAT( FROM_DAYS( TO_DAYS(NOW()) - TO_DAYS( tanggallahir ) ) , '%Y' ) +0)>60 and id_cluster=c.id ) as lansia,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and id_cluster=c.id and cacat_id in (1,2,3,4,5,6)) as cacat,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and id_cluster=c.id and cacat_id='1') as cacat_fisik,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and id_cluster=c.id and cacat_id='2') as cacat_netra,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and id_cluster=c.id and cacat_id='3') as cacat_rungu,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and id_cluster=c.id and cacat_id='4') as cacat_mental,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and id_cluster=c.id and cacat_id='5') as cacat_fisik_mental,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and id_cluster=c.id and cacat_id='6') as cacat_lainnya,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and id_cluster=c.id and (cacat_id IS NULL OR cacat_id='7')) as tidak_cacat,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and sakit_menahun_id is not null and sakit_menahun_id <>'0' and sakit_menahun_id <>'14' and id_cluster=c.id and sex='1') as sakit_L,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and sakit_menahun_id is not null and sakit_menahun_id <>'0' and sakit_menahun_id <>'14' and id_cluster=c.id and sex='2') as sakit_P,
+            (select count(id) from penduduk_hidup where config_id=c.config_id and hamil='1' and id_cluster=c.id) as hamil
+            from tweb_wil_clusterdesa c WHERE c.config_id={$this->config_id} and rw<>'0' AND rt<>'0' AND (select count(id) from tweb_penduduk where config_id=c.config_id and id_cluster=c.id)>0 ";
 
         $sql .= $this->dusun_sql();
         $sql .= ' ORDER BY c.dusun,c.rw,c.rt ';
@@ -85,7 +85,11 @@ class Laporan_bulanan_model extends MY_Model
 
         //	$data = null;
         //Formating Output
-        for ($i = 0; $i < count($data); $i++) {
+        $counter = count($data);
+
+        //	$data = null;
+        //Formating Output
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no']    = $i + 1;
             $data[$i]['tabel'] = $data[$i]['rt'];
         }
@@ -111,18 +115,25 @@ class Laporan_bulanan_model extends MY_Model
         if ($rincian && $tipe) {
             return $this->rincian_awal($tipe);
         }
+        $configId = identitas('id');
+        $bln      = $this->session->bulanku;
+        $thn      = $this->session->tahunku;
+        $pad_bln  = str_pad($bln, 2, '0', STR_PAD_LEFT); // Untuk membandingkan dengan tgl mysql
 
-        $bln     = $this->session->bulanku;
-        $thn     = $this->session->tahunku;
-        $pad_bln = str_pad($bln, 2, '0', STR_PAD_LEFT); // Untuk membandingkan dengan tgl mysql
-
-        // Perubahan penduduk sebelum bulan laporan
-        $this->db
+        // Cari penduduk yang hidup sampai dengan akhir bulan sebelumnya, jadi harus cari berdasarkan log_penduduk
+        // tidak bisa menggunakan status_dasar pada tabel tweb_penduduk
+        $penduduk_mutasi_sql = $this->config_id('l')
             ->select('p.*, l.kode_peristiwa')
-            ->from('log_penduduk l')
-            ->join('tweb_penduduk p', 'l.id_pend = p.id')
-            ->where("DATE_FORMAT(l.tgl_lapor, '%Y-%m') < '{$thn}-{$pad_bln}'");
-        $penduduk_mutasi_sql = $this->db->get_compiled_select();
+            ->from('tweb_penduduk p')
+            // Ambil log yg terakhir saja
+            ->join("(
+                SELECT    MAX(id) max_id, id_pend
+                FROM      log_penduduk
+                where DATE_FORMAT(tgl_lapor, '%Y-%m') < '{$thn}-{$pad_bln}'
+                GROUP BY  id_pend
+            ) log_max", 'log_max.id_pend = p.id')
+            ->join('log_penduduk l', 'log_max.max_id = l.id and l.kode_peristiwa not in (2, 3, 4)')
+            ->get_compiled_select();
 
         $penduduk_mutasi = $this->db
             ->select('sum(case when sex = 1 and warganegara_id <> 2 and kode_peristiwa in (1,5) then 1 else 0 end) AS WNI_L_PLUS')
@@ -133,27 +144,41 @@ class Laporan_bulanan_model extends MY_Model
             ->select('sum(case when sex = 2 and warganegara_id <> 2 and kode_peristiwa in (2, 3, 4) then 1 else 0 end) AS WNI_P_MINUS')
             ->select('sum(case when sex = 1 and warganegara_id = 2 and kode_peristiwa in (2, 3, 4) then 1 else 0 end) AS WNA_L_MINUS')
             ->select('sum(case when sex = 2 and warganegara_id = 2 and kode_peristiwa in (2, 3, 4) then 1 else 0 end) AS WNA_P_MINUS')
-            ->from('(' . $penduduk_mutasi_sql . ') as m')
+            ->from("({$penduduk_mutasi_sql}) as m")
             ->get()
             ->row_array();
 
         // Perubahan keluarga sebelum bulan laporan
-        $this->db
+        $keluarga_mutasi_sql = $this->config_id('l')
             ->select('p.*, l.id_peristiwa')
             ->from('log_keluarga l')
+            // Ambil log yg terakhir saja
+            ->join("(
+                select max(id) id from log_keluarga where id_kk IS NOT NULL and config_id = {$configId} and tgl_peristiwa < '{$thn}-{$pad_bln}-01'  group by id_kk
+            ) log_max_keluarga", 'log_max_keluarga.id = l.id')
             ->join('tweb_keluarga k', 'k.id = l.id_kk')
-            ->join('tweb_penduduk p', 'p.id = k.nik_kepala')
-            ->where("DATE_FORMAT(l.tgl_peristiwa, '%Y-%m') < '{$thn}-{$pad_bln}'");
-        $keluarga_mutasi_sql = $this->db->get_compiled_select();
+            // Ambil log yg terakhir saja
+            ->join("(
+                SELECT    MAX(id) max_id, id_pend
+                FROM      log_penduduk
+                where DATE_FORMAT(tgl_lapor, '%Y-%m') < '{$thn}-{$pad_bln}'
+                and config_id = {$configId}
+                GROUP BY  id_pend
+            ) log_max", 'log_max.id_pend = k.nik_kepala')
+            ->join('log_penduduk lp', 'log_max.max_id = lp.id and lp.kode_peristiwa not in (2, 3, 4) ')
+            ->join('tweb_penduduk p', 'p.id = lp.id_pend and p.kk_level = 1')
+            ->where("l.tgl_peristiwa < '{$thn}-{$pad_bln}-01'")
+            ->where('l.id_peristiwa not in (2,3,4)')
+            ->get_compiled_select();
 
         $keluarga_mutasi = $this->db
-            ->select('sum(case when id_peristiwa = 1 then 1 else 0 end) AS KK_PLUS')
-            ->select('sum(case when sex = 1 and id_peristiwa = 1 then 1 else 0 end) AS KK_L_PLUS')
-            ->select('sum(case when sex = 2 and id_peristiwa = 1 then 1 else 0 end) AS KK_P_PLUS')
+            ->select('sum(case when id_peristiwa in (1, 12) then 1 else 0 end) AS KK_PLUS')
+            ->select('sum(case when sex = 1 and id_peristiwa in (1, 12) then 1 else 0 end) AS KK_L_PLUS')
+            ->select('sum(case when sex = 2 and id_peristiwa in (1, 12) then 1 else 0 end) AS KK_P_PLUS')
             ->select('sum(case when id_peristiwa in (2, 3, 4) then 1 else 0 end) AS KK_MINUS')
             ->select('sum(case when sex = 1 and id_peristiwa in (2, 3, 4) then 1 else 0 end) AS KK_L_MINUS')
             ->select('sum(case when sex = 2 and id_peristiwa in (2, 3, 4) then 1 else 0 end) AS KK_P_MINUS')
-            ->from('(' . $keluarga_mutasi_sql . ') as m')
+            ->from("({$keluarga_mutasi_sql}) as m")
             ->get()
             ->row_array();
 
@@ -184,20 +209,26 @@ class Laporan_bulanan_model extends MY_Model
         switch (true) {
             case in_array($tipe, $penduduk):
                 // Perubahan penduduk sebelum bulan laporan
-                $this->db
+                $this->config_id('l')
                     ->select('p.*, l.kode_peristiwa')
-                    ->from('log_penduduk l')
-                    ->join('tweb_penduduk p', 'l.id_pend = p.id')
-                    ->where("DATE_FORMAT(l.tgl_lapor, '%Y-%m') < '{$thn}-{$pad_bln}'");
+                    ->from('tweb_penduduk p')
+                    // Ambil log yg terakhir saja
+                    ->join("(
+                        SELECT    MAX(id) max_id, id_pend
+                        FROM      log_penduduk
+                        where DATE_FORMAT(tgl_lapor, '%Y-%m') < '{$thn}-{$pad_bln}'
+                        GROUP BY  id_pend
+                    ) log_max", 'log_max.id_pend = p.id')
+                    ->join('log_penduduk l', 'log_max.max_id = l.id and l.kode_peristiwa not in (2, 3, 4)');
                 break;
 
             case in_array($tipe, $keluarga):
                 // Perubahan penduduk sebelum bulan laporan
-                $this->db
+                $this->config_id('l')
                     ->select('p.*, l.id_peristiwa')
                     ->from('log_keluarga l')
                     ->join('tweb_keluarga k', 'k.id = l.id_kk')
-                    ->join('tweb_penduduk p', 'p.id = k.nik_kepala')
+                    ->join('tweb_penduduk p', 'p.id = k.nik_kepala and p.status_dasar = 1')
                     ->where("DATE_FORMAT(l.tgl_peristiwa, '%Y-%m') < '{$thn}-{$pad_bln}'");
                 break;
         }
@@ -247,7 +278,7 @@ class Laporan_bulanan_model extends MY_Model
         return $this->db->get()->result_array();
     }
 
-    private function rincian_dasar($tipe)
+    private function rincian_dasar($tipe): void
     {
         switch ($tipe) {
             case 'wni_l': $this->db->where('sex = 1 AND warganegara_id <> 2');
@@ -262,18 +293,16 @@ class Laporan_bulanan_model extends MY_Model
             case 'wna_p': $this->db->where('sex = 2 AND warganegara_id = 2');
                 break;
 
-            case 'jml': break;
-
-            case 'jml_l': $this->db->where('sex = 1');
-                break;
-
-            case 'jml_p': $this->db->where('sex = 2');
-                break;
+            case 'jml':
 
             case 'kk': break;
 
+            case 'jml_l':
+
             case 'kk_l': $this->db->where('sex = 1');
                 break;
+
+            case 'jml_p':
 
             case 'kk_p': $this->db->where('sex = 2');
                 break;
@@ -291,7 +320,7 @@ class Laporan_bulanan_model extends MY_Model
         switch (true) {
             case in_array($tipe, $penduduk):
                 // Perubahan penduduk sebelum bulan laporan
-                $this->db
+                $this->config_id('l')
                     ->select('p.*, l.kode_peristiwa')
                     ->from('log_penduduk l')
                     ->join('tweb_penduduk p', 'l.id_pend = p.id')
@@ -300,7 +329,7 @@ class Laporan_bulanan_model extends MY_Model
 
             case in_array($tipe, $keluarga):
                 // Perubahan penduduk sebelum bulan laporan
-                $this->db
+                $this->config_id('l')
                     ->select('p.*, l.id_peristiwa')
                     ->from('log_keluarga l')
                     ->join('tweb_keluarga k', 'k.id = l.id_kk')
@@ -378,12 +407,12 @@ class Laporan_bulanan_model extends MY_Model
     }
 
     // Perubahan penduduk pada bulan laporan
-    private function mutasi_pada_bln_thn($kode_peristiwa)
+    private function mutasi_pada_bln_thn(int $kode_peristiwa)
     {
         $bln = $this->session->bulanku;
         $thn = $this->session->tahunku;
 
-        $this->db
+        $this->config_id('l')
             ->select('p.*, l.ref_pindah, l.kode_peristiwa')
             ->from('log_penduduk l')
             ->join('tweb_penduduk p', 'l.id_pend = p.id')
@@ -411,14 +440,14 @@ class Laporan_bulanan_model extends MY_Model
      *
      * @param mixed $kode_peristiwa
      */
-    private function mutasi_keluarga_bln_thn($kode_peristiwa)
+    private function mutasi_keluarga_bln_thn(int $kode_peristiwa)
     {
         $bln = $this->session->bulanku;
         $thn = $this->session->tahunku;
 
         $id_peristiwa = $kode_peristiwa;
 
-        $this->db
+        $this->config_id('l')
             ->select('p.*, l.id_peristiwa')
             ->from('log_keluarga l')
             ->join('tweb_keluarga k', 'k.id = l.id_kk')
@@ -437,7 +466,7 @@ class Laporan_bulanan_model extends MY_Model
         return $this->db->get_compiled_select();
     }
 
-    private function rincian_peristiwa($peristiwa, $tipe)
+    private function rincian_peristiwa(int $peristiwa, $tipe)
     {
         $penduduk = ['wni_l', 'wni_p', 'wna_l', 'wna_p', 'jml', 'jml_l', 'jml_p'];
         $keluarga = ['kk', 'kk_l', 'kk_p'];
@@ -446,7 +475,7 @@ class Laporan_bulanan_model extends MY_Model
             $mutasi_pada_bln_thn = $this->mutasi_pada_bln_thn($peristiwa);
             $this->db
                 ->select('*')
-                ->from('(' . $mutasi_pada_bln_thn . ') as m');
+                ->from("({$mutasi_pada_bln_thn}) as m");
 
             switch ($tipe) {
                 case 'wni_l': $this->db->where('sex = 1 AND warganegara_id <> 2');
@@ -489,7 +518,7 @@ class Laporan_bulanan_model extends MY_Model
         return $this->db->get()->result_array();
     }
 
-    private function mutasi_peristiwa($peristiwa, $rincian = null, $tipe = null)
+    private function mutasi_peristiwa(int $peristiwa, $rincian = null, $tipe = null)
     {
         // Jika rincian dan tipe di definisikan, maka akan masuk kedetil laporan
         if ($rincian && $tipe) {
@@ -498,7 +527,8 @@ class Laporan_bulanan_model extends MY_Model
 
         // Mutasi penduduk
         $mutasi_pada_bln_thn = $this->mutasi_pada_bln_thn($peristiwa);
-        $data                = $this->db
+
+        $data = $this->db
             ->select('sum(case when sex = 1 and warganegara_id <> 2 then 1 else 0 end) AS WNI_L')
             ->select('sum(case when sex = 2 and warganegara_id <> 2 then 1 else 0 end) AS WNI_P')
             ->select('sum(case when sex = 1 and warganegara_id = 2 then 1 else 0 end) AS WNA_L')
@@ -617,12 +647,23 @@ class Laporan_bulanan_model extends MY_Model
         return $data;
     }
 
-    public function rekapitulasi_data()
+    protected function search_sql()
+    {
+        if ($cari = $this->session->cari) {
+            $this->db
+                ->group_start()
+                ->like('a.dusun', $cari)
+                ->group_end();
+        }
+    }
+
+    public function rekapitulasi_data(): void
     {
         $bln     = $this->session->filter_bulan;
         $thn     = $this->session->filter_tahun;
         $pad_bln = str_pad($bln, 2, '0', STR_PAD_LEFT); // Untuk membandingkan dengan tgl mysql
-        $data    = $this->db
+
+        $this->db
             ->select('a.dusun as DUSUN')
             // Penduduk Awal Bulan
             ->select("(sum(case when p.sex = 1 and p.warganegara_id <> 2 and l.kode_peristiwa in (1,5) and DATE_FORMAT(l.tgl_lapor, '%Y-%m') < '{$thn}-{$pad_bln}' then 1 else 0 end) - sum(case when p.sex = 1 and p.warganegara_id <> 2 and l.kode_peristiwa in (2,3,4) and DATE_FORMAT(l.tgl_lapor, '%Y-%m') < '{$thn}-{$pad_bln}' then 1 else 0 end)) AS WNI_L_AWAL")
@@ -655,12 +696,13 @@ class Laporan_bulanan_model extends MY_Model
             ->select("(sum(case when p.kk_level = 1 and kode_peristiwa in (1,5) and month(l.tgl_lapor) = {$bln} and year(l.tgl_lapor) = {$thn} then 1 else 0 end) - sum(case when p.kk_level = 1 and kode_peristiwa in (2,3,4) and month(l.tgl_lapor) = {$bln} and year(l.tgl_lapor) = {$thn} then 1 else 0 end)) AS KK_MASUK_JLH")
             ->select("(sum(case when p.kk_level != 1 and kode_peristiwa in (1,5) and month(l.tgl_lapor) = {$bln} and year(l.tgl_lapor) = {$thn} then 1 else 0 end) - sum(case when p.kk_level != 1 and kode_peristiwa in (2,3,4) and month(l.tgl_lapor) = {$bln} and year(l.tgl_lapor) = {$thn} then 1 else 0 end)) AS KK_MASUK_ANG_KEL");
 
+        $this->search_sql();
         $this->rekapitulasi_query_dasar();
     }
 
-    private function rekapitulasi_query_dasar()
+    private function rekapitulasi_query_dasar(): void
     {
-        $this->db
+        $this->config_id('l')
             ->from('log_penduduk l')
             ->join('tweb_penduduk p', 'l.id_pend = p.id')
             ->join('tweb_keluarga d', 'p.id_kk = d.id')

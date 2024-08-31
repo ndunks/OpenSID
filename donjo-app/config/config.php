@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,13 +29,34 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
 defined('BASEPATH') || exit('No direct script access allowed');
+
+/*
+|--------------------------------------------------------------------------
+| Trusted Hosts
+|--------------------------------------------------------------------------
+|
+| In case you want to leave the base_url configuration empty for portability,
+| it involves a risk:
+|
+| http://www.skeletonscribe.net/2013/05/practical-http-host-header-attacks.html
+|
+| To avoid security issues, you may want to configure a list of "trusted hosts".
+| (for dev and test environments or multi-domain sites)
+|
+| Elements of this list imply you accept any subdomain it has.
+| For example domain.com also accepts <whatever.>domain.com
+|
+| Array: ['localhost', 'my-development.com', 'my-production.com', 'subdomain.domain.com']
+|
+*/
+$config['trusted_hosts'] = [];
 
 /*
 |--------------------------------------------------------------------------
@@ -194,7 +215,7 @@ $config['composer_autoload'] = 'vendor/autoload.php';
 | DO NOT CHANGE THIS UNLESS YOU FULLY UNDERSTAND THE REPERCUSSIONS!!
 |
 */
-$config['permitted_uri_chars'] = 'a-z 0-9~%.:_\-';
+$config['permitted_uri_chars'] = 'a-z 0-9~%.:_\-@\=';
 
 /*
 |--------------------------------------------------------------------------
@@ -372,6 +393,7 @@ $config['cache_query_string'] = false;
 |
 */
 $config['encryption_key'] = 'lumbungkomunitas';
+$config['cipher']         = 'AES-256-CBC';
 
 /*
 |--------------------------------------------------------------------------
@@ -576,10 +598,24 @@ $config['proxy_ips'] = '';
 |
 | - Nama Aplikasi
 | - Nama Lembaga
+| - Facebook OpenDesa
+| - Telegram OpenDesa
+| - Telegram Kontributor
+| - Github OpenSID
+| - Website OpenDesa
+| - Forum OpenDesa
+| - Youtube OpenDesa
 |
 */
-$config['nama_aplikasi'] = 'OpenSID';
-$config['nama_lembaga']  = 'OpenDesa';
+$config['nama_aplikasi']  = 'OpenSID';
+$config['nama_lembaga']   = 'OpenDesa';
+$config['fb_opendesa']    = 'https://www.facebook.com/groups/komunitasopendesa';
+$config['tg_opendesa']    = 'https://t.me/komunitasopensidstop';
+$config['tg_kontributor'] = 'https://t.me/+mi5ydVtVfmw0YWY1';
+$config['github']         = 'https://github.com/OpenSID/OpenSID';
+$config['website']        = 'https://opendesa.id';
+$config['forum']          = 'https://forum.opendesa.id';
+$config['youtube']        = 'https://www.youtube.com/KomunitasOpenSID-OpenDesa';
 
 /*
 |--------------------------------------------------------------------------
@@ -609,7 +645,8 @@ $config['server_layanan'] = 'https://layanan.opendesa.id';
 |--------------------------------------------------------------------------
 |
 */
-$config['rilis_umum'] = 'https://api.github.com/repos/opensid/opensid/releases/latest';
+$config['rilis_umum']    = 'https://api.github.com/repos/opensid/opensid/releases/latest';
+$config['rilis_premium'] = 'https://api.github.com/repos/opensid/rilis-premium/releases/latest';
 
 /*
 |--------------------------------------------------------------------------
@@ -629,11 +666,29 @@ $config['api_sdgs'] = 'https://sid.kemendesa.go.id/sdgs/searching/score-sdgs?loc
 
 /*
 |--------------------------------------------------------------------------
+| API Hari Libur
+|--------------------------------------------------------------------------
+|
+*/
+$config['api_hari_libur'] = 'https://raw.githubusercontent.com/guangrei/APIHariLibur_V2/main/holidays.json';
+
+/*
+|--------------------------------------------------------------------------
+| API Google Recaptcha
+|--------------------------------------------------------------------------
+|
+*/
+$config['api_google_recaptcha'] = 'https://google.com/recaptcha/api/';
+
+/*
+|--------------------------------------------------------------------------
 | Path View Blade
 |--------------------------------------------------------------------------
 |
 */
-$config['views_blade'] = RESOURCESPATH . 'views/';
+$config['views_blade'] = [
+    RESOURCESPATH . 'views/',
+];
 
 /*
 |--------------------------------------------------------------------------

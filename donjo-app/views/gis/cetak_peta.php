@@ -1,15 +1,3 @@
-<?php
-/*
- * File ini:
- *
- * Bagian dari menu cetak pada tampilan peta di Admin maupun Web
- *
- * donjo-app/views/gis/cetak_peta.php
- *
- */
-
-?>
-
 <table class="title" leaflet-browser-print-content width="100%" style="border: solid 1px grey; text-align: center;">
   <tr>
     <td align="center"></td>
@@ -72,6 +60,6 @@
     <td align="center"></td>
   </tr>
   <tr>
-    <td align="center"><img src="<?= base_url()?>assets/images/kompas.png" alt="OpenSID"></td>
+    <td align="center"><img src="<?= asset('images/kompas.png')?>" alt="OpenSID"></td>
   </tr>
 </table>

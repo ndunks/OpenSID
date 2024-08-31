@@ -32,7 +32,7 @@
                     </div>
                     <?php
                         $this->load->view('surat/form/nomor_surat');
-    $this->load->view('surat/kode_isian');
+    $this->load->view('surat/form/kode_isian');
     $this->load->view('surat/form/tgl_berlaku');
     $this->load->view('surat/form/_pamong');
     ?>

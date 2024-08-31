@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -55,17 +55,13 @@ class Password_repository implements Password_reset_interface
 
     /**
      * The number of seconds a token should last.
-     *
-     * @var int
      */
-    protected $expires;
+    protected int $expires;
 
     /**
      * Minimum number of seconds before re-redefining the token.
-     *
-     * @var int
      */
-    protected $throttle;
+    protected int $throttle;
 
     public function __construct(int $expires = 60, int $throttle = 60)
     {
@@ -78,7 +74,7 @@ class Password_repository implements Password_reset_interface
     /**
      * {@inheritDoc}
      */
-    public function create($user)
+    public function create($user): string
     {
         $email = $user->email;
 
@@ -101,7 +97,7 @@ class Password_repository implements Password_reset_interface
     /**
      * {@inheritDoc}
      */
-    public function createNewToken()
+    public function createNewToken(): string
     {
         return hash_hmac('sha256', bin2hex(random_bytes(20)), config_item('encryption_key'));
     }
@@ -109,7 +105,7 @@ class Password_repository implements Password_reset_interface
     /**
      * {@inheritDoc}
      */
-    public function exists($user, $token)
+    public function exists($user, $token): bool
     {
         $record = $this->connection->where('email', $user->email)->get('password_resets')->row();
 
@@ -121,7 +117,7 @@ class Password_repository implements Password_reset_interface
     /**
      * {@inheritDoc}
      */
-    public function recentlyCreatedToken($user)
+    public function recentlyCreatedToken($user): bool
     {
         if ($this->throttle <= 0) {
             return false;

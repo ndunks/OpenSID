@@ -3,9 +3,9 @@
 	<section class="content-header">
 		<h1>Peserta Program Bantuan</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a></li>
-			<li><a href="<?= site_url('program_bantuan') ?>"> Daftar Program Bantuan</a></li>
-			<li><a href="<?= site_url("program_bantuan/detail/{$detail['id']}") ?>"> Rincian Program Bantuan</a></li>
+			<li><a href="<?= site_url('beranda') ?>"><i class="fa fa-home"></i> Beranda</a></li>
+			<li><a href="<?= site_url('peserta_bantuan') ?>"> Daftar Program Bantuan</a></li>
+			<li><a href="<?= site_url("peserta_bantuan/detail/{$detail['id']}") ?>"> Rincian Program Bantuan</a></li>
 			<li class="active">Peserta Program Bantuan</li>
 		</ol>
 	</section>
@@ -15,7 +15,7 @@
 				<div class="box box-info">
 					<div class="box-header with-border">
 						<a href="<?= site_url('program_bantuan') ?>" class="btn btn-social btn-flat btn-primary btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Program Bantuan"><i class="fa fa-arrow-circle-o-left"></i> Kembali Ke Daftar Program Bantuan</a>
-						<a href="<?= site_url("program_bantuan/detail/{$detail['id']}") ?>" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Rincian Program Bantuan"><i class="fa fa-arrow-circle-o-left"></i> Kembali Ke Rincian Program Bantuan</a>
+						<a href="<?= site_url("peserta_bantuan/detail/{$detail['id']}") ?>" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Rincian Program Bantuan"><i class="fa fa-arrow-circle-o-left"></i> Kembali Ke Rincian Program Bantuan</a>
 					</div>
 					<div class="box-body">
 						<div class="row">
@@ -26,15 +26,15 @@
 								<hr>
 								<form id="main" name="main" method="POST" class="form-horizontal">
 									<div class="form-group">
-										<label class="col-sm-4 col-lg-3 control-label <?php ($detail['sasaran'] != 1) && print 'no-padding-top' ?>" for="nik">Cari <?= $detail['judul_cari_peserta'] ?></label>
+										<label class="col-sm-4 col-lg-3 control-label <?php if ($detail['sasaran'] != 1) {
+																							echo 'no-padding-top';
+																						} ?>" for="nik">Cari <?= $detail['judul_cari_peserta'] ?></label>
 										<div class="col-sm-9">
-											<select class="form-control select2 input-sm required" id="nik" name="nik" onchange="formAction('main')" style="width:100%">
+											<select class="form-control input-sm required" id="nik_bantuan" name="nik" onchange="formAction('main')" data-bantuan="<?= $program[0]['id'] ?>" data-sasaran="<?= $program[0]['sasaran'] ?>" style="width:100%">
 												<option value="">-- Silakan Masukan <?= $detail['judul_cari_peserta'] ?> --</option>
-												<?php foreach ($program[2] as $item) :
-												    if ($item['id'] !== '') : ?>
-														<option value="<?= $item['id'] ?>" <?= selected($individu['nik'], $item['nik']); ?>><?= $item['nama'] . ' - ' . $item['info'] ?></option>
-												<?php endif;
-												endforeach; ?>
+												<?php if ($individu['nik']) : ?>
+													<option value="<?= $individu['id'] ?>" selected><?= 'NIK: ' . $individu['nik'] . ' - ' . $individu['nama'] . ' - ' . $individu['alamat_wilayah'] ?></option>
+												<?php endif; ?>
 											</select>
 										</div>
 									</div>

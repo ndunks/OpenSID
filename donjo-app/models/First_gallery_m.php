@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,18 +37,17 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-class First_gallery_m extends CI_Model
+class First_gallery_m extends MY_Model
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function paging($p = 1)
     {
-        $sql      = "SELECT COUNT(id) AS id FROM gambar_gallery WHERE enabled = 1 AND tipe='0'";
-        $query    = $this->db->query($sql);
-        $row      = $query->row_array();
+        // TODO: Digunakan dimana
+        $row = $this->config_id()
+            ->select('COUNT(id) AS id')
+            ->where('enabled', 1)
+            ->where('tipe', 0)
+            ->get('gambar_gallery')
+            ->row_array();
         $jml_data = $row['id'];
 
         $this->load->library('paging');
@@ -64,23 +63,29 @@ class First_gallery_m extends CI_Model
     public function gallery_show($offset = 0, $limit = 50)
     {
         // OPTIMIZE: benarkah butuh paging?
-        $paging_sql = ' LIMIT ' . $offset . ',' . $limit;
-
-        $sql = "SELECT * FROM gambar_gallery
-			WHERE enabled = 1 AND tipe ='0'
-			ORDER BY urut";
-        $sql .= $paging_sql;
-
-        $query = $this->db->query($sql);
-        $data  = $query->result_array();
+        $data = $this->config_id()
+            ->where('enabled', 1)
+            ->where('tipe', 0)
+            ->order_by('urut')
+            ->get('gambar_gallery', $limit, $offset)
+            ->result_array();
 
         // Untuk album yang tidak ada gambar cover, cari gambar di sub-gallery
-        for ($i = 0; $i < count($data); $i++) {
+        $counter = count($data);
+
+        // Untuk album yang tidak ada gambar cover, cari gambar di sub-gallery
+        for ($i = 0; $i < $counter; $i++) {
             if ($data[$i]['gambar'] == '') {
-                $galeri             = $data[$i]['id'];
-                $sql                = "SELECT gambar FROM gambar_gallery WHERE ((enabled = '1') AND ((parrent = '" . $galeri . "') OR (id = '" . $galeri . "')) AND (gambar<>'')) LIMIT 1";
-                $query              = $this->db->query($sql);
-                $row                = $query->row_array();
+                $galeri = $data[$i]['id'];
+                $row    = $this->config_id()
+                    ->where('enabled', 1)
+                    ->group_start()
+                    ->where('parrent', $galeri)
+                    ->or_where('id', $galeri)
+                    ->group_end()
+                    ->where('gambar <>', '', false)
+                    ->get('gambar_gallery', 1)
+                    ->row_array();
                 $data[$i]['gambar'] = $row['gambar'];
             }
         }
@@ -90,9 +95,12 @@ class First_gallery_m extends CI_Model
 
     public function paging2($gal = 0, $p = 1)
     {
-        $sql      = "SELECT COUNT(id) AS id FROM gambar_gallery WHERE enabled = 1 AND (parrent = '{$gal}')";
-        $query    = $this->db->query($sql, $gal);
-        $row      = $query->row_array();
+        $row = $this->config_id()
+            ->select('COUNT(id) AS id')
+            ->where('enabled', 1)
+            ->where('parrent', $gal)
+            ->get('gambar_gallery')
+            ->row_array();
         $jml_data = $row['id'];
 
         $this->load->library('paging');
@@ -107,32 +115,30 @@ class First_gallery_m extends CI_Model
     // daftar gambar di tiap album
     public function sub_gallery_show($gal = 0, $offset = 0, $limit = 50)
     {
-        $paging_sql = ' LIMIT ' . $offset . ',' . $limit;
-        $sql        = "SELECT * FROM gambar_gallery
-			WHERE ((enabled = '1') AND (parrent = '" . $gal . "'))
-			ORDER BY urut
-			";
-        $sql .= $paging_sql;
-
-        $query = $this->db->query($sql);
-
-        return $query->result_array();
+        return $this->config_id()
+            ->where('enabled', 1)
+            ->where('parrent', $gal)
+            ->order_by('urut')
+            ->get('gambar_gallery', $limit, $offset)
+            ->result_array();
     }
 
     public function get_parent($parent)
     {
-        $sql   = "SELECT * FROM gambar_gallery WHERE id = '{$parent}'";
-        $query = $this->db->query($sql);
-
-        return $query->row_array();
+        return $this->config_id()
+            ->where('id', $parent)
+            ->get('gambar_gallery')
+            ->row_array();
     }
 
     // daftar album di widget
     public function gallery_widget()
     {
-        $sql   = "SELECT * FROM gambar_gallery WHERE enabled = '1' and parrent = 0 order by rand() limit 4";
-        $query = $this->db->query($sql);
-
-        return $query->result_array();
+        return $this->config_id()
+            ->where('enabled', 1)
+            ->where('parrent', 0)
+            ->order_by('rand()')
+            ->get('gambar_gallery', 4)
+            ->result_array();
     }
 }

@@ -17,7 +17,7 @@
     @include('admin.layouts.components.notifikasi')
     <div class="row">
 
-        {!! form_open_multipart(route('setting.new_update'), 'id="validasi" class="form-horizontal"') !!}
+        {!! form_open_multipart(ci_route('setting.new_update'), 'id="validasi" class="form-horizontal"') !!}
         @if ($atur_latar)
             <div class="col-md-3">
                 @if (in_array('sistem', $pengaturan_kategori))
@@ -26,18 +26,16 @@
                             <b>Latar Website</b>
                         </div>
                         <div class="box-body box-profile text-center">
-                            <img class="img-responsive"
-                                src="{{ $latar_website }}"
-                                alt="Latar Halaman Website" width="100%">
+                            <a href="<?= site_url("setting/ambil_foto?foto={$latar_website[0]}&pengaturan={$latar_website[1]}") ?>" class="progressive replace">
+                                <img class="preview" loading="lazy" src="<?= base_url('assets/images/img-loader.gif') ?>" alt="Latar Wesbite" width="100%" />
+                            </a>
                             <p class="text-muted text-center text-red">(Kosongkan, jika latar website tidak berubah)</p>
                             <div class="input-group">
                                 <input type="text" class="form-control input-sm" id="file_path" name="latar_website">
-                                <input type="file" class="hidden" id="file" name="latar_website"
-                                    accept=".jpg,.jpeg,.png" />
+                                <input type="file" class="hidden" id="file" name="latar_website" accept=".jpg,.jpeg,.png" />
                                 <input type="text" class="hidden" name="lokasi" value="{{ $lokasi }}" />
                                 <span class="input-group-btn">
-                                    <button type="button" class="btn btn-info btn-flat btn-sm" id="file_browser"><i
-                                            class="fa fa-search"></i>&nbsp;</button>
+                                    <button type="button" class="btn btn-info btn-flat btn-sm" id="file_browser"><i class="fa fa-search"></i>&nbsp;</button>
                                 </span>
                             </div>
                         </div>
@@ -47,16 +45,15 @@
                             <b>Latar Login Admin</b>
                         </div>
                         <div class="box-body box-profile text-center">
-                            <img class="img-responsive" src="{{ $latar_siteman }}"
-                                alt="Latar Halaman Login" width="100%">
+                            <a href="<?= site_url("setting/ambil_foto?foto={$latar_siteman[0]}&pengaturan={$latar_siteman[1]}") ?>" class="progressive replace">
+                                <img class="preview" loading="lazy" src="<?= base_url('assets/images/img-loader.gif') ?>" alt="Latar Login" width="100%" />
+                            </a>
                             <p class="text-muted text-center text-red">(Kosongkan, jika latar login tidak berubah)</p>
                             <div class="input-group">
                                 <input type="text" class="form-control input-sm" id="file_path1" name="latar_login" />
-                                <input type="file" class="hidden" id="file1" name="latar_login"
-                                    accept=".jpg,.jpeg,.png" />
+                                <input type="file" class="hidden" id="file1" name="latar_login" accept=".jpg,.jpeg,.png" />
                                 <span class="input-group-btn">
-                                    <button type="button" class="btn btn-info btn-flat btn-sm" id="file_browser1"><i
-                                            class="fa fa-search"></i>&nbsp;</button>
+                                    <button type="button" class="btn btn-info btn-flat btn-sm" id="file_browser1"><i class="fa fa-search"></i>&nbsp;</button>
                                 </span>
                             </div>
                         </div>
@@ -68,17 +65,15 @@
                             <b>Latar Login Mandiri</b>
                         </div>
                         <div class="box-body box-profile text-center">
-                            <img class="img-responsive" src="{{ $latar_mandiri }}"
-                                alt="Latar Halaman Login" width="100%">
+                            <a href="<?= site_url("setting/ambil_foto?foto={$latar_mandiri[0]}&pengaturan={$latar_mandiri[1]}") ?>" class="progressive replace">
+                                <img class="preview" loading="lazy" src="<?= base_url('assets/images/img-loader.gif') ?>" alt="Latar Wesbite" width="100%" />
+                            </a>
                             <p class="text-muted text-center text-red">(Kosongkan, jika latar login tidak berubah)</p>
                             <div class="input-group">
-                                <input type="text" class="form-control input-sm" id="file_path2"
-                                    name="latar_login_mandiri" />
-                                <input type="file" class="hidden" id="file2" name="latar_login_mandiri"
-                                    accept=".jpg,.jpeg,.png" />
+                                <input type="text" class="form-control input-sm" id="file_path2" name="latar_login_mandiri" />
+                                <input type="file" class="hidden" id="file2" name="latar_login_mandiri" accept=".jpg,.jpeg,.png" />
                                 <span class="input-group-btn">
-                                    <button type="button" class="btn btn-info btn-flat btn-sm" id="file_browser2"><i
-                                            class="fa fa-search"></i>&nbsp;</button>
+                                    <button type="button" class="btn btn-info btn-flat btn-sm" id="file_browser2"><i class="fa fa-search"></i>&nbsp;</button>
                                 </span>
                             </div>
                         </div>
@@ -95,8 +90,7 @@
                                 <div class="icon">
                                     <i class="ion-ios-paper"></i>
                                 </div>
-                                <a href="{{ site_url('surat_master') }}" class="small-box-footer">Lihat Pengaturan <i
-                                        class="fa fa-arrow-circle-right"></i></a>
+                                <a href="{{ site_url('surat_master') }}" class="small-box-footer">Lihat Pengaturan <i class="fa fa-arrow-circle-right"></i></a>
                             </div>
                             <div class="small-box bg-blue">
                                 <div class="inner">
@@ -105,8 +99,7 @@
                                 <div class="icon">
                                     <i class="ion-ios-paper"></i>
                                 </div>
-                                <a href="{{ site_url('surat_mohon') }}" class="small-box-footer">Lihat Pengaturan <i
-                                        class="fa fa-arrow-circle-right"></i></a>
+                                <a href="{{ site_url('surat_mohon') }}" class="small-box-footer">Lihat Pengaturan <i class="fa fa-arrow-circle-right"></i></a>
                             </div>
                         </div>
                     </div>
@@ -127,8 +120,7 @@
                 <button type="reset" class="btn btn-social btn-flat btn-danger btn-sm"><i class="fa fa-times"></i>
                     Batal</button>
                 @if ($ci->cek_hak_akses_url('u', $aksi_controller))
-                    <button type="submit" class="btn btn-social btn-flat btn-info btn-sm pull-right"><i
-                            class="fa fa-check"></i> Simpan</button>
+                    <button type="submit" class="btn btn-social btn-flat btn-info btn-sm pull-right"><i class="fa fa-check"></i> Simpan</button>
                 @endif
             </div>
         </div>
@@ -163,9 +155,97 @@
                 $('#form_tampilan_anjungan_waktu').hide();
             }
         }
+
         if (e != null) {
             e.onchange = show;
             show();
         }
+
+        showTelegram($('#telegram_notifikasi').val());
+
+        $('#telegram_notifikasi').on('select2:select', function(e) {
+            showTelegram(e.params.data.id);
+        });
+
+        function showTelegram(value) {
+            if (value == 0) {
+                $('#form_telegram_token').hide();
+                $('#form_telegram_user_id').hide();
+                $('#telegram_token').removeClass('required');
+                $('#telegram_user_id').removeClass('required');
+            } else {
+                $('#form_telegram_token').show();
+                $('#form_telegram_user_id').show();
+                $('#telegram_token').addClass('required');
+                $('#telegram_user_id').addClass('required');
+            }
+        }
+
+        showEmail($('#email_notifikasi').val());
+
+        $('#email_notifikasi').on('select2:select', function(e) {
+            showEmail(e.params.data.id);
+        });
+
+        function showEmail(value) {
+            if (value == 0) {
+                $('#form_email_protocol').hide();
+                $('#form_email_smtp_host').hide();
+                $('#form_email_smtp_user').hide();
+                $('#form_email_smtp_pass').hide();
+                $('#form_email_smtp_port').hide();
+                $('#email_protocol').removeClass('required');
+                $('#email_smtp_host').removeClass('required');
+                $('#email_smtp_user').removeClass('required');
+                $('#email_smtp_pass').removeClass('required');
+                $('#email_smtp_port').removeClass('required');
+            } else {
+                $('#form_email_protocol').show();
+                $('#form_email_smtp_host').show();
+                $('#form_email_smtp_user').show();
+                $('#form_email_smtp_pass').show();
+                $('#form_email_smtp_port').show();
+                $('#email_protocol').addClass('required');
+                $('#email_smtp_host').addClass('required');
+                $('#email_smtp_user').addClass('required');
+                // jika password masih kosong maka set required
+                if (!$('#email_smtp_pass').data('password')) {
+                    $('#email_smtp_pass').addClass('required');
+                }
+                $('#email_smtp_port').addClass('required');
+            }
+        }
+
+        showRecaptcha($('#google_recaptcha').val());
+
+        $('#google_recaptcha').on('select2:select', function(e) {
+            showRecaptcha(e.params.data.id);
+        });
+
+        function showRecaptcha(value) {
+            if (value == 0) {
+                $('#form_google_recaptcha_secret_key').hide();
+                $('#form_google_recaptcha_site_key').hide();
+                $('#google_recaptcha_secret_key').removeClass('required');
+                $('#google_recaptcha_site_key').removeClass('required');
+            } else {
+                $('#form_google_recaptcha_secret_key').show();
+                $('#form_google_recaptcha_site_key').show();
+                $('#google_recaptcha_secret_key').addClass('required');
+                $('#google_recaptcha_site_key').addClass('required');
+            }
+        }
+
+        $('.show-hide-password').click(function() {
+            let _passwordElm = $(this).prev('input')
+            let _currentType = _passwordElm.attr('type')
+            if (_currentType == 'password') {
+                _passwordElm.attr('type', 'text');
+            } else {
+                _passwordElm.attr('type', 'password');
+            }
+            $(this).find('i').toggleClass('fa-eye fa-eye-slash')
+
+        })
     </script>
 @endpush

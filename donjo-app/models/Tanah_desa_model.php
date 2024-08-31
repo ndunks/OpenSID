@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,7 +39,7 @@ use App\Models\Penduduk;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-class Tanah_desa_model extends CI_Model
+class Tanah_desa_model extends MY_Model
 {
     public const ORDER_ABLE = [
         2 => 'nama_pemilik_asal',
@@ -47,51 +47,42 @@ class Tanah_desa_model extends CI_Model
 
     protected $table = 'tanah_desa';
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function get_data(string $search = '')
     {
-        $builder = $this->db
+        $builder = $this->config_id('td')
             ->select('td.id,
-					td.nama_pemilik_asal,
-					p.nama,
-					td.luas,
-					td.mutasi,
-					td.keterangan')
+                td.nama_pemilik_asal,
+                p.nama,
+                td.luas,
+                td.mutasi,
+                td.keterangan')
             ->from("{$this->table} td")
             ->join('tweb_penduduk p', 'td.id_penduduk = p.id', 'left')
             ->where('td.visible', 1);
 
-        if (empty($search)) {
-            $search = $builder;
-        } else {
-            $search = $builder
-                ->group_start()
-                ->like('td.nama_pemilik_asal', $search)
-                ->or_like('p.nama', $search)
-                ->group_end();
+        if ($search === '') {
+            return $builder;
         }
 
-        return $search;
+        return $builder
+            ->group_start()
+            ->like('td.nama_pemilik_asal', $search)
+            ->or_like('p.nama', $search)
+            ->group_end();
     }
 
     public function view_tanah_desa_by_id($id)
     {
-        $this->db
+        return $this->config_id('td')
             ->select('td.*, p.nama, p.nik as nik_penduduk')
             ->from("{$this->table} td")
             ->join('tweb_penduduk p', 'td.id_penduduk = p.id', 'left')
-            ->where('td.id', $id);
-
-        return $this->db
+            ->where('td.id', $id)
             ->get()
             ->row();
     }
 
-    public function add_tanah_desa()
+    public function add_tanah_desa(): void
     {
         unset($this->session->validation_error, $this->session->success);
 
@@ -111,6 +102,7 @@ class Tanah_desa_model extends CI_Model
         }
 
         $result = [
+            'config_id'            => identitas('id'),
             'id_penduduk'          => $data['id_penduduk'],
             'nik'                  => $data['nik'],
             'jenis_pemilik'        => $data['jenis_pemilik'],
@@ -148,13 +140,13 @@ class Tanah_desa_model extends CI_Model
         status_sukses($hasil);
     }
 
-    public function delete_tanah_desa($id)
+    public function delete_tanah_desa($id): void
     {
-        $hasil = $this->db->update($this->table, ['visible' => 0], ['id' => $id]);
+        $hasil = $this->config_id()->update($this->table, ['visible' => 0], ['id' => $id]);
         status_sukses($hasil);
     }
 
-    public function update_tanah_desa()
+    public function update_tanah_desa(): void
     {
         unset($this->session->validation_error, $this->session->success);
 
@@ -209,11 +201,11 @@ class Tanah_desa_model extends CI_Model
 
         $id = $data['id'];
 
-        $hasil = $this->db->update($this->table, $result, ['id' => $id]);
+        $hasil = $this->config_id()->update($this->table, $result, ['id' => $id]);
         status_sukses($hasil);
     }
 
-    private function periksa_nik(&$valid, $data, $id)
+    private function periksa_nik(&$valid, $data, $id): void
     {
         if (empty($data['penduduk']) && ! isset($data['nik'])) {
             $valid[] = 'NIK Kosong';
@@ -290,7 +282,7 @@ class Tanah_desa_model extends CI_Model
         return $valid;
     }
 
-    private function nik_error($nilai, $judul)
+    private function nik_error($nilai, string $judul)
     {
         if (empty($nilai)) {
             return false;
@@ -298,29 +290,30 @@ class Tanah_desa_model extends CI_Model
         if (! ctype_digit($nilai)) {
             return $judul . ' hanya berisi angka';
         }
-        if (strlen($nilai) != 16 && $nilai != '0') {
-            return $judul . ' panjangnya harus 16 atau bernilai 0';
+        if (strlen($nilai) == 16) {
+            return false;
+        }
+        if ($nilai == '0') {
+            return false;
         }
 
-        return false;
+        return $judul . ' panjangnya harus 16 atau bernilai 0';
     }
 
     public function cetak_tanah_desa()
     {
-        $this->db
+        return $this->config_id('td')
             ->select('td.*, p.nama')
             ->from("{$this->table} td")
             ->join('tweb_penduduk p', 'td.id_penduduk = p.id', 'left')
-            ->where('td.visible', 1);
-
-        return $this->db
+            ->where('td.visible', 1)
             ->get()
             ->result_array();
     }
 
     public function list_penduduk()
     {
-        return $this->db
+        return $this->config_id('p')
             ->select('p.id, p.nama, p.nik')
             ->from('tweb_penduduk p')
             ->order_by('p.nama', 'ASC')

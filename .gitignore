@@ -1,9 +1,6 @@
 # Abaikan folder desa
 desa/*
 
-# Abaikan backup_inkremental
-backup_inkremental/*
-
 # Abaikan file
 *.log
 log-*.php
@@ -11,10 +8,10 @@ info.php
 **/.DS_Store
 sftp-config.json
 .php-cs-fixer.cache
-rector.php
-.htaccess
+/.htaccess
 *.sql
 mitra
+generate-route.php
 
 # Abaikan file cache milik phpintel (plugin sublime text)
 .phpintel/*
@@ -54,10 +51,19 @@ doc/
 docs/
 example/
 examples/
-tools/
+/tools/
 
 vendor/libreoffice/*
 vendor/mikey179/*
+.vscode/*
+/node_modules
+.cache-rector/*
+!.cache-rector/.gitkeep
 
-# Struktur Laravel
-storage/framework/
+storage/framework
+storage/logs
+
+php.ini
+
+Modules/*
+!Modules/.gitkeep

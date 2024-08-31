@@ -2,179 +2,252 @@
 
 @extends('admin.layouts.index')
 
+@push('css')
+    <style>
+        .batas {
+            margin-right: -10px;
+            margin-left: -10px;
+            border-top: 1px solid #f4f4f4;
+        }
+
+        .form-horizontal .form-group {
+            margin-right: -10px;
+            margin-left: -10px;
+        }
+
+        .subtitle_head {
+            margin-left: -10px;
+            margin-right: -10px;
+            /* background-color: #d81b60 !important; */
+        }
+
+        .subtitle_head label {
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            margin-bottom: 0px;
+            /* color: #ffffff !important; */
+        }
+    </style>
+@endpush
+
 @section('title')
-<h1>
-    Surat {{ ucwords($surat['nama']) }}
-</h1>
+    <h1>
+        Surat {{ ucwords($surat['nama']) }}
+    </h1>
 @endsection
 
 @section('breadcrumb')
-<li class="breadcrumb-item"><a href="{{ route('surat') }}">Daftar Cetak Surat</a></li>
-<li class="active"> Surat {{ ucwords($surat['nama']) }}</li>
+    <li class="breadcrumb-item"><a href="{{ ci_route('surat') }}">Daftar Cetak Surat</a></li>
+    <li class="active"> Surat {{ ucwords($surat['nama']) }}</li>
 @endsection
 
 @section('content')
-@include('admin.layouts.components.notifikasi')
-<div class="box box-info">
-    <div class="box-header with-border">
-        <a href="{{ site_url('surat') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Wilayah">
-            <i class="fa fa-arrow-circle-left "></i>Kembali Ke Daftar Cetak Surat
-        </a>
-    </div>
-    <div class="box-body">
-        <form id="main" name="main" method="POST" class="form-horizontal">
-            <div class="form-group">
-                <label for="nik" class="col-sm-3 control-label">NIK / Nama</label>
-                <div class="col-sm-6 col-lg-4">
-                    <select class="form-control required input-sm select2" id="nik" name="nik" style="width:100%;" onchange="formAction('main')">
-                        <option value="">-- Cari NIK / Nama Penduduk --</option>
-                        @foreach ($penduduk as $data)
-                        <option value="{{ $data->id }}" @selected($individu->id === $data->id)>NIK :
-                            {{ $data->nik . ' - ' . $data->nama }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-        </form>
+    @include('admin.layouts.components.notifikasi')
 
-        {!! form_open($form_action, 'id="validasi" method="POST" class="form-surat form-horizontal"') !!}
-        <input type="hidden" id="url_surat" name="url_surat" value="{{ $url }}">
-        <input type="hidden" id="url_remote" name="url_remote" value="{{ site_url('surat/nomor_surat_duplikat') }}">
-        @if ($individu)
-        @include('admin.surat.konfirmasi_pemohon')
-
-        @if ($anggota)
-        <div class="form-group">
-            <label for="keperluan" class="col-sm-3 control-label">Data Keluarga / KK</label>
-            <div class="col-sm-8">
-                <a id="showData" class="btn btn-social btn-danger btn-sm"><i class="fa fa-search-plus"></i>
-                    Tampilkan</a>
-                <a id="hideData" class="btn btn-social btn-danger btn-sm"><i class="fa fa-search-minus"></i>
-                    Sembunyikan</a>
-            </div>
+    <div class="box box-info">
+        <div class="box-header with-border">
+            <a href="{{ site_url('surat') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Wilayah">
+                <i class="fa fa-arrow-circle-left "></i>Kembali Ke Daftar Cetak Surat
+            </a>
         </div>
+        <div class="box-body">
+            {!! form_open($form_action, 'id="validasi" method="POST" class="form-surat form-horizontal"') !!}
+            <input type="hidden" id="url_surat" name="url_surat" value="{{ $url }}">
+            <input type="hidden" id="url_remote" name="url_remote" value="{{ site_url('surat/nomor_surat_duplikat') }}">
 
-        <div id="kel" class="form-group hide">
-            <label for="pengikut" class="col-sm-3 control-label"></label>
-            <div class="col-sm-8">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped table-hover tabel-daftar">
-                        <thead class="bg-gray disabled color-palette">
-                            <tr>
-                                <th>No</th>
-                                <th>NIK</th>
-                                <th>Nama</th>
-                                <th>Jenis Kelamin</th>
-                                <th>Tempat Tanggal Lahir</th>
-                                <th>Hubungan</th>
-                                <th>Status Kawin</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($anggota as $key => $data)
-                            <tr>
-                                <td class="padat">{{ $key + 1 }}</td>
-                                <td class="padat">{{ $data->nik }}</td>
-                                <td nowrap>{{ $data->nama }}</td>
-                                <td nowrap>{{ $data->jenisKelamin->nama }}</td>
-                                <td nowrap>{{ $data->tempatlahir }}, {{ tgl_indo($data->tanggallahir) }}</td>
-                                <td nowrap>{{ $data->pendudukHubungan->nama }}</td>
-                                <td nowrap>{{ $data->statusKawin->nama }}</td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        @endif
-        @endif
+            @include('admin.surat.nomor_surat')
 
-        <div class="row jar_form">
-            <label for="nomor" class="col-sm-3"></label>
-            <div class="col-sm-8">
-                <input class="required" type="hidden" name="nik" value="{{ $individu['id'] }}">
-            </div>
-        </div>
-
-        @include('admin.surat.nomor_surat')
-
-        @foreach ($surat['kode_isian'] as $item)
-        @php $nama = underscore($item->nama, true, true) @endphp
-        <div class="form-group">
-            <label for="{{ $item->nama }}" class="col-sm-3 control-label">{{ $item->nama }}</label>
-            @if ($item->tipe == 'textarea')
-            <div class="col-sm-8">
-                <textarea name="{{ $nama }}" {!! $item->atribut ? str_replace('class="', 'class="form-control input-sm ', $item->atribut) : 'class="form-control input-sm"' !!} placeholder="{{ $item->deskripsi }}"></textarea>
-            </div>
-            @elseif ($item->tipe == 'date')
-            <div class="col-sm-3 col-lg-2">
-                <div class="input-group input-group-sm date">
-                    <div class="input-group-addon">
-                        <i class="fa fa-calendar"></i>
-                    </div>
-                    <input type="text" {!! $item->atribut ? str_replace('class="', 'class="form-control input-sm tgl ', $item->atribut) : 'class="form-control input-sm tgl"' !!} name="{{ $nama }}"
-                    placeholder="{{ $item->deskripsi }}" />
+            @php
+                $sumberDataPenduduk = !is_array($surat->form_isian->individu->data) ? [$surat->form_isian->individu->data] : $surat->form_isian->individu->data ?? [];
+            @endphp
+            @if ($judul_kategori['individu'] != '-')
+                <div class="form-group subtitle_head" data-json='{!! json_encode($sumberDataPenduduk) !!}'>
+                    <label class="col-sm-3 control-label" for="status">{{ str_replace('_', ' ', strtoupper($judul_kategori['individu'] ?? 'Keterangan Pemohon')) }}</label>
+                    @includeWhen(count($sumberDataPenduduk) > 1, 'admin.surat.opsi_sumber_penduduk', ['opsiSumberPenduduk' => $surat->form_isian->individu->data, 'kategori' => 'individu', 'pendudukLuar' => $pendudukLuar])
                 </div>
-            </div>
-            @elseif ($item->tipe == 'time')
-            <div class="col-sm-3 col-lg-2">
-                <div class="input-group input-group-sm date">
-                    <div class="input-group-addon">
-                        <i class="fa fa-clock-o"></i>
-                    </div>
-                    <input type="text" {!! $item->atribut ? str_replace('class="', 'class="form-control input-sm jam ', $item->atribut) : 'class="form-control input-sm jam"' !!} name="{{ $nama }}"
-                    placeholder="{{ $item->deskripsi }}"/>
-                </div>
-            </div>
-            @elseif ($item->tipe == 'datetime')
-            <div class="col-sm-3 col-lg-2">
-                <div class="input-group input-group-sm date">
-                    <div class="input-group-addon">
-                        <i class="fa fa-calendar"></i>
-                    </div>
-                    <input type="text" {!! $item->atribut ? str_replace('class="', 'class="form-control input-sm tgl_jam ', $item->atribut) : 'class="form-control input-sm tgl_jam"' !!} name="{{ $nama }}"
-                    placeholder="{{ $item->deskripsi }}"/>
-                </div>
-            </div>
-            @else
-            <div class="col-sm-8">
-                <input type="{{ $item->tipe }}" {!! $item->atribut ? str_replace('class="', 'class="form-control input-sm ', $item->atribut) : 'class="form-control input-sm"' !!} name="{{ $nama }}" placeholder="{{ $item->deskripsi }}"/>
-            </div>
             @endif
+            @if ($surat->form_isian->individu->info)
+                <div class="callout callout-warning">
+                    <b>{{ $surat->form_isian->individu->info }}</b>
+                </div>
+            @endif
+            @includeWhen(in_array(1, $sumberDataPenduduk), 'admin.surat.penduduk_desa', ['opsiSumberPenduduk' => $surat->form_isian->individu->data, 'kategori' => 'individu'])
+            @foreach ($pendudukLuar as $index => $penduduk)
+                @includeWhen(in_array($index, $sumberDataPenduduk), 'admin.surat.penduduk_luar_desa', ['index' => $index, 'opsiSumberPenduduk' => $surat->form_isian->individu->data, 'kategori' => 'individu', 'input' => explode(',', $penduduk['input'])])
+            @endforeach
+
+            @include('admin.surat.kode_isian')
+
+            @if (isset($form_kategori))
+                @include('admin.surat.kategori_isian')
+            @endif
+
+            @include('admin.surat.form_tgl_berlaku')
+
+            @include('admin.surat.form_pamong')
+
         </div>
-        @endforeach
-
-        @include('admin.surat.form_tgl_berlaku')
-
-        @include('admin.surat.form_pamong')
-
+        <div class="box-footer">
+            <button type="reset" class="btn btn-social btn-danger btn-sm" onclick="reset_form($(this).val());"><i class="fa fa-times"></i> Batal</button>
+            <button type="submit" class="btn btn-social btn-info btn-sm pull-right"><i class="fa fa-check"></i>
+                Simpan</button>
+        </div>
+        </form>
     </div>
-    <div class="box-footer">
-        <button type="reset" class="btn btn-social btn-danger btn-sm" onclick="reset_form($(this).val());"><i class="fa fa-times"></i> Batal</button>
-        <button type="submit" class="btn btn-social btn-info btn-sm pull-right"><i class="fa fa-check"></i>
-            Simpan</button>
-    </div>
-    </form>
-</div>
 @endsection
 
 @push('scripts')
-<script type="text/javascript">
-    $(function() {
-        $('#showData').click(function() {
-            $("#kel").removeClass('hide');
-            $('#showData').hide();
-            $('#hideData').show();
-        });
+    <script type="text/javascript">
+        function pilihAnggota(elm) {
+            let _checked = $(elm).is(':checked')
 
-        $('#hideData').click(function() {
-            $('#kel').addClass('hide');
-            $('#hideData').hide();
-            $('#showData').show();
+            if (_checked) {
+                $('table.kis tr[data-row=' + $(elm).val() + '] input').prop('disabled', 0)
+                $('table.kis tr[data-row=' + $(elm).val() + '] input.datepicker').datepicker({
+                    weekStart: 1,
+                    language: 'id',
+                    format: 'dd-mm-yyyy',
+                    autoclose: true
+                });
+            } else {
+                $('table.kis tr[data-row=' + $(elm).val() + '] input').prop('disabled', 1)
+            }
+        }
+        $('document').ready(function() {
+            const hash = window.location.hash.substring(1)
+            if (hash.length) {
+                const dataPenduduk = hash.split('#')
+                $('select[name="individu[nik]"]').append(`<option selected value="${dataPenduduk[0]}">NIK/Tag ID Card : ${dataPenduduk[1]} - ${decodeURIComponent(dataPenduduk[2])}</option>`)
+                $('select[name="individu[nik]"]').trigger('change')
+            }
+
+
+
+            $('[data-visible-required=1]:visible').addClass('required')
+            $('#nik').select2({
+                ajax: {
+                    url: SITE_URL + 'surat/apipenduduksurat',
+                    dataType: 'json',
+                    data: function(params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1,
+                            surat: $(this).data('surat'),
+                        };
+                    },
+                    cache: true
+                },
+                placeholder: function() {
+                    $(this).data('placeholder');
+                },
+                minimumInputLength: 1,
+                allowClear: true,
+                escapeMarkup: function(markup) {
+                    return markup;
+                },
+            }).autofocus;
+
+            $('.select2-nik-ajax').select2({
+                ajax: {
+                    url: function() {
+                        return $(this).data('url');
+                    },
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        let _kecuali = []
+                        // jika tidak berulang maka batasi pencarian penduduk
+                        if (!$(this).data('sumber_penduduk_berulang')) {
+                            $(`select.select2-nik-ajax.isi-penduduk-desa`).not($(this)).each(function(index, item) {
+                                if (item.value) _kecuali.push(item.value)
+                            })
+                        }
+
+                        return {
+                            q: params.term || '', // search term
+                            page: params.page || 1,
+                            filter_sex: $(this).data('filter-sex'),
+                            surat: $(this).data('surat'),
+                            kategori: $(this).data('kategori'),
+                            hubungan: $(`select[name="${$(this).data('hubungan')}[nik]"]`).val(),
+                            kecuali: _kecuali
+                        };
+                    },
+                    processResults: function(data, params) {
+                        // parse the results into the format expected by Select2
+                        // since we are using custom formatting functions we do not need to
+                        // alter the remote JSON data, except to indicate that infinite
+                        // scrolling can be used
+                        // params.page = params.page || 1;
+
+                        return {
+                            results: data.results,
+                            pagination: data.pagination
+                        };
+                    },
+                    cache: true
+                },
+                templateResult: function(penduduk) {
+                    if (!penduduk.id) {
+                        return penduduk.text;
+                    }
+                    var _tmpPenduduk = penduduk.text.split('\n');
+                    var $penduduk = $(
+                        '<div>' + _tmpPenduduk[0] + '</div><div>' + _tmpPenduduk[1] + '</div>'
+                    );
+                    return $penduduk;
+                },
+                placeholder: '--  Cari NIK / Tag ID Card / Nama Penduduk --',
+                minimumInputLength: 1,
+            });
+
+            // kaitkan data 
+            $('select[data-kaitkan]').each(function() {
+                let _kaitkan = $(this).data('kaitkan')
+                let _kategori = $(this).closest('.form-group').data('kategori')
+
+                _kaitkan.forEach(element => {
+                    for (let i in element.kode_isian_terkait) {
+                        let _namaElm = element.kode_isian_terkait[i].replaceAll(/\s+/g, '_').toLowerCase()
+                        if (_kategori) {
+                            _namaElm += `_${_kategori}`
+                        }
+
+                        $(`[name=${_namaElm}]`).removeClass('required')
+                        $(`[name=${_namaElm}]`).closest('.form-group').addClass('hide')
+                    }
+                });
+
+                $(this).change(function() {
+                    let _aktifkanElm = $(this).data('kaitkan')
+                    let _namaElm, _kategori = $(this).closest('.form-group').data('kategori')
+                    _aktifkanElm.forEach(element => {
+                        for (let j in element.kode_isian_terkait) {
+                            _namaElm = element.kode_isian_terkait[j].replaceAll(/\s+/g, '_').toLowerCase()
+                            if (_kategori) {
+                                _namaElm += `_${_kategori}`
+                            }
+                            $(`[name=${_namaElm}]`).removeClass('required')
+                            $(`[name=${_namaElm}]`).closest('.form-group').addClass('hide')
+                        }
+                        for (let i in element.nilai_isian) {
+                            if (element.nilai_isian[i].includes($(this).val())) {
+                                for (let j in element.kode_isian_terkait) {
+                                    _namaElm = element.kode_isian_terkait[j].replaceAll(/\s+/g, '_').toLowerCase()
+                                    if (_kategori) {
+                                        _namaElm += `_${_kategori}`
+                                    }
+                                    $(`[name=${_namaElm}]`).addClass('required')
+                                    $(`[name=${_namaElm}]`).closest('.form-group').removeClass('hide')
+                                }
+
+                            }
+                        }
+                    });
+                })
+            })
         });
-        $('#hideData').hide();
-    });
-</script>
+    </script>
 @endpush

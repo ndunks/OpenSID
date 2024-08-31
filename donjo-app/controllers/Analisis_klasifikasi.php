@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -55,30 +55,33 @@ class Analisis_klasifikasi extends Admin_Controller
         $this->session->asubmenu = "{$this->controller}";
         $this->modul_ini         = 'analisis';
         $this->sub_modul_ini     = 'master-analisis';
+        $this->set_page          = ['20', '50', '100'];
+        $this->list_session      = ['cari', 'filter', 'state'];
     }
 
-    public function clear()
+    public function clear(): void
     {
         $this->session->unset_userdata(['cari']);
 
         redirect($this->controller);
     }
 
-    public function index($p = 1, $o = 0)
+    public function index($p = 1, $o = 0): void
     {
         unset($_SESSION['cari2']);
         $data['p'] = $p;
         $data['o'] = $o;
 
-        if (isset($_SESSION['cari'])) {
-            $data['cari'] = $_SESSION['cari'];
-        } else {
-            $data['cari'] = '';
+        foreach ($this->list_session as $list) {
+            $data[$list] = $this->session->{$list} ?: '';
         }
 
         if (isset($_POST['per_page'])) {
             $_SESSION['per_page'] = $_POST['per_page'];
         }
+
+        $data['func']     = 'index';
+        $data['set_page'] = $this->set_page;
         $data['per_page'] = $_SESSION['per_page'];
 
         $data['paging']          = $this->analisis_klasifikasi_model->paging($p, $o);
@@ -89,14 +92,14 @@ class Analisis_klasifikasi extends Admin_Controller
         $this->render('analisis_klasifikasi/table', $data);
     }
 
-    public function form($p = 1, $o = 0, $id = 0)
+    public function form($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $data['p'] = $p;
         $data['o'] = $o;
 
         if ($id) {
-            $data['analisis_klasifikasi'] = $this->analisis_klasifikasi_model->get_analisis_klasifikasi($id);
+            $data['analisis_klasifikasi'] = $this->analisis_klasifikasi_model->get_analisis_klasifikasi($id) ?? show_404();
             $data['form_action']          = site_url("{$this->controller}/update/{$p}/{$o}/{$id}");
         } else {
             $data['analisis_klasifikasi'] = null;
@@ -108,7 +111,7 @@ class Analisis_klasifikasi extends Admin_Controller
         $this->load->view('analisis_klasifikasi/ajax_form', $data);
     }
 
-    public function search()
+    public function search(): void
     {
         $cari = $this->input->post('cari');
         if ($cari != '') {
@@ -120,7 +123,7 @@ class Analisis_klasifikasi extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function insert()
+    public function insert(): void
     {
         $this->redirect_hak_akses('u');
         $this->analisis_klasifikasi_model->insert();
@@ -128,7 +131,7 @@ class Analisis_klasifikasi extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function update($p = 1, $o = 0, $id = 0)
+    public function update($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $this->analisis_klasifikasi_model->update($id);
@@ -136,7 +139,7 @@ class Analisis_klasifikasi extends Admin_Controller
         redirect("{$this->controller}/index/{$p}/{$o}");
     }
 
-    public function delete($p = 1, $o = 0, $id = 0)
+    public function delete($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('h');
         $this->analisis_klasifikasi_model->delete($id);
@@ -144,7 +147,7 @@ class Analisis_klasifikasi extends Admin_Controller
         redirect("{$this->controller}/index/{$p}/{$o}");
     }
 
-    public function delete_all($p = 1, $o = 0)
+    public function delete_all($p = 1, $o = 0): void
     {
         $this->redirect_hak_akses('h');
         $this->analisis_klasifikasi_model->delete_all();

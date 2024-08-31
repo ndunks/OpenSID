@@ -2,7 +2,7 @@
 	<section class="content-header">
 		<h1>Laporan Asset Yang Dihapus</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?=site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?=site_url('beranda')?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li class="active">Laporan Asset Yang Dihapus</li>
 		</ol>
 	</section>
@@ -228,7 +228,7 @@
 											<button type="button" class="close" data-dismiss="modal">&times;</button>
 											<h4 class="modal-title">Unduh Inventaris</h4>
 										</div>
-										<formtarget="_blank" class="form-horizontal" method="get" >
+										<form target="_blank" class="form-horizontal" method="get" >
 											<div class="modal-body">
 												<div class="form-group">
 													<label class="col-sm-2 control-label required" style="text-align:left;" for="nama_barang">Tahun</label>
@@ -247,7 +247,7 @@
 														<select name="penandatangan" id="penandatangan" class="form-control input-sm select2">
 															<?php foreach ($pamong as $data): ?>
 																<option value="<?= $data['pamong_id']?>" data-jabatan="<?= trim($data['pamong_jabatan'])?>"
-																	<?= selected($data['jabatan_id'], kades()->id) ?>>
+																	<?= selected($data['jabatan_id'], $kades_id) ?>>
 																	<?= $data['pamong_nama']?>(<?= $data['pamong_jabatan']?>)
 																</option>
 															<?php endforeach; ?>

@@ -10,21 +10,16 @@
 @endsection
 
 @section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('surat') }}">Cetak Layanan Surat</a></li>
+    <li class="breadcrumb-item"><a href="{{ ci_route('surat') }}">Cetak Layanan Surat</a></li>
 @endsection
 
 @section('content')
     @include('admin.layouts.components.notifikasi')
     <div class="box box-info">
         <div class="box-header with-border">
-            <select class="form-control select2 " id="cetak_surat" name="cetak_surat" style="width: 100%;">
-                <option selected="selected">--- Cari Judul Surat Yang Akan Dicetak ---</option>
-                @foreach ($cetak_surat as $key => $value)
-                    <option value="{{ $value->url_surat }}">{{ '[' . (in_array($value->jenis, \App\Models\FormatSurat::RTF) ? 'RTF' : 'TinyMCE') . '] : ' . $value->nama }}</option>
-                @endforeach
-            </select>
+            <select id="cetak-surat" name="cetak_surat" class="form-control input-sm" data-placeholder="--- Cari Judul Surat Yang Akan Dicetak ---"></select>
         </div>
-        
+
         {!! form_open($formAction, 'id="validasi"') !!}
         <div class="box-body">
             <div class="table-responsive">
@@ -49,13 +44,35 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            $('#cetak_surat').select2().on('change', function(e) {
+            $('#cetak-surat').select2({
+                ajax: {
+                    url: SITE_URL + 'surat/apidaftarsurat',
+                    dataType: 'json',
+                    data: function(params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1,
+                        };
+                    },
+                    cache: true
+                },
+                placeholder: function() {
+                    $(this).data('placeholder');
+                },
+                minimumInputLength: 0,
+                allowClear: true,
+                escapeMarkup: function(markup) {
+                    return markup;
+                },
+            });
+
+            $('#cetak-surat').change(function(e) {
                 window.location = SITE_URL + 'surat/form/' + this.value;
             });
 
             var TableData = $('#tabeldata').DataTable({
                 ajax: {
-                    url: "{{ route('surat.datatables') }}",
+                    url: "{{ ci_route('surat.datatables') }}",
                 },
                 columns: [{
                         data: 'DT_RowIndex',

@@ -2,10 +2,10 @@
 	<section class="content-header">
 		<h1>Input Data Sensus - <?= $analisis_master['nama'] ?></h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda') ?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li><a href="<?= site_url('analisis_master/clear') ?>"> Master Analisis</a></li>
-			<li><a href="<?= site_url() ?>analisis_respon/leave"><?= $analisis_master['nama'] ?></a></li>
-			<li><a href="<?= site_url() ?>analisis_respon">Data Sensus</a></li>
+			<li><a href="<?= site_url('analisis_respon/leave') ?>"><?= $analisis_master['nama'] ?></a></li>
+			<li><a href="<?= site_url('analisis_respon') ?>">Data Sensus</a></li>
 			<li class="active">Input Data</li>
 		</ol>
 	</section>
@@ -42,7 +42,7 @@
 												<tr>
 													<td width="150">Form Pendataan</td>
 													<td width="1">:</td>
-													<td><a href="<?= site_url() ?>analisis_master/menu/<?= $_SESSION['analisis_master'] ?>"><?= $analisis_master['nama'] ?></a></td>
+													<td><a href="<?= site_url("analisis_master/menu/{$_SESSION['analisis_master']}") ?>"><?= $analisis_master['nama'] ?></a></td>
 												</tr>
 												<tr>
 													<td>Nomor Identitas</td>
@@ -74,7 +74,7 @@
 													<tbody>
 														<?php $i = 1;
 
-										    foreach ($list_anggota as $ang) : $idc = $ang['id']; ?>
+                                            foreach ($list_anggota as $ang) : $idc = $ang['id']; ?>
 															<tr>
 																<td><?= $i ?></td>
 																<?php if ($analisis_master['id_child'] != 0) : ?>
@@ -88,7 +88,7 @@
 																<td><?php if ($ang['sex'] == 1) : ?>LAKI-LAKI<?php endif; ?><?php if ($ang['sex'] == 2) : ?> PEREMPUAN<?php endif; ?></td>
 															</tr>
 														<?php $i++;
-										    endforeach; ?>
+                                            endforeach; ?>
 													</tbody>
 												</table>
 											</div>
@@ -96,25 +96,25 @@
 										<div class="table-responsive">
 											<table class="table">
 												<?php
-										        $new = 1;
-		$last                = 0;
+                                                $new = 1;
+        $last                                        = 0;
 
-		foreach ($list_jawab as $data) :
-		    $data['no'] = '';
-		    ?>
+        foreach ($list_jawab as $data) :
+            $data['no'] = '';
+            ?>
 													<?php
-		        if ($data['id_kategori'] != $last || $last == 0) :
-		            $new = 1;
-		        endif;
-		    if ($new == 1) : ?>
+                if ($data['id_kategori'] != $last || $last == 0) :
+                    $new = 1;
+                endif;
+            if ($new == 1) : ?>
 														<tr>
 															<th colspan="2" class="bg-aqua"><strong><?= $data['kategori'] ?></strong></th>
 														</tr>
 													<?php
-		        $new  = 0;
-		        $last = $data['id_kategori'];
-		    endif;
-		    ?>
+                $new  = 0;
+                $last = $data['id_kategori'];
+            endif;
+            ?>
 													<tr>
 														<td colspan="2"><label><?= $data['nomor'] ?> ) <?= $data['pertanyaan'] ?></label></td>
 													</tr>
@@ -123,9 +123,9 @@
 															<td width="35px;"></td>
 															<td class="col-xs-12 col-sm-4 pull-left">
 																<select class="form-control input-sm select2" name="rb[<?= $data['id'] ?>]" onchange="formAction('mainform', '<?= site_url('analisis_indikator/kategori') ?>')">
-																	<option value="" <?= jecho(($data['referensi'] && $subjek[$data['referensi']]) && ! ($subjek[$data['referensi']] == $data2['kode_jawaban']) || ($data2['cek'] == 1), true, 'disabled'); ?>>Pilih Jawaban</option>
+																	<option value="" <?= jecho(($data['referensi'] && $subjek[$data['referensi']]) && $subjek[$data['referensi']] != $data2['kode_jawaban'] || ($data2['cek'] == 1), true, 'disabled'); ?>>Pilih Jawaban</option>
 																	<?php foreach ($data['parameter_respon'] as $data2) : ?>
-																		<option <?= jecho(($data['referensi'] && $subjek[$data['referensi']]) && ! ($subjek[$data['referensi']] == $data2['kode_jawaban']) || ($data2['cek'] == 1), true, ''); ?> value="<?= $data['id'] ?>.<?= $data2['id_parameter']; ?>" <?= selected(($data2['cek'] == 1) || ($subjek[$data['referensi']] == $data2['kode_jawaban']), true); ?>><?= $data2['kode_jawaban'] ?>. <?= $data2['jawaban'] ?></option>
+																		<option <?= jecho(($data['referensi'] && $subjek[$data['referensi']]) && $subjek[$data['referensi']] != $data2['kode_jawaban'] || ($data2['cek'] == 1), true, ''); ?> value="<?= $data['id'] ?>.<?= $data2['id_parameter']; ?>" <?= selected(($data2['cek'] == 1) || ($subjek[$data['referensi']] == $data2['kode_jawaban']), true); ?>><?= $data2['kode_jawaban'] ?>. <?= $data2['jawaban'] ?></option>
 																	<?php endforeach; ?>
 																</select>
 															</td>
@@ -159,10 +159,10 @@
 																<td></td>
 																<td>
 																	<?php
-		                    if (preg_match('/tanggal/i', $data['referensi']) || preg_match('/tanggal/i', $data['referensi'])) {
-		                        $subjek[$data['referensi']] = tgl_indo_dari_str($subjek[$data['referensi']]);
-		                    }
-													    ?>
+                            if (preg_match('/tanggal/i', $data['referensi']) || preg_match('/tanggal/i', $data['referensi'])) {
+                                $subjek[$data['referensi']] = tgl_indo_dari_str($subjek[$data['referensi']]);
+                            }
+                                                        ?>
 																	<textarea <?= jecho($data['referensi'] && $subjek[$data['referensi']], true, 'readonly'); ?> id="it[<?= $data['id'] ?>]" name="it[<?= $data['id'] ?>]" class="form-control input-sm" style="width:100%" rows="5"><?= $data['parameter_respon']['jawaban'] ?? $subjek[$data['referensi']]; ?></textarea>
 																</td>
 															</tr>
@@ -180,7 +180,7 @@
 													<label class="col-sm-2 no-padding">Berkas Form Pendaftaran</label>
 													<div class="col-sm-2">
 														<input type="hidden" name="old_file" value="<?= $list_bukti[0]['pengesahan'] ?>">
-														<img class="attachment-img img-responsive" src="<?= base_url() . LOKASI_PENGESAHAN . $list_bukti[0]['pengesahan'] ?>" alt="Bukti Pengesahan">
+														<img class="attachment-img img-responsive" src="<?= base_url(LOKASI_PENGESAHAN . $list_bukti[0]['pengesahan']) ?>" alt="Bukti Pengesahan">
 													</div>
 												</div>
 											<?php endif; ?>

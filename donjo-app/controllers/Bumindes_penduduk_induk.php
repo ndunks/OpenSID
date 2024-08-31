@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -41,8 +41,8 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Bumindes_penduduk_induk extends Admin_Controller
 {
-    private $_set_page;
-    private $_list_session;
+    private array $_set_page     = ['10', '20', '50', '100', [0, 'Semua']];
+    private array $_list_session = ['filter_tahun', 'filter_bulan', 'status_hanya_tetap', 'jenis_peristiwa', 'filter', 'status_dasar', 'sex', 'agama', 'dusun', 'rw', 'rt', 'cari', 'umur_min', 'umur_max', 'umurx', 'pekerjaan_id', 'status', 'pendidikan_sedang_id', 'pendidikan_kk_id', 'status_penduduk', 'judul_statistik', 'cacat', 'cara_kb_id', 'akta_kelahiran', 'status_ktp', 'id_asuransi', 'status_covid', 'bantuan_penduduk', 'log', 'warganegara', 'menahun', 'hubungan', 'golongan_darah', 'hamil', 'kumpulan_nik'];
 
     public function __construct()
     {
@@ -52,14 +52,9 @@ class Bumindes_penduduk_induk extends Admin_Controller
 
         $this->modul_ini     = 'buku-administrasi-desa';
         $this->sub_modul_ini = 'administrasi-penduduk';
-
-        $this->_set_page = ['10', '20', '50', '100'];
-
-        // Samakan dengan donjo-app/controllers/Penduduk.php, karena memanggil penduduk_model
-        $this->_list_session = ['filter_tahun', 'filter_bulan', 'status_hanya_tetap', 'jenis_peristiwa', 'filter', 'status_dasar', 'sex', 'agama', 'dusun', 'rw', 'rt', 'cari', 'umur_min', 'umur_max', 'umurx', 'pekerjaan_id', 'status', 'pendidikan_sedang_id', 'pendidikan_kk_id', 'status_penduduk', 'judul_statistik', 'cacat', 'cara_kb_id', 'akta_kelahiran', 'status_ktp', 'id_asuransi', 'status_covid', 'bantuan_penduduk', 'log', 'warganegara', 'menahun', 'hubungan', 'golongan_darah', 'hamil', 'kumpulan_nik'];
     }
 
-    public function index($page_number = 1, $order_by = 0)
+    public function index($page_number = 1, $order_by = 0): void
     {
         $per_page = $this->input->post('per_page');
         if (isset($per_page)) {
@@ -77,6 +72,7 @@ class Bumindes_penduduk_induk extends Admin_Controller
             'main_content' => 'bumindes/penduduk/induk/content_induk',
             'subtitle'     => 'Buku Induk Penduduk',
             'selected_nav' => 'induk',
+            'page'         => $page_number,
             'order_by'     => $order_by,
             'cari'         => $this->session->cari ?: '',
             'filter'       => $this->session->filter ?: '',
@@ -84,23 +80,21 @@ class Bumindes_penduduk_induk extends Admin_Controller
             'tahun'        => $this->session->filter_tahun,
             'func'         => 'index',
             'set_page'     => $this->_set_page,
+            'main'         => $list_data['main'],
             'paging'       => $list_data['paging'],
             'list_tahun'   => $this->penduduk_log_model->list_tahun(),
         ];
 
-        // TODO : Cari cara agar bisa digabungkan ke array $data = [] (tdk terpisah)
-        $data['main'] = $list_data['main'];
-
         $this->render('bumindes/penduduk/main', $data);
     }
 
-    private function clear_session()
+    private function clear_session(): void
     {
         $this->session->unset_userdata($this->_list_session);
         $this->session->per_page = $this->_set_page[0];
     }
 
-    public function clear()
+    public function clear(): void
     {
         $this->clear_session();
         // Set default filter ke tahun dan bulan sekarang
@@ -109,32 +103,32 @@ class Bumindes_penduduk_induk extends Admin_Controller
         redirect('bumindes_penduduk_induk');
     }
 
-    public function ajax_cetak($o = 0, $aksi = '')
+    public function ajax_cetak($page = 1, $o = 0, $aksi = ''): void
     {
         // pengaturan data untuk dialog cetak/unduh
         $data = [
             'o'                   => $o,
             'aksi'                => $aksi,
-            'form_action'         => site_url("bumindes_penduduk_induk/cetak/{$o}/{$aksi}"),
-            'form_action_privasi' => site_url("bumindes_penduduk_induk/cetak/{$o}/{$aksi}/1"),
+            'form_action'         => site_url("bumindes_penduduk_induk/cetak/{$page}/{$o}/{$aksi}"),
+            'form_action_privasi' => site_url("bumindes_penduduk_induk/cetak/{$page}/{$o}/{$aksi}/1"),
             'isi'                 => 'bumindes/penduduk/induk/ajax_dialog_induk',
         ];
 
         $this->load->view('global/dialog_cetak', $data);
     }
 
-    public function cetak($o = 0, $aksi = '', $privasi_nik = 0)
+    public function cetak($page = 1, $o = 0, $aksi = '', $privasi_nik = 0): void
     {
         $data = [
             'aksi'           => $aksi,
             'config'         => $this->header['desa'],
             'pamong_ttd'     => Pamong::sekretarisDesa()->first(),
             'pamong_ketahui' => Pamong::kepalaDesa()->first(),
-            'main'           => $this->penduduk_model->list_data($o, 0),
+            'main'           => $this->penduduk_model->list_data($o, $page)['main'],
             'bulan'          => $this->session->filter_bulan,
             'tahun'          => $this->session->filter_tahun,
             'tgl_cetak'      => $_POST['tgl_cetak'],
-            'privasi_nik'    => $privasi_nik == 1 ? true : false,
+            'privasi_nik'    => $privasi_nik == 1,
             'file'           => 'Buku Induk Kependudukan',
             'isi'            => 'bumindes/penduduk/induk/content_induk_cetak',
             'letak_ttd'      => ['2', '2', '9'],
@@ -142,13 +136,13 @@ class Bumindes_penduduk_induk extends Admin_Controller
         $this->load->view('global/format_cetak', $data);
     }
 
-    public function autocomplete()
+    public function autocomplete(): void
     {
         $data = $this->penduduk_model->autocomplete($this->input->post('cari'));
-        $this->output->set_content_type('application/json')->set_output(json_encode($data));
+        $this->output->set_content_type('application/json')->set_output(json_encode($data, JSON_THROW_ON_ERROR));
     }
 
-    public function filter($filter)
+    public function filter($filter): void
     {
         $value = $this->input->post($filter);
         if ($value != '') {

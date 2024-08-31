@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,14 +37,19 @@
 
 namespace App\Models;
 
+use App\Enums\JenisKelaminEnum;
+use App\Enums\SHDKEnum;
 use App\Traits\Author;
-use Carbon\Carbon;
+use App\Traits\ConfigId;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Penduduk extends BaseModel
 {
     use Author;
+    use ConfigId;
 
     /**
      * Static data tempat lahir.
@@ -121,13 +126,14 @@ class Penduduk extends BaseModel
         'statusKawin',
         'pendudukStatus',
         'wilayah',
+        'keluarga',
     ];
 
     /**
      * {@inheritDoc}
      */
     protected $casts = [
-        'tanggallahir' => 'datetime',
+        'tanggallahir' => 'datetime:Y-m-d',
     ];
 
     /**
@@ -144,7 +150,7 @@ class Penduduk extends BaseModel
      */
     public function mandiri()
     {
-        return $this->hasOne(PendudukMandiri::class, 'id_pend');
+        return $this->hasOne(PendudukMandiri::class, 'id_pend')->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
     }
 
     /**
@@ -154,7 +160,7 @@ class Penduduk extends BaseModel
      */
     public function kia_ibu()
     {
-        return $this->hasOne(KIA::class, 'ibu_id');
+        return $this->hasOne(KIA::class, 'ibu_id')->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
     }
 
     /**
@@ -164,7 +170,7 @@ class Penduduk extends BaseModel
      */
     public function kia_anak()
     {
-        return $this->hasOne(KIA::class, 'anak_id');
+        return $this->hasOne(KIA::class, 'anak_id')->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
     }
 
     /**
@@ -304,7 +310,7 @@ class Penduduk extends BaseModel
      */
     public function keluarga()
     {
-        return $this->belongsTo(Keluarga::class, 'id_kk')->withDefault();
+        return $this->belongsTo(Keluarga::class, 'id_kk')->withDefault()->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
     }
 
     /**
@@ -314,7 +320,7 @@ class Penduduk extends BaseModel
      */
     public function rtm()
     {
-        return $this->belongsTo(Rtm::class, 'id_rtm', 'no_kk')->withDefault();
+        return $this->belongsTo(Rtm::class, 'id_rtm', 'no_kk')->withDefault()->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
     }
 
     /**
@@ -324,17 +330,25 @@ class Penduduk extends BaseModel
      */
     public function Wilayah()
     {
-        return $this->belongsTo(Wilayah::class, 'id_cluster');
+        return $this->belongsTo(Wilayah::class, 'id_cluster')->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
+    }
+
+    /**
+     * Define a one-to-many relationship.
+     *
+     * @return HasMany
+     */
+    public function dokumen()
+    {
+        return $this->hasMany(Dokumen::class, 'id_pend')->select('id', 'id_pend', 'nama', 'id_syarat', 'tgl_upload', 'dok_warga')->with(['jenisDokumen'])->hidup();
     }
 
     /**
      * Getter wajib ktp attribute.
-     *
-     * @return string
      */
-    public function getWajibKTPAttribute()
+    public function getWajibKTPAttribute(): string
     {
-        return (($this->tanggallahir->age > 16) || (! empty($this->status_kawin) && $this->status_kawin != 1))
+        return (($this->tanggallahir->age > 16) || (!empty($this->status_kawin) && $this->status_kawin != 1))
             ? 'WAJIB KTP'
             : 'BELUM';
     }
@@ -379,33 +393,29 @@ class Penduduk extends BaseModel
      */
     public function getStatusPerkawinanAttribute()
     {
-        return ! empty($this->status_kawin) && $this->status_kawin != 2
+        return !empty($this->status_kawin) && $this->status_kawin != 2
             ? $this->statusKawin->nama
             : (
                 empty($this->akta_perkawinan)
-                    ? 'KAWIN BELUM TERCATAT'
-                    : 'KAWIN TERCATAT'
+                ? 'KAWIN BELUM TERCATAT'
+                : 'KAWIN TERCATAT'
             );
     }
 
     /**
      * Getter status hamil attribute.
-     *
-     * @return string
      */
-    public function getStatusHamilAttribute()
+    public function getStatusHamilAttribute(): string
     {
         return empty($this->hamil) ? 'TIDAK HAMIL' : 'HAMIL';
     }
 
     /**
      * Getter nama asuransi attribute.
-     *
-     * @return string
      */
-    public function getNamaAsuransiAttribute()
+    public function getNamaAsuransiAttribute(): string
     {
-        return ! empty($this->id_asuransi) && $this->id_asuransi != 1
+        return !empty($this->id_asuransi) && $this->id_asuransi != 1
             ? (($this->id_asuransi == 99)
                 ? "Nama/No Asuransi : {$this->no_asuransi}"
                 : "No Asuransi : {$this->no_asuransi}")
@@ -417,7 +427,7 @@ class Penduduk extends BaseModel
      *
      * @return string
      */
-    public function getUrlFotoAttribute()
+    public function getUrlFotoAttribute(): void
     {
         // try {
         //     return Storage::disk('ftp')->exists("desa/upload/user_pict/{$this->foto}")
@@ -454,43 +464,106 @@ class Penduduk extends BaseModel
      * Scope query untuk menyaring data penduduk berdasarkan parameter yang ditentukan
      *
      * @param Builder $query
-     * @param mixed   $value
      *
      * @return Builder
      */
-    public function scopefilters($query, array $filters = [])
+    public function scopefilters($query, array $filters = [], array $allowedFilters = ['sex', 'status_dasar', 'kk_level'])
     {
         foreach ($filters as $key => $value) {
+            if (!in_array($key, $allowedFilters)) {
+                continue;
+            }
+
             $query->when($value ?? false, static function ($query) use ($value, $key) {
-                $query->where($key, $value);
+                if (is_array($value)) {
+                    return $query->whereIn($key, $value);
+                }
+
+                return $query->where($key, $value);
             });
         }
 
         return $query;
     }
 
-    public function getUsiaAttribute()
+    public function getUsiaAttribute(): string
     {
-        $tglSekarang = Carbon::now();
-        $tglLahir    = Carbon::parse($this->tanggallahir);
-
-        return $tglLahir->diffInYears($tglSekarang) . ' Tahun';
+        return $this->getUmurAttribute() . ' Tahun';
     }
 
     public function getUmurAttribute()
     {
-        $tglSekarang = Carbon::now();
-        $tglLahir    = Carbon::parse($this->tanggallahir);
-
-        return $tglLahir->diffInYears($tglSekarang);
+        return usia($this->tanggallahir, null, '%y');
     }
 
-    public function getAlamatWilayahAttribute()
+    public function getAlamatWilayahAttribute(): string
     {
-        if (! in_array($this->id_kk, [0, null])) {
+        if ($this->id_kk != null) {
             return $this->keluarga->alamat . ' RT ' . $this->keluarga->wilayah->rt . ' / RW ' . $this->keluarga->wilayah->rw . ' ' . ucwords(setting('sebutan_dusun') . ' ' . $this->keluarga->wilayah->dusun);
         }
 
         return $this->alamat_sekarang . ' RT ' . $this->wilayah->rt . ' / RW ' . $this->wilayah->rw . ' ' . ucwords(setting('sebutan_dusun') . ' ' . $this->wilayah->dusun);
+    }
+
+    public function scopeKepalaKeluarga($query)
+    {
+        return $query->where(['kk_level' => SHDKEnum::KEPALA_KELUARGA]);
+    }
+
+    public function scopeAyah($query, $idKk)
+    {
+        return $query->where('id_kk', $idKk)->whereIn('kk_level', [SHDKEnum::KEPALA_KELUARGA, SHDKEnum::SUAMI])->where('sex', JenisKelaminEnum::LAKI_LAKI);
+    }
+
+    public function scopeIbu($query, $idKk)
+    {
+        return $query->where('id_kk', $idKk)->whereIn('kk_level', [SHDKEnum::KEPALA_KELUARGA, SHDKEnum::ISTRI])->where('sex', JenisKelaminEnum::PEREMPUAN);
+    }
+
+    public function isKepalaKeluarga()
+    {
+        return $this->attributes['kk_level'] == SHDKEnum::KEPALA_KELUARGA;
+    }
+
+    public function formIndividu()
+    {
+        $individu                = $this->toArray();
+        $individu['pendidikan']  = $individu['pendidikan_k_k']['nama'] ?? ($individu['pendidikan']['nama'] ?? '');
+        $individu['warganegara'] = $individu['warga_negara']['nama'] ?? '';
+        $individu['agama']       = $this->agama->nama ?? '';
+        $individu['umur']        = $this->umur;
+
+        return $individu;
+    }
+
+    protected function scopeDpt($query, $tglPemilihan = null)
+    {
+        $tglPemilihan ??= date('d-m-Y');
+
+        return $query->where(['status_dasar' => 1, 'status' => 1, 'warganegara_id' => 1])
+            ->where(static function ($q) use ($tglPemilihan) {
+                return $q->whereRaw(DB::raw("(DATE_FORMAT(FROM_DAYS(TO_DAYS(STR_TO_DATE('{$tglPemilihan}','%d-%m-%Y'))-TO_DAYS(`tanggallahir`)), '%Y')+0 ) >= 17"))
+                    ->orWhereIn('status_kawin', [2, 3, 4]);
+            })->whereNotIn('pekerjaan_id', ['6', '7']);
+    }
+
+    protected function scopeBatasiUmur($query, $tglPemilihan, $umurObj = [])
+    {
+        if (empty($umurObj['max']) && empty($umurObj['min'])) {
+            return $query;
+        }
+        $satuan  = $umurObj['satuan'] == 'tahun' ? 'YEAR' : 'MONTH';
+        $umurMin = empty($umurObj['min']) ? 0 : $umurObj['min'];
+        $umurMax = empty($umurObj['max']) ? 1000 : $umurObj['max'];
+
+        return $query->whereRaw(DB::raw("TIMESTAMPDIFF({$satuan}, tanggallahir, STR_TO_DATE('{$tglPemilihan}','%d-%m-%Y')) between {$umurMin} and {$umurMax}"));
+    }
+
+    /**
+     * Get all of the pesan for the Penduduk
+     */
+    public function pesan(): HasMany
+    {
+        return $this->hasMany(PesanMandiri::class, 'identitas', 'nik');
     }
 }

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -51,7 +51,7 @@ class Paging
     public $end;
     public $end_link;
     public $suffix;
-    public $num_links = 20;
+    public $num_links = 10;
 
     public function __construct($props = [])
     {
@@ -60,7 +60,7 @@ class Paging
         }
     }
 
-    public function init($input = [])
+    public function init(array $input = []): void
     {
         if (isset($input['page'])) {
             $this->page = (int) $input['page'];
@@ -85,11 +85,7 @@ class Paging
         if ($this->per_page < 1) {
             $this->per_page = 50;
         }
-        if ($this->num_rows < 1) {
-            $my_num_rows = 1;
-        } else {
-            $my_num_rows = $this->num_rows;
-        }
+        $my_num_rows = $this->num_rows < 1 ? 1 : $this->num_rows;
 
         $this->num_page = (int) ((($my_num_rows - 1) / $this->per_page) + 1);
         $this->offset   = (int) (($this->page - 1) * $this->per_page);

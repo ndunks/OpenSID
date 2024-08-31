@@ -18,23 +18,27 @@
         <div class="box-header with-border">
             <div class="form-inline">
                 @if (can('h'))
-                    <a href="#confirm-delete" title="Hapus Data"
-                        onclick="deleteAllBox('mainform', '{{ route('buku_tamu.delete') }}')"
-                        class="btn btn-social btn-danger btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block hapus-terpilih"><i
-                            class='fa fa-trash-o'></i> Hapus</a>
+                    <a href="#confirm-delete" title="Hapus Data" onclick="deleteAllBox('mainform', '{{ ci_route('buku_tamu.delete') }}')" class="btn btn-social btn-danger btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block hapus-terpilih"><i
+                            class='fa fa-trash-o'></i>
+                        Hapus</a>
                 @endif
                 <div class="input-group input-group-sm date">
                     <div class="input-group-addon" style="border-radius: 5px 0 0 5px">
                         <i class="fa fa-calendar"></i>
                     </div>
-                    <input type="text" name="tanggal" class="form-control input-sm" title="Rentang Tanggal"
-                        placeholder="Masukaan Rentang Tanggal" id="date-range" style="border-radius: 0 5px 5px 0">
+                    <input
+                        type="text"
+                        name="tanggal"
+                        class="form-control input-sm"
+                        title="Rentang Tanggal"
+                        placeholder="Masukaan Rentang Tanggal"
+                        id="date-range"
+                        style="border-radius: 0 5px 5px 0"
+                    >
                 </div>
-                <a id="cetak" title="Cetak Data"
-                    class="btn btn-social bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
+                <a id="cetak" title="Cetak Data" class="btn btn-social bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
                     <i class='fa fa-print'></i> Cetak</a>
-                <a id="expor" title="Expor Data"
-                    class="btn btn-social btn-success btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
+                <a id="expor" title="Expor Data" class="btn btn-social btn-success btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
                     <i class='fa fa-file'></i> Expor</a>
             </div>
         </div>
@@ -72,8 +76,8 @@
         $(document).ready(function() {
             $('#cetak, #expor').on('click', function() {
                 let url = $(this).attr('id') == 'cetak' ?
-                    "{{ route('buku_tamu.cetak') }}/" :
-                    "{{ route('buku_tamu.ekspor') }}/";
+                    "{{ ci_route('buku_tamu.cetak') }}/" :
+                    "{{ ci_route('buku_tamu.ekspor') }}/";
 
                 $.ajax({
                     url: url,
@@ -92,7 +96,7 @@
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: "{{ route('buku_tamu') }}",
+                    url: "{{ ci_route('buku_tamu') }}",
                     data: function(req) {
                         req.tanggal = $('#date-range').val();
                     },
@@ -152,14 +156,14 @@
                         orderable: true
                     },
                     {
-                        data: 'bidang.nama',
-                        name: 'bidang.nama',
+                        data: 'bidang',
+                        name: 'bidang',
                         searchable: true,
                         orderable: true
                     },
                     {
-                        data: 'keperluan.keperluan',
-                        name: 'keperluan.keperluan',
+                        data: 'keperluan',
+                        name: 'keperluan',
                         searchable: true,
                         orderable: true
                     },

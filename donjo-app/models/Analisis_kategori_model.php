@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,82 +39,70 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Analisis_kategori_model extends MY_Model
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function autocomplete()
     {
         return $this->autocomplete_str('kategori', 'analisis_kategori_indikator');
     }
 
-    private function search_sql()
+    private function search_sql(): void
     {
-        if (isset($_SESSION['cari'])) {
-            $cari       = $_SESSION['cari'];
-            $kw         = $this->db->escape_like_str($cari);
-            $kw         = '%' . $kw . '%';
-            $search_sql = " AND u.kategori LIKE '{$kw}'";
-
-            return $search_sql;
+        if ($cari = $this->session->cari) {
+            $this->db->like('u.kategori', $cari);
         }
     }
 
-    private function master_sql()
+    private function master_sql(): void
     {
-        if (isset($_SESSION['analisis_master'])) {
-            $kf         = $_SESSION['analisis_master'];
-            $filter_sql = " AND u.id_master = {$kf}";
-
-            return $filter_sql;
+        if ($analisis_master = $this->session->analisis_master) {
+            $this->db->like('u.id_master', $analisis_master);
         }
     }
 
     public function paging($p = 1, $o = 0)
     {
-        $sql = 'SELECT COUNT(id) AS id FROM analisis_kategori_indikator u WHERE 1';
-        $sql .= $this->search_sql();
-        $sql .= $this->master_sql();
-        $query    = $this->db->query($sql);
-        $row      = $query->row_array();
+        $this->db->select("count('u.id') as id");
+
+        $row      = $this->list_data_sql()->row_array();
         $jml_data = $row['id'];
 
-        $this->load->library('paging');
-        $cfg['page']     = $p;
-        $cfg['per_page'] = $_SESSION['per_page'];
-        $cfg['num_rows'] = $jml_data;
-        $this->paging->init($cfg);
+        return $this->paginasi($p, $jml_data);
+    }
 
-        return $this->paging;
+    private function list_data_sql()
+    {
+        $this->config_id('u')
+            ->from('analisis_kategori_indikator u');
+
+        $this->search_sql();
+        $this->master_sql();
+
+        return $this->db->get();
     }
 
     public function list_data($o = 0, $offset = 0, $limit = 500)
     {
         switch ($o) {
-            case 3: $order_sql = ' ORDER BY u.kategori';
+            case 3:
+                $this->db->order_by('u.kategori');
                 break;
 
-            case 4: $order_sql = ' ORDER BY u.kategori DESC';
+            case 4:
+                $this->db->order_by('u.kategori DESC');
                 break;
 
-            default:$order_sql = ' ORDER BY u.kategori';
+            default:
+                $this->db->order_by('u.kategori');
+        }
+        if ($limit > 0) {
+            $this->db->limit($limit, $offset);
         }
 
-        $paging_sql = ' LIMIT ' . $offset . ',' . $limit;
-        $sql        = 'SELECT u.* FROM analisis_kategori_indikator u WHERE 1 ';
+        $data = $this->list_data_sql()->result_array();
 
-        $sql .= $this->search_sql();
-        $sql .= $this->master_sql();
-        $sql .= $order_sql;
-        $sql .= $paging_sql;
+        $j       = $offset;
+        $counter = count($data);
 
-        $query = $this->db->query($sql);
-        $data  = $query->result_array();
-
-        $j = $offset;
-
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $j + 1;
             $j++;
         }
@@ -122,42 +110,42 @@ class Analisis_kategori_model extends MY_Model
         return $data;
     }
 
-    public function insert()
+    public function insert(): void
     {
         $data              = [];
         $data['id_master'] = $this->session->analisis_master;
         $data['kategori']  = htmlentities($this->input->post('kategori'));
+        $data['config_id'] = identitas('id');
         $outp              = $this->db->insert('analisis_kategori_indikator', $data);
 
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function update($id = 0)
+    public function update($id = 0): void
     {
         $data              = [];
         $data['id_master'] = $this->session->analisis_master;
         $data['kategori']  = htmlentities($this->input->post('kategori'));
-        $this->db->where('id', $id);
-        $outp = $this->db->update('analisis_kategori_indikator', $data);
+        $outp              = $this->config_id()->where('id', $id)->update('analisis_kategori_indikator', $data);
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function delete($id = '', $semua = false)
+    public function delete($id = '', $semua = false): void
     {
         if (! $semua) {
             $this->session->success = 1;
         }
 
-        $outp = $this->db->where('id', $id)->delete('analisis_kategori_indikator');
+        $outp = $this->config_id()->where('id', $id)->delete('analisis_kategori_indikator');
 
         status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->session->success = 1;
 
-        $id_cb = $_POST['id_cb'];
+        $id_cb = $this->input->post('id_cb');
 
         foreach ($id_cb as $id) {
             $this->delete($id, $semua = true);
@@ -166,9 +154,9 @@ class Analisis_kategori_model extends MY_Model
 
     public function get_analisis_kategori($id = 0)
     {
-        $sql   = 'SELECT * FROM analisis_kategori_indikator WHERE id = ?';
-        $query = $this->db->query($sql, $id);
-
-        return $query->row_array();
+        return $this->config_id()
+            ->where('id', $id)
+            ->get('analisis_kategori_indikator')
+            ->row_array();
     }
 }

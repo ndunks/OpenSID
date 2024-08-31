@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -49,7 +49,7 @@ class MY_Exceptions extends CI_Exceptions
      *
      * @var array
      */
-    protected $db_error_codes = [1029, 1049, 1051, 1054, 1062, 1067, 1072, 1109, 1138, 1146, 1166, 1169, 1173, 1176, 1265, 1271, 1364, 1406, 1978];
+    protected $db_error_codes = [1029, 1049, 1051, 1054, 1062, 1067, 1072, 1109, 1138, 1146, 1166, 1169, 1173, 1176, 1265, 1271, 1292, 1364, 1406, 1978];
 
     public function __construct()
     {
@@ -67,7 +67,7 @@ class MY_Exceptions extends CI_Exceptions
      * @param mixed $filepath
      * @param mixed $line
      */
-    public function log_exception($severity, $message, $filepath, $line)
+    public function log_exception($severity, $message, $filepath, $line): void
     {
         parent::log_exception($severity, $message, $filepath, $line);
         if (preg_match('/\\[PERIKSA\\]/', $message)) {
@@ -77,7 +77,7 @@ class MY_Exceptions extends CI_Exceptions
             ];
             $this->ci->session->heading           = 'Error ditemukan pada isi data';
             $this->ci->session->message_query     = '<p>Error ditemukan di file' . $filepath . 'pada baris ' . $line . '</p>';
-            $this->ci->session->message_exception = strip_tags((new \Exception())->getTraceAsString());
+            $this->ci->session->message_exception = strip_tags((new Exception())->getTraceAsString());
 
             redirect('periksa');
         }
@@ -99,22 +99,21 @@ class MY_Exceptions extends CI_Exceptions
         }
 
         $error = $error ?: $this->ci->db->error();
-        if (! empty($error) && in_array($error['code'], $this->db_error_codes)) {
+        if ($error !== [] && in_array($error['code'], $this->db_error_codes)) {
             $this->ci->session->db_error          = $error;
             $this->ci->session->message           = '<p>' . (is_array($error) ? implode('</p><p>', $error) : $error) . '</p>';
             $this->ci->session->heading           = $heading;
             $this->ci->session->message_query     = '<p>' . (is_array($message) ? implode('</p><p>', $message) : $message) . '</p>';
-            $this->ci->session->message_exception = strip_tags((new \Exception())->getTraceAsString());
+            $this->ci->session->message_exception = strip_tags((new Exception())->getTraceAsString());
             /*
             | 1049 adalah kode koneksi database gagal. Dalam hal ini tampilkan halaman khusus
             | menjelaskan langkah yang dapat dilakukan untuk mengatasi.
             */
-            if ($error['code'] === 1049) {
-                redirect('koneksi-database');
-            }
+            redirect('koneksi-database');
 
-            redirect('periksa');
+            // redirect('periksa');
         }
+        log_message('error', json_encode($message));
 
         return parent::show_error($heading, $message, $template, $status_code);
     }

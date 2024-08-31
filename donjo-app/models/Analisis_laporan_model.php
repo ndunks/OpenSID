@@ -11,6 +11,43 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ *
+ * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
+ * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
+ * tanpa batasan, termasuk hak untuk menggunakan, menyalin, mengubah dan/atau mendistribusikan,
+ * asal tunduk pada syarat berikut:
+ *
+ * Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan dalam
+ * setiap salinan atau bagian penting Aplikasi Ini. Barang siapa yang menghapus atau menghilangkan
+ * pemberitahuan ini melanggar ketentuan lisensi Aplikasi Ini.
+ *
+ * PERANGKAT LUNAK INI DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN, BAIK TERSURAT MAUPUN
+ * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
+ * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
+ *
+ * @package   OpenSID
+ * @author    Tim Pengembang OpenDesa
+ * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @license   http://www.gnu.org/licenses/gpl.html GPL V3
+ * @link      https://github.com/OpenSID/OpenSID
+ *
+ */
+
+use App\Enums\AnalisisRefSubjekEnum;
+
+/*
+ *
+ * File ini bagian dari:
+ *
+ * OpenSID
+ *
+ * Sistem informasi desa sumber terbuka untuk memajukan desa
+ *
+ * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
+ *
+ * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
  * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
@@ -29,7 +66,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,7 +74,7 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-class Analisis_laporan_model extends CI_Model
+class Analisis_laporan_model extends My_Model
 {
     public function __construct()
     {
@@ -48,18 +85,19 @@ class Analisis_laporan_model extends CI_Model
 
     public function autocomplete()
     {
-        $sql = 'SELECT no_kk FROM tweb_keluarga
-			UNION SELECT t.nama
-				FROM tweb_keluarga u
-				LEFT JOIN penduduk_hidup t ON u.nik_kepala = t.id
-				LEFT JOIN tweb_wil_clusterdesa c ON t.id_cluster = c.id
-				WHERE 1 ';
+        $sql = 'SELECT no_kk FROM tweb_keluarga WHERE config_id = ' . identitas('id') .
+            ' UNION SELECT t.nama
+                FROM tweb_keluarga u
+                LEFT JOIN penduduk_hidup t ON u.nik_kepala = t.id
+                LEFT JOIN tweb_wil_clusterdesa c ON t.id_cluster = c.id
+                WHERE u.config_id = ' . identitas('id');
         $query = $this->db->query($sql);
         $data  = $query->result_array();
 
-        $outp = '';
+        $outp    = '';
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $outp .= ',"' . $data[$i]['no_kk'] . '"';
         }
         $outp = strtolower(substr($outp, 1));
@@ -148,7 +186,7 @@ class Analisis_laporan_model extends CI_Model
         }
     }
 
-    private function dusun_sql()
+    private function dusun_sql(): void
     {
         if (empty($this->session->dusun) || $this->subjek == 5) {
             return;
@@ -157,7 +195,7 @@ class Analisis_laporan_model extends CI_Model
         $this->db->where('dusun', $this->session->dusun);
     }
 
-    private function rw_sql()
+    private function rw_sql(): void
     {
         if (empty($this->session->rw) || $this->subjek == 5) {
             return;
@@ -166,7 +204,7 @@ class Analisis_laporan_model extends CI_Model
         $this->db->where('rw', $this->session->rw);
     }
 
-    private function rt_sql()
+    private function rt_sql(): void
     {
         if (empty($this->session->rt) || $this->subjek == 5) {
             return;
@@ -175,7 +213,7 @@ class Analisis_laporan_model extends CI_Model
         $this->db->where('rt', $this->session->rt);
     }
 
-    private function klasifikasi_sql()
+    private function klasifikasi_sql(): void
     {
         if (empty($this->session->klasifikasi)) {
             return;
@@ -184,7 +222,7 @@ class Analisis_laporan_model extends CI_Model
         $this->db->where('k.id', $this->session->klasifikasi);
     }
 
-    private function jawab_sql()
+    private function jawab_sql(): void
     {
         if (empty($kf = $this->session->jawab)) {
             return;
@@ -194,12 +232,12 @@ class Analisis_laporan_model extends CI_Model
         $jmkf = $this->session->jmkf;
         $this->db
             ->where_in('x.id_parameter', $kf)
-            ->where("((SELECT COUNT(id_parameter) FROM analisis_respon WHERE id_subjek = u.id AND id_periode = {$per} AND id_parameter IN ({$kf})) = {$jmkf})");
+            ->where("((SELECT COUNT(id_parameter) FROM analisis_respon ar WHERE id_subjek = u.id AND id_periode = {$per} AND id_parameter IN ({$kf})) = {$jmkf})");
     }
 
     public function get_judul()
     {
-        $asubjek = $this->referensi_model->list_by_id('analisis_ref_subjek')[$this->subjek]['subjek'];
+        $asubjek = AnalisisRefSubjekEnum::all()[$this->subjek];
 
         switch ($this->subjek) {
             case 1:
@@ -285,29 +323,29 @@ class Analisis_laporan_model extends CI_Model
         return $this->paging;
     }
 
-    public function list_data_query()
+    public function list_data_query(): void
     {
         $per     = $this->analisis_master_model->periode->id;
         $master  = $this->analisis_master_model->analisis_master;
-        $pembagi = $master['pembagi'] + 0;
+        $pembagi = (int) $master['pembagi'];
 
         switch ($this->subjek) {
             case 1:
-                $this->db
+                $this->config_id('u')
                     ->from('penduduk_hidup u')
                     ->join('tweb_wil_clusterdesa c', 'u.id_cluster = c.id', 'left')
                     ->join('tweb_keluarga kk', 'kk.id = u.id_kk', 'left');
                 break;
 
             case 2:
-                $this->db
+                $this->config_id('u')
                     ->from('tweb_keluarga u')
                     ->join('penduduk_hidup p', 'u.nik_kepala = p.id', 'left')
                     ->join('tweb_wil_clusterdesa c', 'p.id_cluster = c.id', 'left');
                 break;
 
             case 3:
-                $this->db
+                $this->config_id('u')
                     ->from('tweb_rtm u')
                     ->join('penduduk_hidup p', 'u.nik_kepala = p.id')
                     ->join('tweb_keluarga kk', 'kk.nik_kepala = p.id', 'left')
@@ -315,7 +353,7 @@ class Analisis_laporan_model extends CI_Model
                 break;
 
             case 4:
-                $this->db
+                $this->config_id('u')
                     ->from('kelompok u')
                     ->join('penduduk_hidup p', 'u.id_ketua = p.id', 'left')
                     ->join('tweb_keluarga kk', 'kk.nik_kepala = p.id', 'left')
@@ -324,25 +362,26 @@ class Analisis_laporan_model extends CI_Model
 
             case 5:
                 $this->db
-                    ->from('config u');
+                    ->from('config u')
+                    ->where('u.app_key', get_app_key());
                 break;
 
             case 6:
-                $this->db
+                $this->config_id('u')
                     ->from('tweb_wil_clusterdesa u')
                     ->where('u.rt', '0')
                     ->where('u.rw', '0');
                 break;
 
             case 7:
-                $this->db
+                $this->config_id('u')
                     ->from('tweb_wil_clusterdesa u')
                     ->where('u.rt', '0')
                     ->where('u.rw <>', '0');
                 break;
 
             case 8:
-                $this->db
+                $this->config_id('u')
                     ->from('tweb_wil_clusterdesa u')
                     ->where('u.rt <> 0')
                     ->where('u.rt <> "-"');
@@ -370,9 +409,8 @@ class Analisis_laporan_model extends CI_Model
 
     public function list_data($o = 0, $offset = 0, $limit = 500)
     {
-        $per     = $this->analisis_master_model->periode->id;
         $master  = $this->analisis_master_model->analisis_master;
-        $pembagi = $master['pembagi'] + 0;
+        $pembagi = (int) $master['pembagi'];
 
         switch ($this->subjek) {
             case 1:
@@ -455,25 +493,22 @@ class Analisis_laporan_model extends CI_Model
 
         $data = $this->db->get()->result_array();
 
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $j + 1;
 
             if ($data[$i]['cek']) {
                 $data[$i]['nilai'] = $data[$i]['cek'];
-                $data[$i]['set']   = "<img src='" . base_url() . "assets/images/icon/tick.png'>";
+                $data[$i]['set']   = '<img src="' . base_url('assets/images/icon/tick.png') . '">';
             } else {
                 $data[$i]['nilai']       = '-';
-                $data[$i]['set']         = "<img src='" . base_url() . "assets/images/icon/cross.png'>";
+                $data[$i]['set']         = '<img src="' . base_url('assets/images/icon/cross.png') . '">';
                 $data[$i]['klasifikasi'] = '-';
             }
             $data[$i]['jk'] = '-';
-            if ($data[$i]['sex'] == 1) {
-                $data[$i]['jk'] = 'LAKI-LAKI';
-            } else {
-                $data[$i]['jk'] = 'PEREMPUAN';
-            }
+            $data[$i]['jk'] = $data[$i]['sex'] == 1 ? 'LAKI-LAKI' : 'PEREMPUAN';
 
             $j++;
         }
@@ -483,13 +518,15 @@ class Analisis_laporan_model extends CI_Model
 
     private function list_jawab2($id = 0, $in = 0)
     {
-        $per = $this->analisis_master_model->periode->id;
-        $sql = 'SELECT s.id as id_parameter,s.jawaban as jawaban,s.nilai
-			FROM analisis_respon r
-			LEFT JOIN analisis_parameter s ON r.id_parameter = s.id
-			WHERE r.id_subjek = ? AND r.id_periode = ? AND r.id_indikator = ?';
-        $query = $this->db->query($sql, [$id, $per, $in]);
-        $data  = $query->row_array();
+        $per  = $this->analisis_master_model->periode->id;
+        $data = $this->config_id('r')
+            ->select('s.id as id_parameter,s.jawaban as jawaban,s.nilai')
+            ->join('analisis_parameter s', 'r.id_parameter = s.id')
+            ->where('r.id_subjek', $id)
+            ->where('r.id_periode', $per)
+            ->where('r.id_indikator', $in)
+            ->get()
+            ->row_array();
 
         if (empty($data['jawaban'])) {
             $data['jawaban'] = '-';
@@ -503,25 +540,26 @@ class Analisis_laporan_model extends CI_Model
     {
         $jmkf = $this->group_parameter();
         $cb   = '';
-        if (count($jmkf)) {
+        if (count($jmkf) > 0) {
             foreach ($jmkf as $jm) {
                 $cb .= $jm['id_jmkf'] . ',';
             }
         }
-        $cb = $cb . '7777777';
+        $cb .= '7777777';
 
         $sql = "SELECT u.*,
-			(SELECT COUNT(id)
-				FROM analisis_indikator
-				WHERE id = u.id AND id IN({$cb})) AS cek
-			FROM analisis_indikator u
-			WHERE 1 ";
+            (SELECT COUNT(id)
+                FROM analisis_indikator
+                WHERE id = u.id AND id IN({$cb}) AND config_id = " . identitas('id') . ') AS cek
+            FROM analisis_indikator u
+            WHERE u.config_id = ' . identitas('id');
         $sql .= $this->master_sql();
         $sql .= ' ORDER BY u.nomor ASC';
-        $query = $this->db->query($sql, $id);
-        $data  = $query->result_array();
+        $query   = $this->db->query($sql, $id);
+        $data    = $query->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no']      = $i + 1;
             $ret                 = $this->list_jawab2($id, $data[$i]['id']);
             $data[$i]['jawaban'] = $ret['jawaban'];
@@ -534,12 +572,14 @@ class Analisis_laporan_model extends CI_Model
 
     public function get_total($id = 0)
     {
-        $per = $this->analisis_master_model->periode->id;
-        $sql = 'SELECT akumulasi
-			FROM analisis_respon_hasil u
-			WHERE id_subjek = ? AND id_periode = ? ';
-        $query = $this->db->query($sql, [$id, $per]);
-        $data  = $query->row_array();
+        $per  = $this->analisis_master_model->periode->id;
+        $data = $this->config_id('u')
+            ->select('akumulasi')
+            ->from('analisis_respon_hasil u')
+            ->where('id_subjek', $id)
+            ->where('id_periode', $per)
+            ->get()
+            ->row_array();
 
         return $data['akumulasi'];
     }
@@ -548,14 +588,14 @@ class Analisis_laporan_model extends CI_Model
     {
         switch ($this->subjek) {
             case 1:
-                $this->db
+                $this->config_id('u')
                     ->select('u.id, u.nik AS nid, u.nama, u.sex, c.dusun, c.rw, c.rt')
                     ->from('penduduk_hidup u')
                     ->join('tweb_wil_clusterdesa c', 'u.id_cluster = c.id', 'left');
                 break;
 
             case 2:
-                $this->db
+                $this->config_id('u')
                     ->select('u.id, u.no_kk AS nid, p.nama, p.sex, c.dusun, c.rw, c.rt')
                     ->from('tweb_keluarga u')
                     ->join('penduduk_hidup p', 'u.nik_kepala = p.id', 'left')
@@ -563,7 +603,7 @@ class Analisis_laporan_model extends CI_Model
                 break;
 
             case 3:
-                $this->db
+                $this->config_id('u')
                     ->select('u.id, u.no_kk AS nid, p.nama, p.sex, c.dusun, c.rw, c.rt')
                     ->from('tweb_rtm u')
                     ->join('penduduk_hidup p', 'u.nik_kepala = p.id', 'left')
@@ -571,7 +611,7 @@ class Analisis_laporan_model extends CI_Model
                 break;
 
             case 4:
-                $this->db
+                $this->config_id('u')
                     ->select('u.id, u.kode AS nid, u.nama, p.sex, c.dusun, c.rw, c.rt')
                     ->from('kelompok u')
                     ->join('penduduk_hidup p', '.id_ketua = p.id', 'left')
@@ -581,11 +621,12 @@ class Analisis_laporan_model extends CI_Model
             case 5:
                 $this->db
                     ->select("u.id, u.kode_desa AS nid, u.nama_desa as nama, '-' as sex, '-' as dusun, '-' as rw, '-' as rt")
-                    ->from('config u');
+                    ->from('config u')
+                    ->where('u.app_key', get_app_key());
                 break;
 
             case 6:
-                $this->db
+                $this->config_id('u')
                     ->select("u.id, u.dusun AS nid, UPPER('{$this->setting->sebutan_dusun}') as nama, '-' as sex, u.dusun, '-' as rw, '-' as rt")
                     ->from('tweb_wil_clusterdesa u')
                     ->where('u.rt', '0')
@@ -593,7 +634,7 @@ class Analisis_laporan_model extends CI_Model
                 break;
 
             case 7:
-                $this->db
+                $this->config_id('u')
                     ->select("u.id, u.rw AS nid, CONCAT( UPPER('{$this->setting->sebutan_dusun} '), u.dusun, ' RW ', u.rw) as nama, '-' as sex, u.dusun, u.rw, '-' as rt")
                     ->from('tweb_wil_clusterdesa u')
                     ->where('u.rt', '0')
@@ -601,7 +642,7 @@ class Analisis_laporan_model extends CI_Model
                 break;
 
             case 8:
-                $this->db
+                $this->config_id('u')
                     ->select("u.id, u.rt AS nid, CONCAT( UPPER('{$this->setting->sebutan_dusun} '), u.dusun, ' RW ', u.rw, ' RT ', u.rt) as nama, '-' as sex, u.dusun, u.rw, u.rt")
                     ->from('tweb_wil_clusterdesa u')
                     ->where('u.rt <> 0')
@@ -621,25 +662,15 @@ class Analisis_laporan_model extends CI_Model
     public function multi_jawab($p = 0, $o = 0)
     {
         $master = $this->analisis_master_model->analisis_master;
-        if (isset($this->session->jawab)) {
-            $kf = $this->session->jawab;
-        } else {
-            $kf = '7777777';
-        }
+        $kf     = $this->session->jawab ?? '7777777';
 
         switch ($o) {
             case 1:
-                $order_sql = ' ORDER BY u.id';
-                break;
-
-            case 2:
-                $order_sql = ' ORDER BY u.id DESC';
-                break;
-
             case 3:
                 $order_sql = ' ORDER BY u.id';
                 break;
 
+            case 2:
             case 4:
                 $order_sql = ' ORDER BY u.id DESC';
                 break;
@@ -651,16 +682,17 @@ class Analisis_laporan_model extends CI_Model
         $order_sql = ' ORDER BY u.nomor,i.kode_jawaban ASC';
 
         $sql = "SELECT u.pertanyaan,u.nomor,i.jawaban,i.id AS id_jawaban,i.kode_jawaban,
-				(SELECT count(id) FROM analisis_parameter WHERE id IN ({$kf}) AND id = i.id) AS cek
-			FROM analisis_indikator u
-			LEFT JOIN analisis_parameter i ON u.id = i.id_indikator
-			WHERE u.id_master = {$master['id']} ";
+            (SELECT count(id) FROM analisis_parameter WHERE id IN ({$kf}) AND id = i.id AND u.config_id = " . identitas('id') . ") AS cek
+            FROM analisis_indikator u
+            LEFT JOIN analisis_parameter i ON u.id = i.id_indikator
+            WHERE u.id_master = {$master['id']} AND u.config_id = " . identitas('id');
         $sql .= $asign_sql;
         $sql .= $order_sql;
-        $query = $this->db->query($sql, $master);
-        $data  = $query->result_array();
+        $query   = $this->db->query($sql, $master);
+        $data    = $query->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $i + 1;
         }
 
@@ -670,13 +702,12 @@ class Analisis_laporan_model extends CI_Model
     public function group_parameter()
     {
         if (isset($this->session->jawab)) {
-            $idcb = $this->session->jawab;
-            $sql  = "SELECT DISTINCT(id_indikator) AS id_jmkf
-				FROM analisis_parameter
-				WHERE id IN({$idcb})";
-            $query = $this->db->query($sql);
-
-            return $query->result_array();
+            return $this->config_id('ap')
+                ->select('DISTINCT(id_indikator) AS id_jmkf')
+                ->from('analisis_parameter ap')
+                ->where_in('ap.id', $this->session->jawab)
+                ->get()
+                ->result_array();
         }
 
         return null;
@@ -684,11 +715,11 @@ class Analisis_laporan_model extends CI_Model
 
     public function list_klasifikasi()
     {
-        $sql = 'SELECT *
-			FROM analisis_klasifikasi
-			WHERE id_master=?';
-        $query = $this->db->query($sql, $this->session->analisis_master);
-
-        return $query->result_array();
+        return $this->config_id('u')
+            ->select('u.id, u.nama')
+            ->from('analisis_klasifikasi u')
+            ->where('u.id_master', $this->session->analisis_master)
+            ->get()
+            ->result_array();
     }
 }

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -64,17 +64,17 @@ class Bumindes_tanah_kas_desa extends Admin_Controller
                     'recordsTotal'    => $this->tanah_kas_desa_model->get_data()->count_all_results(),
                     'recordsFiltered' => $this->tanah_kas_desa_model->get_data($search)->count_all_results(),
                     'data'            => $this->tanah_kas_desa_model->get_data($search)->order_by($order, $dir)->limit($length, $start)->get()->result(),
-                ]));
+                ], JSON_THROW_ON_ERROR));
         }
 
         $this->render('bumindes/umum/main', [
-            'subtitle'     => 'Buku Tanah Kas Desa',
+            'subtitle'     => 'Buku Tanah Kas ' . ucwords($this->setting->sebutan_desa),
             'selected_nav' => 'tanah_kas',
             'main_content' => 'bumindes/pembangunan/tanah_kas_desa/content_tanah_kas_desa',
         ]);
     }
 
-    public function clear()
+    public function clear(): void
     {
         $this->session->filter_tahun = date('Y');
         $this->session->filter_bulan = date('m');
@@ -82,9 +82,9 @@ class Bumindes_tanah_kas_desa extends Admin_Controller
         redirect('bumindes_tanah_kas_desa');
     }
 
-    public function view_tanah_kas_desa($id)
+    public function view_tanah_kas_desa($id): void
     {
-        $view_data = $this->tanah_kas_desa_model->view_tanah_kas_desa_by_id($id);
+        $view_data = $this->tanah_kas_desa_model->view_tanah_kas_desa_by_id($id) ?? show_404();
         $data      = [
             'main'            => $view_data,
             'main_content'    => 'bumindes/pembangunan/tanah_kas_desa/form_tanah_kas_desa',
@@ -100,11 +100,11 @@ class Bumindes_tanah_kas_desa extends Admin_Controller
         $this->render('bumindes/umum/main', $data);
     }
 
-    public function form($id = '')
+    public function form($id = ''): void
     {
         $this->redirect_hak_akses('u');
         if ($id) {
-            $view_data = $this->tanah_kas_desa_model->view_tanah_kas_desa_by_id($id);
+            $view_data = $this->tanah_kas_desa_model->view_tanah_kas_desa_by_id($id) ?? show_404();
             $data      = [
                 'main'            => $view_data,
                 'main_content'    => 'bumindes/pembangunan/tanah_kas_desa/form_tanah_kas_desa',
@@ -134,7 +134,7 @@ class Bumindes_tanah_kas_desa extends Admin_Controller
         $this->render('bumindes/umum/main', $data);
     }
 
-    public function add_tanah_kas_desa()
+    public function add_tanah_kas_desa(): void
     {
         $this->redirect_hak_akses('u');
         $this->tanah_kas_desa_model->add_tanah_kas_desa();
@@ -146,7 +146,7 @@ class Bumindes_tanah_kas_desa extends Admin_Controller
         }
     }
 
-    public function update_tanah_kas_desa($id)
+    public function update_tanah_kas_desa($id): void
     {
         $this->redirect_hak_akses('u');
         $this->tanah_kas_desa_model->update_tanah_kas_desa();
@@ -158,7 +158,7 @@ class Bumindes_tanah_kas_desa extends Admin_Controller
         }
     }
 
-    public function delete_tanah_kas_desa($id)
+    public function delete_tanah_kas_desa($id): void
     {
         $this->redirect_hak_akses('h');
         $this->tanah_kas_desa_model->delete_tanah_kas_desa($id);
@@ -166,7 +166,7 @@ class Bumindes_tanah_kas_desa extends Admin_Controller
         redirect('bumindes_tanah_kas_desa');
     }
 
-    public function cetak_tanah_kas_desa($aksi = '')
+    public function cetak_tanah_kas_desa($aksi = ''): void
     {
         $data              = $this->modal_penandatangan();
         $data['aksi']      = $aksi;

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -40,7 +40,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 class Web_menu_model extends MY_Model
 {
     protected $table = 'menu';
-    private $urut_model;
+    private Urut_Model $urut_model;
 
     public function __construct()
     {
@@ -61,14 +61,14 @@ class Web_menu_model extends MY_Model
         return autocomplete_data_ke_str($data);
     }
 
-    private function search_sql()
+    private function search_sql(): void
     {
         if ($cari = $this->session->cari) {
             $this->db->like('nama', $cari);
         }
     }
 
-    private function filter_sql()
+    private function filter_sql(): void
     {
         if ($filter = $this->session->filter) {
             $this->db->where('enabled', $filter);
@@ -83,9 +83,9 @@ class Web_menu_model extends MY_Model
         return $this->paginasi($page_number, $jml_data);
     }
 
-    private function list_data_sql()
+    private function list_data_sql(): void
     {
-        $this->db
+        $this->config_id()
             ->from($this->table)
             ->where('parrent', $this->session->parrent);
 
@@ -124,9 +124,10 @@ class Web_menu_model extends MY_Model
             ->get()
             ->result_array();
 
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $j + 1;
             if ($data[$i]['link_tipe'] != 99) {
                 $data[$i]['link'] = menu_slug($data[$i]['link']);
@@ -138,42 +139,43 @@ class Web_menu_model extends MY_Model
         return $data;
     }
 
-    public function insert()
+    public function insert(): void
     {
-        $data         = $this->validasi($this->input->post());
-        $data['urut'] = $this->urut_model->urut_max(['parrent' => $this->session->parrent]) + 1;
+        $data              = $this->validasi($this->input->post());
+        $data['urut']      = $this->urut_model->urut_max(['parrent' => $this->session->parrent]) + 1;
+        $data['config_id'] = identitas('id');
 
         $outp = $this->db->insert($this->table, $data);
 
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function update($id = 0)
+    public function update($id = 0): void
     {
         $data = $this->validasi($this->input->post());
         if ($data['link'] == '') {
             unset($data['link']);
         }
 
-        $outp = $this->db
+        $outp = $this->config_id()
             ->where('id', $id)
             ->update($this->table, $data);
 
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function delete($id = '', $semua = false)
+    public function delete($id = '', $semua = false): void
     {
         if (! $semua) {
             $this->session->success = 1;
         }
 
-        $outp = $this->db->where('id', $id)->or_where('parrent', $id)->delete($this->table);
+        $outp = $this->config_id()->where('id', $id)->or_where('parrent', $id)->delete($this->table);
 
         status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->session->success = 1;
 
@@ -184,9 +186,9 @@ class Web_menu_model extends MY_Model
         }
     }
 
-    public function menu_lock($id = '', $val = 1)
+    public function menu_lock($id = '', $val = 1): void
     {
-        $outp = $this->db
+        $outp = $this->config_id()
             ->where('id', $id)
             ->or_where('parrent', $id)
             ->update($this->table, ['enabled' => $val]);
@@ -196,7 +198,7 @@ class Web_menu_model extends MY_Model
 
     public function get_menu($id = 0)
     {
-        $data = $this->db
+        $data = $this->config_id()
             ->get_where($this->table, ['id' => $id])
             ->row_array();
 
@@ -208,7 +210,7 @@ class Web_menu_model extends MY_Model
     // $arah:
     //		1 - turun
     // 		2 - naik
-    public function urut($id, $arah)
+    public function urut($id, $arah): void
     {
         $this->urut_model->urut($id, $arah, ['parrent' => $this->session->parrent]);
     }
@@ -228,7 +230,7 @@ class Web_menu_model extends MY_Model
 
     public function menu_aktif($link)
     {
-        return $this->db
+        return $this->config_id()
             ->where('link', $link)
             ->where('enabled', 1)
             ->get($this->table)

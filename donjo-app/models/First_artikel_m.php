@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,7 +37,7 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-class First_artikel_m extends CI_Model
+class First_artikel_m extends MY_Model
 {
     public function __construct()
     {
@@ -51,25 +51,21 @@ class First_artikel_m extends CI_Model
 
     public function get_headline()
     {
-        $data = $this->db
+        return $this->config_id('a')
             ->select('a.*, u.nama AS owner, YEAR(tgl_upload) as thn, MONTH(tgl_upload) as bln, DAY(tgl_upload) as hri')
             ->from('artikel a')
             ->join('user u', 'a.id_user = u.id', 'LEFT')
-            ->where('headline = 1')
+            ->where('a.enabled', 1)
+            ->where('headline', 1)
             ->where('a.tgl_upload <', date('Y-m-d H:i:s'))
             ->order_by('tgl_upload DESC')
             ->get()
             ->row_array();
-        if (empty($data)) {
-            $data = null;
-        }
-
-        return $data;
     }
 
     public function get_feed()
     {
-        $sumber_feed = 'https://www.covid19.go.id/feed/';
+        $sumber_feed = setting('link_feed');
         if (! cek_bisa_akses_site($sumber_feed)) {
             return null;
         }
@@ -82,10 +78,7 @@ class First_artikel_m extends CI_Model
 
     public function get_widget()
     {
-        $sql   = 'SELECT * FROM widget LIMIT 1 ';
-        $query = $this->db->query($sql);
-
-        return $query->result_array();
+        return $this->config_id()->get('widget', 1)->result_array();
     }
 
     public function paging($p = 1)
@@ -93,7 +86,7 @@ class First_artikel_m extends CI_Model
         $this->db->select('COUNT(a.id) AS jml');
         $this->paging_artikel_sql();
         $cari = trim($this->input->get('cari', true));
-        if (! empty($cari)) {
+        if ($cari !== '') {
             $cari          = $this->db->escape_like_str($cari);
             $cfg['suffix'] = "?cari={$cari}";
         }
@@ -109,19 +102,19 @@ class First_artikel_m extends CI_Model
         return $this->paging;
     }
 
-    private function paging_artikel_sql()
+    private function paging_artikel_sql(): void
     {
-        $this->db
+        $this->config_id('a')
             ->from('artikel a')
             ->join('user u', 'a.id_user = u.id', 'LEFT')
             ->join('kategori k', 'a.id_kategori = k.id', 'LEFT')
             ->where('a.enabled', 1)
-            ->where('a.headline <>', 1)
+            ->where('(a.headline != 1)')
             ->where('a.id_kategori NOT IN (1000)')
             ->where('a.tgl_upload <', date('Y-m-d H:i:s'));
 
         $cari = trim($this->input->get('cari', true));
-        if (! empty($cari)) {
+        if ($cari !== '') {
             $this->db
                 ->group_start()
                 ->like('a.judul', $cari)
@@ -139,8 +132,9 @@ class First_artikel_m extends CI_Model
             ->limit($limit, $offset)
             ->get()
             ->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $this->sterilkan_artikel($data[$i]);
             $this->icon_keuangan($data[$i]);
         }
@@ -148,13 +142,13 @@ class First_artikel_m extends CI_Model
         return $data;
     }
 
-    private function sterilkan_artikel(&$data)
+    private function sterilkan_artikel(&$data): void
     {
-        $data['judul'] = $this->security->xss_clean($data['judul']);
+        $data['judul'] = htmlspecialchars_decode($this->security->xss_clean($data['judul']));
         $data['slug']  = $this->security->xss_clean($data['slug']);
     }
 
-    private function icon_keuangan(&$data)
+    private function icon_keuangan(&$data): void
     {
         // ganti shortcode menjadi icon
         $data['isi'] = $this->shortcode_model->convert_sc_list($data['isi']);
@@ -163,7 +157,7 @@ class First_artikel_m extends CI_Model
     public function arsip_show($type = '')
     {
         // Artikel agenda (kategori=1000) tidak ditampilkan
-        $this->db
+        $this->config_id('a')
             ->select('a.*, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri')
             ->where('a.enabled', 1)
             ->where('a.id_kategori NOT IN (1000)')
@@ -184,10 +178,11 @@ class First_artikel_m extends CI_Model
         }
 
         $this->db->limit(7);
-        $data = $this->db->get('artikel a')->result_array();
+        $data    = $this->db->get('artikel a')->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
-            $data[$i]['judul'] = $this->security->xss_clean($data[$i]['judul']);
+        for ($i = 0; $i < $counter; $i++) {
+            $data[$i]['judul'] = htmlspecialchars_decode($this->security->xss_clean($data[$i]['judul']));
         }
 
         return $data;
@@ -195,7 +190,7 @@ class First_artikel_m extends CI_Model
 
     public function paging_arsip($p = 1)
     {
-        $row = $this->db
+        $row = $this->config_id('a')
             ->select('COUNT(a.id) AS id')
             ->from('artikel a')
             ->join('user u', 'a.id_user = u.id', 'LEFT')
@@ -218,7 +213,7 @@ class First_artikel_m extends CI_Model
 
     public function full_arsip($offset = 0, $limit = 50)
     {
-        $query = $this->db
+        $query = $this->config_id('a')
             ->select('a.*,u.nama AS owner,k.kategori, YEAR(tgl_upload) as thn, MONTH(tgl_upload) as bln, DAY(tgl_upload) as hri')
             ->from('artikel a')
             ->join('user u', 'a.id_user = u.id', 'LEFT')
@@ -230,7 +225,9 @@ class First_artikel_m extends CI_Model
             ->get();
         $data = $query->result_array();
         if ($query->num_rows() > 0) {
-            for ($i = 0; $i < count($data); $i++) {
+            $counter = count($data);
+
+            for ($i = 0; $i < $counter; $i++) {
                 $nomer           = $offset + $i + 1;
                 $id              = $data[$i]['id'];
                 $tgl             = date('d/m/Y', strtotime($data[$i]['tgl_upload']));
@@ -245,13 +242,13 @@ class First_artikel_m extends CI_Model
         return $data;
     }
 
-    private function sql_gambar_slide_show($gambar)
+    private function sql_gambar_slide_show(string $gambar)
     {
-        $this->db
+        $this->config_id()
             ->select('id, judul, gambar, slug, YEAR(tgl_upload) as thn, MONTH(tgl_upload) as bln, DAY(tgl_upload) as hri')
             ->from('artikel')
             ->where('enabled', 1)
-            ->where('headline', 3)
+            ->where('slider', 1)
             ->where($gambar . ' !=', '')
             ->where('tgl_upload <', date('Y-m-d H:i:s'));
 
@@ -269,8 +266,8 @@ class First_artikel_m extends CI_Model
             $sql[] = '(' . $this->sql_gambar_slide_show('gambar3') . ')';
         }
         $sql = implode('
-		UNION
-		', $sql);
+        UNION
+        ', $sql);
 
         $sql .= ($gambar_utama) ? 'ORDER BY tgl_upload DESC LIMIT 10' : 'ORDER BY RAND() LIMIT 10';
 
@@ -281,19 +278,23 @@ class First_artikel_m extends CI_Model
     public function slider_gambar()
     {
         $sumber = $this->setting->sumber_gambar_slider;
+        $limit  = $this->setting->jumlah_gambar_slider ?? 10;
 
         $slider_gambar = [];
 
         switch ($sumber) {
             case '1':
                 // 10 gambar utama semua artikel terbaru
-                $slider_gambar['gambar'] = $this->db
+                $slider_gambar['gambar'] = $this->config_id()
                     ->select('id, judul, gambar, slug, YEAR(tgl_upload) as thn, MONTH(tgl_upload) as bln, DAY(tgl_upload) as hri')
                     ->where('enabled', 1)
                     ->where('gambar !=', '')
                     ->where('tgl_upload <', date('Y-m-d H:i:s'))
+                    ->where('slider', 1)
                     ->order_by('tgl_upload DESC')
-                    ->limit(10)->get('artikel')->result_array();
+                    ->limit($limit)
+                    ->get('artikel')
+                    ->result_array();
                 $slider_gambar['lokasi'] = LOKASI_FOTO_ARTIKEL;
                 break;
 
@@ -316,18 +317,13 @@ class First_artikel_m extends CI_Model
         }
 
         $slider_gambar['sumber'] = $sumber;
+        $slider_gambar['gambar'] = array_slice($slider_gambar['gambar'], 0, $limit);
 
         return $slider_gambar;
     }
 
     public function agenda_show($type = '')
     {
-        $this->db
-            ->select('a.*, g.*, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri')
-            ->join('artikel a', 'a.id = g.id_artikel', 'LEFT')
-            ->where('a.enabled', 1)
-            ->where('a.id_kategori', '1000');
-
         switch ($type) {
             case 'yad':
                 $this->db->where('DATE(g.tgl_agenda) > CURDATE()')
@@ -343,7 +339,11 @@ class First_artikel_m extends CI_Model
                 break;
         }
 
-        return $this->db
+        return $this->config_id('g')
+            ->select('a.*, g.*, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri')
+            ->join('artikel a', 'a.id = g.id_artikel', 'LEFT')
+            ->where('a.enabled', 1)
+            ->where('a.tipe', AGENDA)
             ->get('agenda g')
             ->result_array();
     }
@@ -352,7 +352,7 @@ class First_artikel_m extends CI_Model
     {
         $this->for_slug();
 
-        return $this->db
+        return $this->config_id('k')
             ->select('k.*')
             ->from('komentar k')
             ->join('artikel a', 'k.id_artikel = a.id')
@@ -371,7 +371,7 @@ class First_artikel_m extends CI_Model
 
     public function get_kategori($id = 0)
     {
-        $data = $this->db
+        $data = $this->config_id(null, true)
             ->group_start()
             ->where('id', $id)
             ->or_where('slug', $id)
@@ -395,7 +395,14 @@ class First_artikel_m extends CI_Model
 
     public function get_artikel($thn, $bln, $hr, $url)
     {
-        $this->db->select('a.*, u.nama AS owner, k.kategori, k.slug AS kat_slug, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri')
+        if (is_numeric($url)) {
+            $this->db->where('a.id', $url);
+        } else {
+            $this->db->where('a.slug', $url);
+        }
+
+        $query = $this->config_id('a')
+            ->select('a.*, u.nama AS owner, k.kategori, k.slug AS kat_slug, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri')
             ->from('artikel a')
             ->join('user u', 'a.id_user = u.id', 'left')
             ->join('kategori k', 'a.id_kategori = k.id', 'left')
@@ -403,15 +410,8 @@ class First_artikel_m extends CI_Model
             ->where('a.tgl_upload <', date('Y-m-d H:i:s'))
             ->where('YEAR(a.tgl_upload)', $thn)
             ->where('MONTH(a.tgl_upload)', $bln)
-            ->where('DAY(a.tgl_upload)', $hr);
-
-        if (is_numeric($url)) {
-            $this->db->where('a.id', $url);
-        } else {
-            $this->db->where('a.slug', $url);
-        }
-
-        $query = $this->db->get();
+            ->where('DAY(a.tgl_upload)', $hr)
+            ->get();
 
         if ($query->num_rows() > 0) {
             $data = $query->row_array();
@@ -425,16 +425,20 @@ class First_artikel_m extends CI_Model
 
     public function get_dokumen_artikel($id)
     {
-        return $this->db->select('dokumen')
+        return $this->config_id()
+            ->select('dokumen')
             ->where('id', $id)
             ->get('artikel')
-            ->row()->dokumen;
+            ->row()
+            ->dokumen;
     }
 
     public function get_agenda($id)
     {
-        return $this->db->where('id_artikel', $id)
-            ->get('agenda')->row_array();
+        return $this->config_id()
+            ->where('id_artikel', $id)
+            ->get('agenda')
+            ->row_array();
     }
 
     public function paging_kat($p = 1, $id = 0)
@@ -453,9 +457,9 @@ class First_artikel_m extends CI_Model
     }
 
     // Query sama untuk paging and ambil daftar artikel menurut kategori
-    private function list_artikel_sql($id)
+    private function list_artikel_sql($id): void
     {
-        $this->db
+        $this->config_id('a')
             ->from('artikel a')
             ->join('user u', 'a.id_user = u.id', 'left')
             ->join('kategori k', 'a.id_kategori = k.id', 'left')
@@ -477,12 +481,13 @@ class First_artikel_m extends CI_Model
         $this->db->select('a.*, u.nama AS owner, k.kategori, k.slug AS kat_slug, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri');
         $this->db->order_by('a.tgl_upload', 'DESC');
         $this->db->limit($limit, $offset);
-        $data = $this->db->get()->result_array();
+        $data    = $this->db->get()->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
-            $data[$i]['judul'] = $this->security->xss_clean($data[$i]['judul']);
+        for ($i = 0; $i < $counter; $i++) {
+            $data[$i]['judul'] = htmlspecialchars_decode($this->security->xss_clean($data[$i]['judul']));
             if (empty($this->setting->user_admin) || $data[$i]['id_user'] != $this->setting->user_admin) {
-                $data[$i]['isi'] = $this->security->xss_clean($data[$i]['isi']);
+                $data[$i]['isi'] = htmlspecialchars_decode($this->security->xss_clean($data[$i]['isi']));
             }
             // ganti shortcode menjadi icon
             $data[$i]['isi'] = $this->shortcode_model->convert_sc_list($data[$i]['isi']);
@@ -498,6 +503,7 @@ class First_artikel_m extends CI_Model
      */
     public function insert_comment($data = [])
     {
+        $data['config_id'] = identitas('id');
         $this->db->insert('komentar', $data);
 
         return $this->db->affected_rows();
@@ -505,22 +511,25 @@ class First_artikel_m extends CI_Model
 
     public function list_komentar($id = 0)
     {
-        return $this->db->from('komentar')
+        return $this->config_id()
+            ->from('komentar')
             ->where('id_artikel', $id)
             ->where('status', 1)
             ->order_by('tgl_upload DESC')
-            ->get()->result_array();
+            ->get()
+            ->result_array();
     }
 
     // Tampilan di widget sosmed
     public function list_sosmed()
     {
-        $query = $this->db->where('enabled', 1)->get('media_sosial');
+        $query = $this->config_id()->where('enabled', 1)->get('media_sosial');
 
         if ($query->num_rows() > 0) {
-            $data = $query->result_array();
+            $data    = $query->result_array();
+            $counter = count($data);
 
-            for ($i = 0; $i < count($data); $i++) {
+            for ($i = 0; $i < $counter; $i++) {
                 $data[$i]['link'] = $this->web_sosmed_model->link_sosmed($data[$i]['id'], $data[$i]['link'], $data[$i]['tipe']);
             }
         }
@@ -528,22 +537,24 @@ class First_artikel_m extends CI_Model
         return $data;
     }
 
-    public function hit($url)
+    public function hit($url): void
     {
         $this->load->library('user_agent');
 
-        $id = $this->db->select('id')
+        $id = $this->config_id()
+            ->select('id')
             ->where('slug', $url)
             ->or_where('id', $url)
             ->get('artikel')
             ->row()->id;
 
         //membatasi hit hanya satu kali dalam setiap session
-        if (in_array($id, $_SESSION['artikel']) || $this->agent->is_robot() || crawler() === true) {
+        if (in_array($id, $_SESSION['artikel']) || $this->agent->is_robot() || crawler()) {
             return;
         }
 
-        $this->db->set('hit', 'hit + 1', false)
+        $this->config_id()
+            ->set('hit', 'hit + 1', false)
             ->where('id', $id)
             ->update('artikel');
         $_SESSION['artikel'][] = $id;
@@ -551,8 +562,8 @@ class First_artikel_m extends CI_Model
 
     public function get_artikel_by_id($id)
     {
-        return $this->db
-            ->select('slug, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri')
+        return $this->config_id()
+            ->select('slug, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri, judul, tgl_upload')
             ->where(['id' => $id])
             ->get('artikel')
             ->row_array();

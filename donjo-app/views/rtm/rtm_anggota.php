@@ -42,7 +42,7 @@
 	<section class="content-header">
 		<h1>Daftar Anggota Rumah Tangga</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda')?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li><a href="<?= site_url('rtm/clear')?>"> Daftar Rumah Tangga</a></li>
 			<li class="active">Daftar Anggota Rumah Tangga</li>
 		</ol>
@@ -88,13 +88,13 @@
 							</tr>
 							<tr>
 								<td>
-									<?= ($program['programkerja']) ? anchor("program_bantuan/peserta/3/{$kepala_kk['no_kk']}", 'Program Bantuan', 'target="_blank"') : 'Program Bantuan'; ?>
+									<?= ($program['programkerja']) ? anchor("peserta_bantuan/peserta/3/{$kepala_kk['no_kk']}", 'Program Bantuan', 'target="_blank"') : 'Program Bantuan'; ?>
 								</td>
 								<td>:</td>
 								<td>
 									<?php if ($program['programkerja']): ?>
 										<?php foreach ($program['programkerja'] as $item): ?>
-											<?= anchor("program_bantuan/data_peserta/{$item['peserta_id']}", '<span class="label label-success">' . $item['nama'] . '</span>&nbsp;', 'target="_blank"'); ?>
+											<?= anchor("peserta_bantuan/data_peserta/{$item['peserta_id']}", '<span class="label label-success">' . $item['nama'] . '</span>&nbsp;', 'target="_blank"'); ?>
 										<?php endforeach; ?>
 									<?php else: ?>
 										-

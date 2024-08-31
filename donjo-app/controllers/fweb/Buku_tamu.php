@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -64,13 +64,14 @@ class Buku_tamu extends MY_Controller
     public function index()
     {
         return view('buku_tamu.registrasi', [
-            'aksi'      => route('buku-tamu.registrasi'),
+            'aksi'      => ci_route('buku-tamu.registrasi'),
             'bertemu'   => RefJabatan::pluck('nama', 'id'),
             'keperluan' => BukuKeperluan::whereStatus(StatusEnum::YA)->pluck('keperluan', 'id'),
+            'kamera'    => $this->setting->buku_tamu_kamera,
         ]);
     }
 
-    public function registrasi()
+    public function registrasi(): void
     {
         if ($this->input->post()) {
             $post = $this->validate($this->request);
@@ -85,12 +86,10 @@ class Buku_tamu extends MY_Controller
 
             if ($cek_registrasi) {
                 set_session('error', 'Registrasi Gagal Disimpan<br>Anda Sudah Melakukan Registrasi Hari Ini');
+            } elseif (BukuTamu::create($post)) {
+                set_session('success', 'Registrasi Berhasil Disimpan');
             } else {
-                if (BukuTamu::create($post)) {
-                    set_session('success', 'Registrasi Berhasil Disimpan');
-                } else {
-                    set_session('error', 'Registrasi Gagal Disimpan');
-                }
+                set_session('error', 'Registrasi Gagal Disimpan');
             }
         } else {
             set_session('error', 'Akses Tidak Tersedia');
@@ -123,7 +122,7 @@ class Buku_tamu extends MY_Controller
         return view($view, $data);
     }
 
-    public function jawaban($id = null, $jawaban = null)
+    public function jawaban($id = null, $jawaban = null): void
     {
         $tamu = BukuTamu::find($id);
 
@@ -135,7 +134,7 @@ class Buku_tamu extends MY_Controller
             BukuKepuasan::create([
                 'id_nama'           => $tamu->id,
                 'id_pertanyaan'     => $pertanyaan->id,
-                'pertanyaan_statis' => $pertanyaan->pertanyaan_statis,
+                'pertanyaan_statis' => $pertanyaan->pertanyaan,
                 'id_jawaban'        => $jawaban,
             ]);
 
@@ -169,10 +168,10 @@ class Buku_tamu extends MY_Controller
             'nama'          => htmlentities($request['nama']),
             'telepon'       => htmlentities($request['telepon']),
             'instansi'      => htmlentities($request['instansi']),
-            'jenis_kelamin' => htmlentities($request['jenis_kelamin']),
+            'jenis_kelamin' => bilangan($request['jenis_kelamin']),
             'alamat'        => htmlentities($request['alamat']),
-            'id_bidang'     => htmlentities($request['id_bidang']),
-            'id_keperluan'  => htmlentities($request['id_keperluan']),
+            'bidang'        => bilangan($request['id_bidang']),
+            'keperluan'     => bilangan($request['id_keperluan']),
             'foto'          => $this->foto($request['foto']),
         ];
     }
@@ -182,7 +181,7 @@ class Buku_tamu extends MY_Controller
         $nama_file = null;
 
         if ($base64) {
-            $nama_file = time() . mt_rand(10000, 999999) . '.jpg';
+            $nama_file = time() . random_int(10000, 999999) . '.jpg';
             $base64    = str_replace('data:image/png;base64,', '', $base64);
             $base64    = base64_decode($base64, true);
 

@@ -19,7 +19,7 @@
 											</li>';
                                 }
                             }
-							?>
+                            ?>
 						</ul>
 					</div>
 				</div>
@@ -31,8 +31,8 @@
 	<section class="content-header">
 		<h1>Ubah Data Asset Lainnya</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a></li>
-			<li><a href="<?= site_url() ?>inventaris_asset"><i class="fa fa-dashboard"></i>Daftar Asset Lainnya</a></li>
+			<li><a href="<?= site_url('beranda') ?>"><i class="fa fa-home"></i> Beranda</a></li>
+			<li><a href="<?= site_url('inventaris_asset') ?>"><i class="fa fa-dashboard"></i>Daftar Asset Lainnya</a></li>
 			<li class="active">Ubah Data</li>
 		</ol>
 	</section>
@@ -45,7 +45,7 @@
 				<div class="col-md-9">
 					<div class="box box-info">
 						<div class="box-header with-border">
-							<a href="<?= site_url() ?>inventaris_asset" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-arrow-circle-left"></i> Kembali Ke Daftar Asset Lainnya</a>
+							<a href="<?= site_url('inventaris_asset') ?>" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-arrow-circle-left"></i> Kembali Ke Daftar Asset Lainnya</a>
 						</div>
 						<div class="box-body">
 							<div class="row">
@@ -173,21 +173,21 @@
 										<div class="col-sm-4">
 											<select name="penggunaan_barang" id="penggunaan_barang" class="form-control input-sm required" placeholder="Hak Tanah" required>
 												<?php
-							                    $value = '';
-							if (substr($main->kode_barang, -7, 2) == 01) {
-							    $value = 'Pemerintah Desa';
-							} elseif (substr($main->kode_barang, -7, 2) == 02) {
-							    $value = 'Badan Permusyawaratan Daerah';
-							} elseif (substr($main->kode_barang, -7, 2) == 03) {
-							    $value = 'PKK';
-							} elseif (substr($main->kode_barang, -7, 2) == 04) {
-							    $value = 'LKMD';
-							} elseif (substr($main->kode_barang, -7, 2) == 05) {
-							    $value = 'Karang Taruna';
-							} elseif (substr($main->kode_barang, -7, 2) == 07) {
-							    $value = 'RW';
-							}
-							?>
+                                                $value = '';
+                            if (substr($main->kode_barang, -7, 2) == 01) {
+                                $value = 'Pemerintah Desa';
+                            } elseif (substr($main->kode_barang, -7, 2) == 02) {
+                                $value = 'Badan Permusyawaratan Daerah';
+                            } elseif (substr($main->kode_barang, -7, 2) == 03) {
+                                $value = 'PKK';
+                            } elseif (substr($main->kode_barang, -7, 2) == 04) {
+                                $value = 'LKMD';
+                            } elseif (substr($main->kode_barang, -7, 2) == 05) {
+                                $value = 'Karang Taruna';
+                            } elseif (substr($main->kode_barang, -7, 2) == 07) {
+                                $value = 'RW';
+                            }
+                            ?>
 												<option value="<?= substr($main->kode_barang, 14, 2); ?>"><?= $value; ?></option>
 												<option value="01">Pemerintah Desa</option>
 												<option value="02">Badan Permusyawaratan Daerah</option>

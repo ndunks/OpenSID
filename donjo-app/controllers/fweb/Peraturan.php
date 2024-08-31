@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -40,7 +40,7 @@ use App\Models\RefDokumen;
 
 class Peraturan extends Web_Controller
 {
-    public function index()
+    public function index(): void
     {
         if (! $this->web_menu_model->menu_aktif('peraturan-desa')) {
             show_404();
@@ -48,9 +48,22 @@ class Peraturan extends Web_Controller
 
         $data = $this->includes;
 
-        $data['pilihan_kategori'] = RefDokumen::where('id', '!=', 1)->pluck('nama', 'id');
-        $data['pilihan_tahun']    = Dokumen::distinct('tahun')->hidup()->where('kategori', '!=', 1)->pluck('tahun');
-        $data['halaman_statis']   = 'peraturan/index';
+        $data['pilihan_kategori'] = RefDokumen::query()
+            ->where('id', '!=', 1)
+            ->pluck('nama', 'id')
+            ->transform(static function ($item, $key) {
+                if ($key === 2) {
+                    return str_replace(['Desa', 'desa'], ucwords(setting('sebutan_desa')), $item);
+                }
+
+                if ($key === 3) {
+                    return "{$item} Di " . ucwords(setting('sebutan_desa'));
+                }
+
+                return $item;
+            });
+        $data['pilihan_tahun']  = Dokumen::distinct('tahun')->hidup()->where('kategori', '!=', 1)->pluck('tahun');
+        $data['halaman_statis'] = 'peraturan/index';
 
         $this->_get_common_data($data);
         $this->set_template('layouts/halaman_statis.tpl.php');
@@ -74,9 +87,7 @@ class Peraturan extends Web_Controller
             return datatables()
                 ->of($query)
                 ->addIndexColumn()
-                ->addColumn('kategori_dokumen', static function ($row) {
-                    return $row['attr']['jenis_peraturan'] ?? $row->kategoriDokumen->nama;
-                })
+                ->addColumn('kategori_dokumen', static fn ($row) => $row['attr']['jenis_peraturan'] ?? $row->kategoriDokumen->nama)
                 ->make();
         }
 

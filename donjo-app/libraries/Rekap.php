@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,13 +29,14 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
 use App\Models\Anak;
+use App\Models\UserGrup;
 use Illuminate\Support\Facades\DB;
 
 class Rekap
@@ -71,6 +72,7 @@ class Rekap
         $ibuHamil = DB::table('ibu_hamil')
             ->join('kia', 'ibu_hamil.kia_id', '=', 'kia.id')
             ->join('tweb_penduduk', 'kia.ibu_id', '=', 'tweb_penduduk.id')
+            ->where('ibu_hamil.config_id', identitas('id'))
             ->where('status_kehamilan', '!=', null)
             ->whereMonth('ibu_hamil.created_at', '>=', $batasBulanBawah)
             ->whereMonth('ibu_hamil.created_at', '<=', $batasBulanAtas)
@@ -84,6 +86,10 @@ class Rekap
                 'tweb_penduduk.nama',
             ]);
 
+        if ($id) {
+            $ibuHamil = $ibuHamil->where('posyandu_id', $id);
+        }
+
         // if ($this->ci->session->userdata('isAdmin')->id_grup !== UserGrup::getGrupId(UserGrup::ADMINISTRATOR)) {
         //     $ibuHamil = $ibuHamil->where('posyandu_id', $this->ci->session->userdata('id'));
         // } else {
@@ -95,6 +101,7 @@ class Rekap
         $ibuHamil  = $ibuHamil->get()->toArray();
         $dataTahun = DB::table('ibu_hamil')
             ->selectRaw('YEAR(created_at) as tahun')
+            ->where('config_id', identitas('id'))
             ->distinct()
             ->get();
 
@@ -190,40 +197,38 @@ class Rekap
                     $periksaNifas     = $hitungPeriksaNifas >= 3 ? 'Y' : 'T';
                     $konseling        = 'TS';
                     $kunjunganRumah   = 'TS';
-                } else {
-                    if ($dataUsiaKehamilan <= 3) {
-                        // 0 - 3 Bulan (Trisemester 1)
-                        $periksaKehamilan = $hitungPeriksaKehamilan >= 1 ? 'Y' : 'T';
-                        $pilFe            = $hitungPilFe >= 1 ? 'Y' : 'T';
-                        $periksaNifas     = 'TS';
-                        $konseling        = $hitungKonseling >= 1 ? 'Y' : 'T';
-                        if ($status_kehamilan == 'KEK' || $status_kehamilan == 'RISTI') {
-                            $kunjunganRumah = $hitungKunjunganRumah >= 1 ? 'Y' : 'T';
-                        } else {
-                            $kunjunganRumah = 'T';
-                        }
-                    } elseif ($dataUsiaKehamilan <= 6) {
-                        // 4 - 6 Bulan (Trisemester 2)
-                        $periksaKehamilan = $hitungPeriksaKehamilan >= 1 ? 'Y' : 'T';
-                        $pilFe            = $hitungPilFe >= 1 ? 'Y' : 'T';
-                        $periksaNifas     = 'TS';
-                        $konseling        = $hitungKonseling >= 1 ? 'Y' : 'T';
-                        if ($status_kehamilan == 'KEK' || $status_kehamilan == 'RISTI') {
-                            $kunjunganRumah = $hitungKunjunganRumah >= 1 ? 'Y' : 'T';
-                        } else {
-                            $kunjunganRumah = 'T';
-                        }
+                } elseif ($dataUsiaKehamilan <= 3) {
+                    // 0 - 3 Bulan (Trisemester 1)
+                    $periksaKehamilan = $hitungPeriksaKehamilan >= 1 ? 'Y' : 'T';
+                    $pilFe            = $hitungPilFe >= 1 ? 'Y' : 'T';
+                    $periksaNifas     = 'TS';
+                    $konseling        = $hitungKonseling >= 1 ? 'Y' : 'T';
+                    if ($status_kehamilan == 'KEK' || $status_kehamilan == 'RISTI') {
+                        $kunjunganRumah = $hitungKunjunganRumah >= 1 ? 'Y' : 'T';
                     } else {
-                        // 7 - 9 Bulan (Trisemester 3) atau lebih
-                        $periksaKehamilan = $hitungPeriksaKehamilan >= 2 ? 'Y' : 'T';
-                        $pilFe            = $hitungPilFe >= 1 ? 'Y' : 'T';
-                        $periksaNifas     = 'TS';
-                        $konseling        = $hitungKonseling >= 2 ? 'Y' : 'T';
-                        if ($status_kehamilan == 'KEK' || $status_kehamilan == 'RISTI') {
-                            $kunjunganRumah = $hitungKunjunganRumah >= 1 ? 'Y' : 'T';
-                        } else {
-                            $kunjunganRumah = 'T';
-                        }
+                        $kunjunganRumah = 'T';
+                    }
+                } elseif ($dataUsiaKehamilan <= 6) {
+                    // 4 - 6 Bulan (Trisemester 2)
+                    $periksaKehamilan = $hitungPeriksaKehamilan >= 1 ? 'Y' : 'T';
+                    $pilFe            = $hitungPilFe >= 1 ? 'Y' : 'T';
+                    $periksaNifas     = 'TS';
+                    $konseling        = $hitungKonseling >= 1 ? 'Y' : 'T';
+                    if ($status_kehamilan == 'KEK' || $status_kehamilan == 'RISTI') {
+                        $kunjunganRumah = $hitungKunjunganRumah >= 1 ? 'Y' : 'T';
+                    } else {
+                        $kunjunganRumah = 'T';
+                    }
+                } else {
+                    // 7 - 9 Bulan (Trisemester 3) atau lebih
+                    $periksaKehamilan = $hitungPeriksaKehamilan >= 2 ? 'Y' : 'T';
+                    $pilFe            = $hitungPilFe >= 1 ? 'Y' : 'T';
+                    $periksaNifas     = 'TS';
+                    $konseling        = $hitungKonseling >= 2 ? 'Y' : 'T';
+                    if ($status_kehamilan == 'KEK' || $status_kehamilan == 'RISTI') {
+                        $kunjunganRumah = $hitungKunjunganRumah >= 1 ? 'Y' : 'T';
+                    } else {
+                        $kunjunganRumah = 'T';
                     }
                 }
 
@@ -271,7 +276,7 @@ class Rekap
                         }
                     }
 
-                    $jumlahSeharusnya                          = (int) $jumlahLayanan - (int) $jumlahTS;
+                    $jumlahSeharusnya                          = $jumlahLayanan - $jumlahTS;
                     $dataFilter[$key]['konvergensi_indikator'] = [
                         'jumlah_diterima_lengkap' => $jumlahY,
                         'jumlah_seharusnya'       => $jumlahSeharusnya,
@@ -303,7 +308,7 @@ class Rekap
             }
 
             foreach ($capaianKonvergensi as $key => $item) {
-                $capaianKonvergensijumlahSeharusnya            = count($dataFilter) - (int) $item['TS'];
+                $capaianKonvergensijumlahSeharusnya            = count($dataFilter) - $item['TS'];
                 $capaianKonvergensi[$key]['jumlah_seharusnya'] = $capaianKonvergensijumlahSeharusnya;
                 $capaianKonvergensi[$key]['persen']            = $capaianKonvergensijumlahSeharusnya == 0 ? '0.00' : number_format($item['Y'] / $capaianKonvergensijumlahSeharusnya * 100, 2);
             }
@@ -367,6 +372,7 @@ class Rekap
         $bulananAnak = DB::table('bulanan_anak')
             ->join('kia', 'bulanan_anak.kia_id', '=', 'kia.id')
             ->join('tweb_penduduk', 'kia.anak_id', '=', 'tweb_penduduk.id')
+            ->where('bulanan_anak.config_id', identitas('id'))
             ->whereMonth('bulanan_anak.created_at', '>=', $batasBulanBawah)
             ->whereMonth('bulanan_anak.created_at', '<=', $batasBulanAtas)
             ->whereYear('bulanan_anak.created_at', $tahun)
@@ -379,6 +385,10 @@ class Rekap
                 'tweb_penduduk.nama',
                 'tweb_penduduk.sex',
             ]);
+
+        if ($id) {
+            $bulananAnak = $bulananAnak->where('posyandu_id', $id);
+        }
 
         // if ($this->ci->session->userdata('isAdmin')->id_grup !== UserGrup::getGrupId(UserGrup::ADMINISTRATOR)) {
         //     $bulananAnak = $bulananAnak->where('posyandu_id', $this->ci->session->userdata('id'));
@@ -464,12 +474,14 @@ class Rekap
 
                 // HITUNG PENIMBANGAN DALAM 1 TAHUN
                 $hitungPenimbangan = DB::table('bulanan_anak')
+                    ->where('config_id', identitas('id'))
                     ->where('kia_id', $key)
                     ->where('pengukuran_berat_badan', '1')
                     ->count();
 
                 //HITUNG KONSELING DALAM 1 TAHUN
                 $KonselingGizi = DB::table('bulanan_anak')
+                    ->where('config_id', identitas('id'))
                     ->where('kia_id', $key)
                     ->select(['konseling_gizi_ayah', 'konseling_gizi_ibu'])
                     ->get();
@@ -489,6 +501,7 @@ class Rekap
 
                 //HITUNG PENGASUHAN DALAM 1 TAHUN
                 $hitungPengasuhan = DB::table('bulanan_anak')
+                    ->where('config_id', identitas('id'))
                     ->where('kia_id', $key)
                     ->where('pengasuhan_paud', '1')
                     ->whereYear('bulanan_anak.created_at', $tahun)
@@ -529,7 +542,7 @@ class Rekap
                     $jaminanKesehatan      = $hitungJaminanKesehatan >= 1 ? 'Y' : 'T';
                     $akta_lahir            = $hitungAktaLahir >= 1 ? 'Y' : 'T';
                     $pengasuhan_paud       = $hitungPengasuhan >= 5 ? 'Y' : 'T';
-                } elseif ($kategoriUmur == 4) {
+                } elseif ($kategoriUmur === 4) {
                     $imunisasi             = $hitungImunisasi > 0 && $hitungImunisasiCampak > 0 ? 'Y' : 'T';
                     $penimbanganBeratBadan = $hitungPenimbangan >= 15 ? 'Y' : 'T';
                     $konseling_gizi        = $JUMLAH_KG >= 15 ? 'Y' : 'T';
@@ -549,6 +562,7 @@ class Rekap
                     } else {
                         // CARI TINGGI BADAN DI DATABASE
                         $hitungTinggiBadan = DB::table('bulanan_anak')
+                            ->where('config_id', identitas('id'))
                             ->where('kia_id', $key)
                             ->where('pengukuran_tinggi_badan', '1')
                             ->whereMonth('bulanan_anak.created_at', '2') // februari
@@ -564,6 +578,7 @@ class Rekap
                     } else {
                         // CARI TINGGI BADAN DI DATABASE
                         $hitungTinggiBadan = DB::table('bulanan_anak')
+                            ->where('config_id', identitas('id'))
                             ->where('kia_id', $key)
                             ->where('pengukuran_tinggi_badan', '1')
                             ->whereMonth('bulanan_anak.created_at', '2') // februari
@@ -579,6 +594,7 @@ class Rekap
                     } elseif ($umurAnak <= 8) {
                         // CARI TINGGI BADAN DI DATABASE
                         $hitungTinggiBadan = DB::table('bulanan_anak')
+                            ->where('config_id', identitas('id'))
                             ->where('kia_id', $key)
                             ->where('pengukuran_tinggi_badan', '1')
                             ->whereMonth('bulanan_anak.created_at', '8') // agustus
@@ -589,6 +605,7 @@ class Rekap
                         $tinggiBadan = $hitungTinggiBadan > 0 ? 'Y' : 'T';
                     } else {
                         $hitungTinggiBadan = DB::table('bulanan_anak')
+                            ->where('config_id', identitas('id'))
                             ->where('kia_id', $key)
                             ->whereMonth('bulanan_anak.created_at', '2') // februari
                             ->orWhereMonth('bulanan_anak.created_at', '8') // agustus
@@ -612,6 +629,7 @@ class Rekap
                     } elseif ($umurAnak <= 11) {
                         // CARI TINGGI BADAN DI DATABASE
                         $hitungTinggiBadan = DB::table('bulanan_anak')
+                            ->where('config_id', identitas('id'))
                             ->where('kia_id', $key)
                             ->where('pengukuran_tinggi_badan', '1')
                             ->whereMonth('bulanan_anak.created_at', '8') // agustus
@@ -621,6 +639,7 @@ class Rekap
                         $tinggiBadan = $hitungTinggiBadan > 0 ? 'Y' : 'T';
                     } else {
                         $hitungTinggiBadan = DB::table('bulanan_anak')
+                            ->where('config_id', identitas('id'))
                             ->where('kia_id', $key)
                             ->whereMonth('bulanan_anak.created_at', '2') // februari
                             ->orWhereMonth('bulanan_anak.created_at', '8') // agustus
@@ -646,6 +665,7 @@ class Rekap
                 //HAPUS KODE DI BAWAH INI JIKA PENGECEKAN TINGGI BADAN HANYA DILAKUKAN DI BULAN FEBRUARI DAN AGUSTUS
                 //INI CARINYA DI DALAM 1 KUARTAL MINIMAL 1X
                 $hitungTinggiBadan = DB::table('bulanan_anak')
+                    ->where('config_id', identitas('id'))
                     ->where('kia_id', $key)
                     ->where('pengukuran_tinggi_badan', '1')
                     ->whereMonth('bulanan_anak.created_at', '>=', $batasBulanBawah)
@@ -690,7 +710,7 @@ class Rekap
                         $jumlahTS++;
                     }
                 }
-                $jumlahSeharusnya            = (int) $jumlahLayanan - (int) $jumlahTS;
+                $jumlahSeharusnya            = $jumlahLayanan - $jumlahTS;
                 $tingkatKonvergensiIndikator = [
                     'jumlah_diterima_lengkap' => $jumlahY,
                     'jumlah_seharusnya'       => $jumlahSeharusnya,
@@ -727,7 +747,7 @@ class Rekap
             }
 
             foreach ($capaianKonvergensi as $key => $item) {
-                $capaianKonvergensijumlahSeharusnya            = count($dataFilter) - (int) $item['TS'];
+                $capaianKonvergensijumlahSeharusnya            = count($dataFilter) - $item['TS'];
                 $capaianKonvergensi[$key]['jumlah_diterima']   = $item['Y'];
                 $capaianKonvergensi[$key]['jumlah_seharusnya'] = $capaianKonvergensijumlahSeharusnya;
                 $capaianKonvergensi[$key]['persen']            = $capaianKonvergensijumlahSeharusnya == 0 ? '0.00' : number_format($item['Y'] / $capaianKonvergensijumlahSeharusnya * 100, 2);

@@ -2,7 +2,7 @@
     <section class="content-header">
         <h1>Permohonan Surat</h1>
         <ol class="breadcrumb">
-            <li><a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a></li>
+            <li><a href="<?= site_url('beranda') ?>"><i class="fa fa-home"></i> Beranda</a></li>
             <li><a href="<?= site_url('permohonan_surat_admin/index/1/0') ?>"> Daftar Permohonan Surat</a></li>
             <li class="active">Surat Keterangan</li>
         </ol>
@@ -121,7 +121,7 @@
 <div class="row">
     <div class="col-md-12">
         <div class="form-surat" id="periksa-permohonan">
-            <?php $this->load->view($form_surat); ?>
+            <?php $this->load->view('surat/form_surat_tinymce'); ?>
         </div>
     </div>
 </div>
@@ -138,7 +138,7 @@
         var isian_form = JSON.parse($('#isian_form').val(), function(key, value) {
 
             if (key) {
-                var elem = $('*[name=' + key + ']');
+                var elem = $('*[name="' + key + '"]');
                 elem.val(value);
                 elem.change();
                 // Kalau isian hidden, akan ada isian lain untuk menampilkan datanya

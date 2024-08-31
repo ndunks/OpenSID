@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -42,30 +42,29 @@
  *
  * @license     GNU General Public License (GPL)
  *
- * @see        http://www.ajaxray.com/blog/2008/05/02/php-universal-feed-parser-lightweight-php-class-for-parsing-rss-and-atom-feeds/
+ * @see http://www.ajaxray.com/blog/2008/05/02/php-universal-feed-parser-lightweight-php-class-for-parsing-rss-and-atom-feeds/
  */
 class FeedParser
 {
-    private $xmlParser;
-    private $insideItem = [];                  // Keep track of current position in tag tree
+    private $xmlParser;  // List of tag names which have sub tags
+    private array $insideItem = [];                  // Keep track of current position in tag tree
     private $currentTag;                     // Last entered tag name
     private $currentAttr;                     // Attributes array of last entered tag
-    private $namespaces = [
+    private array $namespaces = [
         'http://purl.org/rss/1.0/'                 => 'RSS 1.0',
         'http://purl.org/rss/1.0/modules/content/' => 'RSS 2.0',
         'http://www.w3.org/2005/Atom'              => 'ATOM 1',
     ];
 
     // Namespaces to detact feed version
-    private $itemTags    = ['ITEM', 'ENTRY'];    // List of tag names which holds a feed item
-    private $channelTags = ['CHANNEL', 'FEED'];  // List of tag names which holds all channel elements
-    private $dateTags    = ['UPDATED', 'PUBDATE', 'DC:DATE'];
-    private $hasSubTags  = ['IMAGE', 'AUTHOR'];  // List of tag names which have sub tags
-    private $channels    = [];
-    private $items       = [];
-    private $itemIndex   = 0;
-    private $url;                     // The parsed url
-    private $version;                     // Detected feed version
+    private array $itemTags    = ['ITEM', 'ENTRY'];    // List of tag names which holds a feed item
+    private array $channelTags = ['CHANNEL', 'FEED'];  // List of tag names which holds all channel elements
+    private array $dateTags    = ['UPDATED', 'PUBDATE', 'DC:DATE'];
+    private array $hasSubTags  = ['IMAGE', 'AUTHOR'];  // List of tag names which have sub tags
+    private array $channels    = [];
+    private array $items       = [];
+    private string $url;                     // The parsed url
+    private string $version = '';                     // Detected feed version
 
     /**
      * Constructor - Initialize and set event handler functions to xmlParser
@@ -88,7 +87,7 @@ class FeedParser
      *
      * @return array - All chennels as associative array
      */
-    public function getChannels()
+    public function getChannels(): array
     {
         return $this->channels;
     }
@@ -98,7 +97,7 @@ class FeedParser
      *
      * @return array - All feed items as associative array
      */
-    public function getItems()
+    public function getItems(): array
     {
         return $this->items;
     }
@@ -108,7 +107,7 @@ class FeedParser
      *
      * @return number
      */
-    public function getTotalItems()
+    public function getTotalItems(): int
     {
         return count($this->items);
     }
@@ -116,7 +115,7 @@ class FeedParser
     /**
      * Get a feed item by index
      *
-     * @param    number  index of feed item
+     * @param number  index of feed item
      * @param mixed $index
      *
      * @return array feed item as associative array of it's elements
@@ -128,14 +127,12 @@ class FeedParser
         }
 
         throw new Exception('Item index is learger then total items.');
-
-        return false;
     }
 
     /**
      * Get a channel element by name
      *
-     * @param    string  the name of channel tag
+     * @param string  the name of channel tag
      * @param mixed $tagName
      *
      * @return string
@@ -147,8 +144,6 @@ class FeedParser
         }
 
         throw new Exception("Channel tag {$tagName} not found.");
-
-        return false;
     }
 
     /**
@@ -160,8 +155,6 @@ class FeedParser
     {
         if (empty($this->url)) {
             throw new Exception('Feed URL is not set yet.');
-
-            return false;
         }
 
         return $this->url;
@@ -180,7 +173,7 @@ class FeedParser
     /**
      * Parses a feed url
      *
-     * @param    srting  teh feed url
+     * @param srting  teh feed url
      * @param mixed $url
      *
      * @return void
@@ -190,13 +183,13 @@ class FeedParser
         $this->url  = $url;
         $URLContent = $this->getUrlContent();
 
-        if ($URLContent) {
+        if ($URLContent !== '' && $URLContent !== '0') {
             $segments = str_split($URLContent, 4096);
 
             foreach ($segments as $index => $data) {
-                $lastPiese = ((count($segments) - 1) == $index) ? true : false;
+                $lastPiese = (count($segments) - 1) == $index;
                 $result    = xml_parse($this->xmlParser, $data, $lastPiese);
-                if (! $result) {
+                if ($result === 0) {
                     log_message('error', sprintf(
                         'XML error: %s at line %d',
                         xml_error_string(xml_get_error_code($this->xmlParser)),
@@ -235,8 +228,6 @@ class FeedParser
     {
         if (empty($this->url)) {
             throw new Exception('URL to parse is empty!.');
-
-            return false;
         }
 
         if ($content = @file_get_contents($this->url)) {
@@ -254,7 +245,7 @@ class FeedParser
 
         curl_close($ch);
 
-        if (empty($error)) {
+        if ($error === '') {
             return $content;
         }
 
@@ -266,9 +257,9 @@ class FeedParser
     /**
      * Handle the start event of a tag while parsing
      *
-     * @param    object  the xmlParser object
-     * @param    string  name of currently entering tag
-     * @param    array   array of attributes
+     * @param object  the xmlParser object
+     * @param string  name of currently entering tag
+     * @param array   array of attributes
      * @param mixed $parser
      * @param mixed $tagName
      * @param mixed $attrs
@@ -290,8 +281,8 @@ class FeedParser
     /**
      * Handle the end event of a tag while parsing
      *
-     * @param    object  the xmlParser object
-     * @param    string  name of currently ending tag
+     * @param object  the xmlParser object
+     * @param string  name of currently ending tag
      * @param mixed $parser
      * @param mixed $tagName
      *
@@ -310,8 +301,8 @@ class FeedParser
     /**
      * Handle character data of a tag while parsing
      *
-     * @param    object  the xmlParser object
-     * @param    string  tag value
+     * @param object  the xmlParser object
+     * @param string  tag value
      * @param mixed $parser
      * @param mixed $data
      *
@@ -397,8 +388,8 @@ class FeedParser
     /**
      * Find out the feed version
      *
-     * @param    string  name of current tag
-     * @param    array   array of attributes
+     * @param string  name of current tag
+     * @param array   array of attributes
      * @param mixed $tagName
      * @param mixed $attrs
      *
@@ -481,9 +472,9 @@ class FeedParser
     /**
      * Replace HTML entities &something; by real characters
      *
-     * @see     http://lastrss.oslab.net/
+     * @see http://lastrss.oslab.net/
      *
-     * @param    string
+     * @param string
      * @param mixed $string
      *
      * @return string

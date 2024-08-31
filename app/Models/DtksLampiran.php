@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,10 +37,14 @@
 
 namespace App\Models;
 
+use App\Traits\ConfigId;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class DtksLampiran extends BaseModel
 {
+    use ConfigId;
+
     /**
      * The table associated with the model.
      *
@@ -67,18 +71,43 @@ class DtksLampiran extends BaseModel
         'id_rtm',
     ];
 
-    public function getFotoKecilAttribute()
+    public function getFotoKecilAttribute(): string
     {
         $path = LOKASI_FOTO_DTKS . 'kecil_' . $this->attributes['foto'];
-        if (! file_exists(FCPATH . $path)) {
+        if (!file_exists(FCPATH . $path)) {
             return '';
         }
 
-        return base_url() . $path;
+        return base_url($path);
     }
 
     public function dtks()
     {
-        return $this->belongsToMany(Dtks::class, 'dtks_ref_lampiran', 'id_lampiran', 'id_dtks');
+        return $this->belongsToMany(Dtks::class, 'dtks_ref_lampiran', 'id_lampiran', 'id_dtks')->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
+    }
+
+    /**
+     * The "booted" method of the model.
+     */
+    public static function boot(): void
+    {
+        parent::boot();
+        static::deleting(static function ($model): void {
+            static::deleteFile($model, 'foto', true);
+        });
+    }
+
+    public static function deleteFile($model, ?string $file, $deleting = false): void
+    {
+        if ($model->isDirty($file) || $deleting) {
+            $logo       = LOKASI_FOTO_DTKS . $model->getOriginal($file);
+            $path_kecil = LOKASI_FOTO_DTKS . 'kecil_' . $model->getOriginal($file);
+            if (file_exists($logo)) {
+                unlink($logo);
+            }
+            if (file_exists($path_kecil)) {
+                unlink($path_kecil);
+            }
+        }
     }
 }

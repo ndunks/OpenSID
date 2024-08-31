@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -55,6 +55,7 @@ class OTP_email implements OTP_interface
     {
         $this->ci = get_instance();
         $this->ci->load->library('email', config_item('email'));
+        $this->ci->email->initialize(config_email());
     }
 
     /**
@@ -76,13 +77,13 @@ class OTP_email implements OTP_interface
             return true;
         }
 
-        throw new \Exception($this->ci->email->print_debugger());
+        throw new Exception($this->ci->email->print_debugger());
     }
 
     /**
      * {@inheritDoc}
      */
-    public function verifikasi_otp($otp, $user = null)
+    public function verifikasi_otp($otp, $user = null): bool
     {
         if ($this->cek_verifikasi_otp($user)) {
             return true;
@@ -117,7 +118,7 @@ class OTP_email implements OTP_interface
     /**
      * {@inheritDoc}
      */
-    public function cek_verifikasi_otp($user)
+    public function cek_verifikasi_otp($user): bool
     {
         $token = $this->ci->db->from('tweb_penduduk')
             ->select('email_tgl_verifikasi')
@@ -125,7 +126,7 @@ class OTP_email implements OTP_interface
             ->get()
             ->row();
 
-        return (bool) ($token->email_tgl_verifikasi != null);
+        return $token->email_tgl_verifikasi != null;
     }
 
     /**
@@ -143,7 +144,7 @@ class OTP_email implements OTP_interface
             return true;
         }
 
-        throw new \Exception($this->ci->email->print_debugger());
+        throw new Exception($this->ci->email->print_debugger());
     }
 
     /**
@@ -151,27 +152,25 @@ class OTP_email implements OTP_interface
      */
     public function kirim_pin_baru($user, $pin, $nama)
     {
-        $this->ci->email->from($this->ci->email->smtp_user, 'OpenSID')
-            ->to($user)
-            ->subject('PIN Baru')
-            ->set_mailtype('html')
-            ->message($this->ci->load->view('fmandiri/email/kirim-pin', ['pin' => $pin, 'nama' => $nama], true));
+        try {
+            $this->ci->email->from($this->ci->email->smtp_user, 'OpenSID')
+                ->to($user)
+                ->subject('PIN Baru')
+                ->set_mailtype('html')
+                ->message($this->ci->load->view('fmandiri/email/kirim-pin', ['pin' => $pin, 'nama' => $nama], true));
 
-        if ($this->ci->email->send()) {
-            return true;
+            return (bool) ($this->ci->email->send());
+        } catch (Throwable $th) {
+            throw new Exception($this->ci->email->print_debugger(), $th->getCode(), $th);
         }
-
-        throw new \Exception($this->ci->email->print_debugger());
     }
 
     /**
      * {@inheritDoc}
      */
-    public function cek_akun_terdaftar($user)
+    public function cek_akun_terdaftar($user): bool
     {
-        return isset($this->ci->db)
-            ? ($this->ci->db->where('email', $user['email'])->where_not_in('id', $user['id'])->get('tweb_penduduk')->num_rows() === 0)
-            : false;
+        return isset($this->ci->db) && $this->ci->db->where('email', $user['email'])->where_not_in('id', $user['id'])->get('tweb_penduduk')->num_rows() === 0;
     }
 
     /**
@@ -190,6 +189,6 @@ class OTP_email implements OTP_interface
             return true;
         }
 
-        throw new \Exception($this->ci->email->print_debugger());
+        throw new Exception($this->ci->email->print_debugger());
     }
 }

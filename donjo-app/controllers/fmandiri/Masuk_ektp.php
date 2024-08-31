@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -50,7 +50,7 @@ class Masuk_ektp extends Web_Controller
         }
     }
 
-    public function index()
+    public function index(): void
     {
         $mac_address = $this->input->get('mac_address', true);
         $token       = $this->input->get('token_layanan', true);
@@ -76,16 +76,10 @@ class Masuk_ektp extends Web_Controller
             'form_action'         => site_url('layanan-mandiri/cek-ektp'),
         ];
 
-        if ($this->setting->tampilan_anjungan == 1) {
-            $this->load->model('first_gallery_m');
-
-            $data['daftar_album'] = $this->first_gallery_m->sub_gallery_show($this->setting->tampilan_anjungan_slider);
-        }
-
         $this->load->view(MANDIRI . '/masuk', $data);
     }
 
-    public function cek_ektp()
+    public function cek_ektp(): void
     {
         $this->mandiri_model->siteman_ektp();
         redirect('layanan-mandiri/beranda');

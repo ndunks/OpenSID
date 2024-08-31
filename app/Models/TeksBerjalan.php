@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,10 +37,16 @@
 
 namespace App\Models;
 
+use App\Traits\Author;
+use App\Traits\ConfigId;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class TeksBerjalan extends BaseModel
 {
+    use Author;
+    use ConfigId;
+
     /**
      * The table associated with the model.
      *
@@ -71,6 +77,18 @@ class TeksBerjalan extends BaseModel
         'status' => 'boolean',
     ];
 
+    public function scopeList($query, $tipe = '', $status = '')
+    {
+        if ($tipe != '') {
+            $query->where('tipe', $status);
+        }
+        if ($status != '') {
+            $query->where('status', $status);
+        }
+
+        return $query;
+    }
+
     /**
      * Scope query untuk status
      *
@@ -96,5 +114,29 @@ class TeksBerjalan extends BaseModel
     public function scopeTipe($query, $value = 1)
     {
         return $query->where('tipe', $value);
+    }
+
+    public function scopeNomorUrut($query, $id, $direction)
+    {
+        $data = $this->findOrFail($id);
+
+        $currentNo = $data->urut;
+        $targetNo  = ($direction == 2) ? $currentNo - 1 : $currentNo + 1;
+
+        $query->where('urut', $targetNo)->update(['urut' => $currentNo]);
+
+        $data->update(['urut' => $targetNo]);
+
+        return $query;
+    }
+
+    public function scopeUrutMax($query)
+    {
+        return $query->orderByDesc('urut')->first()->urut + 1;
+    }
+
+    public function artikel()
+    {
+        return $this->belongsTo(Artikel::class, 'tautan', 'id');
     }
 }

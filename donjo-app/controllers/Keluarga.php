@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,20 +29,23 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
-use App\Models\Config;
+use App\Enums\JenisKelaminEnum;
+use App\Enums\SHDKEnum;
+use App\Models\Keluarga as ModelsKeluarga;
+use App\Models\Penduduk;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Keluarga extends Admin_Controller
 {
-    private $_set_page;
-    private $_list_session;
+    private array $_set_page     = ['20', '50', '100', [0, 'Semua']];
+    private array $_list_session = ['jenis_peristiwa', 'status_hanya_tetap', 'status_dasar', 'sex', 'dusun', 'rw', 'rt', 'cari', 'kelas', 'filter', 'id_bos', 'judul_statistik', 'bantuan_keluarga', 'kumpulan_kk'];
 
     public function __construct()
     {
@@ -50,24 +53,22 @@ class Keluarga extends Admin_Controller
         $this->load->model(['keluarga_model', 'penduduk_model', 'wilayah_model', 'program_bantuan_model']);
         $this->modul_ini     = 'kependudukan';
         $this->sub_modul_ini = 'keluarga';
-        $this->_set_page     = ['20', '50', '100'];
-        $this->_list_session = ['jenis_peristiwa', 'status_hanya_tetap', 'status_dasar', 'sex', 'dusun', 'rw', 'rt', 'cari', 'kelas', 'filter', 'id_bos', 'judul_statistik', 'bantuan_keluarga', 'kumpulan_kk'];
     }
 
-    public function clear_session()
+    public function clear_session(): void
     {
         $this->session->unset_userdata($this->_list_session);
         $this->session->per_page     = $this->_set_page[0];
         $this->session->status_dasar = 1; // tampilkan KK aktif saja
     }
 
-    public function clear()
+    public function clear(): void
     {
         $this->clear_session();
         redirect($this->controller);
     }
 
-    public function index($p = 1, $o = 1)
+    public function index($p = 1, $o = 1): void
     {
         $data['p'] = $p;
         $data['o'] = $o;
@@ -88,11 +89,7 @@ class Keluarga extends Admin_Controller
                 $data['rw']      = $rw;
                 $data['list_rt'] = $this->wilayah_model->list_rt($dusun, $rw);
 
-                if (isset($rt)) {
-                    $data['rt'] = $rt;
-                } else {
-                    $data['rt'] = '';
-                }
+                $data['rt'] = $rt ?? '';
             } else {
                 $data['rw'] = '';
             }
@@ -105,13 +102,14 @@ class Keluarga extends Admin_Controller
             $this->session->per_page = $per_page;
         }
 
-        $data['func']       = 'index';
-        $data['set_page']   = $this->_set_page;
-        $list_data          = $this->keluarga_model->list_data($o, $p);
-        $data['paging']     = $list_data['paging'];
-        $data['main']       = $list_data['main'];
-        $data['list_sex']   = $this->referensi_model->list_data('tweb_penduduk_sex');
-        $data['list_dusun'] = $this->wilayah_model->list_dusun();
+        $data['func']             = 'index';
+        $this->header['kategori'] = 'data_lengkap';
+        $data['set_page']         = $this->_set_page;
+        $list_data                = $this->keluarga_model->list_data($o, $p);
+        $data['paging']           = $list_data['paging'];
+        $data['main']             = $list_data['main'];
+        $data['list_sex']         = $this->referensi_model->list_data('tweb_penduduk_sex');
+        $data['list_dusun']       = $this->wilayah_model->list_dusun();
 
         $this->render('sid/kependudukan/keluarga', $data);
     }
@@ -121,16 +119,16 @@ class Keluarga extends Admin_Controller
         return json($this->keluarga_model->autocomplete($this->input->post('cari')));
     }
 
-    public function cetak($o = 0, $aksi = '', $privasi_kk = 0)
+    public function cetak($page = 1, $o = 0, $aksi = '', $privasi_kk = 0): void
     {
-        $data['main'] = $this->keluarga_model->list_data($o, -1);
+        $data['main'] = $this->keluarga_model->list_data($o, $page)['main'];
         if ($privasi_kk == 1) {
             $data['privasi_kk'] = true;
         }
         $this->load->view("sid/kependudukan/keluarga_{$aksi}", $data);
     }
 
-    public function form_peristiwa($peristiwa = '')
+    public function form_peristiwa($peristiwa = ''): void
     {
         $this->redirect_hak_akses('u');
         // Acuan jenis peristiwa berada pada ref_peristiwa
@@ -143,7 +141,7 @@ class Keluarga extends Admin_Controller
         $this->form();
     }
 
-    public function form_peristiwa_a($peristiwa = '', $p = 1, $o = 0, $id = 0)
+    public function form_peristiwa_a($peristiwa = '', $p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         // Acuan jenis peristiwa berada pada ref_peristiwa
@@ -152,11 +150,11 @@ class Keluarga extends Admin_Controller
     }
 
     // Masukkan KK baru
-    public function form($p = 1, $o = 0)
+    public function form($p = 1, $o = 0): void
     {
         $this->redirect_hak_akses('u');
         // Reset kalau dipanggil dari luar pertama kali ($_POST kosong)
-        if (empty($_POST) && (! isset($_SESSION['dari_internal']) || ! $_SESSION['dari_internal'])) {
+        if ($_POST === [] && (!isset($_SESSION['dari_internal']) || !$_SESSION['dari_internal'])) {
             unset($_SESSION['validation_error']);
         }
 
@@ -165,11 +163,7 @@ class Keluarga extends Admin_Controller
         // Validasi dilakukan di keluarga_model sewaktu insert dan update
         if (isset($_SESSION['validation_error']) && $_SESSION['validation_error']) {
             // Kalau dipanggil internal pakai data yang disimpan di $_SESSION
-            if ($_SESSION['dari_internal']) {
-                $data['penduduk'] = $_SESSION['post'];
-            } else {
-                $data['penduduk'] = $_POST;
-            }
+            $data['penduduk'] = $_SESSION['dari_internal'] ? $_SESSION['post'] : $_POST;
             // Di penduduk_isian_form memakai 'sex' sesuai dengan nama kolom
             // tapi pengisian nilai sebelumnya menggunakan 'id_sex'
             $data['penduduk']['id_sex'] = $data['penduduk']['sex'];
@@ -221,13 +215,13 @@ class Keluarga extends Admin_Controller
 
     // Tambah anggota keluarga dari penduduk baru
     // Tidak boleh tambah anggota bagi kasus kepala keluarga mati/hilang/pindah
-    public function form_a($p = 1, $o = 0, $id = 0)
+    public function form_a($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $kepala = $this->keluarga_model->get_kepala_a($id);
         $this->redirect_tidak_valid(empty($kepala['id']) || $kepala['status_dasar'] == 1);
 
-        if (empty($_POST) && ! $_SESSION['dari_internal']) {
+        if ($_POST === [] && !$_SESSION['dari_internal']) {
             unset($_SESSION['validation_error']);
         } else {
             unset($_SESSION['dari_internal']);
@@ -265,6 +259,10 @@ class Keluarga extends Admin_Controller
         }
         $data['jenis_peristiwa'] = $this->session->jenis_peristiwa;
 
+        // data orang tua
+        $data['data_ayah'] = collect(Penduduk::ayah($id)->first(['nama', 'nik']))->toArray();
+        $data['data_ibu']  = collect(Penduduk::ibu($id)->first(['nama', 'nik']))->toArray();
+
         // Validasi dilakukan di keluarga_model sewaktu insert dan update
         if ($_SESSION['validation_error']) {
             $data['id_kk']    = $_SESSION['id_kk'];
@@ -275,10 +273,10 @@ class Keluarga extends Admin_Controller
         $this->render('sid/kependudukan/keluarga_form_a', $data);
     }
 
-    public function edit_nokk($p = 1, $o = 0, $id = 0)
+    public function edit_nokk($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
-        $data['kk']                 = $this->keluarga_model->get_keluarga($id);
+        $data['kk']                 = $this->keluarga_model->get_keluarga($id) ?? show_404();
         $data['dusun']              = $this->wilayah_model->list_dusun();
         $data['rw']                 = $this->wilayah_model->list_rw($data['kk']['dusun']);
         $data['rt']                 = $this->wilayah_model->list_rt($data['kk']['dusun'], $data['kk']['rw']);
@@ -292,7 +290,7 @@ class Keluarga extends Admin_Controller
     }
 
     // Tambah KK dari penduduk yg ada
-    public function form_old($p = 1, $o = 0, $id = 0)
+    public function form_old($id = 0): void
     {
         $this->redirect_hak_akses('u');
         $data['penduduk']       = $this->keluarga_model->list_penduduk_lepas();
@@ -302,7 +300,28 @@ class Keluarga extends Admin_Controller
         $this->load->view('sid/kependudukan/ajax_add_keluarga', $data);
     }
 
-    public function filter($filter)
+    public function pindah_kolektif(): void
+    {
+        $this->redirect_hak_akses('u');
+        $data['id_kk']       = $this->input->get('id_cb');
+        $data['dusun']       = $this->wilayah_model->list_dusun();
+        $data['rw']          = $this->wilayah_model->list_rw();
+        $data['rt']          = $this->wilayah_model->list_rt();
+        $data['form_action'] = site_url("{$this->controller}/proses_pindah");
+        log_message('error', print_r($data['id_kk'], true));
+
+        $this->load->view('sid/kependudukan/ajax_pindah_wilayah', $data);
+    }
+
+    public function proses_pindah(): void
+    {
+        $this->redirect_hak_akses('u');
+        $this->keluarga_model->proses_pindah($this->input->post());
+
+        redirect($this->controller);
+    }
+
+    public function filter($filter): void
     {
         $value = $this->input->post($filter);
         if ($value != '') {
@@ -314,7 +333,7 @@ class Keluarga extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function dusun()
+    public function dusun(): void
     {
         $this->session->unset_userdata(['rw', 'rt']);
         $dusun = $this->input->post('dusun');
@@ -327,7 +346,7 @@ class Keluarga extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function rw()
+    public function rw(): void
     {
         $this->session->unset_userdata('rt');
         $rw = $this->input->post('rw');
@@ -340,7 +359,7 @@ class Keluarga extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function rt()
+    public function rt(): void
     {
         $rt = $this->input->post('rt');
         if ($rt != '') {
@@ -353,7 +372,7 @@ class Keluarga extends Admin_Controller
     }
 
     // Tambah KK dengan memilih dari penduduk yg sudah ada
-    public function insert()
+    public function insert(): void
     {
         $this->redirect_hak_akses('u');
         $this->keluarga_model->insert();
@@ -361,10 +380,13 @@ class Keluarga extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function insert_a()
+    public function insert_a(): void
     {
         $this->redirect_hak_akses('u');
-        $id_kk = $this->input->post('id_kk');
+        $id_kk          = $this->input->post('id_kk');
+        $_POST['no_kk'] = $_POST['no_kk_keluarga'];
+        $_POST['id']    = $id_kk;
+        unset($_POST['no_kk_keluarga']);
         $this->keluarga_model->insert_a();
         if ($_SESSION['validation_error']) {
             $_SESSION['id_kk']         = $id_kk;
@@ -377,7 +399,7 @@ class Keluarga extends Admin_Controller
     }
 
     // Tambah KK dengan mengisi form penduduk kepala keluarga baru
-    public function insert_new()
+    public function insert_new(): void
     {
         $this->redirect_hak_akses('u');
         $this->keluarga_model->insert_new();
@@ -389,7 +411,7 @@ class Keluarga extends Admin_Controller
         }
     }
 
-    public function update_nokk($id = 0)
+    public function update_nokk($id = 0): void
     {
         $this->redirect_hak_akses('u');
         $this->redirect_tidak_valid($this->keluarga_model->get_kepala_a($id)['status_dasar'] == 1);
@@ -398,58 +420,75 @@ class Keluarga extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function delete($p = 1, $o = 0, $id = 0)
+    public function delete($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('h');
+
+        if (data_lengkap()) {
+            session_error('Data tidak dapat proses karena sudah dinyatakan lengkap');
+
+            redirect("{$this->controller}/index/{$p}/{$o}");
+        }
+
         $this->redirect_tidak_valid($this->keluarga_model->cek_boleh_hapus($id));
         $this->keluarga_model->delete($id);
 
         redirect($this->controller);
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->redirect_hak_akses('h');
+
+        if (data_lengkap()) {
+            session_error('Data tidak dapat proses karena sudah dinyatakan lengkap');
+
+            redirect("{$this->controller}/index/{$p}/{$o}");
+        }
+
         $this->keluarga_model->delete_all();
 
         redirect($this->controller);
     }
 
-    public function anggota($p = 1, $o = 0, $id = 0)
+    public function anggota($p = 1, $o = 0, $id = 0): void
     {
         $data['p']  = $p;
         $data['o']  = $o;
         $data['kk'] = $id;
 
-        $data['main']      = $this->keluarga_model->list_anggota($id);
-        $data['kepala_kk'] = $this->keluarga_model->get_kepala_kk($id);
-        $data['program']   = $this->program_bantuan_model->get_peserta_program(2, $data['kepala_kk']['no_kk']);
+        $kk            = ModelsKeluarga::with(['anggota'])->find($id) ?? show_404();
+        $data['no_kk'] = $kk->no_kk;
+        $data['main']  = $kk->anggota->map(static function ($item) {
+            $item->hubungan = SHDKEnum::valueOf($item->kk_level);
+            $item->sex      = JenisKelaminEnum::valueOf($item->sex);
+
+            return $item;
+        })->toArray();
+        $data['kepala_kk'] = $kk->anggota->where('kk_level', SHDKEnum::KEPALA_KELUARGA)->first();
+        $data['program']   = $this->program_bantuan_model->get_peserta_program(2, $kk->no_kk);
 
         $this->render('sid/kependudukan/keluarga_anggota', $data);
     }
 
-    public function ajax_add_anggota($p = 1, $o = 0, $id = 0)
+    public function ajax_add_anggota($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $data['p'] = $p;
         $data['o'] = $o;
 
-        $kk = $this->keluarga_model->get_kepala_kk($id);
-        if ($kk) {
-            $data['kepala_kk'] = $kk;
-        } else {
-            $data['kepala_kk'] = null;
-        }
+        $kk                  = $this->keluarga_model->get_kepala_kk($id);
+        $data['kepala_kk']   = $kk ?: null;
         $data['hubungan']    = $this->penduduk_model->list_hubungan($data['kepala_kk']['status_kawin_id'], $data['kepala_kk']['sex_id']);
         $data['main']        = $this->keluarga_model->list_anggota($id);
-        $data['penduduk']    = $this->keluarga_model->list_penduduk_lepas();
+        $data['penduduk']    = $this->keluarga_model->list_penduduk_lepas(true);
         $data['form_action'] = site_url("{$this->controller}/add_anggota/{$p}/{$o}/{$id}");
 
         $this->load->view('sid/kependudukan/ajax_add_anggota_form', $data);
     }
 
     // $id adalah id tweb_penduduk
-    public function edit_anggota($p = 1, $o = 0, $id_kk = 0, $id = 0)
+    public function edit_anggota($p = 1, $o = 0, $id_kk = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $data['p'] = $p;
@@ -458,19 +497,15 @@ class Keluarga extends Admin_Controller
         $data['hubungan'] = $this->keluarga_model->list_hubungan();
         $data['main']     = $this->keluarga_model->get_anggota($id);
 
-        $kk = $this->keluarga_model->get_kepala_kk($id_kk);
-        if ($kk) {
-            $data['kepala_kk'] = $kk;
-        } else {
-            $data['kepala_kk'] = null;
-        }
+        $kk                = $this->keluarga_model->get_kepala_kk($id_kk);
+        $data['kepala_kk'] = $kk ?: null;
 
         $data['form_action'] = site_url("{$this->controller}/update_anggota/{$p}/{$o}/{$id_kk}/{$id}");
 
         $this->load->view('sid/kependudukan/ajax_edit_anggota_form', $data);
     }
 
-    public function kartu_keluarga($p = 1, $o = 0, $id = 0)
+    public function kartu_keluarga($p = 1, $o = 0, $id = 0): void
     {
         $data['p']     = $p;
         $data['o']     = $o;
@@ -479,13 +514,9 @@ class Keluarga extends Admin_Controller
         $data['hubungan'] = $this->keluarga_model->list_hubungan();
         $data['main']     = $this->keluarga_model->list_anggota($id);
         $kk               = $this->keluarga_model->get_kepala_kk($id);
-        $data['desa']     = Config::first();
+        $data['desa']     = $this->header['desa'];
 
-        if ($kk) {
-            $data['kepala_kk'] = $kk;
-        } else {
-            $data['kepala_kk'] = $this->keluarga_model->get_keluarga($id);
-        }
+        $data['kepala_kk'] = $kk ?: $this->keluarga_model->get_keluarga($id) ?? show_404();
 
         $data['penduduk']    = $this->keluarga_model->list_penduduk_lepas();
         $data['form_action'] = site_url("{$this->controller}/print");
@@ -493,32 +524,32 @@ class Keluarga extends Admin_Controller
         $this->render('sid/kependudukan/kartu_keluarga', $data);
     }
 
-    public function cetak_kk($id = 0)
+    public function cetak_kk($id = 0): void
     {
         $data = $this->keluarga_model->get_data_cetak_kk($id);
 
         $this->load->view('sid/kependudukan/cetak_kk_all', $data);
     }
 
-    public function cetak_kk_all()
+    public function cetak_kk_all(): void
     {
         $data = $this->keluarga_model->get_data_cetak_kk_all();
 
         $this->load->view('sid/kependudukan/cetak_kk_all', $data);
     }
 
-    public function doc_kk($id = 0)
+    public function doc_kk($id = 0): void
     {
         $this->keluarga_model->unduh_kk($id);
     }
 
-    public function doc_kk_all($id = 0)
+    public function doc_kk_all($id = 0): void
     {
         $this->keluarga_model->unduh_kk();
     }
 
     // Tidak boleh tambah anggota bagi kasus kepala keluarga mati/hilang/pindah
-    public function add_anggota($p = 1, $o = 0, $id = 0)
+    public function add_anggota($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $kepala = $this->keluarga_model->get_kepala_a($id);
@@ -528,7 +559,7 @@ class Keluarga extends Admin_Controller
         redirect("{$this->controller}/anggota/{$p}/{$o}/{$id}");
     }
 
-    public function update_anggota($p = 1, $o = 0, $id_kk = 0, $id = 0)
+    public function update_anggota($p = 1, $o = 0, $id_kk = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $this->redirect_tidak_valid($this->keluarga_model->get_kepala_a($id_kk)['status_dasar'] == 1);
@@ -538,7 +569,7 @@ class Keluarga extends Admin_Controller
     }
 
     // Pecah keluarga
-    public function delete_anggota($p = 1, $o = 0, $kk = 0, $id = 0)
+    public function delete_anggota($p = 1, $o = 0, $kk = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $this->keluarga_model->rem_anggota($kk, $id);
@@ -547,7 +578,7 @@ class Keluarga extends Admin_Controller
     }
 
     // Keluarkan karena salah mengisi
-    public function keluarkan_anggota($kk, $id = 0)
+    public function keluarkan_anggota($kk, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $this->keluarga_model->rem_anggota($no_kk_sebelumnya = 0, $id); // Tidak simpan no KK
@@ -555,7 +586,7 @@ class Keluarga extends Admin_Controller
         redirect("{$this->controller}/anggota/1/0/{$kk}");
     }
 
-    public function delete_all_anggota($p = 1, $o = 0, $kk = 0)
+    public function delete_all_anggota($p = 1, $o = 0, $kk = 0): void
     {
         $this->redirect_hak_akses('h');
         $this->keluarga_model->rem_all_anggota($kk);
@@ -563,7 +594,7 @@ class Keluarga extends Admin_Controller
         redirect("{$this->controller}/anggota/{$p}/{$o}/{$kk}");
     }
 
-    public function statistik($tipe = '0', $nomor = 0, $sex = null)
+    public function statistik($tipe = '0', $nomor = 0, $sex = null): void
     {
         $this->clear_session();
         // Untuk tautan TOTAL di laporan statistik, di mana arg-2 = sex dan arg-3 kosong
@@ -587,7 +618,7 @@ class Keluarga extends Admin_Controller
                 break;
 
             case $tipe == 'bantuan_keluarga':
-                if (! in_array($nomor, [BELUM_MENGISI, TOTAL])) {
+                if (!in_array($nomor, [BELUM_MENGISI, TOTAL])) {
                     $this->session->status_dasar = null;
                 } // tampilkan semua peserta walaupun bukan hidup/aktif
                 $session  = 'bantuan_keluarga';
@@ -597,11 +628,17 @@ class Keluarga extends Admin_Controller
             case $tipe > 50:
                 $program_id                     = preg_replace('/^50/', '', $tipe);
                 $this->session->program_bantuan = $program_id;
-                $nama                           = $this->db->select('nama')
+
+                // TODO: Sederhanakan query ini, pindahkan ke model
+                $nama = $this->db
+                    ->select('nama')
+                    ->where('config_id', identitas('id'))
                     ->where('id', $program_id)
-                    ->get('program')->row()
+                    ->get('program')
+                    ->row()
                     ->nama;
-                if (! in_array($nomor, [BELUM_MENGISI, TOTAL])) {
+
+                if (!in_array($nomor, [BELUM_MENGISI, TOTAL])) {
                     $this->session->status_dasar = null; // tampilkan semua peserta walaupun bukan hidup/aktif
                     $nomor                       = $program_id;
                 }
@@ -627,14 +664,14 @@ class Keluarga extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function cetak_statistik($tipe = 0)
+    public function cetak_statistik($tipe = 0): void
     {
         $data['main'] = $this->keluarga_model->list_data_statistik($tipe);
 
         $this->load->view('sid/kependudukan/keluarga_print', $data);
     }
 
-    public function search_kumpulan_kk()
+    public function search_kumpulan_kk(): void
     {
         $data['kumpulan_kk'] = $this->session->kumpulan_kk ?: '';
         $data['form_action'] = site_url("{$this->controller}/filter/kumpulan_kk");
@@ -642,17 +679,17 @@ class Keluarga extends Admin_Controller
         $this->load->view('sid/kependudukan/ajax_search_kumpulan_kk', $data);
     }
 
-    public function ajax_cetak($o = 0, $aksi = '')
+    public function ajax_cetak($page = 1, $o = 0, $aksi = ''): void
     {
         $data['o']                   = $o;
         $data['aksi']                = $aksi;
-        $data['form_action']         = site_url("{$this->controller}/cetak/{$o}/{$aksi}");
-        $data['form_action_privasi'] = site_url("{$this->controller}/cetak/{$o}/{$aksi}/1");
+        $data['form_action']         = site_url("{$this->controller}/cetak/{$page}/{$o}/{$aksi}?id_cb={$this->input->get('id_cb')}");
+        $data['form_action_privasi'] = site_url("{$this->controller}/cetak/{$page}/{$o}/{$aksi}/1?id_cb={$this->input->get('id_cb')}");
 
         $this->load->view('sid/kependudukan/ajax_cetak_bersama', $data);
     }
 
-    public function program_bantuan()
+    public function program_bantuan(): void
     {
         // TODO : Ubah cara ini untuk menampilkan data
         $this->session->sasaran  = 2; // sasaran keluarga
@@ -668,20 +705,20 @@ class Keluarga extends Admin_Controller
         $this->load->view('sid/kependudukan/pencarian_program_bantuan', $data);
     }
 
-    public function program_bantuan_proses()
+    public function program_bantuan_proses(): void
     {
         $id_program = $this->input->post('program_bantuan');
         $this->statistik('bantuan_keluarga', $id_program, '0');
     }
 
-    public function nokk_sementara()
+    public function nokk_sementara(): void
     {
         $this->session->nokk_sementara = '0';
 
         redirect($this->controller);
     }
 
-    public function form_pecah_semua($id = 0)
+    public function form_pecah_semua($id = 0): void
     {
         $this->redirect_hak_akses('u');
         $data['kk']             = $this->keluarga_model->get_keluarga($id);
@@ -692,7 +729,7 @@ class Keluarga extends Admin_Controller
         $this->load->view('sid/kependudukan/pecah_semua', $data);
     }
 
-    public function pecah_semua($id = 0)
+    public function pecah_semua($id = 0): void
     {
         $this->redirect_hak_akses('u');
         $this->keluarga_model->pecah_semua($id, $this->input->post());

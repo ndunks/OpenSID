@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,13 +29,11 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
-
-use App\Models\Config;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -50,9 +48,10 @@ class Siteman extends MY_Controller
         $this->lang->load('passwords');
         $this->load->library('Reset/Password', '', 'password');
         $this->latar_login = default_file(LATAR_LOGIN . $this->setting->latar_login, DEFAULT_LATAR_SITEMAN);
+        $this->header      = collect(identitas())->toArray();
     }
 
-    public function index()
+    public function index(): void
     {
         // Kalau sehabis periksa data, paksa harus login lagi
         if ($this->session->periksa_data == 1) {
@@ -65,7 +64,7 @@ class Siteman extends MY_Controller
             redirect('main');
         }
         unset($_SESSION['balik_ke']);
-        $data['header'] = Config::first();
+        $data['header'] = $this->header;
 
         $data['form_action'] = site_url('siteman/auth');
         $data['logo_bsre']   = default_file(LOGO_BSRE, false);
@@ -85,8 +84,17 @@ class Siteman extends MY_Controller
         $this->load->view('siteman', $data);
     }
 
-    public function auth()
+    public function auth(): void
     {
+        if (setting('google_recaptcha')) {
+            $status = google_recaptcha();
+
+            if (! $status->success) {
+                set_session('notif', 'Mohon konfirmasi bahwa anda bukan robot!');
+                redirect('siteman');
+            }
+        }
+
         $method       = $this->input->method(true);
         $allow_method = ['POST'];
         if (! in_array($method, $allow_method)) {
@@ -102,9 +110,11 @@ class Siteman extends MY_Controller
             redirect('siteman');
         }
 
-        if (! $this->user_model->syarat_sandi() && ! ($this->session->user == 1 && (config_item('demo_mode') || ENVIRONMENT === 'development'))) {
+        if (! $this->user_model->syarat_sandi() && (! config_item('demo_mode') && ENVIRONMENT !== 'development')) {
             // Password tidak memenuhi syarat kecuali di website demo
-            $redirectTo = 'user_setting/change_pwd';
+
+            $this->session->force_change_password = true;
+            redirect('pengguna#sandi');
         }
 
         $_SESSION['dari_login'] = '1';
@@ -125,22 +135,22 @@ class Siteman extends MY_Controller
         }
     }
 
-    public function logout()
+    public function logout(): void
     {
         $this->user_model->logout();
 
         redirect('siteman');
     }
 
-    public function lupa_sandi()
+    public function lupa_sandi(): void
     {
-        $data['header']      = Config::first();
+        $data['header']      = $this->header;
         $data['latar_login'] = $this->latar_login;
 
         $this->load->view('lupa_sandi', $data);
     }
 
-    public function kirim_lupa_sandi()
+    public function kirim_lupa_sandi(): void
     {
         // Periksa isian captcha
         $captcha = new App\Libraries\Captcha();
@@ -154,7 +164,7 @@ class Siteman extends MY_Controller
             $status = $this->password->driver('email')->sendResetLink([
                 'email' => $this->input->post('email'),
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             log_message('error', $e);
 
             set_session('notif', 'Tidak berhasil mengirim email, harap mencoba kembali.');
@@ -167,13 +177,13 @@ class Siteman extends MY_Controller
         redirect('siteman/lupa_sandi');
     }
 
-    public function reset_kata_sandi($token = null)
+    public function reset_kata_sandi($token = null): void
     {
         if (! $token) {
             redirect('siteman');
         }
 
-        $data['header']      = Config::first();
+        $data['header']      = $this->header;
         $data['email']       = $this->input->get('email', true);
         $data['token']       = $token;
         $data['latar_login'] = $this->latar_login;
@@ -181,7 +191,7 @@ class Siteman extends MY_Controller
         $this->load->view('reset_kata_sandi', $data);
     }
 
-    public function verifikasi_sandi()
+    public function verifikasi_sandi(): void
     {
         $request = (object) $this->input->post();
 
@@ -194,11 +204,12 @@ class Siteman extends MY_Controller
         try {
             $status = $this->password->driver('email')->reset(
                 ['email' => $request->email, 'token' => $request->token, 'password' => $request->password],
-                function ($user, $password) {
+                function ($user, $password): void {
+                    // TODO: OpenKab - Perlu disesuaikan ulang setelah semua modul selesai
                     $this->db->where('id', $user->id)->update('user', ['password' => $this->generatePasswordHash($password)]);
                 }
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             log_message('error', $e);
 
             set_session('notif', 'Tidak berhasil memverifikasi kata sandi, silahkan coba kembali.');
@@ -223,7 +234,7 @@ class Siteman extends MY_Controller
         $pwHash = password_hash($string, PASSWORD_BCRYPT);
         // Cek kekuatan hash, regenerate jika masih lemah
         if (password_needs_rehash($pwHash, PASSWORD_BCRYPT)) {
-            $pwHash = password_hash($string, PASSWORD_BCRYPT);
+            return password_hash($string, PASSWORD_BCRYPT);
         }
 
         return $pwHash;

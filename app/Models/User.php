@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,11 +37,15 @@
 
 namespace App\Models;
 
+use App\Traits\ConfigId;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 // class User extends Authenticatable implements JWTSubject
 class User extends BaseModel
 {
+    use ConfigId;
+
     // use HasApiTokens;
     // use HasFactory;
     // use Notifiable;
@@ -56,20 +60,9 @@ class User extends BaseModel
     public $timestamps = false;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
+     * {@inheritDoc}
      */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'last_login',
-        'id_telegram',
-        'notif_telegram',
-        'telegram_verified_at',
-        'email_verified_at',
-    ];
+    protected $guarded = [];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -91,12 +84,39 @@ class User extends BaseModel
         'telegram_verified_at' => 'datetime',
     ];
 
-    public function getJWTIdentifier()
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::updating(static function ($model): void {
+            static::deleteFile($model, 'foto');
+        });
+
+        static::deleting(static function ($model): void {
+            static::deleteFile($model, 'foto', true);
+        });
+    }
+
+    public static function deleteFile($model, ?string $file, $deleting = false): void
+    {
+        if ($model->isDirty($file) || $deleting) {
+            $fotoSedang = LOKASI_USER_PICT . 'sedang_' . $model->getOriginal($file);
+            $fotoKecil  = LOKASI_USER_PICT . 'kecil_' . $model->getOriginal($file);
+            if (file_exists($fotoSedang)) {
+                unlink($fotoSedang);
+            }
+            if (file_exists($fotoKecil)) {
+                unlink($fotoKecil);
+            }
+        }
+    }
+
+    public function getJWTIdentifier(): void
     {
         // return $this->getKey();
     }
 
-    public function getJWTCustomClaims()
+    public function getJWTCustomClaims(): array
     {
         return [];
     }
@@ -112,6 +132,16 @@ class User extends BaseModel
     }
 
     /**
+     * Define a one-to-one relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\hasOne
+     */
+    public function userGrup()
+    {
+        return $this->hasOne(UserGrup::class, 'id', 'id_grup');
+    }
+
+    /**
      * Scope query untuk status pengguna
      *
      * @param mixed $query
@@ -121,6 +151,24 @@ class User extends BaseModel
      */
     public function scopeStatus($query, $status = 1)
     {
+        if ($status == '') {
+            return $query;
+        }
+
         return $query->where('active', $status);
+    }
+
+    /**
+     * Scope query untuk super admin
+     *
+     * Super admin tidak terikat dengan status (selalu aktif) dan hanya ada 1 untuk setiap desa
+     *
+     * @param mixed $query
+     *
+     * @return Builder
+     */
+    public function scopeSuperAdmin($query)
+    {
+        return $query->where('id_grup', UserGrup::getGrupId(UserGrup::ADMINISTRATOR))->first();
     }
 }

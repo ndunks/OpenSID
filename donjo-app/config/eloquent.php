@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,89 +29,37 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
-use Carbon\Carbon;
-use Carbon\CarbonImmutable;
-use Carbon\CarbonInterval;
-use Carbon\CarbonPeriod;
-use Illuminate\Database\Capsule\Manager as Capsule;
-use Illuminate\Events\Dispatcher;
-use Illuminate\Pagination\Cursor;
-use Illuminate\Pagination\CursorPaginator;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Arr;
 
-Carbon::setLocale('id');
-CarbonImmutable::setLocale('id');
-CarbonPeriod::setLocale('id');
-CarbonInterval::setLocale('id');
+require_once 'database.php';
 
-$capsule = new Capsule();
-$capsule->addConnection([
-    'driver'    => $db['default']['dbdriver'] == 'mysqli' ? 'mysql' : $db['default']['dbdriver'],
-    'host'      => $db['default']['hostname'],
-    'port'      => $db['default']['port'],
-    'database'  => $db['default']['database'],
-    'username'  => $db['default']['username'],
-    'password'  => $db['default']['password'],
-    'charset'   => $db['default']['char_set'],
-    'collation' => $db['default']['dbcollat'],
-    'prefix'    => $db['default']['dbprefix'],
-    'stricton'  => $db['default']['stricton'],
-    'options'   => [
-        \PDO::ATTR_EMULATE_PREPARES => true,
-    ],
-]);
-$capsule->setAsGlobal();
-$capsule->setEventDispatcher(new Dispatcher());
-$capsule->bootEloquent();
-$capsule->getContainer()->singleton('db', static function () use ($capsule) {
-    return $capsule->getDatabaseManager();
-});
+$connections = [];
 
-Facade::clearResolvedInstances();
-Facade::setFacadeApplication($capsule->getContainer());
+foreach ($db as $key => $options) {
+    $dbdriver = Arr::get($options, 'dbdriver');
+    $dbdriver = ($dbdriver === 'mysqli') ? 'mysql' : $dbdriver;
 
-Paginator::$defaultView       = 'admin/layouts/components/pagination_default';
-Paginator::$defaultSimpleView = 'admin/layouts/components/pagination_simple_default';
+    $connections['default'] = $key;
 
-Paginator::viewFactoryResolver(static function () {
-    return view();
-});
+    $connections['connections'][$key] = [
+        'driver'    => $dbdriver,
+        'host'      => Arr::get($options, 'hostname'),
+        'port'      => Arr::get($options, 'port', 3306),
+        'database'  => Arr::get($options, 'database'),
+        'username'  => Arr::get($options, 'username'),
+        'password'  => Arr::get($options, 'password'),
+        'charset'   => Arr::get($options, 'char_set'),
+        'collation' => Arr::get($options, 'dbcollat'),
+        'prefix'    => Arr::get($options, 'swap_pre'),
+        'strict'    => Arr::get($options, 'stricton'),
+        'engine'    => null,
+    ];
+}
 
-Paginator::currentPathResolver(static function () {
-    return current_url();
-});
-
-Paginator::currentPageResolver(static function ($pageName = 'page') {
-    $page = get_instance()->input->get($pageName);
-
-    if (filter_var($page, FILTER_VALIDATE_INT) !== false && (int) $page >= 1) {
-        return (int) $page;
-    }
-
-    return 1;
-});
-
-Paginator::queryStringResolver(static function () {
-    return get_instance()->uri->uri_string();
-});
-
-CursorPaginator::currentCursorResolver(static function ($cursorName = 'cursor') {
-    return Cursor::fromEncoded(get_instance()->input->get($cursorName));
-});
-
-\Illuminate\Database\Query\Builder::macro('toRawSql', function () {
-    return array_reduce($this->getBindings(), static function ($sql, $binding) {
-        return preg_replace('/\?/', is_numeric($binding) ? $binding : "'{$binding}'", $sql, 1);
-    }, $this->toSql());
-});
-
-\Illuminate\Database\Eloquent\Builder::macro('toRawSql', function () {
-    return $this->getQuery()->toRawSql();
-});
+return $connections;

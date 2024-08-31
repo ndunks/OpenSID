@@ -1,10 +1,6 @@
-				<footer class="main-footer">
-					<div class="pull-right hidden-xs">
-						<b>Versi</b> <?= AmbilVersi() ?>
-					</div>
-					<strong>Aplikasi <a href="https://github.com/OpenSID/OpenSID" target="_blank"><?= config_item('nama_aplikasi') ?></a>, dikembangkan oleh <a href="https://www.facebook.com/groups/OpenSID/" target="_blank">Komunitas <?= config_item('nama_aplikasi') ?></a>.</strong>
-				</footer>
-				<?php include RESOURCESPATH . 'views/admin/layouts/partials/control_sidebar.blade.php'; ?>
+				<?= view('admin.layouts.partials.footer') ?>
+
+				<?= view('admin.layouts.partials.control_sidebar') ?>
 				</div>
 				</div>
 
@@ -47,6 +43,7 @@
 				<script src="<?= asset('js/numeral.min.js') ?>"></script>
 				<!-- Script-->
 				<script src="<?= asset('js/script.js') ?>"></script>
+				<script src="<?= asset('js/admin.js') ?>"></script>
 				<script src="<?= asset('js/custom-select2.js') ?>"></script>
 				<script src="<?= asset('js/custom-datetimepicker.js') ?>"></script>
 
@@ -55,6 +52,7 @@
 
 				<!-- Sweet Alert -->
 				<script src="<?= asset('js/sweetalert2/sweetalert2.all.min.js') ?>"></script>
+				<script src="<?= asset('js/Leaflet.fullscreen.min.js') ?>"></script>
 				<script type="text/javascript">
 					numeral.register("locale", "id-id", {
 						delimiters: {
@@ -62,11 +60,11 @@
 							decimal: ","
 						},
 						abbreviations: {
-								thousand: 'k',
-								million: 'm',
-								billion: 'b',
-								trillion: 't'
-							},
+							thousand: 'k',
+							million: 'm',
+							billion: 'b',
+							trillion: 't'
+						},
 						currency: {
 							symbol: "Rp." //The currency for UAE is called the Dirham
 						}
@@ -74,6 +72,16 @@
 					numeral.locale('id-id');
 					numeral.defaultFormat('0,0.00');
 					console.log(numeral.locale())
+
+					// pengaturan peta
+					var pengaturan_peta = {
+						maxZoom: <?= setting('max_zoom_peta') ?>,
+						minZoom: <?= setting('min_zoom_peta') ?>,
+						fullscreenControl: {
+							position: 'topright' // Menentukan posisi tombol fullscreen
+						}
+					};
+
 				</script>
 
 				<!-- Token Field -->
@@ -85,7 +93,7 @@
 					<script src="<?= asset('js/demo.js') ?>"></script>
 				<?php endif ?>
 
-				<?php if (! setting('inspect_element')): ?>
+				<?php if (! setting('inspect_element')) : ?>
 					<script src="<?= asset('js/disabled.min.js') ?>"></script>
 				<?php endif ?>
 
@@ -115,13 +123,13 @@
 							notify_msg = 'Data berhasil disimpan';
 						} else if (success == -1) {
 							notify = 'error';
-							notify_msg = 'Data gagal disimpan ' + message;
+							notify_msg = 'Data gagal disimpan. <br>' + message;
 						} else if (success == -2) {
 							notify = 'error';
-							notify_msg = 'Data gagal disimpan, nama id sudah ada!';
+							notify_msg = 'Data gagal disimpan. <br>Nama id sudah ada!';
 						} else if (success == -3) {
 							notify = 'error';
-							notify_msg = 'Data gagal disimpan, nama id sudah ada!';
+							notify_msg = 'Data gagal disimpan. <br>Nama id sudah ada!';
 						} else if (success == 4) {
 							notify = 'success';
 							notify_msg = 'Data berhasil dihapus';
@@ -134,6 +142,9 @@
 						} else if (success == 6) {
 							notify = 'success';
 							notify_msg = 'Silahkan Cek Pesan di Email Anda';
+						} else if (success == -99) {
+							notify = 'error';
+							notify_msg = message;
 						} else {
 							notify = success;
 							notify_msg = message;
@@ -148,6 +159,79 @@
 						$('.sidebar-toggle').on('click', function() {
 							localStorage.setItem('sidebar', $("#sidebar_collapse").hasClass('sidebar-collapse'));
 						});
+
+						//Format Tabel
+						$("#tabel1").DataTable();
+						$("#tabel2").DataTable({
+							paging: false,
+							lengthChange: false,
+							searching: false,
+							ordering: false,
+							info: false,
+							autoWidth: false,
+							scrollX: true,
+						});
+						$("#tabel3").DataTable({
+							paging: true,
+							lengthChange: true,
+							searching: true,
+							ordering: true,
+							info: true,
+							autoWidth: false,
+							scrollX: true,
+						});
+
+						// formatting datatable Program Bantuan
+						$("#table-program").DataTable({
+							paging: false,
+							info: false,
+							searching: false,
+							columnDefs: [{
+									targets: [0, 1, 3, 4, 5, 6, 7],
+									orderable: false,
+								},
+								{
+									targets: [4],
+									className: "text-center",
+								},
+								{
+									targets: [7],
+									render: function(data, type, full, meta) {
+										if (data == 0) {
+											return "Tidak Aktif";
+										}
+										return "Aktif";
+									},
+								},
+							],
+						});
+
+						// Penggunaan datatable di inventaris
+						if (!$.fn.DataTable.isDataTable("#tabel4")) {
+							var t = $("#tabel4").DataTable({
+								responsive: true,
+								processing: true,
+								autoWidth: false,
+								lengthMenu: [
+									[10, 25, 50, 100, -1],
+									[10, 25, 50, 100, "Semua"]
+								],
+								pageLength: 10,
+								language: {
+									url: "<?= asset('bootstrap/js/dataTables.indonesian.lang') ?>",
+								},
+							});
+							t.on("order.dt search.dt", function() {
+								t.column(0, {
+										search: "applied",
+										order: "applied"
+									})
+									.nodes()
+									.each(function(cell, i) {
+										cell.innerHTML = i + 1;
+									});
+							}).draw();
+						}
 					});
 				</script>
 				<script type="text/javascript">
@@ -158,6 +242,35 @@
 				</script>
 				<?php session_error_clear(); ?>
 
+				<?php if (isset($perbaharui_langganan) && ! config_item('demo_mode')) : ?>
+					<!-- cek status langganan -->
+					<script type="text/javascript">
+						var controller = '<?= $this->controller ?>';
+						$.ajax({
+								url: `<?= config_item('server_layanan') ?>/api/v1/pelanggan/pemesanan`,
+								headers: {
+									"Authorization": `Bearer <?= setting('layanan_opendesa_token') ?>`,
+									"X-Requested-With": `XMLHttpRequest`,
+								},
+								type: 'Post',
+							})
+							.done(function(response) {
+								let data = {
+									body: response
+								}
+								$.ajax({
+									url: `${SITE_URL}pelanggan/pemesanan`,
+									type: 'Post',
+									dataType: 'json',
+									data: data,
+								}).done(function() {
+									if (controller == 'pelanggan') {
+										location.reload();
+									}
+								});
+							})
+					</script>
+				<?php endif ?>
 				</body>
 
 				</html>

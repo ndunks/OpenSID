@@ -75,7 +75,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	<section class="content-header">
 		<h1>Data Penduduk</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid'); ?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda'); ?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li class="active">Data Penduduk</li>
 		</ol>
 	</section>
@@ -97,17 +97,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 								</ul>
 							</div>
 						<?php endif; ?>
-						<?php if (can('h')): ?>
+						<?php if (can('h') && ! data_lengkap()): ?>
 							<a href="#confirm-delete" title="Hapus Data Terpilih" onclick="deleteAllBox('mainform', '<?= site_url("penduduk/delete_all/{$p}/{$o}"); ?>')" class="btn btn-social btn-flat btn-danger btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block hapus-terpilih"><i class='fa fa-trash-o'></i> Hapus Data Terpilih</a>
 						<?php endif; ?>
 						<div class="btn-group-vertical">
 							<a class="btn btn-social btn-flat btn-info btn-sm" data-toggle="dropdown"><i class='fa fa-arrow-circle-down'></i> Pilih Aksi Lainnya</a>
 							<ul class="dropdown-menu" role="menu">
 								<li>
-									<a href="<?= site_url("penduduk/ajax_cetak/{$o}/cetak"); ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Cetak Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Cetak Data"><i class="fa fa-print"></i> Cetak</a>
+									<a id="cetak_id" href="<?= site_url("penduduk/ajax_cetak/{$p}/{$o}/cetak"); ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Cetak Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Cetak Data"><i class="fa fa-print"></i> Cetak</a>
 								</li>
 								<li>
-									<a href="<?= site_url("penduduk/ajax_cetak/{$o}/unduh"); ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Unduh Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Unduh Data"><i class="fa fa-download"></i> Unduh</a>
+									<a id="unduh_id" href="<?= site_url("penduduk/ajax_cetak/{$p}/{$o}/unduh"); ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Unduh Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Unduh Data"><i class="fa fa-download"></i> Unduh</a>
 								</li>
 								<li>
 									<a href="<?= site_url('penduduk/ajax_adv_search'); ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Pencarian Spesifik" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Pencarian Spesifik"><i class="fa fa-search"></i> Pencarian Spesifik</a>
@@ -121,24 +121,26 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 								<li>
 									<a href="<?= site_url("{$this->controller}/nik_sementara"); ?>" class="btn btn-social btn-flat btn-block btn-sm" title="NIK Sementara"><i class="fa fa-search"></i> NIK Sementara</a>
 								</li>
-								<li>
-									<a href="<?= site_url('penduduk_log/clear'); ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Log Data Penduduk"><i class="fa fa-book"></i> Log Penduduk</a>
-								</li>
 							</ul>
 						</div>
 						<div class="btn-group-vertical">
 							<a class="btn btn-social btn-flat bg-navy btn-sm" data-toggle="dropdown"><i class='fa fa-arrow-circle-down'></i> Impor / Ekspor</a>
 							<ul class="dropdown-menu" role="menu">
-								<?php if (! config_item('demo_mode') && $this->session->grup == 1): ?>
+								<?php if (! config_item('demo_mode') && auth()->id_grup == $akses && ! data_lengkap()): ?>
 									<li>
-										<a href="<?= route('penduduk.impor') ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Impor Penduduk"><i class="fa fa-upload"></i> Impor Penduduk</a>
+										<a href="<?= ci_route('penduduk.impor') ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Impor Penduduk"><i class="fa fa-upload"></i> Impor Penduduk</a>
 									</li>
-									<li>
-										<a href="<?= route('penduduk.impor_bip') ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Impor BIP"><i class="fa fa-upload"></i> Impor BIP</a>
-									</li>
+									<?php if (! setting('multi_desa')): ?>
+										<li>
+											<a href="<?= ci_route('penduduk.impor_bip') ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Impor BIP"><i class="fa fa-upload"></i> Impor BIP</a>
+										</li>
+									<?php endif ?>
 								<?php endif ?>
 								<li>
-									<a href="<?= route('penduduk.ekspor') ?>" target="_blank" class="btn btn-social btn-flat btn-block btn-sm" title="Ekspor Penduduk"><i class="fa fa-download"></i> Ekspor Penduduk</a>
+									<a href="<?= ci_route('penduduk.ekspor') ?>" target="_blank" class="btn btn-social btn-flat btn-block btn-sm" title="Ekspor Penduduk"><i class="fa fa-download"></i> Ekspor Penduduk</a>
+								</li>
+								<li>
+									<a href="<?= ci_route('penduduk.ekspor.1') ?>" target="_blank" class="btn btn-social btn-flat btn-block btn-sm" title="Ekspor Penduduk Berupa Isian Lengkap (Huruf)"><i class="fa fa-download"></i> Ekspor Penduduk Huruf</a>
 								</li>
 							</ul>
 						</div>
@@ -213,7 +215,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 										<tbody>
 											<?php if ($main): ?>
 												<?php foreach ($main as $key => $data): ?>
-													<tr <?= jecho(get_nik($data['nik']), '0', 'class="danger"') ?>>
+													<tr <?= valid_nik_nokk($data['nik']) ?>>
 														<td class="padat"><input type="checkbox" name="id_cb[]" value="<?= $data['id']; ?>" /></td>
 														<td class="padat"><?= ($key + $paging->offset + 1); ?></td>
 														<td class="aksi">
@@ -236,9 +238,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 																			<li>
 																				<a href="<?= site_url("penduduk/ajax_penduduk_maps/{$p}/{$o}/{$data['id']}/0"); ?>" class="btn btn-social btn-flat btn-block btn-sm"><i class='fa fa-map-marker'></i> Lihat Lokasi Tempat Tinggal</a>
 																			</li>
-																			<li>
-																				<a href="<?= site_url("penduduk/edit_status_dasar/{$p}/{$o}/{$data['id']}"); ?>" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Ubah Status Dasar" class="btn btn-social btn-flat btn-block btn-sm"><i class='fa fa-sign-out'></i> Ubah Status Dasar</a>
-																			</li>
+																			<?php if (data_lengkap()) : ?>
+																				<li>
+																					<a href="<?= site_url("penduduk/edit_status_dasar/{$p}/{$o}/{$data['id']}"); ?>" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Ubah Status Dasar" class="btn btn-social btn-flat btn-block btn-sm"><i class='fa fa-sign-out'></i> Ubah Status Dasar</a>
+																				</li>
+																			<?php endif; ?>
 																		<?php endif; ?>
 																		<li>
 																			<a href="<?= site_url("penduduk/dokumen/{$data['id']}"); ?>" class="btn btn-social btn-flat btn-block btn-sm"><i class="fa fa-upload"></i> Upload Dokumen Penduduk</a>
@@ -246,7 +250,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 																		<li>
 																			<a href="<?= site_url("penduduk/cetak_biodata/{$data['id']}"); ?>" target="_blank" class="btn btn-social btn-flat btn-block btn-sm"><i class="fa fa-print"></i> Cetak Biodata Penduduk</a>
 																		</li>
-																		<?php if (can('h')): ?>
+																		<?php if (can('h') && ! data_lengkap()): ?>
 																			<li>
 																				<a href="#" data-href="<?= site_url("penduduk/delete/{$p}/{$o}/{$data['id']}"); ?>" class="btn btn-social btn-flat btn-block btn-sm" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash-o"></i> Hapus</a>
 																			</li>
@@ -257,7 +261,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 														</td>
 														<td class="padat">
 															<a href="<?= site_url("penduduk/ambil_foto?foto={$data['foto']}&sex={$data['id_sex']}"); ?>" class="progressive replace penduduk_kecil">
-																<img class="preview " loading="lazy" src="<?= base_url('assets/images/img-loader.gif') ?>" alt="Foto Penduduk"/>
+																<img class="preview " loading="lazy" src="<?= asset('images/img-loader.gif') ?>" alt="Foto Penduduk"/>
 															</a>
 
 														</td>
@@ -284,11 +288,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 														<td><?= tgl_indo($data['created_at']); ?></td>
 													</tr>
 												<?php endforeach; ?>
-											<?php else: ?>
-												<tr>
-													<td class="text-center" colspan="20">Data Tidak Tersedia</td>
-												</tr>
-											<?php endif; ?>
+											<?php else: tidak_ada_data(21); endif; ?>
 										</tbody>
 									</table>
 								</div>
@@ -303,3 +303,14 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 </div>
 <?php $this->load->view('global/confirm_delete'); ?>
 <?php $this->load->view('global/konfirmasi'); ?>
+
+<script>
+	$("input[type=checkbox]").change(function () {
+		var id = $('input[name="id_cb[]"]:checked').map(function () {
+			return this.value;
+		}).get().join(',');
+
+		$("#cetak_id").attr("href", `<?= site_url("penduduk/ajax_cetak/{$p}/{$o}/cetak") ?>?id_cb=${id}`);
+		$("#unduh_id").attr("href", `<?= site_url("penduduk/ajax_cetak/{$p}/{$o}/unduh") ?>?id_cb=${id}`);
+	})
+</script>

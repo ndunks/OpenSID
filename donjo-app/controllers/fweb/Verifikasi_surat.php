@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -45,7 +45,7 @@ class Verifikasi_surat extends Web_Controller
         $this->load->model(['keluar_model', 'url_shortener_model', 'stat_shortener_model']);
     }
 
-    public function cek($alias = null)
+    public function cek($alias = null): void
     {
         $cek = $this->url_shortener_model->get_url($alias);
         if (! $cek) {
@@ -57,14 +57,14 @@ class Verifikasi_surat extends Web_Controller
         redirect($cek->url);
     }
 
-    public function encode($id_dokumen = null)
+    public function encode($id_dokumen = null): void
     {
         $id_encoded = $this->url_shortener_model->encode_id($id_dokumen);
 
         redirect('verifikasi-surat/' . $id_encoded);
     }
 
-    public function decode($id_encoded = null)
+    public function decode($id_encoded = null): void
     {
         $id_decoded = $this->url_shortener_model->decode_id($id_encoded);
 

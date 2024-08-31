@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,7 +37,7 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-class Urut_model extends CI_Model
+class Urut_model extends MY_Model
 {
     private $tabel;
     private $kolom_id;
@@ -52,43 +52,51 @@ class Urut_model extends CI_Model
     /**
      * Cari nomor urut terbesar untuk subset data
      *
-     * @param		array		syarat kolom data yang akan diperiksa
+     * @param array		syarat kolom data yang akan diperiksa
      * @param mixed $subset
      *
      * @return int nomor urut maksimum untuk subset
      */
     public function urut_max($subset = ['1' => '1'])
     {
-        return $this->db->select_max('urut')
+        return $this->config_id()
+            ->select_max('urut')
             ->where($subset)
             ->get($this->tabel)
             ->row()->urut;
     }
 
-    private function urut_semua($subset = ['1' => '1'])
+    private function urut_semua($subset = ['1' => '1']): void
     {
-        $urut_duplikat = $this->db->select('urut, COUNT(*) c')
+        $urut_duplikat = $this->config_id()
+            ->select('urut, COUNT(*) c')
             ->where($subset)
             ->group_by('urut')
             ->having('c > 1')
-            ->get($this->tabel)->result_array();
-        $belum_diurut = $this->db
+            ->get($this->tabel)
+            ->result_array();
+
+        $belum_diurut = $this->config_id()
             ->where($subset)
             ->where('urut IS NULL')
             ->limit(1)
-            ->get($this->tabel)->row_array();
+            ->get($this->tabel)
+            ->row_array();
+
         $daftar = [];
         if ($urut_duplikat || $belum_diurut) {
-            $daftar = $this->db->select($this->kolom_id)
+            $daftar = $this->config_id()
+                ->select($this->kolom_id)
                 ->where($subset)
                 ->order_by('urut')
-                ->get($this->tabel)->result_array();
+                ->get($this->tabel)
+                ->result_array();
         }
+        $counter = count($daftar);
 
-        for ($i = 0; $i < count($daftar); $i++) {
-            $this->db->where($this->kolom_id, $daftar[$i][$this->kolom_id]);
+        for ($i = 0; $i < $counter; $i++) {
             $data['urut'] = $i + 1;
-            $this->db->update($this->tabel, $data);
+            $this->config_id()->where($this->kolom_id, $daftar[$i][$this->kolom_id])->update($this->tabel, $data);
         }
     }
 
@@ -102,11 +110,13 @@ class Urut_model extends CI_Model
     public function urut($id, $arah, $subset = ['1' => '1'])
     {
         $this->urut_semua($subset);
-        $unsur1 = $this->db->where($this->kolom_id, $id)
+        $unsur1 = $this->config_id()
+            ->where($this->kolom_id, $id)
             ->get($this->tabel)
             ->row_array();
 
-        $daftar = $this->db->select("{$this->kolom_id}, urut")
+        $daftar = $this->config_id()
+            ->select("{$this->kolom_id}, urut")
             ->where($subset)
             ->order_by('urut')
             ->get($this->tabel)
@@ -117,7 +127,9 @@ class Urut_model extends CI_Model
 
     private function urut_daftar($id, $arah, $daftar, $unsur1)
     {
-        for ($i = 0; $i < count($daftar); $i++) {
+        $counter = count($daftar);
+
+        for ($i = 0; $i < $counter; $i++) {
             if ($daftar[$i][$this->kolom_id] == $id) {
                 break;
             }
@@ -137,10 +149,13 @@ class Urut_model extends CI_Model
         }
 
         // Tukar urutan
-        $this->db->where($this->kolom_id, $unsur2[$this->kolom_id])->
-            update($this->tabel, ['urut' => $unsur1['urut']]);
-        $this->db->where($this->kolom_id, $unsur1[$this->kolom_id])->
-            update($this->tabel, ['urut' => $unsur2['urut']]);
+        $this->config_id()
+            ->where($this->kolom_id, $unsur2[$this->kolom_id])
+            ->update($this->tabel, ['urut' => $unsur1['urut']]);
+
+        $this->config_id()
+            ->where($this->kolom_id, $unsur1[$this->kolom_id])
+            ->update($this->tabel, ['urut' => $unsur2['urut']]);
 
         return (int) $unsur2['urut'];
     }

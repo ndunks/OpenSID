@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,6 +37,7 @@
 
 namespace App\Models;
 
+use App\Casts\Path;
 use App\Traits\Author;
 
 defined('BASEPATH') || exit('No direct script access allowed');
@@ -58,6 +59,7 @@ class Config extends BaseModel
      * @var array
      */
     protected $fillable = [
+        'app_key',
         'nama_desa',
         'kode_desa',
         'kode_pos',
@@ -99,6 +101,24 @@ class Config extends BaseModel
     ];
 
     /**
+     * The hidden with the model.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'app_key',
+    ];
+
+    /**
+     * The casts with the model.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'path' => Path::class,
+    ];
+
+    /**
      * Getter untuk nip kepala desa dari pengurus
      *
      * @return string
@@ -120,7 +140,7 @@ class Config extends BaseModel
 
     public function pamong()
     {
-        return Pamong::kepalaDesa()->first();
+        return Pamong::select('pamong_nip', 'pamong_nama')->kepalaDesa()->first();
     }
 
     /**
@@ -132,7 +152,7 @@ class Config extends BaseModel
     {
         $logo = LOKASI_LOGO_DESA . $this->attributes['logo'];
 
-        if (empty($this->attributes['logo']) || ! file_exists(FCPATH . $logo)) {
+        if (empty($this->attributes['logo']) || !file_exists(FCPATH . $logo)) {
             return 'assets/files/logo/opensid_logo.png';
         }
 
@@ -148,35 +168,52 @@ class Config extends BaseModel
     {
         $kantor_desa = LOKASI_LOGO_DESA . $this->attributes['kantor_desa'];
 
-        if (empty($this->attributes['kantor_desa']) || ! file_exists(FCPATH . $kantor_desa)) {
+        if (empty($this->attributes['kantor_desa']) || !file_exists(FCPATH . $kantor_desa)) {
             return 'assets/files/logo/opensid_kantor.jpg';
         }
 
         return $this->attributes['kantor_desa'];
     }
 
+    public function scopeAppKey($query)
+    {
+        return $query->where('app_key', get_app_key());
+    }
+
     /**
      * The "booted" method of the model.
-     *
-     * @return void
      */
-    public static function boot()
+    public static function boot(): void
     {
         parent::boot();
-        static::creating(static function ($model) {
+
+        static::creating(static function ($model): void {
             $model->app_key = get_app_key();
         });
 
-        static::updating(static function ($model) {
+        static::updating(static function ($model): void {
+            static::deleteFile($model, 'logo');
+            static::deleteFile($model, 'kantor_desa');
             static::clearCache();
         });
     }
 
     // Hapus cache config dan modul
-    private static function clearCache()
+    public static function clearCache(): void
     {
-        // hapus_cache('identitas_desa');
+        cache()->flush();
+        // cache()->forget('identitas_desa');
         hapus_cache('status_langganan');
         hapus_cache('_cache_modul');
+    }
+
+    public static function deleteFile($model, ?string $file): void
+    {
+        if ($model->isDirty($file)) {
+            $logo = LOKASI_LOGO_DESA . $model->getOriginal($file);
+            if (file_exists($logo)) {
+                unlink($logo);
+            }
+        }
     }
 }

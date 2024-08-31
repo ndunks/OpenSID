@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -42,56 +42,6 @@ class Dpt_model extends Penduduk_model
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('keluarga_model');
-    }
-
-    public function autocomplete()
-    {
-        return $this->autocomplete_str('nama', 'tweb_penduduk');
-    }
-
-    private function cacatx_sql()
-    {
-        $kf = $this->session->cacatx;
-        if (isset($kf)) {
-            $this->db->where("u.cacat_id <> {$kf} AND u.cacat_id is not null and u.cacat_id<>''");
-        }
-    }
-
-    private function menahunx_sql()
-    {
-        $kf = $this->session->menahunx;
-        if (isset($_kf)) {
-            $this->db->where("u.sakit_menahun_id <> {$kf} and u.sakit_menahun_id is not null and u.sakit_menahun_id<>'0'");
-        }
-    }
-
-    protected function umur_max_sql()
-    {
-        $kf = $this->session->umur_max;
-        if (isset($kf)) {
-            $tanggal_pemilihan = $this->tanggal_pemilihan();
-            $this->db->where("(SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(STR_TO_DATE('{$tanggal_pemilihan}','%d-%m-%Y'))-TO_DAYS(`tanggallahir`)), '%Y')+0 FROM tweb_penduduk WHERE id = u.id) <= {$kf}");
-        }
-    }
-
-    protected function umur_min_sql()
-    {
-        $kf = $this->session->umur_min;
-        if (isset($kf)) {
-            $tanggal_pemilihan = $this->tanggal_pemilihan();
-            $this->db->where("(SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(STR_TO_DATE('{$tanggal_pemilihan}','%d-%m-%Y'))-TO_DAYS(`tanggallahir`)), '%Y')+0 FROM tweb_penduduk WHERE id = u.id) >= {$kf}");
-        }
-    }
-
-    protected function umur_sql()
-    {
-        $kf = $this->session->umurx;
-        if (isset($kf)) {
-            if ($kf != BELUM_MENGISI) {
-                $this->db->where("(SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(`tanggallahir`)), '%Y')+0 FROM tweb_penduduk WHERE id = u.id) >= (SELECT dari FROM tweb_penduduk_umur WHERE id={$kf} ) AND (SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(`tanggallahir`)), '%Y')+0 FROM tweb_penduduk WHERE id = u.id) <= (SELECT sampai FROM tweb_penduduk_umur WHERE id={$kf} )");
-            }
-        }
     }
 
     public function tanggal_pemilihan()
@@ -118,40 +68,51 @@ class Dpt_model extends Penduduk_model
      * 4. Umur >= 17 tahun pada tanggal pemilihan ATAU sudah/pernah kawin (status kawin = KAWIN, CERAI HIDUP atau CERAI MATI)
      * 5. Pekerjaan bukan TNI atau POLRI
      */
-    private function syarat_dpt_sql()
+    private function syarat_dpt_sql(): void
     {
         $tanggal_pemilihan = $this->tanggal_pemilihan();
         $this->db
-            ->where('u.status_dasar = 1 AND u.status = 1 AND u.warganegara_id = 1 ')
+            ->where('u.status_dasar = 1 AND u.status = 1 AND u.warganegara_id = 1')
             ->where("(((SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(STR_TO_DATE('{$tanggal_pemilihan}','%d-%m-%Y'))-TO_DAYS(`tanggallahir`)), '%Y')+0 FROM tweb_penduduk WHERE id = u.id) >= 17) OR u.status_kawin IN (2,3,4))")
             ->where("u.pekerjaan_id NOT IN ('6', '7')");
     }
 
-    public function paging($p = 1, $o = 0)
+    private function cacatx_sql(): void
     {
-        $this->list_data_sql();
-        $jml_data = $this->db
-            ->select('COUNT(u.id) AS jml')
-            ->get()->row()->jml;
+        $kf = $this->session->cacatx;
+        if (isset($kf)) {
+            $this->db->where("u.cacat_id <> {$kf} AND u.cacat_id is not null and u.cacat_id<>''");
+        }
+    }
 
-        $this->load->library('paging');
-        $cfg['page']     = $p;
-        $cfg['per_page'] = $_SESSION['per_page'];
-        $cfg['num_rows'] = $jml_data;
-        $this->paging->init($cfg);
-
-        return $this->paging;
+    private function menahunx_sql(): void
+    {
+        $kf = $this->session->menahunx;
+        if (isset($_kf)) {
+            $this->db->where("u.sakit_menahun_id <> {$kf} and u.sakit_menahun_id is not null and u.sakit_menahun_id<>'0'");
+        }
     }
 
     // Digunakan untuk paging dan query utama supaya jumlah data selalu sama
     private function list_data_sql()
     {
-        $this->db
+        $this->config_id('u')
             ->from('tweb_penduduk u')
             ->join('tweb_keluarga d', 'u.id_kk = d.id', 'left')
             ->join('tweb_wil_clusterdesa a', 'd.id_cluster = a.id', 'left')
             ->join('tweb_wil_clusterdesa a2', 'u.id_cluster = a2.id', 'left')
-            ->join('log_penduduk log', 'u.id = log.id_pend', 'left');
+            // Ambil log yg terakhir saja
+            ->join(
+                '
+                (
+                    SELECT    MAX(id) max_id, id_pend
+                    FROM      log_penduduk
+                    GROUP BY  id_pend
+                ) log_max',
+                'log_max.id_pend = u.id',
+                'left'
+            )
+            ->join('log_penduduk log', 'log_max.max_id = log.id', 'left');
 
         $this->syarat_dpt_sql();
         $this->search_sql();
@@ -191,20 +152,10 @@ class Dpt_model extends Penduduk_model
         $this->tag_id_card_sql();
     }
 
-    // $limit = 0 mengambil semua
-    public function list_data($o = 0, $offset = 0, $limit = 0)
+    private function order_by_list($order_by)
     {
-        //Main Query
-        $this->list_data_sql();
-
-        //Paging SQL
-        if ($limit > 0) {
-            $this->db->limit($limit, $offset);
-        }
-        $query_dasar = $this->db->select('u.*')->get_compiled_select();
-
         //Ordering SQL
-        switch ($o) {
+        switch ($order_by) {
             case 1: $this->db->order_by('u.nik');
                 break;
 
@@ -238,26 +189,49 @@ class Dpt_model extends Penduduk_model
 
             default: break;
         }
+    }
 
+    // $limit = 0 mengambil semua
+    public function list_data($o = 0, $page = 1)
+    {
         $tanggal_pemilihan = $this->tanggal_pemilihan();
+
+        //Main Query
+        $this->list_data_sql();
+        $this->db->select("(DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(u.tanggallahir)), '%Y')+0) AS umur");
+        $this->db->select("(DATE_FORMAT(FROM_DAYS(TO_DAYS(STR_TO_DATE('{$tanggal_pemilihan}','%d-%m-%Y'))-TO_DAYS(`tanggallahir`)), '%Y')+0) AS umur_pada_pemilihan");
+        $this->order_by_list($o);
+
+        //Paging SQL
+        if ($page > 0 && $this->session->per_page > 0) {
+            $jumlah_pilahan = $this->db->count_all_results('', false);
+            $paging         = $this->paginasi($page, $jumlah_pilahan);
+            $this->db->limit($paging->per_page, $paging->offset);
+        }
+        $query_dasar = $this->db->select('u.*')->get_compiled_select();
+
         $this->db->distinct()
             ->select('u.id,u.nik,u.tag_id_card,u.tanggallahir,u.tempatlahir,u.status,u.status_dasar,u.id_kk,u.nama,u.nama_ayah,u.nama_ibu,a.dusun,a.rw,a.rt,d.alamat,d.no_kk AS no_kk')
-            ->select("(SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(`tanggallahir`)), '%Y')+0 FROM tweb_penduduk WHERE id = u.id) AS umur")
-            ->select("(SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(STR_TO_DATE('{$tanggal_pemilihan}','%d-%m-%Y'))-TO_DAYS(`tanggallahir`)), '%Y')+0 FROM tweb_penduduk WHERE id = u.id) AS umur_pada_pemilihan")
+            ->select("(DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(u.tanggallahir)), '%Y')+0) AS umur")
+            ->select("(DATE_FORMAT(FROM_DAYS(TO_DAYS(STR_TO_DATE('{$tanggal_pemilihan}','%d-%m-%Y'))-TO_DAYS(`tanggallahir`)), '%Y')+0) AS umur_pada_pemilihan")
             ->select('x.nama AS sex,sd.nama AS pendidikan_sedang,n.nama AS pendidikan,p.nama AS pekerjaan,k.nama AS kawin,g.nama AS agama,m.nama AS gol_darah,hub.nama AS hubungan');
 
-        $this->db->from("({$query_dasar}) as u");
+        $this->db->from("#({$query_dasar}) AS u#");
         $this->lookup_ref_penduduk();
+        $this->order_by_list($o);
+        $sql = str_replace(['(#', '#)'], '', $this->db->get_compiled_select());
 
-        $data = $this->db->get()->result_array();
+        $data = $this->db->query($sql)->result_array();
 
         //Formating Output
-        $j = $offset;
+        $j       = $paging->offset ?? $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             // Ubah alamat penduduk lepas
             if (! $data[$i]['id_kk'] || $data[$i]['id_kk'] == 0) {
-                $penduduk = $this->db->select('p.id_cluster, p.alamat_sekarang, c.dusun, c.rw, c.rt')
+                $penduduk = $this->config_id('p')
+                    ->select('p.id_cluster, p.alamat_sekarang, c.dusun, c.rw, c.rt')
                     ->from('tweb_penduduk p')
                     ->join('tweb_wil_clusterdesa c', 'p.id_cluster = c.id', 'left')
                     ->where('p.id', $data[$i]['id'])
@@ -271,6 +245,10 @@ class Dpt_model extends Penduduk_model
             }
             $data[$i]['no'] = $j + 1;
             $j++;
+        }
+
+        if ($page > 0) {
+            return ['paging' => $paging, 'main' => $data];
         }
 
         return $data;
@@ -296,37 +274,14 @@ class Dpt_model extends Penduduk_model
             ->join('log_penduduk log', 'u.id = log.id_pend', 'left');
     }
 
-    public function adv_search_proses()
-    {
-        unset($_POST['umur1'], $_POST['umur2'], $_POST['dusun'], $_POST['rt'], $_POST['rw']);
-
-        $i = 0;
-
-        while ($i++ < count($_POST)) {
-            $col[$i] = key($_POST);
-            next($_POST);
-        }
-        $i = 0;
-
-        while ($i++ < count($col)) {
-            if ($_POST[$col[$i]] == '') {
-                unset($_POST[$col[$i]]);
-            }
-        }
-
-        $data = $_POST;
-        $this->db->where($data);
-
-        return $this->db->get('tweb_penduduk');
-    }
-
     public function statistik_wilayah()
     {
-        $this->db->select([
-            'dusun', 'rw', "count('*') as jumlah_warga",
-            'SUM(CASE WHEN sex = 1 THEN 1 ELSE 0 END) as jumlah_warga_l',
-            'SUM(CASE WHEN sex = 2 THEN 1 ELSE 0 END) as jumlah_warga_p',
-        ])
+        $this->config_id('u')
+            ->select([
+                'dusun', 'rw', "count('*') as jumlah_warga",
+                'SUM(CASE WHEN sex = 1 THEN 1 ELSE 0 END) as jumlah_warga_l',
+                'SUM(CASE WHEN sex = 2 THEN 1 ELSE 0 END) as jumlah_warga_p',
+            ])
             ->from('tweb_penduduk u')
             ->join('tweb_wil_clusterdesa w', 'u.id_cluster = w.id', 'left');
 
@@ -334,9 +289,11 @@ class Dpt_model extends Penduduk_model
         $this->db->group_by(['dusun', 'rw']);
 
         $data = $this->db->get()->result_array();
+        //Formating Output
+        $counter = count($data);
 
         //Formating Output
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $i + 1;
         }
 
@@ -345,11 +302,12 @@ class Dpt_model extends Penduduk_model
 
     public function statistik_total()
     {
-        $this->db->select([
-            "count('*') as total_warga",
-            'SUM(CASE WHEN sex = 1 THEN 1 ELSE 0 END) as total_warga_l',
-            'SUM(CASE WHEN sex = 2 THEN 1 ELSE 0 END) as total_warga_p',
-        ])
+        $this->config_id('u')
+            ->select([
+                "count('*') as total_warga",
+                'SUM(CASE WHEN sex = 1 THEN 1 ELSE 0 END) as total_warga_l',
+                'SUM(CASE WHEN sex = 2 THEN 1 ELSE 0 END) as total_warga_p',
+            ])
             ->from('tweb_penduduk u');
 
         $this->syarat_dpt_sql();

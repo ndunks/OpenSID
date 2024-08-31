@@ -2,7 +2,7 @@
 	<section class="content-header">
 		<h1>Sertifikat Vaksin Covid 19</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda') ?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li><a href="<?= site_url($this->controller) ?>"><i class="fa fa-medkit"></i> Daftar Penduduk Penerima Vaksin Covid 19</a></li>
 			<li class="active">Sertifikat Vaksin</li>
 		</ol>
@@ -51,7 +51,7 @@
                             } else {
                                 $ket = 'Belum Vaksin';
                             }
-			?>
+            ?>
 						<div class="form-group">
 							<label>Keterangan Vaksin</label>
 							<textarea class="form-control input-sm" rows="5" readonly><?= $ket ?></textarea>

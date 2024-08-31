@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -42,9 +42,9 @@ class MY_Cache extends CI_Cache
     // $lama, waktu simpan dalam detik
     public function pakai_cache($callback, $cache_id, $lama)
     {
-        if (! $data = $this->file->get($cache_id)) {
+        if (! $data = $this->get($cache_id)) {
             $data = $callback();
-            $this->file->save($cache_id, $data, $lama);
+            $this->save($cache_id, $data, $lama);
         }
 
         return $data;
@@ -53,13 +53,17 @@ class MY_Cache extends CI_Cache
     /* 	Untuk cache yg diberi prefix user_id, seperti "{$this->session->user}_cache_modul",
             hapus_cache_untuk_semua('_cache_modul') akan menghapus file cache untuk semua pengguna
     */
-    public function hapus_cache_untuk_semua($cache_id)
+    public function hapus_cache_untuk_semua($cache_id): void
     {
-        foreach ($this->file->cache_info() as $cache) {
+        foreach ($this->cache_info() as $cache) {
             $file = $cache['server_path'];
-            if (substr_compare($file, $cache_id, -strlen($cache_id)) === 0 && file_exists($file)) {
-                unlink($file);
+            if (substr_compare($file, $cache_id, -strlen($cache_id)) !== 0) {
+                continue;
             }
+            if (! file_exists($file)) {
+                continue;
+            }
+            unlink($file);
         }
     }
 }

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -75,6 +75,7 @@ class Web_dokumen_model extends MY_Model
             $this->db->like('dokumen.nama', $isi);
         }
         $this->db->order_by('dokumen.tahun DESC', 'dokumen.kategori ASC', 'dokumen.nama ASC');
+        $this->config_id('dokumen');
 
         return $this->db->from('dokumen_hidup as dokumen')->get()->result_array();
     }
@@ -82,15 +83,16 @@ class Web_dokumen_model extends MY_Model
     // ================= informasi publik ===================
     // https://mbahcoding.com/tutorial/php/codeigniter/codeigniter-simple-server-side-datatable-example.html
 
-    private function get_all_informasi_publik_query()
+    private function get_all_informasi_publik_query(): void
     {
-        $this->db->from($this->table)
+        $this->config_id()
+            ->from($this->table)
             ->where('id_pend', '0')
             ->where('enabled', '1')
             ->where('id_pend', '0');
     }
 
-    private function get_informasi_publik_query()
+    private function get_informasi_publik_query(): void
     {
         $this->get_all_informasi_publik_query();
 
@@ -113,7 +115,7 @@ class Web_dokumen_model extends MY_Model
 
         if (isset($_POST['order'])) { // here order processing
             $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
-        } elseif (isset($this->order)) {
+        } elseif ($this->order !== null) {
             $order = $this->order;
             $this->db->order_by(key($order), $order[key($order)]);
         }
@@ -152,11 +154,12 @@ class Web_dokumen_model extends MY_Model
     {
         $this->db->select('tahun');
         $this->db->group_by('tahun');
+        $this->config_id();
 
         return $this->db->from($this->table)->get()->result_array();
     }
 
-    private function search_sql()
+    private function search_sql(): void
     {
         if ($cari = $this->session->cari) {
             $this->db
@@ -167,14 +170,14 @@ class Web_dokumen_model extends MY_Model
         }
     }
 
-    private function filter_sql()
+    private function filter_sql(): void
     {
         if ($filter = $this->session->filter) {
             $this->db->where('enabled', $filter);
         }
     }
 
-    private function jenis_peraturan_sql($kat)
+    private function jenis_peraturan_sql($kat): void
     {
         // Jenis peraturan ada di kolom attr dalam bentuk json
         if ($kat == 3 && ($jenis = $this->session->jenis_peraturan)) {
@@ -183,7 +186,7 @@ class Web_dokumen_model extends MY_Model
         }
     }
 
-    private function filter_tahun($kat)
+    private function filter_tahun($kat): void
     {
         if ($tahun = $this->session->tahun) {
             switch ($kat) {
@@ -209,10 +212,12 @@ class Web_dokumen_model extends MY_Model
         }
     }
 
-    private function list_data_sql($kat)
+    private function list_data_sql($kat): void
     {
-        $this->db->from('dokumen_hidup')
+        $this->config_id()
+            ->from('dokumen_hidup')
             ->where('id_pend', 0);
+
         // $kat == 1 adalah informasi publik dan mencakup juga jenis dokumen lain termasuk SK Kades dan Perdes
         if ($kat != '1') {
             $this->db->where('kategori', $kat);
@@ -271,9 +276,10 @@ class Web_dokumen_model extends MY_Model
             ->get()
             ->result_array();
 
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no']   = $j + 1;
             $data[$i]['attr'] = json_decode($data[$i]['attr'], true);
             // Ambil keterangan kategori publik
@@ -281,23 +287,12 @@ class Web_dokumen_model extends MY_Model
                 $data[$i]['kategori_info_publik'] = $this->referensi_model->list_ref_flip(KATEGORI_PUBLIK)[$data[$i]['kategori_info_publik']];
             }
 
-            if ($data[$i]['enabled'] == 1) {
-                $data[$i]['aktif'] = 'Ya';
-            } else {
-                $data[$i]['aktif'] = 'Tidak';
-            }
+            $data[$i]['aktif'] = $data[$i]['enabled'] == 1 ? 'Ya' : 'Tidak';
 
             $j++;
         }
 
         return $data;
-    }
-
-    private function semua_mime_type()
-    {
-        $semua_mime_type = array_merge(unserialize(MIME_TYPE_DOKUMEN), unserialize(MIME_TYPE_GAMBAR), unserialize(MIME_TYPE_ARSIP));
-
-        return array_diff($semua_mime_type, ['application/octet-stream']);
     }
 
     private function upload_dokumen()
@@ -328,6 +323,9 @@ class Web_dokumen_model extends MY_Model
         $retval = true;
         $post   = $this->input->post();
         $data   = $this->validasi($post);
+
+        $data['config_id'] = $this->config_id;
+
         if (! empty($post['satuan'])) {
             $data['satuan'] = $result = $this->upload_dokumen();
             if ($result == false) {
@@ -339,7 +337,7 @@ class Web_dokumen_model extends MY_Model
             return false;
         }
 
-        $data['attr']      = json_encode($data['attr']);
+        $data['attr']      = json_encode($data['attr'], JSON_THROW_ON_ERROR);
         $data['dok_warga'] = isset($post['dok_warga']);
         // Dari layanan mandiri gunakan NIK penduduk
         $data['created_by'] = $mandiri ? $this->session->nik : $this->session->user;
@@ -348,10 +346,10 @@ class Web_dokumen_model extends MY_Model
         $retval &= $this->db->insert('dokumen', $data);
         $insert_id = $this->db->insert_id();
 
-        if ($retval) {
+        if ($retval !== 0) {
             $data['id_parent'] = $insert_id;
 
-            foreach ($post['anggota_kk'] as $key => $value) {
+            foreach ($post['anggota_kk'] as $value) {
                 $data['id_pend'] = $value;
                 $retval &= $this->db->insert('dokumen', $data);
             }
@@ -360,7 +358,7 @@ class Web_dokumen_model extends MY_Model
         return $retval;
     }
 
-    private function validasi($post, $id = null)
+    private function validasi($post)
     {
         $data                         = [];
         $data['nama']                 = nomor_surat_keputusan($post['nama']);
@@ -422,23 +420,26 @@ class Web_dokumen_model extends MY_Model
         $retval = true;
 
         $post = $this->input->post();
-        $data = $this->validasi($post, $id);
+        $data = $this->validasi($post);
         // Jangan simpan dok_warga kalau dari Layanan Mandiri
         if (! $mandiri) {
-            ! $data['dok_warga'] = isset($post['dok_warga']);
+            $data['dok_warga'] = isset($post['dok_warga']);
         }
-        $old_file = $this->db->select('satuan')
+        $old_file = $this->config_id()
+            ->select('satuan')
             ->where('id', $id)
-            ->get('dokumen')->row()->satuan;
+            ->get('dokumen')
+            ->row()
+            ->satuan;
         $data['satuan'] = $old_file;
         if (! empty($post['satuan'])) {
             $data['satuan'] = $this->upload_dokumen();
             $retval &= ! (empty($data['satuan']));
-            if (! $retval) {
+            if ($retval === 0) {
                 return $retval;
             }
         }
-        $data['attr']       = json_encode($data['attr']);
+        $data['attr']       = json_encode($data['attr'], JSON_THROW_ON_ERROR);
         $data['updated_at'] = date('Y-m-d H:i:s');
         // Dari layanan mandiri gunakan NIK penduduk
         $data['updated_by'] = $mandiri ? $this->session->nik : $this->session->user;
@@ -448,7 +449,7 @@ class Web_dokumen_model extends MY_Model
         if ($id_pend) {
             $this->db->where('id_pend', $id_pend);
         }
-        $retval &= $this->db->where('id', $id)->update('dokumen', $data);
+        $retval &= $this->config_id()->where('id', $id)->update('dokumen', $data);
 
         $retval &= $this->update_dok_anggota($id, $post, $data);
 
@@ -462,42 +463,39 @@ class Web_dokumen_model extends MY_Model
         $retval = true;
 
         // cek jika dokumen ini juga ada di anggota yang lain
-        $anggota_kk   = $post['anggota_kk'];
-        $anggota_lain = array_column($this->get_dokumen_di_anggota_lain($id), 'id_pend');
+        $anggota_kk   = $post['anggota_kk'] ?? [];
+        $anggota_lain = array_column($this->get_dokumen_di_anggota_lain($id), 'id_pend') ?? [];
 
         // cari intersect anggota
         unset($data['id_pend']);
         $intersect_id_pend = array_intersect($anggota_kk, $anggota_lain);
 
-        foreach ($intersect_id_pend as $key => $value) {
-            $this->db->where('id_pend', $value);
-            $this->db->where('id_parent', $id);
-            $retval &= $this->db->update('dokumen', $data);
+        foreach ($intersect_id_pend as $value) {
+            $retval &= $this->config_id()->where('id_pend', $value)->where('id_parent', $id)->update('dokumen', $data);
         }
 
         // cari diff anggota (jika ada anggota yang diuncheck - delete)
         if (isset($anggota_kk)) {
             $diff_id_pend = array_diff($anggota_lain, $anggota_kk);
 
-            foreach ($diff_id_pend as $key => $value) {
-                $retval &= $this->db->delete('dokumen', ['id_pend' => $value, 'id_parent' => $id]);
+            foreach ($diff_id_pend as $value) {
+                $retval &= $this->config_id()->delete('dokumen', ['id_pend' => $value, 'id_parent' => $id]);
             }  // hard delete
         } else {
-            foreach ($anggota_lain as $key => $value) {
-                $retval &= $this->db->delete('dokumen', ['id_pend' => $value, 'id_parent' => $id]);
+            foreach ($anggota_lain as $value) {
+                $retval &= $this->config_id()->delete('dokumen', ['id_pend' => $value, 'id_parent' => $id]);
             }  // hard delete
         }
 
         // cari diff anggota (jika ada anggota tambahan yang dicheck -> insert)
         $diff_id_pend = array_diff($anggota_kk, $anggota_lain);
-        if (isset($diff_id_pend)) {
-            unset($data['updated_at']);
+        unset($data['updated_at']);
 
-            foreach ($diff_id_pend as $key => $value) {
-                $data['id_pend']   = $value;
-                $data['id_parent'] = $id;
-                $retval &= $this->db->insert('dokumen', $data);	// insert new data
-            }
+        foreach ($diff_id_pend as $value) {
+            $data['id_pend']   = $value;
+            $data['id_parent'] = $id;
+            $data['config_id'] = $this->config_id;
+            $retval &= $this->db->insert('dokumen', $data);	// insert new data
         }
 
         return $retval;
@@ -510,14 +508,18 @@ class Web_dokumen_model extends MY_Model
             $this->session->success = 1;
         }
 
-        $old_dokumen = $this->db->select('satuan')->
-            where('id', $id)->
-            get('dokumen')->row()->satuan;
+        $old_dokumen = $this->config_id()
+            ->select('satuan')
+            ->where('id', $id)
+            ->get('dokumen')
+            ->row()
+            ->satuan;
+
         $data = [
             'updated_at' => date('Y-m-d H:i:s'),
             'deleted'    => 1,
         ];
-        $outp = $this->db->where('id', $id)->update('dokumen', $data);
+        $outp = $this->config_id()->where('id', $id)->update('dokumen', $data);
         if ($outp) {
             unlink(LOKASI_DOKUMEN . $old_dokumen);
         } else {
@@ -529,7 +531,7 @@ class Web_dokumen_model extends MY_Model
 
         // soft delete dokumen anggota lain jika ada
         foreach ($anggota_lain as $item) {
-            $this->db->where('id', $item['id'])->update('dokumen', $data);
+            $this->config_id()->where('id', $item['id'])->update('dokumen', $data);
         }
 
         return $outp;
@@ -537,10 +539,10 @@ class Web_dokumen_model extends MY_Model
 
     public function hard_delete_dokumen_bersama($id_pend)
     {
-        return $this->db->delete('dokumen', ['id_pend' => $id_pend, 'id_parent >' => '0']);
+        return $this->config_id()->delete('dokumen', ['id_pend' => $id_pend, 'id_parent >' => '0']);
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->session->success = 1;
 
@@ -551,10 +553,12 @@ class Web_dokumen_model extends MY_Model
         }
     }
 
-    public function dokumen_lock($id = '', $val = 0)
+    public function dokumen_lock($id = '', $val = 0): void
     {
-        $sql  = 'UPDATE dokumen SET enabled = ? WHERE id = ?';
-        $outp = $this->db->query($sql, [$val, $id]);
+        $outp = $this->config_id()
+            ->set('enabled', $val)
+            ->where('id', $id)
+            ->update('dokumen');
 
         status_sukses($outp); //Tampilkan Pesan
     }
@@ -564,17 +568,25 @@ class Web_dokumen_model extends MY_Model
         if ($id_pend) {
             $this->db->where('id_pend', $id_pend);
         }
-        $data = $this->db->from($this->table)
+        $data = $this->config_id()
+            ->from($this->table)
             ->where('id', $id)
-            ->get()->row_array();
-        $data['attr'] = json_decode($data['attr'], true);
+            ->get()
+            ->row_array();
 
-        return array_filter($data);
+        if ($data) {
+            $data['attr'] = json_decode($data['attr'], true);
+
+            return array_filter($data);
+        }
+
+        return null;
     }
 
     public function get_dokumen_di_anggota_lain($id_dokumen = 0)
     {
-        $data = $this->db->from($this->table)
+        $data = $this->config_id()
+            ->from($this->table)
             ->where('id_parent', $id_dokumen)
             ->get()->result_array();
 
@@ -601,7 +613,8 @@ class Web_dokumen_model extends MY_Model
             $this->db->where('id_pend', $id_pend);
         }
 
-        return $this->db->select('satuan')
+        return $this->config_id()
+            ->select('satuan')
             ->where('id', $id)
             ->where('enabled', 1)
             ->get('dokumen')->row()->satuan;
@@ -612,7 +625,7 @@ class Web_dokumen_model extends MY_Model
         $kategori = $this->list_kategori();
         $kat_nama = $kategori[$kat];
         if (empty($kat_nama)) {
-            $kat_nama = $kategori[0];
+            return $kategori[0];
         }
 
         return $kat_nama;
@@ -625,7 +638,6 @@ class Web_dokumen_model extends MY_Model
 
     public function list_tahun($kat = 1)
     {
-        $list_tahun = [];
         // Data tanggal berbeda menurut kategori dokumen
         // Informasi masing2 kategori dokumen tersimpan dalam format json di kolom attr
         // MySQL baru memiliki fitur query json mulai dari 5.7; jadi di sini dilakukan secara manual
@@ -651,10 +663,12 @@ class Web_dokumen_model extends MY_Model
                 break;
         }
 
-        return $this->db->distinct()
+        return $this->config_id()
+            ->distinct()
             ->from($this->table)
             ->order_by('tahun DESC')
-            ->get()->result_array();
+            ->get()
+            ->result_array();
     }
 
     public function data_cetak($kat = 1, $tahun = '', $jenis_peraturan = '')
@@ -692,11 +706,13 @@ class Web_dokumen_model extends MY_Model
         if ($kat != '1') {
             $this->db->where('kategori', $kat);
         }
-        $data = $this->db->select('*')
+        $data = $this->config_id()
+            ->select('*')
             ->from($this->table)
             ->where('id_pend', '0')
             ->where('enabled', '1')
-            ->get()->result_array();
+            ->get()
+            ->result_array();
 
         foreach ($data as $i => $dok) {
             $data[$i]['no']   = $i + 1;
@@ -708,40 +724,28 @@ class Web_dokumen_model extends MY_Model
 
     public function data_ppid($tgl_dari = null)
     {
-        $kode_desa = $this->db->select('kode_desa')
-            ->limit(1)->get('config')
-            ->row()->kode_desa;
+        $kode_desa = setting('kode_desa');
+
         $lokasi_dokumen = base_url('dokumen_web/unduh_berkas/');
         $this->db->select("id, '{$kode_desa}' as kode_desa, CONCAT('{$lokasi_dokumen}', id) as dokumen, nama, tgl_upload, updated_at, enabled, kategori_info_publik as kategori, tahun");
-        if (empty($tgl_dari)) {
-            $data = $this->ekspor_semua_data();
-        } else {
-            $data = $this->ekspor_perubahan_data($tgl_dari);
-        }
 
-        return $data;
+        return empty($tgl_dari) ? $this->ekspor_semua_data() : $this->ekspor_perubahan_data($tgl_dari);
     }
 
     public function ekspor_informasi_publik($data_ekspor, $tgl_dari = null)
     {
-        $kode_desa = $this->db->select('kode_desa')
-            ->limit(1)->get('config')
-            ->row()->kode_desa;
+        $kode_desa = identitas('kode_desa');
         $this->db->select("id, '{$kode_desa}' as kode_desa, satuan, nama, tgl_upload, updated_at, enabled, kategori_info_publik as kategori, tahun");
-        if ($data_ekspor == 1) {
-            $data = $this->ekspor_semua_data();
-        } else {
-            $data = $this->ekspor_perubahan_data($tgl_dari);
-        }
 
-        return $data;
+        return $data_ekspor == 1 ? $this->ekspor_semua_data() : $this->ekspor_perubahan_data($tgl_dari);
     }
 
     // Semua informasi publik diekspor termasuk yg tidak aktif dan yg telah dihapus
     private function ekspor_semua_data()
     {
         // Hanya data yg 'hidup'
-        return $this->db->select("'0' as aksi")
+        return $this->config_id()
+            ->select("'0' as aksi")
             ->from($this->table)
             ->where('id_pend', '0')
             ->order_by('id')
@@ -768,7 +772,8 @@ class Web_dokumen_model extends MY_Model
 		");
 
         // Termasuk data yg sudah dihapus
-        return $this->db->from('dokumen')
+        return $this->config_id()
+            ->from('dokumen')
             ->where('id_pend', '0')
             ->where("DATE(updated_at) > STR_TO_DATE('{$tgl_dari}', '%d-%m-%Y')")
             ->order_by('id')

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -55,7 +55,7 @@ class Analisis_master_model extends MY_Model
         return $this->autocomplete_str('nama', 'analisis_master');
     }
 
-    private function search_sql()
+    private function search_sql(): void
     {
         if (empty($cari = $this->session->cari)) {
             return;
@@ -65,7 +65,7 @@ class Analisis_master_model extends MY_Model
             ->like('u.nama', $cari);
     }
 
-    private function filter_sql()
+    private function filter_sql(): void
     {
         if (empty($kf = $this->session->filter)) {
             return;
@@ -75,7 +75,7 @@ class Analisis_master_model extends MY_Model
             ->where('u.subjek_tipe', $kf);
     }
 
-    private function state_sql()
+    private function state_sql(): void
     {
         if (empty($kf = $this->session->state)) {
             return;
@@ -88,8 +88,11 @@ class Analisis_master_model extends MY_Model
     public function paging($p = 1, $o = 0)
     {
         $this->list_data_query();
-        $jml_data = $this->db->select('COUNT(u.id) as jml_data')
-            ->get()->row()->jml_data;
+        $jml_data = $this->db
+            ->select('COUNT(u.id) as jml_data')
+            ->get()
+            ->row()
+            ->jml_data;
 
         $this->load->library('paging');
         $cfg['page']     = $p;
@@ -100,9 +103,9 @@ class Analisis_master_model extends MY_Model
         return $this->paging;
     }
 
-    private function list_data_query()
+    private function list_data_query(): void
     {
-        $this->db
+        $this->config_id('u')
             ->from('analisis_master u')
             ->join('analisis_ref_subjek s', 'u.subjek_tipe = s.id', 'left');
         $this->search_sql();
@@ -113,7 +116,8 @@ class Analisis_master_model extends MY_Model
     public function list_data($o = 0, $offset = 0, $limit = 500)
     {
         $desa = ucwords($this->setting->sebutan_desa);
-        $this->db->select('u.*')
+        $this->db
+            ->select('u.*')
             ->select("(case when u.subjek_tipe = 5 then '{$desa}' else s.subjek end) as subjek");
         $this->list_data_query();
 
@@ -144,14 +148,15 @@ class Analisis_master_model extends MY_Model
 
         $data = $this->db->get()->result_array();
 
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $j + 1;
             if ($data[$i]['lock'] == 1) {
-                $data[$i]['lock'] = "<img src='" . base_url() . "assets/images/icon/unlock.png'>";
+                $data[$i]['lock'] = '<img src="' . base_url('assets/images/icon/unlock.png') . '">';
             } else {
-                $data[$i]['lock'] = "<img src='" . base_url() . "assets/images/icon/lock.png'>";
+                $data[$i]['lock'] = '<img src="' . base_url('assets/images/icon/lock.png') . '">';
             }
             $j++;
         }
@@ -161,47 +166,41 @@ class Analisis_master_model extends MY_Model
 
     private function sterilkan_data($post)
     {
-        $data                 = [];
-        $data['nama']         = alfanumerik_spasi($post['nama']);
-        $data['subjek_tipe']  = $post['subjek_tipe'];
-        $data['id_kelompok']  = $post['id_kelompok'] ?: null;
-        $data['lock']         = $post['lock'] ?: null;
-        $data['format_impor'] = $post['format_impor'] ?: null;
-        $data['pembagi']      = bilangan_titik($post['pembagi']);
-        $data['id_child']     = $post['id_child'] ?: null;
-        $data['deskripsi']    = htmlentities($post['deskripsi']);
-
-        return $data;
+        return ['nama' => alfanumerik_spasi($post['nama']), 'subjek_tipe' => $post['subjek_tipe'], 'id_kelompok' => $post['id_kelompok'] ?: null, 'lock' => $post['lock'] ?: null, 'format_impor' => $post['format_impor'] ?: null, 'pembagi' => bilangan_titik($post['pembagi']), 'id_child' => $post['id_child'] ?: null, 'deskripsi' => htmlentities($post['deskripsi'])];
     }
 
-    public function insert()
+    public function insert(): void
     {
-        $data = $this->sterilkan_data($this->input->post());
-        $outp = $this->db->insert('analisis_master', $data);
+        $data              = $this->sterilkan_data($this->input->post());
+        $data['config_id'] = $this->config_id;
+        $outp              = $this->db->insert('analisis_master', $data);
         status_sukses($outp);
     }
 
-    public function update($id = 0)
+    public function update($id = 0): void
     {
         $data = $this->sterilkan_data($this->input->post());
         // Kolom yang tidak boleh diubah untuk analisis sistem
         if ($this->is_analisis_sistem($id)) {
             unset($data['subjek_tipe'], $data['lock'], $data['format_impor']);
         }
-        $this->db->where('id', $id);
-        $outp = $this->db->update('analisis_master', $data);
+        $outp = $this->config_id()->where('id', $id)->update('analisis_master', $data);
         status_sukses($outp);
     }
 
     public function is_analisis_sistem($id)
     {
-        $jenis = $this->db->select('jenis')->where('id', $id)
-            ->get('analisis_master')->row()->jenis;
+        $jenis = $this->config_id()
+            ->select('jenis')
+            ->where('id', $id)
+            ->get('analisis_master')
+            ->row()
+            ->jenis;
 
         return $jenis == 1;
     }
 
-    public function delete($id = '', $semua = false)
+    public function delete($id = '', $semua = false): void
     {
         if ($this->is_analisis_sistem($id)) {
             return;
@@ -212,12 +211,12 @@ class Analisis_master_model extends MY_Model
         }
         $this->sub_delete($id);
 
-        $outp = $this->db->where('id', $id)->delete('analisis_master');
+        $outp = $this->config_id()->where('id', $id)->delete('analisis_master');
 
         status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->session->success = 1;
 
@@ -228,37 +227,33 @@ class Analisis_master_model extends MY_Model
         }
     }
 
-    // TODO: tambahkan relational constraint supaya data analisis terhapus secara otomatis oleh DB
-    private function sub_delete($id = '')
+    // TODO: OpenKAB - tambahkan migrasi relational constraint supaya data analisis terhapus secara otomatis oleh DB
+    private function sub_delete($id = ''): void
     {
-        $sql = 'DELETE FROM analisis_parameter WHERE id_indikator IN(SELECT id FROM analisis_indikator WHERE id_master = ?)';
-        $this->db->query($sql, $id);
+        $this->config_id()
+            ->where("id_indikator IN(SELECT id FROM analisis_indikator WHERE id_master = {$id} AND config_id = {$this->config_id})")
+            ->delete('analisis_parameter');
 
-        $sql = 'DELETE FROM analisis_respon WHERE id_periode IN(SELECT id FROM analisis_periode WHERE id_master = ?)';
-        $this->db->query($sql, $id);
+        $this->db
+            ->where("id_periode IN(SELECT id FROM analisis_periode WHERE id_master = {$id})")
+            ->delete('analisis_respon');
 
-        $sql = 'DELETE FROM analisis_kategori_indikator WHERE id_master = ?';
-        $this->db->query($sql, $id);
+        $this->config_id()->where('id_master', $id)->delete('analisis_kategori_indikator');
 
-        $sql = 'DELETE FROM analisis_klasifikasi WHERE id_master = ?';
-        $this->db->query($sql, $id);
+        $this->config_id()->where('id_master', $id)->delete('analisis_klasifikasi');
 
-        $sql = 'DELETE FROM analisis_respon_hasil WHERE id_master = ?';
-        $this->db->query($sql, $id);
+        $this->config_id()->where('id_master', $id)->delete('analisis_respon_hasil');
 
-        $sql = 'DELETE FROM analisis_partisipasi WHERE id_master = ?';
-        $this->db->query($sql, $id);
+        $this->config_id()->where('id_master', $id)->delete('analisis_partisipasi');
 
-        $sql = 'DELETE FROM analisis_periode WHERE id_master = ?';
-        $this->db->query($sql, $id);
+        $this->config_id()->where('id_master', $id)->delete('analisis_periode');
 
-        $sql = 'DELETE FROM analisis_indikator WHERE id_master = ?';
-        $this->db->query($sql, $id);
+        $this->config_id()->where('id_master', $id)->delete('analisis_indikator');
     }
 
     public function get_analisis_master($id = 0)
     {
-        return $this->db
+        return $this->config_id('u')
             ->select('u.*, s.subjek as subjek_nama')
             ->from('analisis_master u')
             ->join('analisis_ref_subjek s', 'u.subjek_tipe = s.id', 'left')
@@ -277,7 +272,8 @@ class Analisis_master_model extends MY_Model
             ->from('analisis_periode')
             ->where('aktif', 1)
             ->where('id_master', $id)
-            ->get()->row();
+            ->get()
+            ->row();
     }
 
     // id dari periode aktif
@@ -297,17 +293,16 @@ class Analisis_master_model extends MY_Model
 
     public function list_kelompok()
     {
-        $sql   = 'SELECT * FROM kelompok_master';
-        $query = $this->db->query($sql);
-
-        return $query->result_array();
+        return $this->config_id()
+            ->get('kelompok_master')
+            ->result_array();
     }
 
     public function list_analisis_child()
     {
-        $sql   = 'SELECT * FROM analisis_master WHERE subjek_tipe = 1';
-        $query = $this->db->query($sql);
-
-        return $query->result_array();
+        return $this->config_id()
+            ->where('subjek_tipe', 1)
+            ->get('analisis_master')
+            ->result_array();
     }
 }

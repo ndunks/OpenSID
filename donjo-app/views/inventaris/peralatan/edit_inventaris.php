@@ -19,7 +19,7 @@
 											</li>';
                                 }
                             }
-							?>
+                            ?>
 						</ul>
 					</div>
 				</div>
@@ -31,8 +31,8 @@
 	<section class="content-header">
 		<h1>Ubah Data Inventaris Peralatan Dan Mesin</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a></li>
-			<li><a href="<?= site_url() ?>inventaris_peralatan"><i class="fa fa-dashboard"></i>Daftar Inventaris Peralatan Dan Mesin</a></li>
+			<li><a href="<?= site_url('beranda') ?>"><i class="fa fa-home"></i> Beranda</a></li>
+			<li><a href="<?= site_url('inventaris_peralatan') ?>"><i class="fa fa-dashboard"></i>Daftar Inventaris Peralatan Dan Mesin</a></li>
 			<li class="active">Ubah Data</li>
 		</ol>
 	</section>
@@ -45,7 +45,7 @@
 				<div class="col-md-9">
 					<div class="box box-info">
 						<div class="box-header with-border">
-							<a href="<?= site_url() ?>inventaris_peralatan" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-arrow-circle-left"></i> Kembali Ke Daftar Inventaris Peralatan Dan Mesin</a>
+							<a href="<?= site_url('inventaris_peralatan') ?>" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-arrow-circle-left"></i> Kembali Ke Daftar Inventaris Peralatan Dan Mesin</a>
 						</div>
 						<div class="box-body">
 							<div class="row">
@@ -112,31 +112,31 @@
 									<div class="form-group">
 										<label class="col-sm-3 control-label " style="text-align:left;" for="no_pabrik">Nomor Pabrik</label>
 										<div class="col-sm-8">
-											<input maxlength="50" value="<?= (! empty($main->no_pabrik) ? $main->no_pabrik : '-'); ?>" class="form-control input-sm required" name="no_pabrik" id="no_pabrik" type="text" />
+											<input maxlength="50" value="<?= (empty($main->no_pabrik) ? '-' : $main->no_pabrik); ?>" class="form-control input-sm required" name="no_pabrik" id="no_pabrik" type="text" />
 										</div>
 									</div>
 									<div class="form-group">
 										<label class="col-sm-3 control-label " style="text-align:left;" for="no_rangka">Nomor Rangka </label>
 										<div class="col-sm-8">
-											<input maxlength="50" value="<?= (! empty($main->no_rangka) ? $main->no_rangka : '-'); ?>" class="form-control input-sm required" name="no_rangka" id="no_rangka" type="text" />
+											<input maxlength="50" value="<?= (empty($main->no_rangka) ? '-' : $main->no_rangka); ?>" class="form-control input-sm required" name="no_rangka" id="no_rangka" type="text" />
 										</div>
 									</div>
 									<div class="form-group">
 										<label class="col-sm-3 control-label " style="text-align:left;" for="no_mesin">Nomor Mesin</label>
 										<div class="col-sm-8">
-											<input maxlength="50" value="<?= (! empty($main->no_mesin) ? $main->no_mesin : '-'); ?>" class="form-control input-sm required" name="no_mesin" id="no_mesin" type="text" />
+											<input maxlength="50" value="<?= (empty($main->no_mesin) ? '-' : $main->no_mesin); ?>" class="form-control input-sm required" name="no_mesin" id="no_mesin" type="text" />
 										</div>
 									</div>
 									<div class="form-group">
 										<label class="col-sm-3 control-label " style="text-align:left;" for="no_polisi">Nomor Polisi </label>
 										<div class="col-sm-8">
-											<input maxlength="50" value="<?= (! empty($main->no_polisi) ? $main->no_polisi : '-'); ?>" class="form-control input-sm required" name="no_polisi" id="no_polisi" type="text" />
+											<input maxlength="50" value="<?= (empty($main->no_polisi) ? '-' : $main->no_polisi); ?>" class="form-control input-sm required" name="no_polisi" id="no_polisi" type="text" />
 										</div>
 									</div>
 									<div class="form-group">
 										<label class="col-sm-3 control-label " style="text-align:left;" for="bpkb">BPKB</label>
 										<div class="col-sm-8">
-											<input maxlength="50" value="<?= (! empty($main->no_bpkb) ? $main->no_bpkb : '-'); ?>" class="form-control input-sm required" name="no_bpkb" id="no_bpkb" type="text" />
+											<input maxlength="50" value="<?= (empty($main->no_bpkb) ? '-' : $main->no_bpkb); ?>" class="form-control input-sm required" name="no_bpkb" id="no_bpkb" type="text" />
 										</div>
 									</div>
 									<div class="form-group">
@@ -144,21 +144,21 @@
 										<div class="col-sm-4">
 											<select name="penggunaan_barang" id="penggunaan_barang" class="form-control input-sm required" placeholder="Hak Tanah" required>
 												<?php
-							                    $value = '';
-							if (substr($main->kode_barang, -7, 2) == 01) {
-							    $value = 'Pemerintah Desa';
-							} elseif (substr($main->kode_barang, -7, 2) == 02) {
-							    $value = 'Badan Permusyawaratan Daerah';
-							} elseif (substr($main->kode_barang, -7, 2) == 03) {
-							    $value = 'PKK';
-							} elseif (substr($main->kode_barang, -7, 2) == 04) {
-							    $value = 'LKMD';
-							} elseif (substr($main->kode_barang, -7, 2) == 05) {
-							    $value = 'Karang Taruna';
-							} elseif (substr($main->kode_barang, -7, 2) == 07) {
-							    $value = 'RW';
-							}
-							?>
+                                                $value = '';
+                            if (substr($main->kode_barang, -7, 2) == 01) {
+                                $value = 'Pemerintah Desa';
+                            } elseif (substr($main->kode_barang, -7, 2) == 02) {
+                                $value = 'Badan Permusyawaratan Daerah';
+                            } elseif (substr($main->kode_barang, -7, 2) == 03) {
+                                $value = 'PKK';
+                            } elseif (substr($main->kode_barang, -7, 2) == 04) {
+                                $value = 'LKMD';
+                            } elseif (substr($main->kode_barang, -7, 2) == 05) {
+                                $value = 'Karang Taruna';
+                            } elseif (substr($main->kode_barang, -7, 2) == 07) {
+                                $value = 'RW';
+                            }
+                            ?>
 												<option value="<?= substr($main->kode_barang, 14, 2); ?>"><?= $value; ?></option>
 												<option value="01">Pemerintah Desa</option>
 												<option value="02">Badan Permusyawaratan Daerah</option>

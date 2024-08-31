@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,11 +37,11 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-class Keuangan_model extends CI_model
+class Keuangan_model extends MY_Model
 {
     private $zip_file = '';
     private $id_keuangan_master;
-    private $tabel_berdesa = [
+    private array $tabel_berdesa = [
         'keuangan_ref_bank_desa',
         'keuangan_ta_anggaran',
         'keuangan_ta_anggaran_log',
@@ -83,7 +83,7 @@ class Keuangan_model extends CI_model
         'keuangan_ta_triwulan',
         'keuangan_ta_triwulan_rinci',
     ];
-    private $data_siskeudes = [
+    private array $data_siskeudes = [
         'keuangan_ref_bank_desa'        => 'Ref_Bank_Desa.csv',
         'keuangan_ref_bel_operasional'  => 'Ref_Bel_Operasional.csv',
         'keuangan_ref_bidang'           => 'Ref_Bidang.csv',
@@ -146,7 +146,7 @@ class Keuangan_model extends CI_model
     public function __construct()
     {
         parent::__construct();
-        $this->load->library('upload');
+        $this->load->library('MY_Upload', null, 'upload');
         $this->load->helper('donjolib');
         $this->load->helper('pict_helper');
         $this->uploadConfig = [
@@ -176,7 +176,7 @@ class Keuangan_model extends CI_model
     private function get_versi_database()
     {
         $csv_versi = get_csv($this->zip_file, 'Ref_Version.csv');
-        if ($csv_versi) {
+        if ($csv_versi !== []) {
             return $csv_versi[0]['Versi'];
         }
 
@@ -186,14 +186,14 @@ class Keuangan_model extends CI_model
     private function get_tahun_anggaran()
     {
         $csv_anggaran = get_csv($this->zip_file, 'Ta_RAB.csv');
-        if ($csv_anggaran) {
+        if ($csv_anggaran !== []) {
             return $csv_anggaran[0]['Tahun'];
         }
 
         return false;
     }
 
-    private function get_keuangan_master()
+    private function get_keuangan_master(): void
     {
         $this->zip_file = $_FILES['keuangan']['tmp_name'];
         if (! empty($this->id_keuangan_master)) {
@@ -205,12 +205,13 @@ class Keuangan_model extends CI_model
             'tahun_anggaran' => $this->get_tahun_anggaran(),
             'tanggal_impor'  => date('Y-m-d'),
             'aktif'          => 1,
+            'config_id'      => identitas('id'),
         ];
         $this->db->insert('keuangan_master', $data_master);
         $this->id_keuangan_master = $this->db->insert_id();
     }
 
-    public function extract()
+    public function extract(): void
     {
         $_SESSION['success'] = 1;
         $this->get_keuangan_master();
@@ -218,6 +219,10 @@ class Keuangan_model extends CI_model
         foreach ($this->data_siskeudes as $tabel_opensid => $file_siskeudes) {
             $data_tabel_siskeudes = $this->extract_file($file_siskeudes);
             if (! empty($data_tabel_siskeudes)) {
+                foreach ($data_tabel_siskeudes as $key => $value) {
+                    $data_tabel_siskeudes[$key]['config_id'] = identitas('id');
+                }
+
                 if (! $this->db->insert_batch($tabel_opensid, $data_tabel_siskeudes)) {
                     $_SESSION['success'] = -1;
                 }
@@ -225,15 +230,13 @@ class Keuangan_model extends CI_model
         }
     }
 
-    public function extract_update()
+    public function extract_update(): void
     {
         $this->id_keuangan_master = (int) str_replace('"', '', $_POST['id_keuangan_master']);
         $tables                   = array_keys($this->data_siskeudes);
-        $this->db->where('id_keuangan_master', $this->id_keuangan_master);
-        $this->db->delete($tables);
+        $this->config_id()->where('id_keuangan_master', $this->id_keuangan_master)->delete($tables);
         $this->extract();
-        $this->db->where('id', $this->id_keuangan_master)
-            ->update('keuangan_master', ['tanggal_impor' => date('Y-m-d')]);
+        $this->config_id()->where('id', $this->id_keuangan_master)->update('keuangan_master', ['tanggal_impor' => date('Y-m-d')]);
     }
 
     private function cek_file_valid()
@@ -250,16 +253,16 @@ class Keuangan_model extends CI_model
         }
         $this->db->where('versi_database', $this->get_versi_database());
         $this->db->where('tahun_anggaran', $this->get_tahun_anggaran());
-        $result = $this->db->get('keuangan_master')->row();
 
-        return $result;
+        return $this->config_id()->get('keuangan_master')->row();
     }
 
     public function list_data()
     {
-        $data = $this->db->select('*')->order_by('tanggal_impor')->get('keuangan_master')->result_array();
+        $data    = $this->config_id()->order_by('tanggal_impor')->get('keuangan_master')->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no']         = $i + 1;
             $data[$i]['desa_ganda'] = $this->cek_desa($data[$i]['id']);
         }
@@ -269,42 +272,38 @@ class Keuangan_model extends CI_model
 
     public function tahun_anggaran()
     {
-        $data = $this->db->select('*')->get('keuangan_master')->row();
-
-        return $data->tahun_anggaran;
+        return $this->config_id()->get('keuangan_master')->row()->tahun_anggaran;
     }
 
     // Daftar tahun anggaran tersimpan, diurut tahun terkini di atas
     public function list_tahun_anggaran()
     {
-        $data = $this->db->select('tahun_anggaran')
+        $data = $this->config_id()
+            ->select('tahun_anggaran')
             ->order_by('tahun_anggaran DESC')
-            ->get('keuangan_master')->result_array();
+            ->get('keuangan_master')
+            ->result_array();
 
         return array_column($data, 'tahun_anggaran');
     }
 
     public function data_id_keuangan_master()
     {
-        $data = $this->db->select('*')->order_by('tanggal_impor')->get('keuangan_master')->row();
-
-        return $data->id;
+        return $this->config_id()->order_by('tanggal_impor')->get('keuangan_master')->row()->id;
     }
 
     public function data_tahun_keuangan_master()
     {
-        $data = $this->db->select('*')->order_by('tanggal_impor')->get('keuangan_master')->row();
-
-        return $data->tahun_anggaran;
+        return $this->config_id()->order_by('tanggal_impor')->get('keuangan_master')->row()->tahun_anggaran;
     }
 
     public function artikel_statis_keuangan()
     {
         $this->db->select('id, judul');
         $this->db->where([
-            'id_kategori' => 1001,
+            'tipe' => 'keuangan',
         ]);
-        $results = $this->db->get('artikel')->result_array();
+        $results = $this->config_id()->get('artikel')->result_array();
         $link    = [];
 
         foreach ($results as $result) {
@@ -316,12 +315,13 @@ class Keuangan_model extends CI_model
 
     public function delete($id = '')
     {
-        return $this->db->where('id', $id)->delete('keuangan_master');
+        return $this->config_id()->where('id', $id)->delete('keuangan_master');
     }
 
     public function cek_desa($id_master)
     {
-        return $this->db->select('a.Kd_Desa, d.Nama_Desa')
+        return $this->config_id('a')
+            ->select('a.Kd_Desa, d.Nama_Desa')
             ->where('a.id_keuangan_master', $id_master)
             ->distinct()
             ->from('keuangan_ta_rab a')
@@ -331,7 +331,7 @@ class Keuangan_model extends CI_model
     }
 
     // Hapus data yg bukan untuk $desa
-    public function bersihkan_desa($id_master, $desa)
+    public function bersihkan_desa($id_master, $desa): void
     {
         foreach ($this->tabel_berdesa as $tabel) {
             $this->db->where('Kd_Desa <>', $desa)

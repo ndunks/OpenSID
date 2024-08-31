@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -46,25 +46,21 @@ class Job extends CI_Controller
     public function __construct()
     {
         parent::__construct();
+
+        $this->load->database();
+
         $this->load->helper(['number', 'file']);
         $this->load->model(['ekspor_model', 'database_model']);
     }
 
-    public function restore($database = null)
+    public function restore($database = null): void
     {
-        /**
-         * Job hanya bisa digunakan jika :
-         * 1. Diakses lewat CLI dan Config demo true
-         * 2. Diakses lewat CLI dan ENV development
-         *
-         * Selain itu akan menampilkan halaman tidak ditemukan.
-         */
-        if (! is_cli() || (! config_item('demo_mode') && ENVIRONMENT === 'production')) {
+        if (! config_item('demo_mode') && ENVIRONMENT === 'production') {
             show_404();
         }
 
-        delete_files(config_item('log_path'), true);
-        log_message('error', '>_ Mulai');
+        kosongkanFolder(config_item('log_path'));
+        log_message('notice', '>_ Mulai');
 
         // Kecuali folder
         $exclude = [
@@ -89,7 +85,7 @@ class Job extends CI_Controller
             log_message('error', 'Proses Restore Database Gagal');
         }
 
-        log_message('error', '>_ Selesai');
+        log_message('notice', '>_ Selesai');
     }
 
     private function cekDB($filename)
@@ -105,11 +101,8 @@ class Job extends CI_Controller
         return false;
     }
 
-    public function backup_inkremental($lokasi)
+    public function backup_inkremental($lokasi): void
     {
-        if (! is_cli()) {
-            return;
-        }
         /*
         variable status
         0 = sedang dalam prosess
@@ -135,12 +128,8 @@ class Job extends CI_Controller
         }
     }
 
-    public function restore_desa($id)
+    public function restore_desa($id): void
     {
-        if (! is_cli()) {
-            return;
-        }
-
         /*
         variable status
         0 = sedang dalam prosess

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,15 +29,17 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Models\Modul;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
-class Modul_model extends CI_Model
+class Modul_model extends MY_Model
 {
     public function __construct()
     {
@@ -47,14 +49,18 @@ class Modul_model extends CI_Model
 
     public function list_data()
     {
-        $sql = 'SELECT u.* FROM setting_modul u WHERE hidden = 0 AND parent = 0 ';
-        $sql .= $this->search_sql();
-        $sql .= $this->filter_sql();
-        $sql .= ' ORDER BY urut';
-        $query = $this->db->query($sql);
-        $data  = $query->result_array();
+        $this->search_sql();
+        $this->filter_sql();
 
-        for ($i = 0; $i < count($data); $i++) {
+        $data = $this->config_id()
+            ->where('hidden', 0)
+            ->where('parent', 0)
+            ->order_by('urut')
+            ->get('setting_modul')
+            ->result_array();
+        $counter = count($data);
+
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no']       = $i + 1;
             $data[$i]['submodul'] = $this->list_sub_modul($data[$i]['id']);
         }
@@ -69,24 +75,26 @@ class Modul_model extends CI_Model
             return [];
         }
         $aktif = [];
-        $data  = $this->db->where('aktif', 1)->where('parent', 0)
+        $data  = $this->config_id()
+            ->where('aktif', 1)
+            ->where('parent', 0)
             ->order_by('urut')
-            ->get('setting_modul')->result_array();
+            ->get('setting_modul')
+            ->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             if ($this->ada_sub_modul($data[$i]['id'])) {
                 $data[$i]['modul']    = str_replace('[Pemerintah Desa]', ucwords(setting('sebutan_pemerintah_desa')), SebutanDesa($data[$i]['modul']));
                 $data[$i]['submodul'] = $this->list_sub_modul_aktif($data[$i]['id']);
                 // Kelompok submenu yg kosong tidak dimasukkan
-                if (! empty($data[$i]['submodul']) || ! empty($data[$i]['url'])) {
+                if (! empty($data[$i]['submodul']) || ! empty($this->user_model->hak_akses($_SESSION['grup'], $data[$i]['url'], 'b'))) {
                     $aktif[] = $data[$i];
                 }
-            } else {
+            } elseif ($this->user_model->hak_akses($_SESSION['grup'], $data[$i]['url'], 'b')) {
                 // Modul yang tidak boleh diakses tidak dimasukkan
-                if ($this->user_model->hak_akses($_SESSION['grup'], $data[$i]['url'], 'b')) {
-                    $data[$i]['modul'] = str_replace('[Pemerintah Desa]', ucwords(setting('sebutan_pemerintah_desa')), SebutanDesa($data[$i]['modul']));
-                    $aktif[]           = $data[$i];
-                }
+                $data[$i]['modul'] = str_replace('[Pemerintah Desa]', ucwords(setting('sebutan_pemerintah_desa')), SebutanDesa($data[$i]['modul']));
+                $aktif[]           = $data[$i];
             }
         }
 
@@ -95,11 +103,12 @@ class Modul_model extends CI_Model
 
     private function ada_sub_modul($modul_id)
     {
-        $jml = $this->db
+        $jml = $this->config_id()
             ->select("count('id') as jml")
             ->where('parent', $modul_id)
             ->get('setting_modul')
-            ->row()->jml;
+            ->row()
+            ->jml;
 
         return $jml > 0;
     }
@@ -125,24 +134,21 @@ class Modul_model extends CI_Model
     {
         // jangan aktifkan jika demo dan di domain whitelist
         if (config_item('demo_mode') && in_array(get_domain(APP_URL), WEBSITE_DEMO)) {
-            // $this->db->where_not_in('slug', [
-            //     'layanan-pelanggan',
-            //     'pendaftaran-kerjasama',
-            // ]);
-            $this->db->where_not_in('id', [
-                313,
-                331,
+            $this->db->where_not_in('slug', [
+                'layanan-pelanggan',
+                'pendaftaran-kerjasama',
             ]);
         }
 
-        $data = $this->db
+        $data = $this->config_id()
             ->where('parent', $modul_id)
             ->where('hidden <>', 2)
             ->order_by('urut')
             ->get('setting_modul')
             ->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no']    = $i + 1;
             $data[$i]['modul'] = str_replace('[Pemerintah Desa]', ucwords(setting('sebutan_pemerintah_desa')), SebutanDesa($data[$i]['modul']));
         }
@@ -158,7 +164,8 @@ class Modul_model extends CI_Model
             $this->db->where('aktif', $status);
         }
 
-        $data = $this->db->select('modul')
+        $data = $this->config_id()
+            ->select('modul')
             ->where('hidden', 0)
             ->where('parent', 0)
             ->order_by('modul')
@@ -168,61 +175,57 @@ class Modul_model extends CI_Model
         return autocomplete_data_ke_str($data);
     }
 
-    private function search_sql()
+    private function search_sql(): void
     {
-        $cari = $this->session->cari;
-
-        if (isset($cari)) {
-            $kw = $this->db->escape_like_str($cari);
-            $kw = '%' . $kw . '%';
-
-            return " AND (u.modul LIKE '{$kw}' OR u.url LIKE '{$kw}')";
+        if ($cari = $this->session->cari) {
+            $this->db->grup_start()
+                ->like('modul', $cari)
+                ->or_like('url', $cari)
+                ->grup_end();
         }
     }
 
-    private function filter_sql()
+    private function filter_sql(): void
     {
-        $status = $this->session->status;
-
-        if (isset($status)) {
-            return " AND u.aktif = {$status}";
+        if ($status = $this->session->status) {
+            $this->db->where('aktif', $status);
         }
     }
 
     public function get_data($id)
     {
-        return $this->db->get_where('setting_modul', ['id' => $id])->row_array();
+        return $this->config_id()->get_where('setting_modul', ['id' => $id])->row_array();
     }
 
-    public function update($id)
+    public function update($id): void
     {
         $data          = $this->input->post();
         $data['modul'] = strip_tags($data['modul']);
         $data['ikon']  = strip_tags($data['ikon']);
 
-        $outp = $this->db->where('id', $id)->update('setting_modul', $data);
+        $outp = $this->config_id()->where('id', $id)->update('setting_modul', $data);
         $this->lock($id, $data['aktif']);
         $this->cache->hapus_cache_untuk_semua('_cache_modul');
 
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    private function set_aktif_submodul($id, $aktif)
+    private function set_aktif_submodul(int $id, int $aktif)
     {
         $outp = true;
 
-        $submodul      = $this->db->select('id')->where('parent', $id)->get('setting_modul')->result_array();
+        $submodul      = $this->config_id()->select('id')->where('parent', $id)->get('setting_modul')->result_array();
         $list_submodul = array_column($submodul, 'id');
-        if (empty($list_submodul)) {
+        if ($list_submodul === []) {
             return;
         }
 
         foreach ($submodul as $modul) {
-            $sub           = $this->db->select('id')->where('parent', $modul['id'])->get('setting_modul')->result_array();
+            $sub           = $this->config_id()->select('id')->where('parent', $modul['id'])->get('setting_modul')->result_array();
             $list_submodul = array_merge($list_submodul, array_column($sub, 'id'));
         }
         $list_id = implode(',', $list_submodul);
-        $outp    = $outp && $this->db->where('id IN (' . $list_id . ')')->update('setting_modul', ['aktif' => $aktif]);
+        $outp    = $outp && $this->config_id()->where('id IN (' . $list_id . ')')->update('setting_modul', ['aktif' => $aktif]);
         $this->cache->hapus_cache_untuk_semua('_cache_modul');
 
         return $outp;
@@ -245,20 +248,19 @@ class Modul_model extends CI_Model
         1 - web hanya bisa diakses petugas web
         2 - web non-aktif sama sekali
     */
-    public function default_server()
+    public function default_server(): void
     {
         $outp = true;
 
         switch ($this->setting->penggunaan_server) {
             case '1':
             case '5':
-                $outp = $outp && $this->db->update('setting_modul', ['aktif' => 1]);
+                $outp = $outp && $this->config_id()->update('setting_modul', ['aktif' => 1]);
                 // Kalau web tidak diaktifkan sama sekali, non-aktifkan modul Admin Web
                 if ($this->setting->offline_mode == 2) {
                     $modul_web = 13;
-                    $outp      = $outp && $this->db->where('id', $modul_web)
-                        ->update('setting_modul', ['aktif' => 0]);
-                    $outp = $outp && $this->set_aktif_submodul($modul_web, 0);
+                    $outp      = $outp && $this->config_id()->where('id', $modul_web)->update('setting_modul', ['aktif' => 0]);
+                    $outp      = $outp && $this->set_aktif_submodul($modul_web, 0);
                 }
                 break;
 
@@ -267,18 +269,17 @@ class Modul_model extends CI_Model
                 // dilakukan offline di kantor desa. Yaitu, hanya modul Admin Web yang aktif
                 // Kecuali Pengaturan selalu aktif
                 $modul_pengaturan = 11;
-                $outp             = $outp && $this->db->where('id <>', $modul_pengaturan)
+                $outp             = $outp && $this->config_id()->where('id <>', $modul_pengaturan)
                     ->where('parent <>', $modul_pengaturan)
                     ->update('setting_modul', ['aktif' => 0]);
                 $modul_web = 13;
-                $outp      = $outp && $this->db->where('id', $modul_web)
-                    ->update('setting_modul', ['aktif' => 1]);
-                $outp = $outp && $this->set_aktif_submodul($modul_web, 1);
+                $outp      = $outp && $this->config_id()->where('id', $modul_web)->update('setting_modul', ['aktif' => 1]);
+                $outp      = $outp && $this->set_aktif_submodul($modul_web, 1);
                 break;
 
             default:
                 // semua modul aktif
-                $outp = $outp && $this->db->update('setting_modul', ['aktif' => 1]);
+                $outp = $outp && $this->config_id()->update('setting_modul', ['aktif' => 1]);
                 break;
         }
         $this->cache->hapus_cache_untuk_semua('_cache_modul');
@@ -288,13 +289,13 @@ class Modul_model extends CI_Model
 
     public function modul_aktif($controller)
     {
-        $selalu_aktif = ['hom_sid', 'user_setting', 'notif', 'wilayah', 'pengguna', 'tte', 'sign', 'surat_kecamatan'];
-        if (in_array($controller, $selalu_aktif)) {
+        if (in_array($controller, Modul::SELALU_AKTIF)) {
             return true;
         }
 
         // Periksa apakah modulnya aktif atau tidak
-        $aktif = $this->db->select('url')
+        $aktif = $this->config_id()
+            ->select('url')
             ->where('aktif', 1)
             ->get('setting_modul')
             ->result_array();
@@ -311,9 +312,9 @@ class Modul_model extends CI_Model
      * @param $id  id
      * @param $val status : 1 = Unlock, 2 = Lock
      */
-    public function lock($id, $val)
+    public function lock($id, $val): void
     {
-        $outp = $this->db
+        $outp = $this->config_id()
             ->where('id', $id)
             ->or_where('parent', $id)
             ->update('setting_modul', ['aktif' => $val]);
@@ -332,7 +333,7 @@ class Modul_model extends CI_Model
             $list_icon = file_get_contents($file);
             $list_icon = explode('.', $list_icon);
 
-            return array_map(static function ($a) { return explode(':', $a)[0]; }, $list_icon);
+            return array_map(static fn ($a): string => explode(':', $a)[0], $list_icon);
         }
 
         return false;

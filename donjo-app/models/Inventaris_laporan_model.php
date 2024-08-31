@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,7 +37,7 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-class Inventaris_laporan_model extends CI_Model
+class Inventaris_laporan_model extends MY_Model
 {
     protected $table_pamong = 'tweb_desa_pamong';
 
@@ -87,8 +87,10 @@ class Inventaris_laporan_model extends CI_Model
             $this->db->where("{$inventaris[1]}.visible", 1);
             $this->db->where("{$inventaris[1]}.status", 0);
             $this->db->where("{$inventaris[1]}.asal", $inventaris[2]);
-            $hasil                  = $this->db->get($inventaris[1])->row();
-            $result[$inventaris[0]] = ! empty($hasil) ? $hasil : 0;
+            $this->config_id();
+            $hasil = $this->db->get($inventaris[1])->row();
+
+            $result[$inventaris[0]] = empty($hasil) ? 0 : $hasil;
         }
 
         return $result;
@@ -140,8 +142,10 @@ class Inventaris_laporan_model extends CI_Model
             $this->db->where("{$inventaris[1]}.status", 1);
             $this->db->where("{$inventaris[1]}.visible", 1);
             $this->db->where("{$inventaris[1]}.asal", $inventaris[2]);
-            $hasil                  = $this->db->get($inventaris[1])->row();
-            $result[$inventaris[0]] = ! empty($hasil) ? $hasil : 0;
+            $this->config_id();
+            $hasil = $this->db->get($inventaris[1])->row();
+
+            $result[$inventaris[0]] = empty($hasil) ? 0 : $hasil;
         }
 
         return $result;
@@ -200,8 +204,10 @@ class Inventaris_laporan_model extends CI_Model
                 }
             }
             $this->db->where("{$inventaris[1]}.asal", $inventaris[2]);
-            $hasil                  = $this->db->get($inventaris[1])->row();
-            $result[$inventaris[0]] = ! empty($hasil) ? $hasil : 0;
+            $this->config_id();
+            $hasil = $this->db->get($inventaris[1])->row();
+
+            $result[$inventaris[0]] = empty($hasil) ? 0 : $hasil;
         }
 
         return $result;
@@ -260,8 +266,10 @@ class Inventaris_laporan_model extends CI_Model
                 }
             }
             $this->db->where("{$inventaris[1]}.asal", $inventaris[2]);
-            $hasil                  = $this->db->get($inventaris[1])->row();
-            $result[$inventaris[0]] = ! empty($hasil) ? $hasil : 0;
+            $this->config_id();
+            $hasil = $this->db->get($inventaris[1])->row();
+
+            $result[$inventaris[0]] = empty($hasil) ? 0 : $hasil;
         }
 
         return $result;
@@ -290,21 +298,27 @@ class Inventaris_laporan_model extends CI_Model
             ->select('concat(b.asset,b.id_inventaris_asset)')
             ->where('b.status_mutasi', 'Hapus')
             ->where('year(tahun_mutasi) <', $tahun)
-            ->from('rekap_mutasi_inventaris as b')->get_compiled_select();
+            ->where('b.config_id', identitas('id'))
+            ->from('rekap_mutasi_inventaris as b')
+            ->get_compiled_select();
 
         $tgl_thn_n = $this->db
             ->select('MAX(c.tahun_mutasi)')
             ->where('year(c.tahun_mutasi)', $tahun)
             ->where('a.asset = c.asset')
             ->where('a.id_inventaris_asset = c.id_inventaris_asset')
-            ->from('rekap_mutasi_inventaris as c')->get_compiled_select();
+            ->where('c.config_id', identitas('id'))
+            ->from('rekap_mutasi_inventaris as c')
+            ->get_compiled_select();
 
         $tgl_thn_min_n = $this->db
             ->select('MAX(c.tahun_mutasi)')
             ->where('year(c.tahun_mutasi) <', $tahun)
             ->where('a.asset = c.asset')
             ->where('a.id_inventaris_asset = c.id_inventaris_asset')
-            ->from('rekap_mutasi_inventaris as c')->get_compiled_select();
+            ->where('c.config_id', identitas('id'))
+            ->from('rekap_mutasi_inventaris as c')
+            ->get_compiled_select();
 
         // mutasi asset yang tidak rusak saat tahun n-1 data dianggap sebagai data akhir tahun n dan awal tahun
         $this->db
@@ -327,7 +341,7 @@ class Inventaris_laporan_model extends CI_Model
 
         $this->db->where("tahun_mutasi = ({$tgl_thn_n})");
 
-        foreach ($this->db->get('rekap_mutasi_inventaris As a')->result() as $asset) {
+        foreach ($this->db->where('a.config_id', identitas('id'))->get('rekap_mutasi_inventaris As a')->result() as $asset) {
             if ($asset->status_mutasi == null) {
                 $asset->kondisi = 2;
             } elseif ($asset->status_mutasi == 'Hapus') {
@@ -349,6 +363,7 @@ class Inventaris_laporan_model extends CI_Model
         $master_data = $this->db
             ->where("concat(a.asset,a.id) NOT IN ({$sub_q})")
             ->where('a.tahun_pengadaan <=', $tahun)
+            ->where('a.config_id', identitas('id'))
             ->get('master_inventaris AS a');
 
         foreach ($master_data->result() as $asset) {
@@ -453,6 +468,7 @@ class Inventaris_laporan_model extends CI_Model
         return $this->db
             ->select('min(m.tahun_pengadaan) as tahun')
             ->from('master_inventaris m')
+            ->where('m.config_id', identitas('id'))
             ->get()->row()->tahun;
     }
 }

@@ -1,5 +1,6 @@
 @include('admin.layouts.components.asset_validasi')
 @include('admin.layouts.components.asset_datatables')
+@include('admin.layouts.components.jquery_ui')
 
 @extends('admin.layouts.index')
 
@@ -11,7 +12,7 @@
 @endsection
 
 @section('breadcrumb')
-    <li class="breadcrumb-item"><a href="{{ route('surat_master') }}">Daftar Surat</a></li>
+    <li class="breadcrumb-item"><a href="{{ ci_route('surat_master') }}">Daftar Surat</a></li>
     <li class="active">{{ $action }} Pengaturan Surat</li>
 @endsection
 
@@ -19,8 +20,11 @@
     @include('admin.layouts.components.notifikasi')
 
     {!! form_open($formAction, 'id="validasi" enctype="multipart/form-data"') !!}
-    <input type="hidden" id="id_surat" value="{{ $suratMaster->id }}">
+    <input type="hidden" id="id_surat" name="id_surat" value="{{ $suratMaster->id }}">
     <div class="nav-tabs-custom">
+        <div class="container-fluid identitas-surat">
+            <h4>Surat {{ $suratMaster->nama ?? '' }}</h4>
+        </div>
         <ul class="nav nav-tabs" id="tabs">
             <li class="active"><a href="#pengaturan-umum" data-toggle="tab">Umum</a></li>
             <li><a href="#template-surat" data-toggle="tab">Template</a></li>
@@ -30,41 +34,101 @@
 
             @include('admin.pengaturan_surat.umum')
 
-            @if (in_array($suratMaster->jenis, [1, 2]))
-                @include('admin.pengaturan_surat.rtf')
-            @else
-                @include('admin.pengaturan_surat.tinymce')
-            @endif
-
+            @include('admin.pengaturan_surat.tinymce')
             <div class="box-footer">
-                <button type="reset" class="btn btn-social btn-danger btn-sm" onclick="reset_form($(this).val());"><i class="fa fa-times"></i> Batal</button>
-                @if (in_array($suratMaster->jenis, [1, 2]))
-                    <button type="submit" class="btn btn-social btn-info btn-sm pull-right"><i class="fa fa-check"></i>Simpan</button>
-                @else
-                    <button type="submit" name="action" class="btn btn-social btn-info btn-sm pull-right"><i class="fa fa-check"></i>Simpan</button>
-                    <button id="preview" name="action" value="preview" class="btn btn-social btn-info btn-sm pull-right" style="margin: 0 8px"><i class="fa fa-eye"></i>Lihat hasil surat</button>
-                @endif
+                <button type="reset" class="btn btn-social btn-danger btn-sm"><i class="fa fa-times"></i> Batal</button>
+                <button type="submit" name="action" class="btn btn-social btn-info btn-sm pull-right"><i class="fa fa-check"></i>Simpan dan Keluar</button>
+                <a onclick="formAction('validasi', '{{ $simpan_sementara }}')" id="konsep" class="btn btn-social btn-warning btn-sm pull-right" style="margin: 0 8px 0 0;"><i class="fa fa-file-code-o"></i>
+                    Simpan Sementara</a>
+                <button id="preview" name="action" value="preview" class="btn btn-social btn-vk btn-success btn-sm pull-right" style="margin: 0 8px"><i class="fa fa-eye"></i>Tinjau PDF</button>
             </div>
         </div>
     </div>
     </form>
-
-    @include('admin.pengaturan_surat.info')
 @endsection
 
 @push('scripts')
     <script>
+        $('#validasi').submit(function() {
+            tinymce.triggerSave()
+        });
+
         $(document).ready(function() {
             syarat($('input[name=mandiri]:checked').val());
             $('input[name="mandiri"]').change(function() {
                 syarat($(this).val());
             });
 
-            $('#preview').click(function() {
-                $("#validasi").submit(function() {
-                    $("#validasi").attr('target', '_blank');
-                    return true;
+            $('#pengaturan-umum input[name=nama]').keyup(function(e) {
+                $('div.identitas-surat h4').text('Surat ' + $(this).val())
+            })
+
+            $('#preview').click(function(e) {
+                e.preventDefault();
+                tinymce.triggerSave();
+
+                Swal.fire({
+                    title: 'Membuat pratinjau..',
+                    timerProgressBar: true,
+                    didOpen: () => {
+                        Swal.showLoading()
+                    },
+                    allowOutsideClick: () => false
                 });
+
+                $.ajax({
+                    url: `{{ ci_route('surat_master/update', $suratMaster->id) }}`,
+                    type: 'POST',
+                    xhrFields: {
+                        responseType: 'blob'
+                    },
+                    data: $("#validasi").serialize() + "&action=preview",
+                    success: function(response, status, xhr) {
+                        // https://stackoverflow.com/questions/34586671/download-pdf-file-using-jquery-ajax
+                        var filename = "";
+                        var disposition = xhr.getResponseHeader('Content-Disposition');
+
+                        if (disposition) {
+                            var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                            var matches = filenameRegex.exec(disposition);
+                            if (matches !== null && matches[1]) filename = matches[1].replace(
+                                /['"]/g, '');
+                        }
+                        try {
+                            var blob = new Blob([response], {
+                                type: 'application/pdf'
+                            });
+                            if (typeof window.navigator.msSaveBlob !== 'undefined') {
+                                //   IE workaround for "HTML7007: One or more blob URLs were revoked by closing the blob for which they were created. These URLs will no longer resolve as the data backing the URL has been freed."
+                                window.navigator.msSaveBlob(blob, filename);
+                            } else {
+                                var URL = window.URL || window.webkitURL;
+                                var downloadUrl = URL.createObjectURL(blob);
+                                Swal.fire({
+                                    customClass: {
+                                        popup: 'swal-lg'
+                                    },
+                                    title: 'Pratinjau',
+                                    html: `
+                                            <object data="${downloadUrl}" style="width: 100%;min-height: 400px;" type="application/pdf"></object>
+                                        `,
+                                    showCancelButton: true,
+                                    showConfirmButton: false,
+                                    cancelButtonText: 'Tutup',
+                                    allowOutsideClick: () => false
+                                })
+                            }
+                        } catch (ex) {
+                            alert(ex); // This is an error
+                        }
+                    }
+                }).fail(function(response, status, xhr) {
+                    Swal.fire({
+                        title: xhr.statusText,
+                        icon: 'error',
+                        text: response.statusText,
+                    })
+                })
             });
         });
 
@@ -80,28 +144,5 @@
         function syarat(tipe) {
             (tipe == '1' || tipe == null) ? $('#syarat').show(): $('#syarat').hide();
         }
-
-        function reset_form() {
-            var mandiri = "{{ $surat_master['mandiri'] }}";
-
-            $(".tipe").removeClass("active");
-            $("input[name=mandiri").prop("checked", false);
-            if (mandiri) {
-                $("#m1").addClass('active');
-                $("#n1").addClass('active');
-                $("#o1").addClass('active');
-                $("#g1").prop("checked", true);
-                $("#q1").prop("checked", true);
-                $("#bg1").prop("checked", true);
-            } else {
-                $("#m2").addClass('active');
-                $("#n2").addClass('active');
-                $("#o2").addClass('active');
-                $("#g2").prop("checked", true);
-                $("#q2").prop("checked", true);
-                $("#bg2").prop("checked", true);
-            }
-            syarat($('input[name=mandiri]:checked').val());
-        };
     </script>
 @endpush

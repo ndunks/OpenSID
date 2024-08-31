@@ -14,7 +14,7 @@
 	<section class="content-header">
 		<h1><?= $kat_nama?></h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda')?>"><i class="fa fa-home"></i> Beranda</a></li>
       <li class="active"><?= $kat_nama ?></li>
 		</ol>
 	</section>
@@ -31,7 +31,7 @@
             <div class="box-header with-border">
 							<?php if ($this->CI->cek_hak_akses('u')): ?>
 								<a href="<?= site_url("{$this->controller}/form/{$kat}")?>" class="btn btn-social btn-flat btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"  title="Tambah Menu Baru">
-									<i class="fa fa-plus"></i>Tambah <?= $kat_nama?> Baru
+									<i class="fa fa-plus"></i>Tambah
 	            	</a>
 	            <?php endif; ?>
 							<?php if ($this->CI->cek_hak_akses('h')): ?>
@@ -131,7 +131,7 @@
 	                                      <?php endif ?>
 	                                    <?php endif; ?>
 																		    <?php if ($data['tipe'] == 1): ?>
-																				<a href='<?= site_url("dokumen/unduh_berkas/{$data[id]}") ?>' class="btn bg-purple btn-flat btn-sm"  title="Unduh"><i class="fa fa-download"></i></a>
+																				<a href='<?= site_url("dokumen/unduh_berkas/{$data['id']}") ?>' class="btn bg-purple btn-flat btn-sm"  title="Unduh"><i class="fa fa-download"></i></a>
 																			<?php else: ?>
 																				<a href='<?= $data['url'] ?>' class="btn bg-purple btn-flat btn-sm"  title="Unduh" target="_blank"><i class="fa fa-download"></i></a>
 																			<?php endif ?>

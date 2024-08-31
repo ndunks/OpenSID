@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -46,7 +46,7 @@ class Informasi_publik extends Admin_Controller
         $this->load->model('log_ekspor_model');
     }
 
-    public function ekspor()
+    public function ekspor(): void
     {
         $data['form_action']   = site_url('informasi_publik/ekspor_csv');
         $data['log_semua']     = $this->log_ekspor_model->log_terakhir('informasi_publik', 1);
@@ -54,7 +54,7 @@ class Informasi_publik extends Admin_Controller
         $this->load->view('dokumen/dialog_ekspor', $data);
     }
 
-    public function ekspor_csv()
+    public function ekspor_csv(): void
     {
         $filename = 'informasi_publik_' . date('Ymd') . '.csv';
         // Gunakan file temporer

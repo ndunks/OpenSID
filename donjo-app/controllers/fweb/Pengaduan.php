@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -45,10 +45,10 @@ class Pengaduan extends Web_Controller
     {
         parent::__construct();
         $this->load->model('pengaduan_model');
-        $this->load->library('upload');
+        $this->load->library('MY_Upload', null, 'upload');
     }
 
-    public function index($p = 1)
+    public function index($p = 1): void
     {
         if (! $this->web_menu_model->menu_aktif('pengaduan')) {
             show_404();
@@ -78,7 +78,7 @@ class Pengaduan extends Web_Controller
         $this->load->view($this->template, $data);
     }
 
-    public function kirim()
+    public function kirim(): void
     {
         $this->load->library('Telegram/telegram');
         $post = $this->input->post();
@@ -98,6 +98,7 @@ class Pengaduan extends Web_Controller
         } else {
             // Cek pengaduan dengan ip_address yang pada hari yang sama
             $cek = PengaduanModel::where('ip_address', '=', $this->input->ip_address())
+                ->whereNull('id_pengaduan')
                 ->whereDate('created_at', date('Y-m-d'))
                 ->exists();
 
@@ -106,30 +107,28 @@ class Pengaduan extends Web_Controller
                     'status' => 'error',
                     'pesan'  => 'Pengaduan gagal dikirim. Anda hanya dapat mengirimkan satu pengaduan dalam satu hari.',
                 ];
-            } else {
-                if ($this->pengaduan_model->insert()) {
-                    if (! empty($this->setting->telegram_token) && cek_koneksi_internet()) {
-                        try {
-                            $this->telegram->sendMessage([
-                                'text'       => 'Halo! Ada pengaduan baru dari warga, mohon untuk segera ditindak lanjuti. Terima kasih.',
-                                'parse_mode' => 'Markdown',
-                                'chat_id'    => $this->setting->telegram_user_id,
-                            ]);
-                        } catch (Exception $e) {
-                            log_message('error', $e->getMessage());
-                        }
+            } elseif ($this->pengaduan_model->insert()) {
+                if (setting('telegram_notifikasi') && cek_koneksi_internet()) {
+                    try {
+                        $this->telegram->sendMessage([
+                            'text'       => 'Halo! Ada pengaduan baru dari warga, mohon untuk segera ditindak lanjuti. Terima kasih.',
+                            'parse_mode' => 'Markdown',
+                            'chat_id'    => $this->setting->telegram_user_id,
+                        ]);
+                    } catch (Exception $e) {
+                        log_message('error', $e->getMessage());
                     }
-                    $notif = [
-                        'status' => 'success',
-                        'pesan'  => 'Pengaduan berhasil dikirim.',
-                    ];
-                } else {
-                    $notif = [
-                        'status' => 'error',
-                        'pesan'  => 'Pengaduan gagal dikirim.',
-                        'data'   => $post,
-                    ];
                 }
+                $notif = [
+                    'status' => 'success',
+                    'pesan'  => 'Pengaduan berhasil dikirim.',
+                ];
+            } else {
+                $notif = [
+                    'status' => 'error',
+                    'pesan'  => 'Pengaduan gagal dikirim.',
+                    'data'   => $post,
+                ];
             }
         }
 

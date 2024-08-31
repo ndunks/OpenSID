@@ -1,7 +1,7 @@
 <?php $this->load->view('print/headjs.php'); ?>
 	<body>
 		<div id="container">
-			<link href="<?= base_url()?>assets/css/report.css" rel="stylesheet" type="text/css">
+			<link href="<?= asset('css/report.css') ?>" rel="stylesheet" type="text/css">
 			<!-- Print Body -->
 			<div id="body">
 				<div align="center">
@@ -109,7 +109,7 @@
 					<tr>
 						<td width="25%" align="center">KEPALA RUMAH TANGGA</td>
 						<td width="50%"></td>
-						<td align="center" width="150">KEPALA DESA <?= strtoupper($desa['nama_desa']) ?></td>
+						<td align="center" width="150"><?= strtoupper(setting('sebutan_kepala_desa') . ' ' . $desa['nama_desa']) ?></td>
 					</tr>
 					<tr><td>&nbsp;</td></tr>
 					<tr><td>&nbsp;</td></tr>

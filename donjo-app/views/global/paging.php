@@ -50,7 +50,13 @@ defined('BASEPATH') || exit('No direct script access allowed');
 				Tampilkan
 				<select class="form-control input-sm" name="per_page" onchange="$('#paging').submit()">
 					<?php foreach ($set_page as $set): ?>
-						<option value="<?= $set; ?>" <?= selected($per_page = $per_page ?: $paging->per_page, $set); ?>><?= $set; ?></option>
+						<?php if (is_array($set)) : ?>
+							<?php [$number, $string] = $set ?>
+							<option value="<?= $number; ?>" <?= $this->session->per_page == 0 ? 'selected' : '' ?>><?= $string; ?></option>
+							<?php continue ?>
+						<?php else: ?>
+							<option value="<?= $set; ?>" <?= selected($per_page = $per_page ?: $paging->per_page, $set); ?>><?= $set; ?></option>
+						<?php endif ?>
 					<?php endforeach; ?>
 				</select>
 				Dari <strong><?= $paging->num_rows; ?></strong> Total Data
@@ -61,7 +67,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 		<ul class="pagination">
 			<?php if ($paging->start_link): ?>
 				<li <?= jecho($paging->page, 1, "class='disabled'"); ?>><a href="<?= site_url("{$this->controller}/{$func}/1/{$o}");
-			    jecho($paging->page . '!', 1, '#'); ?>" aria-label="First"><span aria-hidden="true">Awal</span></a></li>
+                jecho($paging->page . '!', 1, '#'); ?>" aria-label="First"><span aria-hidden="true">Awal</span></a></li>
 			<?php endif; ?>
 			<?php if ($paging->prev): ?>
 				<li><a href="<?= site_url("{$this->controller}/{$func}/{$paging->prev}/{$o}"); ?>" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a></li>
@@ -74,7 +80,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 			<?php endif; ?>
 			<?php if ($paging->end): ?>
 				<li <?= jecho($paging->page . '!', $paging->end, "class='disabled'"); ?>><a href="<?=site_url("{$this->controller}/{$func}/{$paging->end}/{$o}");
-			    jecho($paging->page, $paging->end_link, '#'); ?>" aria-label="Last"><span aria-hidden="true">Akhir</span></a></li>
+                jecho($paging->page, $paging->end_link, '#'); ?>" aria-label="Last"><span aria-hidden="true">Akhir</span></a></li>
 			<?php endif; ?>
 		</ul>
 	</div>

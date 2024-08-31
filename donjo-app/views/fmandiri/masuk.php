@@ -198,6 +198,10 @@
 			</div>
 		</div>
 	</div>
+
+	<?php $this->load->view('global/konfirmasi_cookie', ['cookie_name' => 'pengunjung']); ?>
+	<?php $this->load->view('global/aktifkan_cookie'); ?>
+
 	<!-- jQuery 3 -->
 	<script src="<?= asset('bootstrap/js/jquery.min.js') ?>"></script>
 	<!-- Bootstrap 3.3.7 -->
@@ -278,7 +282,7 @@
 		});
 
 		function start_countdown() {
-			var times = eval(<?= json_encode($this->session->mandiri_timeout) ?>) - eval(<?= json_encode(time()) ?>);
+			var times = eval(<?= json_encode($this->session->mandiri_timeout, JSON_THROW_ON_ERROR) ?>) - eval(<?= json_encode(time(), JSON_THROW_ON_ERROR) ?>);
 			var menit = Math.floor(times / 60);
 			var detik = times % 60;
 

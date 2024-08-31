@@ -79,6 +79,9 @@ $(document).ready(function()
 	}
 	$('.select2-ikon').select2(
 	{
+	placeholder: function() {
+		$(this).data('placeholder');
+	},
     templateResult: format_ikon,
     templateSelection: format_ikon,
     escapeMarkup: function(m) { return m; }
@@ -106,4 +109,149 @@ $(document).ready(function()
 		$('.select2-ikon').trigger('change');
 	});
 
+	// suplemen terdata
+	$('#terdata').select2({
+		ajax: {
+			url: SITE_URL + 'suplemen/apipenduduksuplemen',
+			dataType: 'json',
+			data: function(params) {
+				return {
+					q: params.term || '',
+					page: params.page || 1,
+					suplemen: $(this).data('suplemen'),
+					sasaran: $(this).data('sasaran'),
+				};
+			},
+			cache: true
+		},
+		placeholder: function() {
+			$(this).data('placeholder');
+		},
+		minimumInputLength: 0,
+		allowClear: true,
+		escapeMarkup: function(markup) {
+			return markup;
+		},
+	});
+
+	// anggota kelompok
+	$('#kelompok_penduduk').select2({
+		ajax: {
+			url: SITE_URL + 'kelompok/apipendudukkelompok',
+			dataType: 'json',
+			data: function(params) {
+				return {
+					q: params.term || '',
+					page: params.page || 1,
+					tipe: $(this).data('tipe'),
+					kelompok: $(this).data('kelompok'),
+				};
+			},
+			cache: true
+		},
+		placeholder: function() {
+			$(this).data('placeholder');
+		},
+		minimumInputLength: 0,
+		allowClear: true,
+		escapeMarkup: function(markup) {
+			return markup;
+		},
+	});
+
+	// peserta bantuan
+	$('#nik_bantuan').select2({
+		ajax: {
+			url: SITE_URL + 'program_bantuan/apipendudukbantuan',
+			dataType: 'json',
+			data: function(params) {
+				return {
+					q: params.term || '',
+					page: params.page || 1,
+					bantuan: $(this).data('bantuan'),
+					sasaran: $(this).data('sasaran'),
+				};
+			},
+			cache: true
+		},
+		placeholder: function() {
+			$(this).data('placeholder');
+		},
+		minimumInputLength: 0,
+		allowClear: true,
+		escapeMarkup: function(markup) {
+			return markup;
+		},
+	});
+
+	// Covid Pemudik
+	$('#covid_pemudik').select2({
+		ajax: {
+			url: SITE_URL + 'covid19/apipendudukpemudik',
+			dataType: 'json',
+			data: function(params) {
+				return {
+					q: params.term || '',
+					page: params.page || 1,
+				};
+			},
+			cache: true
+		},
+		placeholder: function() {
+			$(this).data('placeholder');
+		},
+		minimumInputLength: 0,
+		allowClear: true,
+		escapeMarkup: function(markup) {
+			return markup;
+		},
+	});
+
+	// Vaksin Penerima
+	$('#vaksin_penerima').select2({
+		ajax: {
+			url: SITE_URL + 'vaksin_covid/apipendudukvaksin',
+			dataType: 'json',
+			data: function(params) {
+				return {
+					q: params.term || '',
+					page: params.page || 1,
+				};
+			},
+			cache: true
+		},
+		placeholder: function() {
+			$(this).data('placeholder');
+		},
+		minimumInputLength: 0,
+		allowClear: true,
+		escapeMarkup: function(markup) {
+			return markup;
+		},
+	});
+	
+	// Select2 infinite scroll
+	$('.select2-infinite').select2({
+		ajax: {
+			url: function () {
+				return SITE_URL + $(this).data('url');
+			},
+			dataType: 'json',
+			data: function(params) {
+				return {
+					q: params.term || '',
+					page: params.page || 1,
+				};
+			},
+			cache: true
+		},
+		placeholder: function() {
+			$(this).data('placeholder');
+		},
+		minimumInputLength: 0,
+		allowClear: true,
+		escapeMarkup: function(markup) {
+			return markup;
+		},
+	});
 });

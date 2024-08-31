@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -41,7 +41,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Teks_berjalan_model extends MY_Model
 {
-    private $urut_model;
+    private Urut_Model $urut_model;
 
     public function __construct()
     {
@@ -67,27 +67,28 @@ class Teks_berjalan_model extends MY_Model
         $this->sql();
 
         if ($tipe) {
-            $this->db->where('tipe', $tipe);
+            $this->db->where('t.tipe', $tipe);
         }
 
         if ($web === true) {
-            $this->db->where('status', 1);
+            $this->db->where('t.status', 1);
         }
 
-        $data = $this->db->get()->result_array();
+        $data    = $this->db->get()->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no']        = $i + 1;
-            $data[$i]['tautan']    = menu_slug('artikel/' . $data[$i]['tautan']);
+            $data[$i]['tautan']    = $data[$i]['tautan'] ? menu_slug('artikel/' . $data[$i]['tautan']) : '';
             $data[$i]['tampilkan'] = SistemEnum::valueOf($data[$i]['tipe']);
         }
 
         return $data;
     }
 
-    private function sql()
+    private function sql(): void
     {
-        $this->db
+        $this->config_id('t')
             ->select('t.*, a.judul, a.tgl_upload')
             ->from('teks_berjalan t')
             ->join('artikel a', 't.tautan = a.id', 'left')
@@ -109,12 +110,12 @@ class Teks_berjalan_model extends MY_Model
      * @param $id  id
      * @param $val status : 1 = Unlock, 2 = Lock
      */
-    public function lock($id, $val)
+    public function lock($id, $val): void
     {
-        $this->db->where('id', $id)->update('teks_berjalan', ['status' => $val]);
+        $this->config_id()->where('id', $id)->update('teks_berjalan', ['status' => $val]);
     }
 
-    public function insert()
+    public function insert(): void
     {
         $this->session->success   = 1;
         $this->session->error_msg = '';
@@ -140,7 +141,7 @@ class Teks_berjalan_model extends MY_Model
         return $data;
     }
 
-    public function update($id = 0)
+    public function update($id = 0): void
     {
         $this->session->success   = 1;
         $this->session->error_msg = '';
@@ -150,23 +151,23 @@ class Teks_berjalan_model extends MY_Model
         $data['updated_by'] = $this->session->user;
         $data['updated_at'] = date('Y-m-d H:i:s');
 
-        $outp = $this->db->where('id', $id)->update('teks_berjalan', $data);
+        $outp = $this->config_id()->where('id', $id)->update('teks_berjalan', $data);
 
         status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
     }
 
-    public function delete($id = '', $semua = false)
+    public function delete($id = '', $semua = false): void
     {
         if (! $semua) {
             $this->session->success = 1;
         }
 
-        $outp = $this->db->where('id', $id)->delete('teks_berjalan');
+        $outp = $this->config_id()->where('id', $id)->delete('teks_berjalan');
 
         status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->session->success = 1;
 

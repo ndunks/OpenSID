@@ -3,7 +3,7 @@
 		<h1>Pendataan Penerima Vaksin Covid-19</h1>
 		<ol class="breadcrumb">
 			<li>
-				<a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a>
+				<a href="<?= site_url('beranda') ?>"><i class="fa fa-home"></i> Beranda</a>
 			</li>
 			<li class="active">Data Penerima Vaksin</li>
 		</ol>
@@ -68,6 +68,7 @@
 									</div>
 								</div>
 							</form>
+							<?php $this->load->view('global/paging'); ?>
 						</div>
 					</div>
 				</div>

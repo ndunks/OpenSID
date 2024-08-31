@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,140 +39,110 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Analisis_periode_model extends MY_Model
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function autocomplete()
     {
         return $this->autocomplete_str('nama', 'analisis_periode');
     }
 
-    private function search_sql()
+    private function search_sql(): void
     {
-        if (isset($_SESSION['cari'])) {
-            $cari       = $_SESSION['cari'];
-            $kw         = $this->db->escape_like_str($cari);
-            $kw         = '%' . $kw . '%';
-            $search_sql = " AND (u.nama LIKE '{$kw}' OR u.nama LIKE '{$kw}')";
-
-            return $search_sql;
+        if ($cari = $this->session->cari) {
+            $this->db->like('u.nama', $cari);
         }
     }
 
-    private function master_sql()
+    private function master_sql(): void
     {
-        if (isset($_SESSION['analisis_master'])) {
-            $kf         = $_SESSION['analisis_master'];
-            $filter_sql = " AND u.id_master = {$kf}";
-
-            return $filter_sql;
+        if ($analisis_master = $this->session->analisis_master) {
+            $this->db->where('u.id_master', $analisis_master);
         }
     }
 
-    private function state_sql()
+    private function state_sql(): void
     {
-        if (isset($_SESSION['state'])) {
-            $kf         = $_SESSION['state'];
-            $filter_sql = " AND u.id_state = {$kf}";
+        if ($state = $this->session->state) {
+            $this->db->where('u.id_state', $state);
+        }
+    }
 
-            return $filter_sql;
+    private function order_sql($order = ''): void
+    {
+        switch ($order) {
+            case 1:
+
+            case 3: $this->db->order_by('u.id');
+                break;
+
+            case 2:
+
+            case 4: $this->db->order_by('u.id', 'desc');
+                break;
+
+            case 5: $this->db->order_by('g.id');
+                break;
+
+            case 6: $this->db->order_by('g.id', 'desc');
+                break;
+
+            default: $this->db->order_by('u.id');
         }
     }
 
     public function paging($p = 1, $o = 0)
     {
-        $sql = 'SELECT COUNT(id) AS id FROM analisis_periode u WHERE 1';
-        $sql .= $this->search_sql();
-        $sql .= $this->master_sql();
-        $sql .= $this->state_sql();
-        $query    = $this->db->query($sql);
-        $row      = $query->row_array();
-        $jml_data = $row['id'];
+        $this->list_data_query();
+        $jml_data = $this->db
+            ->get()
+            ->num_rows();
 
-        $this->load->library('paging');
-        $cfg['page']     = $p;
-        $cfg['per_page'] = $_SESSION['per_page'];
-        $cfg['num_rows'] = $jml_data;
-        $this->paging->init($cfg);
-
-        return $this->paging;
+        return $this->paginasi($p, $jml_data);
     }
 
     public function list_data($o = 0, $offset = 0, $limit = 500)
     {
-        switch ($o) {
-            case 1: $order_sql = ' ORDER BY u.id';
-                break;
+        $this->db->select('u.*, s.nama as status');
+        $this->list_data_query();
+        $this->order_sql($o);
 
-            case 2: $order_sql = ' ORDER BY u.id DESC';
-                break;
+        $data = $this->db->get()->result_array();
 
-            case 3: $order_sql = ' ORDER BY u.id';
-                break;
+        $j       = $offset;
+        $counter = count($data);
 
-            case 4: $order_sql = ' ORDER BY u.id DESC';
-                break;
-
-            case 5: $order_sql = ' ORDER BY g.id';
-                break;
-
-            case 6: $order_sql = ' ORDER BY g.id DESC';
-                break;
-
-            default:$order_sql = ' ORDER BY u.id';
-        }
-
-        $paging_sql = ' LIMIT ' . $offset . ',' . $limit;
-
-        $sql = 'SELECT u.*,s.nama AS status FROM analisis_periode u LEFT JOIN analisis_ref_state s ON u.id_state = s.id WHERE 1 ';
-
-        $sql .= $this->search_sql();
-        $sql .= $this->master_sql();
-        $sql .= $this->state_sql();
-        $sql .= $order_sql;
-        $sql .= $paging_sql;
-
-        $query = $this->db->query($sql);
-        $data  = $query->result_array();
-
-        $j = $offset;
-
-        for ($i = 0; $i < count($data); $i++) {
-            $data[$i]['no'] = $j + 1;
-            if ($data[$i]['aktif'] == 1) {
-                $data[$i]['aktif'] = "<img src='" . base_url() . "assets/images/icon/tick.png'>";
-            } else {
-                $data[$i]['aktif'] = '';
-            }
+        for ($i = 0; $i < $counter; $i++) {
+            $data[$i]['no']    = $j + 1;
+            $data[$i]['aktif'] = $data[$i]['aktif'] == 1 ? '<img src="' . base_url('assets/images/icon/tick.png') . '">' : '';
             $j++;
         }
 
         return $data;
     }
 
-    private function validasi_data($post)
+    private function list_data_query(): void
     {
-        $data                      = [];
-        $data['nama']              = nomor_surat_keputusan($post['nama']);
-        $data['id_state']          = $post['id_state'] ?: null;
-        $data['tahun_pelaksanaan'] = bilangan($post['tahun_pelaksanaan']);
-        $data['keterangan']        = htmlentities($post['keterangan']);
-        $data['aktif']             = $post['aktif'] ?: null;
-
-        return $data;
+        $this->config_id('u')
+            ->from('analisis_periode u')
+            ->join('analisis_ref_state s', 'u.id_state = s.id', 'left');
+        $this->search_sql();
+        $this->master_sql();
+        $this->state_sql();
     }
 
-    public function insert()
+    private function validasi_data($post)
+    {
+        return ['nama' => nomor_surat_keputusan($post['nama']), 'id_state' => $post['id_state'] ?: null, 'tahun_pelaksanaan' => bilangan($post['tahun_pelaksanaan']), 'keterangan' => htmlentities($post['keterangan']), 'aktif' => $post['aktif'] ?: null];
+    }
+
+    public function insert(): void
     {
         $data              = $this->validasi_data($this->input->post());
+        $data['config_id'] = $this->config_id;
         $data['duplikasi'] = $this->input->post('duplikasi');
         $dp                = $data['duplikasi'];
         unset($data['duplikasi']);
 
         if ($dp == 1) {
-            $dpd  = $this->db->select('id')->where('id_master', $this->session->analisis_master)->order_by('id', 'desc')->get('analisis_periode')->row_array();
+            $dpd  = $this->config_id()->select('id')->where('id_master', $this->session->analisis_master)->order_by('id', 'desc')->get('analisis_periode')->row_array();
             $sblm = $dpd['id'];
         }
 
@@ -180,19 +150,20 @@ class Analisis_periode_model extends MY_Model
         $data['id_master'] = $this->session->analisis_master;
         if ($data['aktif'] == 1) {
             $akt['aktif'] = 2;
-            $this->db->where('id_master', $this->session->analisis_master);
-            $this->db->update('analisis_periode', $akt);
+            $this->config_id()->where('id_master', $this->session->analisis_master)->update('analisis_periode', $akt);
         }
         $outp = $this->db->insert('analisis_periode', $data);
 
         if ($dp == 1) {
-            $dpd  = $this->db->select('id')->where('id_master', $this->session->analisis_master)->order_by('id', 'desc')->get('analisis_periode')->row_array();
+            $dpd  = $this->config_id()->select('id')->where('id_master', $this->session->analisis_master)->order_by('id', 'desc')->get('analisis_periode')->row_array();
             $skrg = $dpd['id'];
 
             $data = $this->db->select(['id_subjek', 'id_indikator', 'id_parameter'])->where('id_periode', $sblm)->get('analisis_respon')->result_array();
 
             if ($data) {
-                for ($i = 0; $i < count($data); $i++) {
+                $counter = count($data);
+
+                for ($i = 0; $i < $counter; $i++) {
                     $data[$i]['id_periode'] = $skrg;
                 }
                 $outp = $this->db->insert_batch('analisis_respon', $data);
@@ -204,7 +175,7 @@ class Analisis_periode_model extends MY_Model
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function update($id = 0)
+    public function update($id = 0): void
     {
         $data = $this->validasi_data($this->input->post());
         $akt  = [];
@@ -212,28 +183,26 @@ class Analisis_periode_model extends MY_Model
         $data['id_master'] = $this->session->analisis_master;
         if ($data['aktif'] == 1) {
             $akt['aktif'] = 2;
-            $this->db->where('id_master', $this->session->analisis_master);
-            $this->db->update('analisis_periode', $akt);
+            $this->config_id()->where('id_master', $this->session->analisis_master)->update('analisis_periode', $akt);
         }
         $data['id_master'] = $this->session->analisis_master;
-        $this->db->where('id', $id);
-        $outp = $this->db->update('analisis_periode', $data);
+        $outp              = $this->config_id()->where('id', $id)->update('analisis_periode', $data);
 
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function delete($id = '', $semua = false)
+    public function delete($id = '', $semua = false): void
     {
         if (! $semua) {
             $this->session->success = 1;
         }
 
-        $outp = $this->db->where('id', $id)->delete('analisis_periode');
+        $outp = $this->config_id()->where('id', $id)->delete('analisis_periode');
 
         status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->session->success = 1;
 
@@ -246,26 +215,26 @@ class Analisis_periode_model extends MY_Model
 
     public function get_analisis_periode($id = 0)
     {
-        $sql   = 'SELECT * FROM analisis_periode WHERE id = ?';
-        $query = $this->db->query($sql, $id);
-
-        return $query->row_array();
+        return $this->config_id()
+            ->where('id', $id)
+            ->get('analisis_periode')
+            ->row_array();
     }
 
     public function list_state()
     {
-        $sql   = 'SELECT * FROM analisis_ref_state';
-        $query = $this->db->query($sql);
-
-        return $query->result_array();
+        return $this->db
+            ->get('analisis_ref_state')
+            ->result_array();
     }
 
     public function get_id_periode_aktif($id = 0)
     {
-        $data = $this->db->where([
-            'aktif'     => 1,
-            'id_master' => $id,
-        ])
+        $data = $this->config_id()
+            ->where([
+                'aktif'     => 1,
+                'id_master' => $id,
+            ])
             ->get('analisis_periode')
             ->row_array();
 

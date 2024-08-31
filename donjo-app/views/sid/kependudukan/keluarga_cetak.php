@@ -4,7 +4,7 @@
 		<title>Data Keluarga</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<link rel="shortcut icon" href="<?= favico_desa() ?>"/>
-		<link href="<?= base_url()?>assets/css/report.css" rel="stylesheet" type="text/css">
+		<link href="<?= asset('css/report.css') ?>" rel="stylesheet" type="text/css">
 		<!-- TODO: Pindahkan ke external css -->
 		<style>
 			.textx
@@ -31,7 +31,7 @@
 				<table class="border thick">
 					<thead>
 						<tr class="border thick">
-							<th>No</th>
+							<th class="padat">No</th>
 							<th width="150" >Nomor KK</th>
 							<th width="200">Kepala Keluarga</th>
 							<th width="200">NIK</th>

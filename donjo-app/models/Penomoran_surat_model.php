@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,17 +37,12 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-class Penomoran_surat_model extends CI_Model
+class Penomoran_surat_model extends MY_Model
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     /**
      * Cari surat dengan nomor terakhir sesuai setting aplikasi
      *
-     * @param		string 	nama tabel surat
+     * @param string 	nama tabel surat
      * @param mixed      $type
      * @param mixed|null $url
      *
@@ -55,8 +50,7 @@ class Penomoran_surat_model extends CI_Model
      */
     public function get_surat_terakhir($type, $url = null)
     {
-        $thn                 = date('Y');
-        $setting || $setting = $this->setting->penomoran_surat;
+        $setting = $this->setting->penomoran_surat;
 
         if ($setting == 3) {
             $last_sl = $this->get_surat_terakhir_type('log_surat', null, 1);
@@ -88,7 +82,8 @@ class Penomoran_surat_model extends CI_Model
                     if ($type == 'log_surat') {
                         $this->db->where('deleted_at');
                     }
-                    $this->db->from("{$type}")
+                    $this->config_id()
+                        ->from("{$type}")
                         ->where('YEAR(tanggal)', $thn)
                         ->where('status', 1)
                         ->order_by('CAST(no_surat as unsigned) DESC')
@@ -97,7 +92,7 @@ class Penomoran_surat_model extends CI_Model
                     if ($type == 'log_surat') {
                         $this->db->where('deleted_at');
                     }
-                    $this->db
+                    $this->config_id('l')
                         ->select('*, f.nama, l.id id_surat')
                         ->from("{$type} l")
                         ->join('tweb_surat_format f', 'f.id=l.id_format_surat', 'RIGHT')
@@ -111,14 +106,16 @@ class Penomoran_surat_model extends CI_Model
                 break;
 
             case 'surat_masuk':
-                $this->db->from("{$type}")
+                $this->config_id()
+                    ->from("{$type}")
                     ->where('YEAR(tanggal_surat)', $thn)
                     ->order_by('CAST(nomor_urut as unsigned) DESC')
                     ->limit(1);
                 break;
 
             case 'surat_keluar':
-                $this->db->from("{$type}")
+                $this->config_id()
+                    ->from("{$type}")
                     ->where('YEAR(tanggal_surat)', $thn)
                     ->order_by('CAST(nomor_urut as unsigned) DESC')
                     ->limit(1);
@@ -136,9 +133,9 @@ class Penomoran_surat_model extends CI_Model
     /**
      * Periksa apakah nomor surat sudah digunakan sesuai setting aplikasi
      *
-     * @param		string 		nama tabel surat
-     * @param		int 	nomor urut atau nomor surat
-     * @param		string 		url surat untuk layanan surat
+     * @param string 		nama tabel surat
+     * @param int 	nomor urut atau nomor surat
+     * @param string 		url surat untuk layanan surat
      * @param mixed      $type
      * @param mixed      $nomor_surat
      * @param mixed|null $url
@@ -151,29 +148,31 @@ class Penomoran_surat_model extends CI_Model
         $setting = $this->setting->penomoran_surat;
         if ($setting == 3) {
             // Nomor urut gabungan surat layanan, surat masuk dan surat keluar
-            $sql   = [];
-            $sql[] = '(' . $this->db->from('log_surat')
+            $sql = [];
+
+            $sql[] = '(' . $this->config_id()
+                ->from('log_surat')
                 ->select('no_surat as nomor_urut')
                 ->where('YEAR(tanggal)', $thn)
                 ->where('deleted_at')
                 ->where('no_surat', $nomor_surat)
-                ->get_compiled_select()
-                                . ')';
-            $sql[] = '(' . $this->db->from('surat_masuk')
+                ->get_compiled_select() . ')';
+
+            $sql[] = '(' . $this->config_id()
+                ->from('surat_masuk')
                 ->select('nomor_urut')
                 ->where('YEAR(tanggal_surat)', $thn)
                 ->where('nomor_urut', $nomor_surat)
-                ->get_compiled_select()
-                                . ')';
-            $sql[] = '(' . $this->db->from('surat_keluar')
+                ->get_compiled_select() . ')';
+
+            $sql[] = '(' . $this->config_id()
+                ->from('surat_keluar')
                 ->select('nomor_urut')
                 ->where('YEAR(tanggal_surat)', $thn)
                 ->where('nomor_urut', $nomor_surat)
-                ->get_compiled_select()
-                                . ')';
-            $sql = implode('
-			UNION
-			', $sql);
+                ->get_compiled_select() . ')';
+
+            $sql       = implode('UNION', $sql);
             $jml_surat = $this->db->query($sql)->num_rows();
 
             return $jml_surat > 0;
@@ -188,14 +187,16 @@ class Penomoran_surat_model extends CI_Model
                     if ($type == 'log_surat') {
                         $this->db->where('deleted_at');
                     }
-                    $this->db->from("{$type}")
+                    $this->config_id()
+                        ->from("{$type}")
                         ->where('YEAR(tanggal)', $thn)
                         ->where('no_surat', $nomor_surat);
                 } else {
                     if ($type == 'log_surat') {
                         $this->db->where('deleted_at');
                     }
-                    $this->db->from("{$type} l")
+                    $this->config_id('l')
+                        ->from("{$type} l")
                         ->join('tweb_surat_format f', 'f.id=l.id_format_surat', 'RIGHT')
                         ->select('*, f.nama, l.id id_surat')
                         ->where('url_surat', $url)
@@ -205,13 +206,15 @@ class Penomoran_surat_model extends CI_Model
                 break;
 
             case 'surat_masuk':
-                $this->db->from("{$type}")
+                $this->config_id()
+                    ->from("{$type}")
                     ->where('YEAR(tanggal_surat)', $thn)
                     ->where('nomor_urut', $nomor_surat);
                 break;
 
             case 'surat_keluar':
-                $this->db->from("{$type}")
+                $this->config_id()
+                    ->from("{$type}")
                     ->where('YEAR(tanggal_surat)', $thn)
                     ->where('nomor_urut', $nomor_surat);
         }
@@ -231,7 +234,7 @@ class Penomoran_surat_model extends CI_Model
             '[kode_surat]'   => $data['surat']['kode_surat'],
             '[tahun]'        => $thn,
             '[bulan_romawi]' => bulan_romawi((int) $bln),
-            '[kode_desa]'    => $data['config']['kode_desa'],
+            '[kode_desa]'    => identitas()->kode_desa,
         ];
 
         return str_replace(array_keys($array_replace), array_values($array_replace), $setting);

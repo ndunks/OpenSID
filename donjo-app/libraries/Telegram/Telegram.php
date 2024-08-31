@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -55,17 +55,19 @@ class Telegram
     /**
      * @var HttpClient HTTP Client
      */
-    protected $http;
+    protected HttpClient $http;
 
     /**
      * @var string|null Telegram Bot API Token.
      */
-    protected $token;
+    protected string $token;
+
+    private $active;
 
     /**
      * @var string Telegram Bot API Base URI
      */
-    protected $apiBaseUri = 'https://api.telegram.org';
+    protected string $apiBaseUri = 'https://api.telegram.org';
 
     /**
      * @param string|null     $token
@@ -76,8 +78,9 @@ class Telegram
     {
         $this->ci = get_instance();
 
-        $this->token = $this->ci->setting->telegram_token;
-        $this->http  = new HttpClient();
+        $this->token  = $this->ci->setting->telegram_token ?? '';
+        $this->active = $this->ci->setting->telegram_notifikasi;
+        $this->http   = new HttpClient();
     }
 
     /**
@@ -161,7 +164,11 @@ class Telegram
      */
     public function sendMessage(array $params): ?ResponseInterface
     {
-        return $this->sendRequest('sendMessage', $params);
+        if (isset($params['chat_id']) && strlen($params['chat_id']) >= 6) {
+            return $this->active ? $this->sendRequest('sendMessage', $params) : null;
+        }
+
+        return null;
     }
 
     /**
@@ -191,7 +198,7 @@ class Telegram
      */
     protected function sendRequest(string $endpoint, array $params, bool $multipart = false): ?ResponseInterface
     {
-        if (empty($this->token)) {
+        if ($this->token === '') {
             throw CouldNotSendNotification::telegramBotTokenNotProvided('You must provide your telegram bot token to make any API requests.');
         }
 
@@ -212,10 +219,8 @@ class Telegram
      * Convert a value to studly caps case.
      *
      * @param string $value
-     *
-     * @return string
      */
-    protected static function strStudly($value)
+    protected static function strStudly($value): string
     {
         $value = ucwords(str_replace(['-', '_'], ' ', $value));
 

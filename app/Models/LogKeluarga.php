@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,10 +37,14 @@
 
 namespace App\Models;
 
+use App\Traits\ConfigId;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class LogKeluarga extends BaseModel
 {
+    use ConfigId;
+
     /**
      * KETERANGAN id_peristiwa di log_keluarga
      * 1 - keluarga baru
@@ -86,4 +90,27 @@ class LogKeluarga extends BaseModel
      * @var array
      */
     protected $guarded = [];
+
+    public function Keluarga()
+    {
+        return $this->belongsTo(Keluarga::class, 'id_kk', 'id')->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
+    }
+
+    public static function kodePeristiwaAll($index): string
+    {
+        $result = [
+            self::KELUARGA_BARU                 => 'Baru Lahir',
+            self::KEPALA_KELUARGA_MATI          => 'Kepala Keluarga Mati',
+            self::KEPALA_KELUARGA_PINDAH        => 'Kepala Keluarga Pindah',
+            self::KEPALA_KELUARGA_HILANG        => 'Kepala Keluarga Hilang',
+            self::KELUARGA_BARU_DATANG          => 'Keluarga Baru Datang',
+            self::KEPALA_KELUARGA_PERGI         => 'Kepala Keluarga Pergi',
+            self::KEPALA_KELUARGA_TIDAK_VALID   => 'Kepala Keluarga Tidak Valid',
+            self::ANGGOTA_KELUARGA_PECAH        => 'Anggota Keluarga Pecah',
+            self::KELUARGA_HAPUS                => 'Keluarga Hapus',
+            self::KEPALA_KELUARGA_KEMBALI_HIDUP => 'Kepala Keluarga Kembali Hidup',
+        ];
+
+        return $result[$index] ?? '-';
+    }
 }
