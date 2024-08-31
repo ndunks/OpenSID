@@ -239,6 +239,9 @@
 					if(!window['addCsrfField']){
 						var addCsrfField = function(){console.warn('addCsrfField: CSRF disabled')}
 					}
+					if(!window['getCsrfToken']){
+						var getCsrfToken = function(){console.warn('getCsrfToken: CSRF disabled')}
+					}
 				</script>
 				<?php session_error_clear(); ?>
 
