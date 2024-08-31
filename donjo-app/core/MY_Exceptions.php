@@ -88,7 +88,7 @@ class MY_Exceptions extends CI_Exceptions
     /**
      * {@inheritDoc}
      */
-    public function show_errorDISABLED($heading, $message, $template = 'error_general', $status_code = 500)
+    public function show_error($heading, $message, $template = 'error_general', $status_code = 500)
     {
         if ( !$this->ci || $template !== 'error_db') {
             return parent::show_error($heading, $message, $template, $status_code);
@@ -102,18 +102,11 @@ class MY_Exceptions extends CI_Exceptions
 
         $error = $error ?: $this->ci->db->error();
         if ($error !== [] && in_array($error['code'], $this->db_error_codes)) {
-            $this->ci->session->db_error          = $error;
-            $this->ci->session->message           = '<p>' . (is_array($error) ? implode('</p><p>', $error) : $error) . '</p>';
-            $this->ci->session->heading           = $heading;
-            $this->ci->session->message_query     = '<p>' . (is_array($message) ? implode('</p><p>', $message) : $message) . '</p>';
-            $this->ci->session->message_exception = strip_tags((new Exception())->getTraceAsString());
-            /*
-            | 1049 adalah kode koneksi database gagal. Dalam hal ini tampilkan halaman khusus
-            | menjelaskan langkah yang dapat dilakukan untuk mengatasi.
-            */
-            redirect('koneksi-database');
-
-            // redirect('periksa');
+            $message      = '<p>' . (is_array($error) ? implode('</p><p>', $error) : $error) . '</p>';
+            $message     .= '<p>' . (is_array($message) ? implode('</p><p>', $message) : $message) . '</p>';
+            $message    .= '<hr/>' . strip_tags((new Exception())->getTraceAsString());
+            log_message('error', $error);
+            parent::show_error($heading, $message, 'error_general', $status_code);
         }
         log_message('error', json_encode($message));
 
