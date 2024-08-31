@@ -103,7 +103,7 @@ class Seeder extends CI_Model
         $this->load->database();
         $this->load->model('database_model');
         $this->database_model->impor_data_awal_analisis();
-        $this->database_model->cek_migrasi();
+        $this->database_model->cek_migrasi(true);
         $this->isi_config();
         Migrasi::latest('id')->first()->delete();
         session_destroy();
