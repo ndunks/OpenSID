@@ -36,6 +36,7 @@
  */
 
 use App\Models\Config;
+use App\Models\UserGrup;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -52,7 +53,8 @@ class Periksa extends CI_Controller
         }
 
         $this->load->model(['periksa_model', 'user_model']);
-        $this->header = Config::first();
+        $this->header      = Config::appKey()->first();
+        $this->latar_login = default_file(LATAR_LOGIN . $this->periksa_model->getSetting('latar_login'), DEFAULT_LATAR_SITEMAN);
     }
 
     public function index()
@@ -91,6 +93,7 @@ class Periksa extends CI_Controller
         $data                        = [
             'header'      => $this->header,
             'form_action' => site_url('periksa/auth'),
+            'latar_login' => $this->latar_login,
         ];
 
         $this->setting->sebutan_desa      = $this->periksa_model->getSetting('sebutan_desa');
@@ -112,7 +115,8 @@ class Periksa extends CI_Controller
             // Gagal otentifikasi atau bukan admin
             redirect('periksa');
         }
-        if ($this->session->grup != 1) {
+
+        if ($this->session->grup != UserGrup::getGrupId(UserGrup::ADMINISTRATOR)) {
             // Bukan admin
             $this->user_model->logout();
             redirect('periksa');

@@ -43,34 +43,23 @@ class First extends Web_Controller
     {
         parent::__construct();
         parent::clear_cluster_session();
-
-        $this->load->library('security/security_header', null, 'security_header');
-        $this->security_header->handle();
-
-        $this->load->library('security/security_trusted_host', null, 'security_trusted_host');
-        $this->security_trusted_host->handle();
-
-        // Load library statistik pengunjung
-        $this->load->library('statistik_pengunjung');
-
         $this->load->model('first_artikel_m');
         $this->load->model('first_penduduk_m');
         $this->load->model('penduduk_model');
-        $this->load->model('surat_model');
-        $this->load->model('keluarga_model');
+        $this->load->model('surat_model'); // TODO: Cek digunakan halaman apa saja
+        $this->load->model('keluarga_model'); // TODO: Cek digunakan halaman apa saja
         $this->load->model('laporan_penduduk_model');
         $this->load->model('track_model');
-        $this->load->model('keluar_model');
-        $this->load->model('keuangan_model');
-        $this->load->model('keuangan_manual_model');
+        $this->load->model('keluar_model'); // TODO: Cek digunakan halaman apa saja
+        $this->load->model('keuangan_model'); // TODO: Cek digunakan halaman apa saja
+        $this->load->model('keuangan_manual_model'); // TODO: Cek digunakan halaman apa saja
         $this->load->model('web_dokumen_model');
         $this->load->model('program_bantuan_model');
-        $this->load->model('keuangan_manual_model');
         $this->load->model('keuangan_grafik_model');
         $this->load->model('keuangan_grafik_manual_model');
-        $this->load->model('plan_lokasi_model');
-        $this->load->model('plan_area_model');
-        $this->load->model('plan_garis_model');
+        $this->load->model('plan_lokasi_model'); // TODO: Cek digunakan halaman apa saja
+        $this->load->model('plan_area_model'); // TODO: Cek digunakan halaman apa saja
+        $this->load->model('plan_garis_model'); // TODO: Cek digunakan halaman apa saja
         $this->load->model('analisis_import_model');
     }
 
@@ -97,11 +86,12 @@ class First extends Web_Controller
             ];
         }
 
-        // if ($this->setting->apbdes_footer) {
-        //     $data['transparansi'] = $this->setting->apbdes_manual_input
-        //         ? $this->keuangan_grafik_manual_model->grafik_keuangan_tema()
-        //         : $this->keuangan_grafik_model->grafik_keuangan_tema();
-        // }
+        // TODO: OpenKAB - Sesuaikan jika Modul Admin sudah disesuaikan
+        if ($this->setting->apbdes_footer) {
+            $data['transparansi'] = $this->setting->apbdes_manual_input
+                ? $this->keuangan_grafik_manual_model->grafik_keuangan_tema()
+                : $this->keuangan_grafik_model->grafik_keuangan_tema();
+        }
 
         // $data['covid'] = $this->laporan_penduduk_model->list_data('covid');
 
@@ -241,6 +231,7 @@ class First extends Web_Controller
         echo json_encode($output);
     }
 
+    // TODO: OpenKAB - Sesuaikan jika Modul Admin sudah disesuaikan
     public function data_analisis()
     {
         if (! $this->web_menu_model->menu_aktif('data_analisis')) {
@@ -259,6 +250,7 @@ class First extends Web_Controller
         $this->load->view($this->template, $data);
     }
 
+    // TODO: OpenKAB - Sesuaikan jika Modul Admin sudah disesuaikan
     public function jawaban_analisis($stat = '', $sb = 0, $per = 0)
     {
         if (! $this->web_menu_model->menu_aktif('data_analisis')) {
@@ -374,12 +366,33 @@ class First extends Web_Controller
             $data['link_berkas'] = null;
         } else {
             $data = [
-                'link_berkas' => site_url("dokumen/tampilkan_berkas/{$id_dokumen}/{$id_pend}"),
+                'link_berkas' => site_url("first/dokumen_tampilkan_berkas/{$id_dokumen}/{$id_pend}"),
                 'tipe'        => get_extension($berkas),
-                'link_unduh'  => site_url("dokumen/unduh_berkas/{$id_dokumen}/{$id_pend}"),
+                'link_unduh'  => site_url("first/dokumen_unduh_berkas/{$id_dokumen}/{$id_pend}"),
             ];
         }
         $this->load->view('global/tampilkan', $data);
+    }
+
+    /**
+     * Unduh berkas berdasarkan kolom dokumen.id
+     *
+     * @param int        $id_dokumen Id berkas pada koloam dokumen.id
+     * @param mixed|null $id_pend
+     * @param mixed      $tampil
+     *
+     * @return void
+     */
+    public function dokumen_unduh_berkas($id_dokumen, $id_pend = null, $tampil = false)
+    {
+        // Ambil nama berkas dari database
+        $data = $this->web_dokumen_model->get_dokumen($id_dokumen, $id_pend);
+        ambilBerkas($data['satuan'], $this->controller, null, LOKASI_DOKUMEN, $tampil);
+    }
+
+    public function dokumen_tampilkan_berkas($id_dokumen, $id_pend = null)
+    {
+        $this->dokumen_unduh_berkas($id_dokumen, $id_pend, $tampil = true);
     }
 
     public function kategori($id, $p = 1)
@@ -428,6 +441,7 @@ class First extends Web_Controller
                     'email'      => email($post['email']),
                     'status'     => 2,
                     'id_artikel' => $id,
+                    'config_id'  => identitas('id'),
                 ];
 
                 $res = $this->first_artikel_m->insert_comment($data);
@@ -475,10 +489,11 @@ class First extends Web_Controller
     public function load_aparatur_wilayah($id = '', $kd_jabatan = 0)
     {
         $data['penduduk'] = $this->penduduk_model->get_penduduk($id);
+        $kepala_dusun     = 'Kepala ' . ucwords($this->setting->sebutan_dusun);
 
         switch ($kd_jabatan) {
             case '1':
-                $data['jabatan'] = 'Kepala Dusun';
+                $data['jabatan'] = $kepala_dusun;
                 break;
 
             case '2':
@@ -490,7 +505,7 @@ class First extends Web_Controller
                 break;
 
             default:
-                $data['jabatan'] = 'Kepala Dusun';
+                $data['jabatan'] = $kepala_dusun;
                 break;
         }
 

@@ -38,6 +38,7 @@
 namespace App\Models;
 
 use App\Traits\Author;
+use Illuminate\Support\Facades\Schema;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -58,6 +59,7 @@ class Config extends BaseModel
      * @var array
      */
     protected $fillable = [
+        'app_key',
         'nama_desa',
         'kode_desa',
         'kode_pos',
@@ -84,6 +86,12 @@ class Config extends BaseModel
         'warna',
         'created_by',
         'updated_by',
+
+        // Field database lama
+        'nama_kepala_desa',
+        'nip_kepala_desa',
+        'g_analitic',
+        'pamong_id',
     ];
 
     /**
@@ -96,6 +104,15 @@ class Config extends BaseModel
         'nama_kepala_desa',
         'path_logo',
         'path_kantor_desa',
+    ];
+
+    /**
+     * The hidden with the model.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'app_key',
     ];
 
     /**
@@ -120,7 +137,7 @@ class Config extends BaseModel
 
     public function pamong()
     {
-        return Pamong::kepalaDesa()->first();
+        return Pamong::select('pamong_nip', 'pamong_nama')->kepalaDesa()->first();
     }
 
     /**
@@ -155,6 +172,15 @@ class Config extends BaseModel
         return $this->attributes['kantor_desa'];
     }
 
+    public function scopeAppKey($query)
+    {
+        if (Schema::hasColumn($this->table, 'app_key')) {
+            $query->where('app_key', get_app_key());
+        }
+
+        return $query;
+    }
+
     /**
      * The "booted" method of the model.
      *
@@ -175,8 +201,7 @@ class Config extends BaseModel
     // Hapus cache config dan modul
     private static function clearCache()
     {
-        // hapus_cache('identitas_desa');
-        hapus_cache('status_langganan');
+        hapus_cache('identitas_desa');
         hapus_cache('_cache_modul');
     }
 }

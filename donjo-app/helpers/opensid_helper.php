@@ -37,6 +37,9 @@
 
 use App\Models\RefJabatan;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use voku\helper\AntiXSS;
+use App\Models\User;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -45,7 +48,14 @@ defined('BASEPATH') || exit('No direct script access allowed');
  * Format => [dua digit tahun dan dua digit bulan].[nomor urut digit beta].[nomor urut digit bugfix]
  * Untuk rilis resmi (tgl 1 tiap bulan) dimulai dari 0 (beta) dan 0 (bugfix)
  */
-define('VERSION', '2310.0.0');
+define('VERSION', '2401.0.0');
+
+/**
+ * PREMIUM
+ *
+ * Versi OpenSID Premium
+ */
+define('PREMIUM', true);
 
 /**
  * VERSI_DATABASE
@@ -54,7 +64,7 @@ define('VERSION', '2310.0.0');
  * Versi database = [yyyymmdd][nomor urut dua digit]
  * [nomor urut dua digit] : 01 => rilis umum, 51 => rilis bugfix, 71 => rilis premium,
  */
-define('VERSI_DATABASE', '2023100101');
+define('VERSI_DATABASE', '2024010101');
 
 // Kode laporan statistik
 define('JUMLAH', 666);
@@ -136,9 +146,6 @@ define('NILAI_PENDAPAT', serialize([
     4 => 'Buruk',
 ]));
 
-use GuzzleHttp\Exception\ClientException;
-use voku\helper\AntiXSS;
-
 /**
  * Ambil Versi
  *
@@ -161,6 +168,23 @@ function AmbilVersi()
 function currentVersion()
 {
     return substr_replace(substr(VERSION, 0, 4), '.', 2, 0);
+}
+
+function set_app_key()
+{
+    return 'base64:' . base64_encode(random_bytes(32));
+}
+
+function get_app_key()
+{
+    $app_key = file_get_contents(DESAPATH . 'app_key');
+
+    if (empty($app_key)) {
+        $app_key = set_app_key();
+        file_put_contents(DESAPATH . 'app_key', $app_key);
+    }
+
+    return $app_key;
 }
 
 /**
@@ -246,6 +270,38 @@ function httpPost($url, $params)
     }
 
     return $response->getBody()->getContents();
+}
+
+/**
+ * Ambil data desa dari pantau.opensid.my.id berdasarkan config_item('kode_desa')
+ *
+ * @param string $kode_desa
+ *
+ * @return object|null
+ */
+function get_data_desa($kode_desa)
+{
+    try {
+        $response = (new Client())->get(config_item('server_pantau') . '/index.php/api/wilayah/kodedesa?kode=' . $kode_desa, [
+            'headers' => [
+                'X-Requested-With' => 'XMLHttpRequest',
+                'Authorization'    => 'Bearer ' . config_item('token_pantau'),
+            ],
+            'timeout'         => 5,
+            'connect_timeout' => 4,
+            // 'verify'          => false,
+        ]);
+    } catch (ClientException $cx) {
+        log_message('error', $cx);
+
+        return null;
+    } catch (Exception $e) {
+        log_message('error', $e);
+
+        return null;
+    }
+
+    return json_decode($response->getBody()->getContents());
 }
 
 /**
@@ -393,7 +449,7 @@ function isPHP($file, $filename)
 
     $handle = fopen($file, 'rb');
     $buffer = stream_get_contents($handle);
-    if (preg_match('/<\?php|<script|function|__halt_compiler|<html/i', $buffer)) {
+    if (preg_match('/<\?php|<script|__halt_compiler|<html/i', $buffer)) {
         fclose($handle);
 
         return true;
@@ -425,7 +481,7 @@ function getKodeDesaFromTrackSID()
         return session('trackSID_bps_code');
     }
 
-    $config  = \App\Models\Config::first();
+    $config  = identitas();
     $tracker = config_item('server_pantau');
 
     $trackSID_bps_code = getUrlContent($tracker . '/index.php/api/wilayah/kodedesa?kode=' . $config->kode_desa . '&token=' . config_item('token_pantau'));
@@ -967,7 +1023,7 @@ function convertToBytes(string $from)
  * Disalin dari FeedParser.php
  * Load the whole contents of a web page
  *
- * @param    string
+ * @param string
  * @param mixed $url
  *
  * @return string
@@ -1119,6 +1175,10 @@ function unique_slug($tabel = null, $judul = null, $id = null, $field = 'slug', 
         while ($cek_slug) {
             if ($id) {
                 $CI->db->where('id !=', $id);
+
+                if ($CI->db->field_exists('config_id', $tabel)) {
+                    $CI->db->where('config_id', identitas('id'));
+                }
             }
             $cek_slug = $CI->db->get_where($tabel, [$field => $slug_unik])->num_rows();
             if ($cek_slug) {
@@ -1253,73 +1313,107 @@ function getSizeDB()
 
 function idm($kode_desa, $tahun)
 {
-    $cache = 'idm_' . $tahun . '_' . $kode_desa . '.json';
+    $ci    = &get_instance();
+    $cache = "idm_{$tahun}_{$kode_desa}.json";
 
-    return get_instance()->cache->pakai_cache(static function () use ($kode_desa, $tahun) {
-        if (! cek_koneksi_internet()) {
-            return (object) ['error_msg' => 'Periksa koneksi internet Anda.'];
+    // periksa apakah ada file idm dalam bentuk .json dan periksa ketika cache sudah kadaluarsa
+    if (file_exists(DESAPATH . "/cache/{$cache}")) {
+        // perbaharui cache yg sudah kadaluarsa
+        $data = unserialize(file_get_contents(DESAPATH . "cache/{$cache}"));
+        $ci->cache->save($cache, $data['data'], YEAR); // ubah ke satu tahun
+    }
+
+    // ambil cache idm
+    if ($data = $ci->cache->get($cache)) {
+        return $data;
+    }
+
+    // periksa koneksi
+    if (! cek_koneksi_internet()) {
+        return (object) ['error_msg' => 'Periksa koneksi internet Anda.'];
+    }
+
+    // ambil dari api idm
+    try {
+        $client   = new \GuzzleHttp\Client();
+        $response = $client->get(config_item('api_idm') . "/{$kode_desa}/{$tahun}", [
+            'headers' => [
+                'X-Requested-With' => 'XMLHttpRequest',
+            ],
+            'verify' => false,
+        ]);
+
+        if ($response->getStatusCode() === 200) {
+            $ci->cache->save($cache, json_decode($response->getBody()->getContents())->mapData, YEAR);
+
+            return $ci->cache->get($cache);
         }
+    } catch (Exception $e) {
+        log_message('error', $e->getMessage());
+    }
 
-        try {
-            $client   = new \GuzzleHttp\Client();
-            $response = $client->get(config_item('api_idm') . "/{$kode_desa}/{$tahun}", [
-                'headers' => [
-                    'X-Requested-With' => 'XMLHttpRequest',
-                ],
-                'verify' => false,
-            ]);
-
-            return json_decode($response->getBody()->getContents())->mapData;
-        } catch (Exception $e) {
-            log_message('error', $e->getMessage());
-
-            return (object) ['error_msg' => 'Tidak dapat mengambil data IDM.'];
-        }
-    }, $cache, 604800);
+    return (object) ['error_msg' => 'Tidak dapat mengambil data IDM.'];
 }
 
 function sdgs()
 {
     $kode_desa = setting('kode_desa_bps');
-    $cache     = 'sdgs_' . $kode_desa . '.json';
+    $cache     = "sdgs_{$kode_desa}.json";
 
-    if (! empty($kode_desa)) {
-        return get_instance()->cache->pakai_cache(static function () use ($kode_desa) {
-            if (! cek_koneksi_internet()) {
-                return (object) ['error_msg' => 'Periksa koneksi internet Anda.'];
-            }
-
-            try {
-                $client   = new \GuzzleHttp\Client();
-                $response = $client->get(config_item('api_sdgs') . $kode_desa, [
-                    'headers' => [
-                        'X-Requested-With' => 'XMLHttpRequest',
-                    ],
-                    'verify' => false,
-                ]);
-
-                return (object) collect(json_decode($response->getBody()->getContents()))
-                    ->map(static function ($item, $key) {
-                        if ($key === 'data') {
-                            return collect($item)->map(static function ($item) {
-                                $item->image = last(explode('/', $item->image));
-
-                                return (object) $item;
-                            });
-                        }
-
-                        return $item;
-                    })
-                    ->toArray();
-            } catch (Exception $e) {
-                log_message('error', $e->getMessage());
-
-                return (object) ['error_msg' => 'Tidak dapat mengambil data SDGS.'];
-            }
-        }, $cache, 604800);
+    if (empty($kode_desa)) {
+        return (object) ['error_msg' => 'Kode Desa BPS belum ditentukan. Periksa pengaturan <a href="#" style="text-decoration:none;" data-remote="false" data-toggle="modal" data-target="#pengaturan"><strong>Kode Desa BPS&nbsp;(<i class="fa fa-gear"></i>)</a>'];
     }
 
-    return (object) ['error_msg' => 'Kode Desa BPS belum ditentukan. Periksa pengaturan <a href="#" style="text-decoration:none;" data-remote="false" data-toggle="modal" data-target="#pengaturan"><strong>Kode Desa BPS&nbsp;(<i class="fa fa-gear"></i>)</a>'];
+    $ci = &get_instance();
+    // periksa apakah ada file sgds dalam bentuk .json dan periksa ketika cache sudah kadaluarsa
+    if (file_exists(DESAPATH . "/cache/{$cache}")) {
+        // perbaharui cache yg sudah kadaluarsa
+        $data = unserialize(file_get_contents(DESAPATH . "cache/{$cache}"));
+        $ci->cache->save($cache, $data['data'], YEAR); // ubah ke satu tahun
+    }
+
+    // ambil cache sdgs
+    if ($data = $ci->cache->get($cache)) {
+        return $data;
+    }
+
+    // periksa koneksi
+    if (! cek_koneksi_internet()) {
+        return (object) ['error_msg' => 'Periksa koneksi internet Anda.'];
+    }
+
+    try {
+        $client   = new \GuzzleHttp\Client();
+        $response = $client->get(config_item('api_sdgs') . $kode_desa, [
+            'headers' => [
+                'X-Requested-With' => 'XMLHttpRequest',
+            ],
+            'verify' => false,
+        ]);
+
+        if ($response->getStatusCode() === 200) {
+            $data = (object) collect(json_decode($response->getBody()->getContents()))
+                ->map(static function ($item, $key) {
+                    if ($key === 'data') {
+                        return collect($item)->map(static function ($item) {
+                            $item->image = last(explode('/', $item->image));
+
+                            return (object) $item;
+                        });
+                    }
+
+                    return $item;
+                })->toArray();
+
+            $ci->cache->save($cache, $data, YEAR);
+
+            return $ci->cache->get($cache);
+        }
+    } catch (Exception $e) {
+        log_message('error', $e->getMessage());
+    }
+
+    return (object) ['error_msg' => 'Tidak dapat mengambil data SDGS.<br>'];
 }
 
 function menu_slug($url)
@@ -1537,6 +1631,139 @@ if (! function_exists('sekdes')) {
     function sekdes()
     {
         return RefJabatan::getSekdes();
+    }
+}
+
+if (! function_exists('super_admin')) {
+    /**
+     * - Fungsi untuk mengambil id dengan grup superadmin.
+     *
+     * @return int
+     */
+    function super_admin()
+    {
+        $ci = &get_instance();
+        $ci->load->model('user_model');
+
+        return $ci->user_model->get_super_admin();
+    }
+}
+
+if (! function_exists('ref')) {
+    /**
+     * - Fungsi untuk mengambil data tabel refrensi.
+     *
+     * @param mixed $alias
+     *
+     * @return array|object
+     */
+    function ref($alias)
+    {
+        return get_instance()->db->get($alias)->result();
+    }
+}
+
+if (! function_exists('getFormatIsian')) {
+    /**
+     * - Fungsi untuk mengembalikan format kode isian.
+     *
+     * @param mixed $kode_isian
+     *
+     * @return array|object
+     */
+    function getFormatIsian($kode_isian)
+    {
+        $strtolower = strtolower($kode_isian);
+        $ucfirst    = ucfirst($strtolower);
+
+        return [
+            'normal'  => '[' . ucfirst(uclast($kode_isian)) . ']',
+            'lower'   => '[' . $strtolower . ']',
+            'ucfirst' => '[' . $ucfirst . ']',
+            'ucwords' => '[' . substr_replace($ucfirst, strtoupper(substr($ucfirst, 2, 1)), 2, 1) . ']',
+            'upper'   => '[' . substr_replace($ucfirst, strtoupper(substr($ucfirst, 1, 1)), 1, 1) . ']',
+        ];
+    }
+}
+
+/**
+ * Buat hash password (bcrypt) dari string sebuah password
+ *
+ * @param [type]  $string  [description]
+ *
+ * @return [type]  [description]
+ */
+function generatePasswordHash($string)
+{
+    // Pastikan inputnya adalah string
+    $string = is_string($string) ? $string : (string) $string;
+    // Buat hash password
+    $pwHash = password_hash($string, PASSWORD_BCRYPT);
+    // Cek kekuatan hash, regenerate jika masih lemah
+    if (password_needs_rehash($pwHash, PASSWORD_BCRYPT)) {
+        $pwHash = password_hash($string, PASSWORD_BCRYPT);
+    }
+
+    return $pwHash;
+}
+
+if (! function_exists('resetCacheDesa')) {
+    function resetCacheDesa()
+    {
+        $CI = &get_instance();
+        $CI->load->helper('directory');
+        // Hapus isi folder desa/cache
+        $dir = config_item('cache_path');
+
+        foreach (directory_map($dir) as $file) {
+            if ($file !== 'index.html') {
+                unlink($dir . DIRECTORY_SEPARATOR . $file);
+            }
+        }
+    }
+}
+
+if (! function_exists('updateAppKey')) {
+    function updateAppKey($app_key)
+    {
+        file_put_contents(DESAPATH . 'app_key', $app_key);
+    }
+}
+
+if (! function_exists('nextVersion')) {
+    function nextVersion($version = null)
+    {
+        $migrasi = str_replace('.', '', $version ?? currentVersion());
+        $migrasi = substr($migrasi, 0, 4);
+        $tahun   = substr($migrasi, 0, 2);
+        $bulan   = substr($migrasi, -2);
+
+        if ($bulan > 12) {
+            $tahun++;
+            $bulan = 1;
+        } else {
+            $bulan++;
+            if ($bulan < 10) {
+                $bulan = '0' . $bulan;
+            }
+        }
+
+        return $tahun . $bulan;
+    }
+}
+
+if (! function_exists('getVariableName')) {
+    function getVariableName($class = null, $value = null)
+    {
+        if (null === $class || null === $value) {
+            return null;
+        }
+
+        $reflection   = new \ReflectionClass($class);
+        $constants    = $reflection->getConstants();
+        $variableName = array_search($value, $constants);
+
+        return $variableName !== false ? $variableName : null;
     }
 }
 

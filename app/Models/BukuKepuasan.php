@@ -38,9 +38,12 @@
 namespace App\Models;
 
 use App\Enums\JawabanKepuasanEnum;
+use App\Traits\ConfigId;
 
 class BukuKepuasan extends BaseModel
 {
+    use ConfigId;
+
     /**
      * The table associated with the model.
      *
@@ -82,16 +85,6 @@ class BukuKepuasan extends BaseModel
     public function getJawabanAttribute()
     {
         return JawabanKepuasanEnum::all()[$this->id_jawaban];
-    }
-
-    /**
-     * Define a one-to-one relationship.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\hasOne
-     */
-    public function pertanyaan()
-    {
-        return $this->hasOne(BukuPertanyaan::class, 'id', 'id_pertanyaan');
     }
 
     /**

@@ -37,8 +37,8 @@
 
 use App\Enums\SHDKEnum;
 use App\Enums\StatusEnum;
+use App\Enums\StatusSuratKecamatanEnum;
 use App\Libraries\TinyMCE;
-use App\Models\Config;
 use App\Models\FormatSurat;
 use App\Models\Keluarga;
 use App\Models\LogSurat;
@@ -66,13 +66,6 @@ class Surat extends Admin_Controller
 
     public function index()
     {
-        $data['cetak_surat'] = FormatSurat::select(['nama', 'jenis', 'url_surat'])->kunci(FormatSurat::KUNCI_DISABLE)->latest('updated_at')->orderBy('favorit', 'desc')->get();
-
-        return view('admin.surat.index', $data);
-    }
-
-    public function datatables()
-    {
         if ($this->input->is_ajax_request()) {
             return datatables()->of(FormatSurat::kunci(FormatSurat::KUNCI_DISABLE)->orderBy('favorit', 'desc')->latest('updated_at'))
                 ->addIndexColumn()
@@ -99,6 +92,37 @@ class Surat extends Admin_Controller
                 })
                 ->rawColumns(['aksi', 'template_surat'])
                 ->make();
+        }
+
+        return view('admin.surat.index');
+    }
+
+    public function apidaftarsurat()
+    {
+        if ($this->input->is_ajax_request()) {
+            $cari = $this->input->get('q');
+
+            $surat = FormatSurat::select(['id', 'nama', 'jenis', 'url_surat'])
+                ->when($cari, static function ($query) use ($cari) {
+                    $query->orWhere('nama', 'like', "%{$cari}%");
+                })
+                ->kunci(FormatSurat::KUNCI_DISABLE)
+                ->latest('updated_at')
+                ->orderBy('favorit', 'desc')
+                ->paginate(10);
+
+            return json([
+                'results' => collect($surat->items())
+                    ->map(static function ($item) {
+                        return [
+                            'id'   => $item->url_surat,
+                            'text' => ($item->jenis == 1 ? '[RTF]' : '[TinyMCE]') . " - {$item->nama}",
+                        ];
+                    }),
+                'pagination' => [
+                    'more' => $surat->currentPage() < $surat->lastPage(),
+                ],
+            ]);
         }
 
         return show_404();
@@ -160,7 +184,8 @@ class Surat extends Admin_Controller
             $this->permohonan_surat_model->proses($id, 2);
         }
 
-        $surat = FormatSurat::cetak($url)->first();
+        $surat     = FormatSurat::cetak($url)->first();
+        $kecamatan = $surat->kecamatan == StatusEnum::TIDAK ? StatusSuratKecamatanEnum::TidakAktif : StatusSuratKecamatanEnum::BelumDikirim;
 
         if ($surat && $this->request) {
             // Simpan data ke log_surat sebagai draf
@@ -168,7 +193,9 @@ class Surat extends Admin_Controller
             $pamong    = Pamong::find($id_pamong);
             $log_surat = [
                 'id_format_surat' => $surat->id,
-                'id_pend'         => $this->request['nik'], // nik = id_pend
+                'id_pend'         => $this->request['nik'],
+                'nama_non_warga'  => $this->request['nama_non_warga'],
+                'nik_non_warga'   => $this->request['nik_non_warga'],
                 'id_pamong'       => $id_pamong,
                 'nama_jabatan'    => $pamong->jabatan->nama,
                 'nama_pamong'     => $pamong->pamong_nama,
@@ -177,16 +204,8 @@ class Surat extends Admin_Controller
                 'tahun'           => date('Y'),
                 'no_surat'        => $this->request['nomor'],
                 'keterangan'      => $this->request['keterangan'] ?: $this->request['keperluan'],
+                'kecamatan'       => $kecamatan,
             ];
-
-            if ($log_surat['id_pend']) {
-                $nik = Penduduk::find($log_surat['id_pend'])->nik;
-            } else {
-                // Surat untuk non-warga
-                $log_surat['nama_non_warga'] = $this->request['nama_non_warga'];
-                $log_surat['nik_non_warga']  = $this->request['nik_non_warga'];
-                $nik                         = $log_surat['nik_non_warga'];
-            }
 
             $log_surat['surat']     = $surat;
             $log_surat['input']     = $this->request;
@@ -232,6 +251,7 @@ class Surat extends Admin_Controller
                 'tahun'           => date('Y'),
                 'no_surat'        => $cetak['input']['nomor'],
                 'keterangan'      => $cetak['keterangan'],
+                'kecamatan'       => $cetak['kecamatan'],
             ];
 
             if ($nik = $cetak['input']['nik']) {
@@ -277,7 +297,7 @@ class Surat extends Admin_Controller
             $surat = LogSurat::findOrFail($id);
 
             // Logo Surat
-            $file_logo = ($cetak['surat']['logo_garuda'] ? FCPATH . LOGO_GARUDA : gambar_desa(Config::select('logo')->first()->logo, false, true));
+            $file_logo = ($cetak['surat']['logo_garuda'] ? FCPATH . LOGO_GARUDA : gambar_desa(identitas()->logo, false, true));
 
             $logo      = (is_file($file_logo)) ? '<img src="' . $file_logo . '" width="90" height="90" alt="logo-surat" />' : '';
             $logo_bsre = str_replace('[logo]', $logo, $isi_cetak);
@@ -308,7 +328,7 @@ class Surat extends Admin_Controller
                 $html2pdf->setDefaultFont(underscore(setting('font_surat'), true, true));
                 $html2pdf->writeHTML($logo_qrcode);
                 if ($preview) {
-                    $html2pdf->output(sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'preview.pdf', 'FI');
+                    $html2pdf->output(tempnam(sys_get_temp_dir(), '') . '.pdf', 'FI');
                 } else {
                     $html2pdf->output(FCPATH . LOKASI_ARSIP . $nama_surat, 'FI');
 
@@ -356,6 +376,7 @@ class Surat extends Admin_Controller
                 'nama_pamong'     => $pamong->pamong_nama,
                 'id_user'         => auth()->id,
                 'tanggal'         => Carbon::now(),
+                'kecamatan'       => $cetak['kecamatan'],
             ];
             $log_surat['verifikasi_operator'] = 0;
 
@@ -373,7 +394,7 @@ class Surat extends Admin_Controller
             // Kembalikan kode isian [format_nomor_surat]
             $format_surat = $this->tinymce->substitusiNomorSurat($cetak['input']['nomor'], setting('format_nomor_surat'));
             $format_surat = str_replace('[kode_surat]', $cetak['surat']['kode_surat'], $format_surat);
-            $format_surat = str_replace('[kode_desa]', Config::first()->kode_desa, $format_surat);
+            $format_surat = str_replace('[kode_desa]', identitas()->kode_desa, $format_surat);
             $format_surat = str_replace('[bulan_romawi]', bulan_romawi((int) (date('m'))), $format_surat);
             $format_surat = str_replace('[tahun]', date('Y'), $format_surat);
 
@@ -414,7 +435,7 @@ class Surat extends Admin_Controller
             $cetak['surat'] = $surat->formatSurat;
 
             // Logo Surat
-            $file_logo = ($cetak['surat']['logo_garuda'] ? FCPATH . LOGO_GARUDA : gambar_desa(Config::select('logo')->first()->logo, false, true));
+            $file_logo = ($cetak['surat']['logo_garuda'] ? FCPATH . LOGO_GARUDA : gambar_desa(identitas()->logo, false, true));
 
             $logo      = (is_file($file_logo)) ? '<img src="' . $file_logo . '" width="90" height="90" alt="logo-surat" />' : '';
             $isi_cetak = str_replace('[logo]', $logo, $isi_cetak);
@@ -461,9 +482,9 @@ class Surat extends Admin_Controller
 
             $atas_nama = '';
             if ($pamong->pamong_ttd === 1) {
-                $atas_nama .= 'a.n ' . ucwords($pamong->pamong_jabatan . ' ' . Config::first()->nama_desa);
+                $atas_nama .= 'a.n ' . ucwords($pamong->pamong_jabatan . ' ' . identitas()->nama_desa);
             } elseif ($pamong->pamong_ub === 1) {
-                $atas_nama .= 'u.b ' . ucwords($pamong->pamong_jabatan . ' ' . Config::first()->nama_desa);
+                $atas_nama .= 'u.b ' . ucwords($pamong->pamong_jabatan . ' ' . identitas()->nama_desa);
             }
 
             $log_surat['no_surat'] = $this->surat_model->get_last_nosurat_log($surat->url_surat)['no_surat_berikutnya'];
@@ -585,7 +606,8 @@ class Surat extends Admin_Controller
 
         if ($id) {
             $log_surat['id_pend'] = $id;
-            $nik                  = $this->db->select('nik')->where('id', $id)->get('tweb_penduduk')->row()->nik;
+            // TODO: Sederhanakan query ini, pindahkan ke model
+            $nik = $this->db->select('nik')->where('config_id', identitas('id'))->where('id', $id)->get('tweb_penduduk')->row()->nik;
         } else {
             // Surat untuk non-warga
             $log_surat['nama_non_warga'] = $_POST['nama_non_warga'];
@@ -606,8 +628,9 @@ class Surat extends Admin_Controller
         $surat      = $this->surat_model->buat_surat($url, $nama_surat, $lampiran);
         $nama_surat = $surat['namaSurat'];
 
+        // TODO: Sederhanakan query ini, pindahkan ke model
         // Update urls_id log_surat (untuk link qrcode)
-        $this->db->where('nama_surat', $nama_surat)->update('log_surat', ['urls_id' => $surat['qrCode']['urls_id']]);
+        $this->db->where('config_id', identitas('id'))->where('nama_surat', $nama_surat)->update('log_surat', ['urls_id' => $surat['qrCode']['urls_id']]);
 
         if (function_exists('exec') && $this->input->post('submit_cetak') == 'cetak_pdf') {
             $nama_surat = $this->surat_model->rtf_to_pdf($nama_surat);
@@ -645,19 +668,26 @@ class Surat extends Admin_Controller
     {
         // RTF
         if (in_array($data['surat']['jenis'], FormatSurat::RTF)) {
-            $data['config']    = $data['lokasi'] = Config::first();
+            $data['config']    = $data['lokasi'] = $this->header['desa'];
             $data['penduduk']  = $this->surat_model->list_penduduk();
             $data['perempuan'] = $this->surat_model->list_penduduk_perempuan();
         } else {
             // TinyMCE
             // Data penduduk diambil sesuai pengaturan surat
-            $filters = collect($data['surat']['form_isian']->individu)->toArray();
-
-            $data['penduduk'] = Penduduk::filters($filters)->get();
-            if ($filters['kk_level'] == SHDKEnum::KEPALA_KELUARGA) {
-                $data['anggota'] = Keluarga::find($data['individu']['id_kk'])->anggota;
+            if ($data['surat']['form_isian']->data == 2) {
+                $data['penduduk'] = null;
+                $data['anggota']  = null;
             } else {
-                $data['anggota'] = null;
+                $filters          = collect($data['surat']['form_isian']->individu)->toArray();
+                $data['penduduk'] = Penduduk::filters($filters)->get();
+                $kk_level         = $data['individu']['kk_level'];
+                $ada_anggota      = ($filters['kk_level'] == SHDKEnum::KEPALA_KELUARGA || $kk_level == SHDKEnum::KEPALA_KELUARGA) ? true : false;
+
+                if ($ada_anggota) {
+                    $data['anggota'] = Keluarga::find($data['individu']['id_kk'])->anggota;
+                } else {
+                    $data['anggota'] = null;
+                }
             }
         }
 
@@ -753,5 +783,37 @@ class Surat extends Admin_Controller
         $content = ob_get_clean();
 
         return $view_surat . $content;
+    }
+
+    public function apipenduduksurat()
+    {
+        if ($this->input->is_ajax_request()) {
+            $cari    = $this->input->get('q');
+            $filters = collect(FormatSurat::select('form_isian')->find($this->input->get('surat'))->form_isian->individu)->toArray();
+
+            $penduduk = Penduduk::select(['id', 'nik', 'tag_id_card', 'nama', 'id_cluster'])
+                ->when($cari, static function ($query) use ($cari) {
+                    $query->orWhere('nik', 'like', "%{$cari}%")
+                        ->orWhere('tag_id_card', 'like', "%{$cari}%")
+                        ->orWhere('nama', 'like', "%{$cari}%");
+                })
+                ->filters($filters)
+                ->paginate(10);
+
+            return json([
+                'results' => collect($penduduk->items())
+                    ->map(static function ($item) {
+                        return [
+                            'id'   => $item->id,
+                            'text' => 'NIK : ' . $item->nik . '<br>Tag ID Card : ' . ($item->tag_id_card ?: '-') . '<br>Nama : ' . $item->nama . '<br>Alamat : RT-' . $item->wilayah->rt . ', RW-' . $item->wilayah->rw . ', ' . strtoupper(setting('sebutan_dusun') . ' ' . $item->wilayah->dusun),
+                        ];
+                    }),
+                'pagination' => [
+                    'more' => $penduduk->currentPage() < $penduduk->lastPage(),
+                ],
+            ]);
+        }
+
+        return show_404();
     }
 }

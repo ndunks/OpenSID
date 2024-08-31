@@ -38,6 +38,7 @@
 use App\Models\Agama;
 use App\Models\Pamong;
 use App\Models\PendidikanKK;
+use App\Models\Penduduk;
 use App\Models\RefJabatan;
 
 defined('BASEPATH') || exit('No direct script access allowed');
@@ -98,12 +99,14 @@ class Pengurus extends Admin_Controller
         $id_pend = $this->input->post('id_pend');
 
         if ($id) {
+            $data['aksi']   = 'Ubah';
             $data['pamong'] = $this->pamong_model->get_data($id) ?? show_404();
             if (! isset($id_pend)) {
                 $id_pend = $data['pamong']['id_pend'];
             }
             $data['form_action'] = site_url("pengurus/update/{$id}");
         } else {
+            $data['aksi']        = 'Tambah';
             $data['pamong']      = null;
             $data['form_action'] = site_url('pengurus/insert');
         }
@@ -116,6 +119,7 @@ class Pengurus extends Admin_Controller
             $semua_jabatan = $semua_jabatan->except($jabatan_kades);
         }
 
+        $jabatan_sekdes = RefJabatan::getSekdes()->id;
         // Cek apakah sekdes
         $jabatan_sekdes = sekdes()->id;
         if (Pamong::where('jabatan_id', $jabatan_sekdes)->where('pamong_status', 1)->exists() && $data['pamong']['jabatan_id'] != $jabatan_sekdes) {
@@ -124,17 +128,17 @@ class Pengurus extends Admin_Controller
 
         $data['jabatan']       = $semua_jabatan;
         $data['atasan']        = $this->pamong_model->list_atasan($id);
-        $data['penduduk']      = $this->pamong_model->list_penduduk($id_pend ?? 0);
         $data['pendidikan_kk'] = PendidikanKK::pluck('nama', 'id');
         $data['agama']         = Agama::pluck('nama', 'id');
 
         if (! empty($id_pend)) {
+            // TODO :: OpenKab - Tambahkan filter berdasarkan config_id
             $data['individu'] = $this->penduduk_model->get_penduduk($id_pend);
         } else {
             $data['individu'] = null;
         }
 
-        $this->render('home/pengurus_form', $data);
+        return view('admin.pengurus.form', $data);
     }
 
     public function filter($filter)
@@ -323,7 +327,7 @@ class Pengurus extends Admin_Controller
         if ($id) {
             $action      = 'Ubah';
             $form_action = route('pengurus.jabatanupdate', $id);
-            $jabatan     = RefJabatan::findOrFail($id);
+            $jabatan     = RefJabatan::find($id) ?? show_404();
         } else {
             $action      = 'Tambah';
             $form_action = route('pengurus.jabataninsert');
@@ -349,7 +353,7 @@ class Pengurus extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
 
-        $data = RefJabatan::findOrFail($id);
+        $data = RefJabatan::find($id) ?? show_404();
 
         if ($data->update(static::jabatanValidate($this->request, $data->id))) {
             redirect_with('success', 'Berhasil Ubah Data', 'pengurus/jabatan');
@@ -361,7 +365,7 @@ class Pengurus extends Admin_Controller
     {
         $this->redirect_hak_akses('h');
 
-        $data = RefJabatan::findOrFail($id);
+        $data = RefJabatan::find($id) ?? show_404();
         if (in_array($data->id, RefJabatan::getKadesSekdes())) {
             redirect_with('error', 'Gagal Hapus Data, ' . $data->nama . ' Tidak Boleh Dihapus.', 'pengurus/jabatan');
         }
@@ -380,5 +384,35 @@ class Pengurus extends Admin_Controller
             'nama'    => nama_terbatas($request['nama']),
             'tupoksi' => $request['tupoksi'],
         ];
+    }
+
+    public function apidaftarpenduduk()
+    {
+        if ($this->input->is_ajax_request()) {
+            $cari = $this->input->get('q');
+
+            $penduduk = Penduduk::select(['id', 'nik', 'nama', 'id_cluster'])
+                ->when($cari, static function ($query) use ($cari) {
+                    $query->orWhere('nik', 'like', "%{$cari}%")
+                        ->orWhere('nama', 'like', "%{$cari}%");
+                })
+                ->whereNotIn('id', Pamong::whereNotNull('id_pend')->pluck('id_pend')->toArray())
+                ->paginate(10);
+
+            return json([
+                'results' => collect($penduduk->items())
+                    ->map(static function ($item) {
+                        return [
+                            'id'   => $item->id,
+                            'text' => "NIK : {$item->nik} - {$item->nama} - {$item->wilayah->dusun}",
+                        ];
+                    }),
+                'pagination' => [
+                    'more' => $penduduk->currentPage() < $penduduk->lastPage(),
+                ],
+            ]);
+        }
+
+        return show_404();
     }
 }

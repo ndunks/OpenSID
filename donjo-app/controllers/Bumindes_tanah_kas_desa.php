@@ -68,7 +68,7 @@ class Bumindes_tanah_kas_desa extends Admin_Controller
         }
 
         $this->render('bumindes/umum/main', [
-            'subtitle'     => 'Buku Tanah Kas Desa',
+            'subtitle'     => 'Buku Tanah Kas ' . ucwords($this->setting->sebutan_desa),
             'selected_nav' => 'tanah_kas',
             'main_content' => 'bumindes/pembangunan/tanah_kas_desa/content_tanah_kas_desa',
         ]);
@@ -84,7 +84,7 @@ class Bumindes_tanah_kas_desa extends Admin_Controller
 
     public function view_tanah_kas_desa($id)
     {
-        $view_data = $this->tanah_kas_desa_model->view_tanah_kas_desa_by_id($id);
+        $view_data = $this->tanah_kas_desa_model->view_tanah_kas_desa_by_id($id) ?? show_404();
         $data      = [
             'main'            => $view_data,
             'main_content'    => 'bumindes/pembangunan/tanah_kas_desa/form_tanah_kas_desa',
@@ -104,7 +104,7 @@ class Bumindes_tanah_kas_desa extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
         if ($id) {
-            $view_data = $this->tanah_kas_desa_model->view_tanah_kas_desa_by_id($id);
+            $view_data = $this->tanah_kas_desa_model->view_tanah_kas_desa_by_id($id) ?? show_404();
             $data      = [
                 'main'            => $view_data,
                 'main_content'    => 'bumindes/pembangunan/tanah_kas_desa/form_tanah_kas_desa',

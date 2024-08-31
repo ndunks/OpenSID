@@ -1,4 +1,4 @@
-@include('admin.pengaturan_surat.asset_tinymce', ['height' => 250])
+@include('admin.pengaturan_surat.asset_tinymce', ['height' => 250, 'salin_template' => 'header-footer'])
 
 @extends('admin.layouts.index')
 
@@ -42,7 +42,7 @@
                     </div>
                     <div class="form-group">
                         <label>Template Header Surat</label>
-                        <textarea name="header_surat" class="form-control input-sm editor required">{{ setting('header_surat') }}</textarea>
+                        <textarea name="header_surat" class="form-control input-sm editor required" data-jenis="header">{{ setting('header_surat') }}</textarea>
                     </div>
                 </div>
             </div>
@@ -62,7 +62,7 @@
                     <div class="form-group">
                         <label>Template Footer Surat</label>
                         <textarea name="{{ setting('tte') == '1' ? 'footer_surat_tte' : 'footer_surat' }}"
-                            class="form-control input-sm editor required">{{ setting('tte') == '1' ? setting('footer_surat_tte') : setting('footer_surat') }}</textarea>
+                            class="form-control input-sm editor required" data-jenis="footer">{{ setting('tte') == '1' ? setting('footer_surat_tte') : setting('footer_surat') }}</textarea>
                     </div>
                 </div>
 
@@ -81,7 +81,7 @@
 
 
                     <div class="form-group">
-                        <label>Verifikasi {{ $ref_jabatan->where('id', '=', 2)->first()->nama }}</label>
+                        <label>Verifikasi {{ setting('sebutan_sekretaris_desa') }}</label>
                         <div class="input-group col-xs-12 col-sm-8">
                             <div class="btn-group col-xs-12 col-sm-8" data-toggle="buttons" style="padding: 0px;">
                                 <label
@@ -97,13 +97,13 @@
                             </div>
                         </div>
                         <span class="help-block text-red @display(!$sekdes)">User
-                            {{ $ref_jabatan->where('id', '=', 2)->first()->nama }} belum tersedia</span>
+                            {{ setting('sebutan_sekretaris_desa') }} belum tersedia</span>
                     </div>
                 </div>
 
                 <div class="box-body">
                     <div class="form-group">
-                        <label>Verifikasi {{ $ref_jabatan->where('id', '=', 1)->first()->nama }}</label>
+                        <label>Verifikasi {{ setting('sebutan_kepala_desa') }}</label>
                         <div class="input-group col-xs-12 col-sm-8">
                             <div class="btn-group col-xs-12 col-sm-8" data-toggle="buttons" style="padding: 0px;">
                                 <label
@@ -119,7 +119,7 @@
                             </div>
                         </div>
                         <span class="help-block text-red @display(!$kades)">User
-                            {{ $ref_jabatan->where('id', '=', 1)->first()->nama }} belum tersedia</span>
+                            {{ setting('sebutan_kepala_desa') }} belum tersedia</span>
                     </div>
                 </div>
             </div>

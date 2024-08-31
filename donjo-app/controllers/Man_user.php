@@ -38,6 +38,7 @@
 defined('BASEPATH') || exit('No direct script access allowed');
 
 use App\Models\Pamong;
+use App\Models\UserGrup;
 
 class Man_user extends Admin_Controller
 {
@@ -52,7 +53,7 @@ class Man_user extends Admin_Controller
         $this->modul_ini     = 'pengaturan';
         $this->sub_modul_ini = 'pengguna';
         $this->_set_page     = ['10', '50', '100', '200'];
-        $this->_list_session = ['cari', 'filter'];
+        $this->_list_session = ['cari', 'filter', 'group'];
     }
 
     public function clear()
@@ -71,11 +72,7 @@ class Man_user extends Admin_Controller
         $data['o']     = $o;
 
         foreach ($this->_list_session as $list) {
-            if ($list != 'filter') {
-                $data[$list] = $this->session->{$list} ?: '';
-            } else {
-                $data[$list] = $this->session->filter ?: 'active';
-            }
+            $data[$list] = $this->session->{$list} ?: '';
         }
 
         $per_page = $this->input->post('per_page');
@@ -83,16 +80,17 @@ class Man_user extends Admin_Controller
             $this->session->per_page = $per_page;
         }
 
-        $data['func']       = 'index';
-        $data['set_page']   = $this->_set_page;
-        $data['per_page']   = $this->session->per_page;
-        $data['paging']     = $this->user_model->paging($p, $o);
-        $data['main']       = $this->user_model->list_data($o, $data['paging']->offset, $data['paging']->per_page);
-        $data['keyword']    = $this->user_model->autocomplete();
-        $data['user_group'] = array_merge([
+        $data['func']     = 'index';
+        $data['set_page'] = $this->_set_page;
+        $data['per_page'] = $this->session->per_page;
+        $data['paging']   = $this->user_model->paging($p, $o);
+        $data['main']     = $this->user_model->list_data($o, $data['paging']->offset, $data['paging']->per_page);
+        $data['keyword']  = $this->user_model->autocomplete();
+        $data['status']   = [
             ['id' => 'active', 'nama' => 'Aktif'],
             ['id' => 'inactive', 'nama' => 'Tidak Aktif'],
-        ], $this->referensi_model->list_data('user_grup'));
+        ];
+        $data['user_group'] = $this->referensi_model->list_data('user_grup');
 
         $this->render('man_user/manajemen_user_table', $data);
     }
@@ -104,16 +102,16 @@ class Man_user extends Admin_Controller
         $data['o'] = $o;
 
         if ($id) {
-            $data['user']        = $this->user_model->get_user($id);
+            $data['user']        = $this->user_model->get_user($id) ?? show_404();
             $data['form_action'] = site_url("man_user/update/{$p}/{$o}/{$id}");
         } else {
             $data['user']        = null;
             $data['form_action'] = site_url('man_user/insert');
         }
 
-        $data['user_group'] = $this->referensi_model->list_data('user_grup');
-
-        $data['pamong'] = Pamong::selectData()->daftar()->get();
+        $data['user_group'] = UserGrup::get(['id', 'nama']);
+        $data['akses']      = UserGrup::getGrupSistem();
+        $data['pamong']     = Pamong::selectData()->daftar()->get();
 
         $this->render('man_user/manajemen_user_form', $data);
     }
@@ -129,13 +127,14 @@ class Man_user extends Admin_Controller
         redirect('man_user');
     }
 
-    public function filter()
+    public function filter($filter)
     {
-        $filter = $this->input->post('filter');
-        if ($filter != 0 || $filter) {
-            $_SESSION['filter'] = $filter;
+        $value = $this->input->post($filter);
+
+        if ($value !== '') {
+            $this->session->{$filter} = $value;
         } else {
-            unset($_SESSION['filter']);
+            $this->session->unset_userdata($filter);
         }
         redirect('man_user');
     }

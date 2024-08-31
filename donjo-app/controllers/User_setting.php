@@ -35,7 +35,6 @@
  *
  */
 
-use App\Models\Config;
 use App\Models\User;
 
 defined('BASEPATH') || exit('No direct script access allowed');
@@ -58,28 +57,6 @@ class User_setting extends Admin_Controller
         $this->load->view('setting', $data);
     }
 
-    public function update()
-    {
-        $this->load->helper('form');
-        $this->load->library('form_validation');
-        $this->form_validation->set_rules('pass_baru', 'Kata Sandi Baru', 'required|callback_syarat_sandi');
-        $this->form_validation->set_message('syarat_sandi', 'Harus 6 sampai 20 karakter dan sekurangnya berisi satu angka dan satu huruf besar dan satu huruf kecil');
-
-        if ($this->form_validation->run() !== true) {
-            session_error(validation_errors());
-            set_session('error', validation_errors());
-            redirect($_SERVER['HTTP_REFERER']);
-        } else {
-            $this->user_model->update_setting(auth()->id);
-            if ($this->session->success == -1) {
-                set_session('error', $this->session->error_msg);
-                redirect($_SERVER['HTTP_REFERER']);
-            } else {
-                redirect('main');
-            }
-        }
-    }
-
     public function update_password($id = '')
     {
         $this->user_model->update_password($id);
@@ -96,18 +73,10 @@ class User_setting extends Admin_Controller
         return (bool) (preg_match('/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/', $str));
     }
 
-    public function change_pwd()
-    {
-        $id                  = $_SESSION['user'];
-        $data['main']        = $this->user_model->get_user($id);
-        $data['header']      = Config::first();
-        $data['latar_login'] = to_base64(default_file(LATAR_SITEMAN, DEFAULT_LATAR_SITEMAN));
-        $this->load->view('setting_pwd', $data);
-    }
-
     public function kirim_verifikasi()
     {
-        $user = $this->db->where('id', $this->session->user)->get('user')->row();
+        // TODO: OpenKab - Perlu disesuaikan ulang setelah semua modul selesai
+        $user = $this->db->where('config_id', identitas('id'))->where('id', $this->session->user)->get('user')->row();
 
         if ($user->email_verified_at !== null) {
             $this->session->success = 1;
@@ -210,7 +179,8 @@ class User_setting extends Admin_Controller
 
     public function verifikasi(string $hash)
     {
-        $user = $this->db->where('id', $this->session->user)->get('user')->row();
+        // TODO: OpenKab - Perlu disesuaikan ulang setelah semua modul selesai
+        $user = $this->db->where('config_id', identitas('id'))->where('id', $this->session->user)->get('user')->row();
 
         if ($user->email_verified_at !== null) {
             $this->session->success = 1;
@@ -244,7 +214,8 @@ class User_setting extends Admin_Controller
             return redirect('main');
         }
 
-        $this->db->where('id', $this->session->user)->update('user', ['email_verified_at' => date('Y-m-d H:i:s')]);
+        // TODO: Sederhanakan query ini, pindahkan ke model
+        $this->db->where('config_id', identitas('id'))->where('id', $this->session->user)->update('user', ['email_verified_at' => date('Y-m-d H:i:s')]);
 
         $this->session->success = 1;
 

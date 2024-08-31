@@ -53,11 +53,29 @@ class Setting extends Admin_Controller
             'judul'               => 'Pengaturan Aplikasi',
             'pengaturan_kategori' => ['sistem', 'peta', 'web_theme', 'readonly', 'web', 'mobile'],
             'atur_latar'          => true,
-            'latar_website'       => (default_file($this->theme_model->lokasi_latar_website() . $this->setting->latar_website, DEFAULT_LATAR_WEBSITE)),
-            'latar_siteman'       => (default_file(LATAR_LOGIN . $this->setting->latar_login, DEFAULT_LATAR_SITEMAN)),
+            'latar_website'       => [$this->setting->latar_website, 'latar_website'],
+            'latar_siteman'       => [$this->setting->latar_login, 'latar_login'],
         ];
 
         return view('admin.pengaturan.index', $data);
+    }
+
+    public function ambil_foto()
+    {
+        $foto       = $this->input->get('foto');
+        $pengaturan = $this->input->get('pengaturan');
+
+        if ($pengaturan == 'latar_website') {
+            $default     = LOKASI_ASSET_FRONT_IMAGES;
+            $new_setting = $this->theme_model->lokasi_latar_website();
+        }
+
+        if ($pengaturan == 'latar_login' || $pengaturan == 'latar_login_mandiri') {
+            $default     = LOKASI_ASSET_IMAGES;
+            $new_setting = LATAR_LOGIN;
+        }
+
+        ambilBerkas($foto, $this->controller, null, $foto == $pengaturan . '.jpg' ? $default : $new_setting, $tampil = true);
     }
 
     // Untuk view lama
@@ -89,7 +107,7 @@ class Setting extends Admin_Controller
             return;
         } // Hanya bila dipanggil dari form pengumuman
         $this->setting_model->aktifkan_tracking();
-        $this->db->where('kode', 'tracking_off')->update('notifikasi', ['aktif' => 0]);
+        $this->db->where('config_id', identitas('id'))->where('kode', 'tracking_off')->update('notifikasi', ['aktif' => 0]);
     }
 
     // Pengaturan web
@@ -118,7 +136,7 @@ class Setting extends Admin_Controller
             'pengaturan_kategori' => ['setting_mandiri'],
             'atur_latar'          => true,
             'aksi_controller'     => 'setting/mandiri',
-            'latar_mandiri'       => to_base64(default_file(LATAR_LOGIN . $this->setting->latar_login_mandiri, DEFAULT_LATAR_KEHADIRAN)),
+            'latar_mandiri'       => [$this->setting->latar_login_mandiri, 'latar_login_mandiri'],
         ];
 
         return view('admin.pengaturan.index', $data);

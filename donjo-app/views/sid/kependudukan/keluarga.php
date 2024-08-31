@@ -42,8 +42,8 @@
 						</ul>
 					</div>
 				<?php endif; ?>
-				<a href="<?= site_url("keluarga/ajax_cetak/{$o}/cetak")?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Cetak Data" target="_blank"><i class="fa fa-print"></i> Cetak</a>
-				<a href="<?= site_url("keluarga/ajax_cetak/{$o}/unduh")?>" class="btn btn-social btn-flat bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Unduh Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Unduh Data" target="_blank"><i class="fa fa-download"></i> Unduh</a>
+				<a id="cetak_id" href="<?= site_url("keluarga/ajax_cetak/{$p}/{$o}/cetak")?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Cetak Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Cetak Data" target="_blank"><i class="fa fa-print"></i> Cetak</a>
+				<a id="unduh_id" href="<?= site_url("keluarga/ajax_cetak/{$p}/{$o}/unduh")?>" class="btn btn-social btn-flat bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Unduh Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Unduh Data" target="_blank"><i class="fa fa-download"></i> Unduh</a>
 				<div class="btn-group btn-group-vertical">
 					<a class="btn btn-social btn-flat bg-maroon btn-sm" data-toggle="dropdown"><i class='fa fa-arrow-circle-down'></i> Aksi Data Terpilih</a>
 					<ul class="dropdown-menu" role="menu">
@@ -175,7 +175,9 @@
 														<?php if ($data['jumlah_anggota'] > 0): ?>
 															<a href="<?= site_url("keluarga/form_pecah_semua/{$data['id']}")?>" title="Pecah semua anggota ke keluarga baru" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Pecah menjadi keluarga baru" class="btn bg-purple btn-flat btn-sm"><i class="fa fa-cut"></i></a>
 														<?php endif; ?>
-														<a href="<?= site_url("keluarga/edit_nokk/{$p}/{$o}/{$data['id']}")?>" title="Lihat Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Data KK" class="btn bg-info btn-flat btn-sm"><i class="fa fa-eye"></i></a>
+														<?php if (! empty($data['kepala_kk'])): ?>
+															<a href="<?= site_url("keluarga/edit_nokk/{$p}/{$o}/{$data['id']}")?>" title="Lihat Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Data KK" class="btn bg-info btn-flat btn-sm"><i class="fa fa-eye"></i></a>
+														<?php endif; ?>
 													<?php endif; ?>
 												<?php endif; ?>
 												<?php if ($this->CI->cek_hak_akses('h') && $data['boleh_hapus']): ?>
@@ -210,3 +212,14 @@
 	</section>
 </div>
 <?php $this->load->view('global/confirm_delete'); ?>
+
+<script>
+	$("input[type=checkbox]").change(function () {
+		var id = $('input[name="id_cb[]"]:checked').map(function () {
+			return this.value;
+		}).get().join(',');
+
+		$("#cetak_id").attr("href", `<?= site_url("keluarga/ajax_cetak/{$p}/{$o}/cetak") ?>?id_cb=${id}`);
+		$("#unduh_id").attr("href", `<?= site_url("keluarga/ajax_cetak/{$p}/{$o}/unduh") ?>?id_cb=${id}`);
+	})
+</script>

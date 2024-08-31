@@ -38,6 +38,10 @@
 defined('BASEPATH') || exit('No direct script access allowed');
 
 use App\Enums\StatusEnum;
+use App\Models\Dokumen;
+use App\Models\Penduduk as PendudukModel;
+use App\Models\SyaratSurat;
+use App\Models\UserGrup;
 use OpenSpout\Writer\Common\Creator\WriterEntityFactory;
 
 class Penduduk extends Admin_Controller
@@ -52,7 +56,7 @@ class Penduduk extends Admin_Controller
 
         $this->modul_ini     = 'kependudukan';
         $this->sub_modul_ini = 'penduduk';
-        $this->_set_page     = ['50', '100', '200'];
+        $this->_set_page     = ['50', '100', '200', [0, 'Semua']];
         $this->_list_session = ['filter_tahun', 'filter_bulan', 'status_hanya_tetap', 'jenis_peristiwa', 'filter', 'status_dasar', 'sex', 'agama', 'dusun', 'rw', 'rt', 'cari', 'umur', 'umur_min', 'umur_max', 'umurx', 'pekerjaan_id', 'status', 'pendidikan_sedang_id', 'pendidikan_kk_id', 'status_penduduk', 'judul_statistik', 'cacat', 'cara_kb_id', 'akta_kelahiran', 'status_ktp', 'id_asuransi', 'status_covid', 'bantuan_penduduk', 'log', 'warganegara', 'menahun', 'hubungan', 'golongan_darah', 'hamil', 'kumpulan_nik', 'suku', 'bpjs_ketenagakerjaan', 'nik_sementara', 'tag_id_card'];
     }
 
@@ -117,6 +121,8 @@ class Penduduk extends Admin_Controller
         $data['list_status_penduduk'] = $this->referensi_model->list_data('tweb_penduduk_status');
         $data['list_jenis_kelamin']   = $this->referensi_model->list_data('tweb_penduduk_sex');
         $data['pesan_hapus']          = 'Hanya lakukan hapus penduduk hanya jika ada kesalahan saat pengisian data atau penduduk tersebut tidak akan ditambahkan kembali. Apakah Anda yakin ingin menghapus data ini?';
+        $data['akses']                = UserGrup::getGrupId(UserGrup::ADMINISTRATOR);
+        $data['data_lengkap']         = ($this->setting->tgl_data_lengkap_aktif && ! empty($this->setting->tgl_data_lengkap)) ? true : false;
 
         $this->render('sid/kependudukan/penduduk', $data);
     }
@@ -226,25 +232,23 @@ class Penduduk extends Admin_Controller
         $data['p']            = $p;
         $data['o']            = $o;
         $data['list_dokumen'] = $this->penduduk_model->list_dokumen($id);
-        $data['penduduk']     = $this->penduduk_model->get_penduduk($id);
+        $data['penduduk']     = $this->penduduk_model->get_penduduk($id) ?? show_404();
         $data['program']      = $this->program_bantuan_model->get_peserta_program(1, $data['penduduk']['nik']);
         $this->render('sid/kependudukan/penduduk_detail', $data);
     }
 
     public function dokumen($id = '')
     {
-        $data['penduduk']           = $this->penduduk_model->get_penduduk($id) ?? show_404();
-        $data['list_dokumen']       = $this->penduduk_model->list_dokumen($id);
-        $data['jenis_syarat_surat'] = $this->referensi_model->list_by_id('ref_syarat_surat', 'ref_syarat_id');
-
-        $this->render('sid/kependudukan/penduduk_dokumen', $data);
+        $this->render('sid/kependudukan/penduduk_dokumen', [
+            'penduduk' => PendudukModel::select('id', 'nik', 'nama', 'id_cluster')->with(['dokumen'])->find($id) ?? show_404(),
+        ]);
     }
 
     public function dokumen_form($id = 0, $id_dokumen = 0)
     {
         $this->redirect_hak_akses('u');
-        $data['penduduk']           = $this->penduduk_model->get_penduduk($id);
-        $data['jenis_syarat_surat'] = $this->lapor_model->get_surat_ref_all();
+        $data['penduduk']           = $this->penduduk_model->get_penduduk($id) ?? show_404();
+        $data['jenis_syarat_surat'] = SyaratSurat::get();
 
         if ($data['penduduk']['kk_level'] === '1') { //Jika Kepala Keluarga
             $data['kk'] = $this->keluarga_model->list_anggota($data['penduduk']['id_kk']);
@@ -359,6 +363,7 @@ class Penduduk extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
         $id = $this->penduduk_model->insert();
+        $this->cache->hapus_cache_untuk_semua('_wilayah');
         if ($_SESSION['success'] == -1) {
             $_SESSION['dari_internal'] = true;
             redirect("{$this->controller}/form");
@@ -371,6 +376,7 @@ class Penduduk extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
         $this->penduduk_model->update($id);
+        $this->cache->hapus_cache_untuk_semua('_wilayah');
         if ($_SESSION['success'] == -1) {
             $_SESSION['dari_internal'] = true;
             redirect("{$this->controller}/form/{$p}/{$o}/{$id}");
@@ -383,6 +389,7 @@ class Penduduk extends Admin_Controller
     {
         $this->redirect_hak_akses('h');
         $this->penduduk_model->delete($id);
+        $this->cache->hapus_cache_untuk_semua('_wilayah');
 
         redirect("{$this->controller}/index/{$p}/{$o}");
     }
@@ -391,6 +398,7 @@ class Penduduk extends Admin_Controller
     {
         $this->redirect_hak_akses('h');
         $this->penduduk_model->delete_all();
+        $this->cache->hapus_cache_untuk_semua('_wilayah');
 
         redirect("{$this->controller}/index/{$p}/{$o}");
     }
@@ -570,6 +578,7 @@ class Penduduk extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
         $this->penduduk_model->update_status_dasar($id);
+        $this->cache->hapus_cache_untuk_semua('_wilayah');
 
         redirect("{$this->controller}/index/{$p}/{$o}");
     }
@@ -578,13 +587,14 @@ class Penduduk extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
         $this->penduduk_model->kembalikan_status($id);
+        $this->cache->hapus_cache_untuk_semua('_wilayah');
 
         redirect("{$this->controller}/index/{$p}/{$o}");
     }
 
-    public function cetak($o = 0, $aksi = '', $privasi_nik = 0)
+    public function cetak($page = 1, $o = 0, $aksi = '', $privasi_nik = 0)
     {
-        $data['main'] = $this->penduduk_model->list_data($o, 0);
+        $data['main'] = $this->penduduk_model->list_data($o, $page)['main'];
 
         if ($privasi_nik == 1) {
             $data['privasi_nik'] = true;
@@ -596,6 +606,13 @@ class Penduduk extends Admin_Controller
     public function statistik($tipe = '0', $nomor = 0, $sex = null)
     {
         $this->clear_session();
+        // Set filter statistik
+        $filter_global = $this->session->filter_global;
+
+        $this->session->dusun = $filter_global['dusun'];
+        $this->session->rw    = $filter_global['rw'];
+        $this->session->rt    = $filter_global['rt'];
+
         // Untuk tautan TOTAL di laporan statistik, di mana arg-2 = sex dan arg-3 kosong
         // kecuali untuk laporan wajib KTP
         if ($sex == null && $tipe != 18) {
@@ -742,10 +759,16 @@ class Penduduk extends Admin_Controller
             case $tipe > 50:
                 $program_id                     = preg_replace('/^50/', '', $tipe);
                 $this->session->program_bantuan = $program_id;
-                $nama                           = $this->db->select('nama')
+
+                // TODO: Sederhanakan query ini, pindahkan ke model
+                $nama = $this->db
+                    ->select('nama')
+                    ->where('config_id', identitas('id'))
                     ->where('id', $program_id)
-                    ->get('program')->row()
+                    ->get('program')
+                    ->row()
                     ->nama;
+
                 if (! in_array($nomor, [BELUM_MENGISI, TOTAL])) {
                     $this->session->status_dasar = null; // tampilkan semua peserta walaupun bukan hidup/aktif
                     $nomor                       = $program_id;
@@ -901,8 +924,7 @@ class Penduduk extends Admin_Controller
 
     public function autocomplete()
     {
-        $data = $this->penduduk_model->autocomplete($this->input->post('cari'));
-        echo json_encode($data);
+        return json($this->penduduk_model->autocomplete($this->input->post('cari')));
     }
 
     public function search_kumpulan_nik()
@@ -913,12 +935,12 @@ class Penduduk extends Admin_Controller
         $this->load->view('sid/kependudukan/ajax_search_kumpulan_nik', $data);
     }
 
-    public function ajax_cetak($o = 0, $aksi = '')
+    public function ajax_cetak($page = 1, $o = 0, $aksi = '')
     {
         $data['o']                   = $o;
         $data['aksi']                = $aksi;
-        $data['form_action']         = site_url("{$this->controller}/cetak/{$o}/{$aksi}");
-        $data['form_action_privasi'] = site_url("{$this->controller}/cetak/{$o}/{$aksi}/1");
+        $data['form_action']         = site_url("{$this->controller}/cetak/{$page}/{$o}/{$aksi}?id_cb={$this->input->get('id_cb')}");
+        $data['form_action_privasi'] = site_url("{$this->controller}/cetak/{$page}/{$o}/{$aksi}/1?id_cb={$this->input->get('id_cb')}");
 
         $this->load->view('sid/kependudukan/ajax_cetak_bersama', $data);
     }
@@ -992,12 +1014,13 @@ class Penduduk extends Admin_Controller
         $this->redirect_hak_akses('u', '', '', true);
         $hapus = isset($_POST['hapus_data']);
         $this->impor_model->impor_excel($hapus);
+        $this->cache->hapus_cache_untuk_semua('_wilayah');
         redirect('penduduk/impor');
     }
 
     public function impor_bip()
     {
-        if (config_item('demo_mode')) {
+        if (config_item('demo_mode') || setting('multi_desa')) {
             redirect($this->controller);
         }
 
@@ -1013,13 +1036,14 @@ class Penduduk extends Admin_Controller
 
     public function proses_impor_bip()
     {
-        if (config_item('demo_mode')) {
+        if (config_item('demo_mode') || setting('multi_desa')) {
             redirect($this->controller);
         }
 
         $this->redirect_hak_akses('u', '', '', true);
 
-        if ($this->db->get('tweb_penduduk')->num_rows() > 0) {
+        // TODO: Sederhanakan query ini, pindahkan ke model
+        if ($this->db->where('config_id', identitas('id'))->get('tweb_penduduk')->num_rows() > 0) {
             redirect_with('error', 'Tidak dapat mengimpor BIP ketika data penduduk telah ada', 'penduduk/impor_bip');
         }
 
@@ -1060,13 +1084,15 @@ class Penduduk extends Admin_Controller
 
     public function foto_bawaan($id)
     {
-        $penduduk = $this->db->get_where('tweb_penduduk', ['id' => $id])->row();
+        // TODO: Sederhanakan query ini, pindahkan ke model
+        $penduduk = $this->db->where('config_id', identitas('id'))->get_where('tweb_penduduk', ['id' => $id])->row();
 
         if (empty($penduduk)) {
             return redirect('penduduk');
         }
 
-        $this->db->where('id', $penduduk->id)->set('foto', null)->update('tweb_penduduk');
+        // TODO: Sederhanakan query ini, pindahkan ke model
+        $this->db->where('config_id', identitas('id'))->where('id', $penduduk->id)->set('foto', null)->update('tweb_penduduk');
 
         // Hapus file foto penduduk yg di hapus di folder desa/upload/user_pict
         $file_foto = LOKASI_USER_PICT . $penduduk->foto;
