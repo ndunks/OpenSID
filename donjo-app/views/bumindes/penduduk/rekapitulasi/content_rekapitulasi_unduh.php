@@ -1,3 +1,4 @@
+#!/usr/bin/php -q
 <?php
 
 defined('BASEPATH') OR exit('No direct script access allowed');
@@ -45,6 +46,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+<<<<<<<< HEAD:donjo-app/views/bumindes/penduduk/rekapitulasi/content_rekapitulasi_unduh.php
 ?>
 <?php
   header("Content-type: application/octet-stream");
@@ -54,3 +56,5 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
   include("donjo-app/views/bumindes/penduduk/rekapitulasi/content_rekapitulasi_cetak.php");
 ?>
+========
+>>>>>>>> 127c544e6e0d90fdb412558574b20f38475c7214:artisan
