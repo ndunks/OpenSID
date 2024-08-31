@@ -164,6 +164,15 @@
                 })
         </script>
     @endif
+    <script type="text/javascript">
+        // fix when csrf disabled
+        if(!window['addCsrfField']){
+            var addCsrfField = function(){console.warn('addCsrfField: CSRF disabled')}
+        }
+        if(!window['getCsrfToken']){
+            var getCsrfToken = function(){console.warn('getCsrfToken: CSRF disabled')}
+        }
+    </script>
 </body>
 
 </html>
