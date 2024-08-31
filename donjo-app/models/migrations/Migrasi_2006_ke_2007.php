@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -41,7 +41,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Migrasi_2006_ke_2007 extends CI_model
 {
-    public function up()
+    public function up(): void
     {
         // Sesuaikan dengan sql_mode STRICT_TRANS_TABLES
         $this->db->query('ALTER TABLE area MODIFY COLUMN id_cluster INT(11) NULL DEFAULT NULL');
@@ -52,7 +52,7 @@ class Migrasi_2006_ke_2007 extends CI_model
         $this->konfigurasi_qrcode();
     }
 
-    private function data_apbdes_manual()
+    private function data_apbdes_manual(): void
     {
         // Update Menu Keuangan - perbaikan urutan sub menu
         $this->db->where('id', 202)
@@ -573,7 +573,7 @@ class Migrasi_2006_ke_2007 extends CI_model
         $this->db->query($query);
     }
 
-    private function konfigurasi_web()
+    private function konfigurasi_web(): void
     {
         $kode_propinsi = Config::first()->pluck('kode_propinsi');
 
@@ -601,7 +601,7 @@ class Migrasi_2006_ke_2007 extends CI_model
         $this->db->query($query);
     }
 
-    private function konfigurasi_qrcode()
+    private function konfigurasi_qrcode(): void
     {
         // Tambah menu Pengaturan -> Hasilkan QRCode
         $query = "

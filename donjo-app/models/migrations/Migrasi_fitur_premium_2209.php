@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -291,7 +291,7 @@ class Migrasi_fitur_premium_2209 extends MY_model
             ]);
 
             if ($jabatan) {
-                $simpan = collect($jabatan)->unique('jabatan')->map(static function ($item, $key) {
+                $simpan = collect($jabatan)->unique('jabatan')->map(static function ($item, $key): array {
                     $id = $key + 3;
                     Pamong::where('jabatan', $item->jabatan)->update(['jabatan_id' => $id]);
 
@@ -345,7 +345,7 @@ class Migrasi_fitur_premium_2209 extends MY_model
         // Jalankan hanya jika terdeksi cara lama (sekdes = u.b)
         if (Pamong::where('pamong_ub', 1)->exists()) {
             // Sesuaikan Penanda tangan sekdes (a.n)
-            $hasil = $hasil && Pamong::where('pamong_ub', 1)->update(['jabatan_id' => 2, 'pamong_ttd' => 1, 'pamong_ub' => 0]);
+            return $hasil && Pamong::where('pamong_ub', 1)->update(['jabatan_id' => 2, 'pamong_ttd' => 1, 'pamong_ub' => 0]);
         }
 
         // Bagian ini di lewati, default tidak ada terpilih
@@ -365,7 +365,7 @@ class Migrasi_fitur_premium_2209 extends MY_model
     {
         return $hasil && $this->tambah_setting([
             'key'        => 'notifikasi_koneksi',
-            'value'      => 1,
+            'value'      => 0,
             'keterangan' => 'Ingatkan jika aplikasi tidak terhubung dengan internet.',
             'jenis'      => 'boolean',
         ]);
@@ -472,7 +472,7 @@ class Migrasi_fitur_premium_2209 extends MY_model
             foreach ($daftar_penduduk as $data) {
                 // Ganti nama file jika nama file sama dengan nik penduduk
                 if (preg_match("/{$data->nik}/i", $data->foto) && (file_exists(FCPATH . LOKASI_USER_PICT . $data->foto) || file_exists(FCPATH . LOKASI_USER_PICT . 'kecil_' . $data->foto))) {
-                    $nama_baru = time() . '-' . $data->id . '-' . mt_rand(10000, 999999) . get_extension($data->foto);
+                    $nama_baru = time() . '-' . $data->id . '-' . random_int(10000, 999999) . get_extension($data->foto);
 
                     if (DB::table('tweb_penduduk')->where('id', $data->id)->update(['foto' => $nama_baru])) {
                         rename(FCPATH . LOKASI_USER_PICT . $data->foto, FCPATH . LOKASI_USER_PICT . $nama_baru);
@@ -489,7 +489,7 @@ class Migrasi_fitur_premium_2209 extends MY_model
             foreach ($daftar_pamong as $data) {
                 // Ganti nama file jika nama file sama dengan nik penduduk
                 if (null === $data->id_pend && preg_match("/{$data->pamong_nik}/i", $data->foto) && (file_exists(FCPATH . LOKASI_USER_PICT . $data->foto) || file_exists(FCPATH . LOKASI_USER_PICT . 'kecil_' . $data->foto))) {
-                    $nama_baru = 'pamong_' . time() . '-' . $data->pamong_id . '-' . mt_rand(10000, 999999) . get_extension($data->foto);
+                    $nama_baru = 'pamong_' . time() . '-' . $data->pamong_id . '-' . random_int(10000, 999999) . get_extension($data->foto);
 
                     if (DB::table('tweb_desa_pamong')->where('pamong_id', $data->pamong_id)->update(['foto' => $nama_baru])) {
                         rename(FCPATH . LOKASI_USER_PICT . $data->foto, FCPATH . LOKASI_USER_PICT . $nama_baru);
@@ -566,34 +566,42 @@ class Migrasi_fitur_premium_2209 extends MY_model
         }
 
         // Pengaturan TTE Bsre
-        $hasil && $this->tambah_setting([
-            'key'        => 'tte',
-            'value'      => '0',
-            'keterangan' => 'TTE - Aktifkan Modul TTE',
-            'kategori'   => 'tte',
-            'jenis'      => 'boolean',
-        ]);
+        if ($hasil) {
+            $this->tambah_setting([
+                'key'        => 'tte',
+                'value'      => '0',
+                'keterangan' => 'TTE - Aktifkan Modul TTE',
+                'kategori'   => 'tte',
+                'jenis'      => 'boolean',
+            ]);
+        }
 
-        $hasil && $this->tambah_setting([
-            'key'        => 'tte_api',
-            'value'      => '',
-            'keterangan' => 'TTE - URL API TTE',
-            'kategori'   => 'tte',
-        ]);
+        if ($hasil) {
+            $this->tambah_setting([
+                'key'        => 'tte_api',
+                'value'      => '',
+                'keterangan' => 'TTE - URL API TTE',
+                'kategori'   => 'tte',
+            ]);
+        }
 
-        $hasil && $this->tambah_setting([
-            'key'        => 'tte_username',
-            'value'      => '',
-            'keterangan' => 'TTE - Username untuk TTE',
-            'kategori'   => 'tte',
-        ]);
+        if ($hasil) {
+            $this->tambah_setting([
+                'key'        => 'tte_username',
+                'value'      => '',
+                'keterangan' => 'TTE - Username untuk TTE',
+                'kategori'   => 'tte',
+            ]);
+        }
 
-        $hasil && $this->tambah_setting([
-            'key'        => 'tte_password',
-            'value'      => '',
-            'keterangan' => 'TTE - Password untuk TTE',
-            'kategori'   => 'tte',
-        ]);
+        if ($hasil) {
+            $this->tambah_setting([
+                'key'        => 'tte_password',
+                'value'      => '',
+                'keterangan' => 'TTE - Password untuk TTE',
+                'kategori'   => 'tte',
+            ]);
+        }
 
         return $hasil;
     }

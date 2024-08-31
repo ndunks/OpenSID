@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -47,7 +47,7 @@ class Pendaftaran_kerjasama_controller extends Admin_Controller
     /**
      * @var Client HTTP Client
      */
-    protected $client;
+    protected Client $client;
 
     protected $server;
 
@@ -73,15 +73,15 @@ class Pendaftaran_kerjasama_controller extends Admin_Controller
         return view('admin.pendaftaran_kerjasama.pendaftaran', []);
     }
 
-    public function terdaftar()
+    public function terdaftar(): void
     {
-        $data = json_decode(json_encode($this->request));
+        $data = json_decode(json_encode($this->request, JSON_THROW_ON_ERROR), null);
         $this->load->view('pendaftaran_kerjasama/terdaftar', $data, false);
     }
 
-    public function form()
+    public function form(): void
     {
-        $data = json_decode(json_encode($this->request));
+        $data = json_decode(json_encode($this->request, JSON_THROW_ON_ERROR), null);
         $this->load->view('pendaftaran_kerjasama/form', $data, false);
     }
 
@@ -115,7 +115,7 @@ class Pendaftaran_kerjasama_controller extends Admin_Controller
                 ->getBody();
         } catch (ClientException $cx) {
             log_message('error', $cx);
-            $error = json_decode($cx->getResponse()->getBody());
+            $error = json_decode($cx->getResponse()->getBody(), null);
             $this->session->set_flashdata(['errors' => $error]);
             session_error();
 
@@ -145,7 +145,7 @@ class Pendaftaran_kerjasama_controller extends Admin_Controller
         }
 
         $this->setting_model->update_setting([
-            'layanan_opendesa_token' => json_decode($response)->data->token,
+            'layanan_opendesa_token' => json_decode($response, null)->data->token,
         ]);
 
         $this->session->success = 1;
@@ -153,9 +153,9 @@ class Pendaftaran_kerjasama_controller extends Admin_Controller
         return redirect('pendaftaran_kerjasama');
     }
 
-    public function dokumen_template()
+    public function dokumen_template(): void
     {
-        $date = new \DateTime();
+        $date = new DateTime();
         $desa = $this->header['desa'];
 
         $data['desa']         = $desa['nama_desa'];

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -51,11 +51,12 @@ class Migrasi_fitur_premium_2306 extends MY_model
         $hasil = $hasil && $this->jalankan_migrasi('migrasi_fitur_premium_2305', false);
         $hasil = $hasil && $this->migrasi_tabel($hasil);
         $hasil = $hasil && $this->migrasi_data($hasil);
+        $hasil = $hasil && $this->migrasi_2023052551($hasil);
 
         $this->cache->hapus_cache_untuk_semua('_cache_modul');
         $this->cache->hapus_cache_untuk_semua('identitas');
 
-        return $hasil && true;
+        return $hasil;
     }
 
     protected function migrasi_tabel($hasil)
@@ -82,9 +83,8 @@ class Migrasi_fitur_premium_2306 extends MY_model
         $hasil = $hasil && $this->migrasi_2023052453($hasil);
         $hasil = $hasil && $this->migrasi_2023052454($hasil);
         $hasil = $hasil && $this->migrasi_2023052551($hasil);
-        $hasil = $hasil && $this->migrasi_2023053052($hasil);
 
-        return $hasil && true;
+        return $hasil && $this->migrasi_2023053052($hasil);
     }
 
     protected function migrasi_2023052351($hasil, $id)
@@ -92,12 +92,12 @@ class Migrasi_fitur_premium_2306 extends MY_model
         $setting = [
             'judul'      => 'Warna Tema',
             'key'        => 'warna_tema',
-            'value'      => DB::table('setting_aplikasi')->where('config_id', $id)->where('key', 'warna_tema')->first()->value ?: config_item('warna_tema') ?: SettingAplikasi::WARNA_TEMA,
+            'value'      => (DB::table('setting_aplikasi')->where('config_id', $id)->where('key', 'warna_tema')->first()->value ?: config_item('warna_tema')) ?: SettingAplikasi::WARNA_TEMA,
             'keterangan' => 'Warna tema untuk halaman website',
             'jenis'      => 'color',
             'option'     => null,
             'attribute'  => null,
-            'kategori'   => 'hidden',
+            'kategori'   => 'openkab',
         ];
 
         return $hasil && $this->tambah_setting($setting, $id);
@@ -130,7 +130,7 @@ class Migrasi_fitur_premium_2306 extends MY_model
             ->result_array();
 
         if ($result) {
-            $hasil = $hasil && $this->db->where_in('id', collect($result)->pluck('id')->all())->delete('kategori');
+            return $hasil && $this->db->where_in('id', collect($result)->pluck('id')->all())->delete('kategori');
         }
 
         return $hasil;
@@ -149,16 +149,16 @@ class Migrasi_fitur_premium_2306 extends MY_model
 
     protected function migrasi_2023052551($hasil)
     {
-        $surat = FormatSurat::withoutGlobalScope('App\Scopes\ConfigIdScope')
+        $surat = FormatSurat::withoutGlobalScope(App\Scopes\ConfigIdScope::class)
             ->select(['id', 'url_surat', 'kode_isian'])
             ->whereRaw("kode_isian LIKE '%rquired%'")
             ->where('jenis', FormatSurat::TINYMCE_SISTEM)
             ->get();
 
-        foreach ($surat as $key => $value) {
+        foreach ($surat as $value) {
             FormatSurat::whereId($value->id)
                 ->update([
-                    'kode_isian' => str_replace('rquired', 'required', json_encode($value->kode_isian)),
+                    'kode_isian' => str_replace('rquired', 'required', json_encode($value->kode_isian, JSON_THROW_ON_ERROR)),
                 ]);
         }
 
@@ -168,7 +168,7 @@ class Migrasi_fitur_premium_2306 extends MY_model
     protected function migrasi_2023052951($hasil)
     {
         if (! $this->db->field_exists('No_RPJM', 'keuangan_ta_rpjm_visi')) {
-            $hasil = $hasil && $this->dbforge->add_column('keuangan_ta_rpjm_visi', [
+            return $hasil && $this->dbforge->add_column('keuangan_ta_rpjm_visi', [
                 'No_RPJM' => [
                     'type'       => 'varchar',
                     'constraint' => 100,

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,7 +37,6 @@
 
 namespace App\Models;
 
-use App\Libraries\TinyMCE;
 use App\Traits\Author;
 use App\Traits\ConfigId;
 use Illuminate\Database\Eloquent\Builder;
@@ -86,6 +85,11 @@ class FormatSurat extends BaseModel
     public const JENIS_SURAT = [
         self::RTF_SISTEM     => 'Surat Sistem RTF',
         self::RTF_DESA       => 'Surat [Desa] RTF',
+        self::TINYMCE_SISTEM => 'Surat Sistem TinyMCE',
+        self::TINYMCE_DESA   => 'Surat [Desa] TinyMCE',
+    ];
+
+    public const JENIS_SURAT_TANPA_RTF = [
         self::TINYMCE_SISTEM => 'Surat Sistem TinyMCE',
         self::TINYMCE_DESA   => 'Surat [Desa] TinyMCE',
     ];
@@ -140,8 +144,10 @@ class FormatSurat extends BaseModel
         'date'            => 'Input Tanggal',
         'time'            => 'Input Jam',
         'textarea'        => 'Text Area',
-        'select-manual'   => 'Select (Manual)',
-        'select-otomatis' => 'Select (Otomatis)',
+        'select-manual'   => 'Pilihan (Kustom)',
+        'select-otomatis' => 'Pilihan (Referensi)',
+        'hari'            => 'Input Hari',
+        'hari-tanggal'    => 'Input Hari dan Tanggal',
     ];
 
     /**
@@ -155,6 +161,7 @@ class FormatSurat extends BaseModel
      * @var array
      */
     protected $fillable = [
+        'config_id',
         'nama',
         'url_surat',
         'kode_surat',
@@ -176,9 +183,11 @@ class FormatSurat extends BaseModel
         'orientasi',
         'ukuran',
         'margin',
+        'margin_global',
         'header',
         'footer',
         'format_nomor',
+        'sumber_penduduk_berulang',
         'created_by',
         'updated_by',
     ];
@@ -207,10 +216,13 @@ class FormatSurat extends BaseModel
         'mandiri'      => 'boolean',
         'qr_code'      => 'boolean',
         'logo_garuda'  => 'boolean',
+        'header'       => 'integer',
         // 'syarat_surat' => 'json',
         // 'kode_isian'   => 'json',
         // 'margin'       => 'json',
     ];
+
+    private int $nonAktifkanRTF = 0;
 
     /**
      * Define a many-to-many relationship.
@@ -254,36 +266,30 @@ class FormatSurat extends BaseModel
     public function getListSyaratSuratAttribute()
     {
         return $this->syaratSurat->map(
-            static function ($syarat) {
-                return [
-                    'label'      => $syarat->ref_syarat_nama,
-                    'value'      => $syarat->ref_syarat_id,
-                    'form_surat' => [
-                        [
-                            'type'     => 'select',
-                            'required' => true,
-                            'label'    => 'Dokumen Syarat',
-                            'name'     => 'dokumen',
-                            'multiple' => false,
-                            'values'   => $syarat->dokumen->map(static function ($dokumen) {
-                                return [
-                                    'label' => $dokumen->nama,
-                                    'value' => $dokumen->id,
-                                ];
-                            }),
-                        ],
+            static fn ($syarat): array => [
+                'label'      => $syarat->ref_syarat_nama,
+                'value'      => $syarat->ref_syarat_id,
+                'form_surat' => [
+                    [
+                        'type'     => 'select',
+                        'required' => true,
+                        'label'    => 'Dokumen Syarat',
+                        'name'     => 'dokumen',
+                        'multiple' => false,
+                        'values'   => $syarat->dokumen->map(static fn ($dokumen): array => [
+                            'label' => $dokumen->nama,
+                            'value' => $dokumen->id,
+                        ]),
                     ],
-                ];
-            }
+                ],
+            ]
         );
     }
 
     /**
      * Getter form surat attribute.
-     *
-     * @return mixed
      */
-    public function getFormSuratAttribute()
+    public function getFormSuratAttribute(): void
     {
         // try {
         //     return app('surat')->driver($this->url_surat)->form();
@@ -303,23 +309,18 @@ class FormatSurat extends BaseModel
     // {
     //     $this->attributes['url_surat'] = 'surat_' . strtolower(str_replace([' ', '-'], '_', $this->attributes['nama']));
     // }
-
     /**
      * Getter untuk lokasi_surat
-     *
-     * @return string
      */
-    public function getLokasiSuratAttribute()
+    public function getLokasiSuratAttribute(): string
     {
         return LOKASI_SURAT_DESA . $this->url_surat;
     }
 
     /**
      * Getter untuk judul_surat
-     *
-     * @return string
      */
-    public function getJudulSuratAttribute()
+    public function getJudulSuratAttribute(): string
     {
         return 'Surat ' . $this->nama;
     }
@@ -335,17 +336,7 @@ class FormatSurat extends BaseModel
             return kode_isian($this->url_surat);
         }
 
-        $kode_isian = json_decode($this->attributes['kode_isian']);
-        $non_warga  = json_decode(TinyMCE::getKodeIsianNonWarga());
-        if ($this->getFormIsianAttribute()->data == '2') {
-            if (null !== $kode_isian) {
-                return [...$non_warga, ...$kode_isian];
-            }
-
-            return $non_warga;
-        }
-
-        return $kode_isian;
+        return json_decode($this->attributes['kode_isian'], null);
     }
 
     /**
@@ -359,7 +350,7 @@ class FormatSurat extends BaseModel
             return null;
         }
 
-        return json_decode($this->attributes['form_isian']);
+        return json_decode($this->attributes['form_isian'], null);
     }
 
     /**
@@ -367,9 +358,9 @@ class FormatSurat extends BaseModel
      *
      * @return string
      */
-    public function getMarginCmToMmAttribute()
+    public function getMarginCmToMmAttribute(): array
     {
-        $margin = json_decode($this->margin);
+        $margin = json_decode($this->margin, null);
 
         return [
             $margin->kiri * 10,
@@ -381,34 +372,34 @@ class FormatSurat extends BaseModel
 
     /**
      * Getter untuk url surat sistem
-     *
-     * @return string
      */
-    public function getUrlSuratSistemAttribute()
+    public function getUrlSuratSistemAttribute(): ?string
     {
         $surat_export_desa = LOKASI_SURAT_SISTEM . $this->url_surat . '/' . $this->url_surat . '.rtf';
-
-        if (in_array($this->jenis, ['1', '2']) && is_file($surat_export_desa)) {
-            return $surat_export_desa;
+        if (! in_array($this->jenis, ['1', '2'])) {
+            return null;
+        }
+        if (! is_file($surat_export_desa)) {
+            return null;
         }
 
-        return null;
+        return $surat_export_desa;
     }
 
     /**
      * Getter untuk url surat desa
-     *
-     * @return string
      */
-    public function getUrlSuratDesaAttribute()
+    public function getUrlSuratDesaAttribute(): ?string
     {
         $surat_export_desa = LOKASI_SURAT_DESA . $this->url_surat . '/' . $this->url_surat . '.rtf';
-
-        if (in_array($this->jenis, ['1', '2']) && is_file($surat_export_desa)) {
-            return $surat_export_desa;
+        if (! in_array($this->jenis, ['1', '2'])) {
+            return null;
+        }
+        if (! is_file($surat_export_desa)) {
+            return null;
         }
 
-        return null;
+        return $surat_export_desa;
     }
 
     /**
@@ -434,6 +425,10 @@ class FormatSurat extends BaseModel
      */
     public function scopeKunci($query, $value = self::KUNCI)
     {
+        if ($this->getNonAktifkanRTF() !== 0) {
+            $query->whereNotIn('jenis', self::RTF);
+        }
+
         return $query->where('kunci', $value);
     }
 
@@ -460,6 +455,10 @@ class FormatSurat extends BaseModel
      */
     public function scopeJenis($query, $value)
     {
+        if ($this->getNonAktifkanRTF() !== 0) {
+            $query->whereNotIn('jenis', self::RTF);
+        }
+
         if (empty($value)) {
             return $query->whereNotNull('jenis');
         }
@@ -482,5 +481,25 @@ class FormatSurat extends BaseModel
     public function scopeCetak($query, $url = null)
     {
         return $this->scopeKunci($query, self::KUNCI_DISABLE)->where('url_surat', $url);
+    }
+
+    /**
+     * Get the value of nonAktifkanRTF
+     */
+    public function getNonAktifkanRTF(): int
+    {
+        return $this->nonAktifkanRTF;
+    }
+
+    /**
+     * Set the value of nonAktifkanRTF
+     *
+     * @param mixed $nonAktifkanRTF
+     */
+    public function setNonAktifkanRTF(int $nonAktifkanRTF): self
+    {
+        $this->nonAktifkanRTF = $nonAktifkanRTF;
+
+        return $this;
     }
 }

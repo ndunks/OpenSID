@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -84,7 +84,7 @@ class Pamong extends BaseModel
     // TODO: OpenKab - Sementara di disable dulu observer pada relasi ini
     public function penduduk()
     {
-        return $this->hasOne(Penduduk::class, 'id', 'id_pend')->withoutGlobalScope('App\Scopes\ConfigIdScope');
+        return $this->hasOne(Penduduk::class, 'id', 'id_pend')->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
     }
 
     /**
@@ -116,7 +116,7 @@ class Pamong extends BaseModel
             ->leftJoin('ref_jabatan', 'ref_jabatan.id', '=', 'tweb_desa_pamong.jabatan_id');
 
         if (ci_db()->field_exists('gelar_depan', 'tweb_desa_pamong')) {
-            $new_query = $new_query->selectRaw('gelar_depan')->selectRaw('gelar_belakang');
+            return $new_query->selectRaw('gelar_depan')->selectRaw('gelar_belakang');
         }
 
         return $new_query;
@@ -201,7 +201,7 @@ class Pamong extends BaseModel
     public function scopePenandaTangan($query)
     {
         return $this->scopeSelectData($query)
-            ->where(static function ($query) {
+            ->where(static function ($query): void {
                 $query->whereIn('jabatan_id', RefJabatan::getKadesSekdes())
                     ->orWhere('pamong_ttd', '1')
                     ->orWhere('pamong_ub', '1');
@@ -228,7 +228,7 @@ class Pamong extends BaseModel
      */
     public function scopeDaftar($query, $value = 1)
     {
-        return $query->where('pamong_status', StatusEnum::YA)
+        return $query->aktif()
             ->where('kehadiran', $value);
     }
 
@@ -239,20 +239,47 @@ class Pamong extends BaseModel
      */
     public function getPamongNamaAttribute()
     {
-        if ($this->attributes['id_pend'] != null) {
-            $pamong_nama = $this->penduduk->nama;
-        } else {
-            $pamong_nama = $this->attributes['pamong_nama'];
-        }
+        $pamong_nama = $this->attributes['id_pend'] != null ? $this->penduduk->nama : $this->attributes['pamong_nama'];
 
         if ($this->gelar_depan) {
             $pamong_nama = $this->gelar_depan . ' ' . $pamong_nama;
         }
 
         if ($this->gelar_belakang) {
-            $pamong_nama = $pamong_nama . ', ' . $this->gelar_belakang;
+            return $pamong_nama . ', ' . $this->gelar_belakang;
         }
 
         return $pamong_nama;
+    }
+
+    /**
+     * Scope query untuk pamong yang aktif
+     *
+     * @param Builder $query
+     *
+     * @return Builder
+     */
+    public function scopeAktif($query)
+    {
+        return $query->where('pamong_status', StatusEnum::YA);
+    }
+
+    /**
+     * Scope query untuk pamong kecuali yang sudah digunakan di user
+     *
+     * @param Builder $query
+     * @param mixed   $id
+     *
+     * @return Builder
+     */
+    public function scopeBukanPengguna($query, $id = '')
+    {
+        return $query->whereNotIn('pamong_id', static function ($q) use ($id) {
+            if ($id) {
+                return $q->select(['pamong_id'])->where('id', '!=', $id)->whereNotNull('pamong_id')->from('user');
+            }
+
+            return $q->select(['pamong_id'])->whereNotNull('pamong_id')->from('user');
+        });
     }
 }

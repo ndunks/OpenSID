@@ -13,7 +13,7 @@
 	<section class="content-header">
 		<h1>Pengaturan Menu Dinamis / Kategori</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda')?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li class="active">Pengaturan Menu Dinamis</li>
 		</ol>
 	</section>
@@ -88,6 +88,7 @@
 																</tr>
 															</thead>
 															<tbody>
+																<?php if($main) : ?>
 																<?php foreach ($main as $data): ?>
 																	<tr>
 																		<?php $openKab = (null === $data['config_id']) ? 'disabled' : ''; ?>
@@ -119,6 +120,7 @@
                                     <td>-</td>
 																	</tr>
 																<?php endforeach; ?>
+																<?php else: tidak_ada_data(5); endif; ?>
 															</tbody>
 														</table>
 													</div>

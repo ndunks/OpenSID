@@ -2,7 +2,7 @@
     <section class="content-header">
         <h1><?= $title ?></h1>
         <ol class="breadcrumb">
-            <li><a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a></li>
+            <li><a href="<?= site_url('beranda') ?>"><i class="fa fa-home"></i> Beranda</a></li>
             <li class="active"><?= $title ?></li>
         </ol>
     </section>
@@ -37,7 +37,7 @@
                                                             <tr>
                                                                 <td>
                                                                     <?php if($item->log_verifikasi == 5): ?>
-                                                                        <a href="<?= site_url("api/surat/download/{$item->nomor}") ?>" target="_blank" class="btn btn-social btn-flat bg-black btn-sm" title="Unduh"><i class="fa fa-download"></i> Unduh</a>
+                                                                        <a href="<?= site_url("api/surat_kecamatan/download/{$item->nomor}") ?>" target="_blank" class="btn btn-social btn-flat bg-black btn-sm" title="Unduh"><i class="fa fa-download"></i> Unduh</a>
                                                                     <?php endif ?>
                                                                 </td>
                                                                 <td><?= $item->nama ?></td>

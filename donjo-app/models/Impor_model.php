@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,6 +37,7 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
+use App\Models\LogPenduduk;
 use App\Models\Penduduk;
 use App\Models\PendudukAsuransi;
 use OpenSpout\Reader\Common\Creator\ReaderEntityFactory;
@@ -148,6 +149,7 @@ class Impor_model extends MY_Model
         $this->kode_warganegara       = $this->referensi_model->impor_list_data('tweb_penduduk_warganegara');
         $this->kode_hamil             = $this->referensi_model->impor_list_data('ref_penduduk_hamil');
         $this->kode_asuransi          = PendudukAsuransi::pluck('id')->all();
+        $this->logpenduduk            = new LogPenduduk();
     }
 
     /**
@@ -303,12 +305,14 @@ class Impor_model extends MY_Model
         if ($isi_baris['ibu_nik'] != '' && (! ctype_digit($isi_baris['ibu_nik']) || (strlen($isi_baris['ibu_nik']) != 16 && $isi_baris['ibu_nik'] != '0'))) {
             return 'NIK ibu salah';
         }
-
-        if ($isi_baris['nama_ibu'] != '' && cekNama($isi_baris['nama_ibu'])) {
-            return 'Nama ibu hanya boleh berisi karakter alpha, spasi, titik, koma, tanda petik dan strip';
+        if ($isi_baris['nama_ibu'] == '') {
+            return '';
+        }
+        if (! cekNama($isi_baris['nama_ibu'])) {
+            return '';
         }
 
-        return '';
+        return 'Nama ibu hanya boleh berisi karakter alpha, spasi, titik, koma, tanda petik dan strip';
     }
 
     protected function format_tanggal($kolom_tanggal)
@@ -677,7 +681,7 @@ class Impor_model extends MY_Model
         return $penduduk_baru;
     }
 
-    private function hapus_data_penduduk()
+    private function hapus_data_penduduk(): void
     {
         $tabel_penduduk = ['tweb_wil_clusterdesa', 'tweb_keluarga', 'tweb_penduduk', 'log_keluarga', 'log_penduduk', 'log_perubahan_penduduk', 'log_surat', 'tweb_rtm'];
 
@@ -714,7 +718,7 @@ class Impor_model extends MY_Model
             return false;
         }
 
-        return ! $this->setting->tgl_data_lengkap_aktif || empty($this->setting->tgl_data_lengkap);
+        return ! $this->setting->tgl_data_lengkap_aktif;
     }
 
     public function impor_excel($hapus = false)
@@ -747,11 +751,7 @@ class Impor_model extends MY_Model
                     continue;
                 }
 
-                $data_excel = collect($sheet->getRowIterator())->map(static function ($row) {
-                    return collect($row->getCells())->map(static function ($cell) {
-                        return $cell->getValue();
-                    });
-                })
+                $data_excel = collect($sheet->getRowIterator())->map(static fn ($row) => collect($row->getCells())->map(static fn ($cell) => $cell->getValue()))
                     ->chunk(500)
                     ->toArray();
 

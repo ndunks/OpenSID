@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -138,10 +138,9 @@ class Migrasi_multidb extends MY_model
         $hasil = $hasil && $this->analisis_respon($hasil);
         $hasil = $hasil && $this->tte($hasil);
         $hasil = $hasil && $this->dtks($hasil);
+        $hasil = $hasil && $this->password_reset($hasil);
 
-        $hasil = $hasil && $this->jalankan_migrasi('data_awal');
-
-        return $hasil && true;
+        return $hasil && $this->jalankan_migrasi('data_awal');
     }
 
     // OpenKAB - Identitas Desa
@@ -192,14 +191,14 @@ class Migrasi_multidb extends MY_model
 
         // Unique kolom app_key pada tabel config
         if (! $this->cek_indeks($tabel, 'app_key')) {
-            Schema::table($tabel, static function (Blueprint $table) {
+            Schema::table($tabel, static function (Blueprint $table): void {
                 $table->unique(['app_key'], 'app_key');
             });
         }
 
         // Unique kolom kode_desa pada tabel config
         if (! $this->cek_indeks($tabel, 'kode_desa')) {
-            Schema::table($tabel, static function (Blueprint $table) {
+            Schema::table($tabel, static function (Blueprint $table): void {
                 $table->unique(['kode_desa'], 'kode_desa');
             });
         }
@@ -231,9 +230,7 @@ class Migrasi_multidb extends MY_model
         $hasil = $hasil && $this->tambah_config_id($table);
 
         // Sesuaikan ulang index key pada tabel setting_aplikasi
-        $hasil = $hasil && $this->buat_ulang_index($table, 'key', '(`config_id`, `key`)');
-
-        return $hasil && true;
+        return $hasil && $this->buat_ulang_index($table, 'key', '(`config_id`, `key`)');
     }
 
     // OpenKAB - Teks Berjalan
@@ -295,12 +292,12 @@ class Migrasi_multidb extends MY_model
         $hasil = $hasil && $this->tambah_config_id($tabel);
 
         if (! $this->cek_indeks($tabel, 'media_sosial_config')) {
-            Schema::table($tabel, static function (Blueprint $table) {
+            Schema::table($tabel, static function (Blueprint $table): void {
                 $table->unique(['config_id', 'nama'], 'media_sosial_config');
             });
         }
 
-        return $hasil && true;
+        return $hasil;
     }
 
     // OpenKAB - Kehadiran Jam Kerja
@@ -311,12 +308,12 @@ class Migrasi_multidb extends MY_model
         $hasil = $hasil && $this->tambah_config_id($tabel);
 
         if (! $this->cek_indeks($tabel, 'jam_kerja_config')) {
-            Schema::table($tabel, static function (Blueprint $table) {
+            Schema::table($tabel, static function (Blueprint $table): void {
                 $table->unique(['config_id', 'nama_hari'], 'jam_kerja_config');
             });
         }
 
-        return $hasil && true;
+        return $hasil;
     }
 
     // OpenKAB - Kehadiran Alasan Keluar
@@ -380,7 +377,6 @@ class Migrasi_multidb extends MY_model
     protected function log_penduduk($hasil)
     {
         $table = 'log_penduduk';
-
         $this->db->query('ALTER TABLE log_perubahan_penduduk MODIFY COLUMN tanggal timestamp DEFAULT current_timestamp() NOT NULL');
         // Tambah kolom config_id pada tabel tweb_penduduk
         $hasil = $hasil && $this->tambah_config_id($table);
@@ -448,7 +444,6 @@ class Migrasi_multidb extends MY_model
     protected function anjungan_menu($hasil)
     {
         $tabel = 'anjungan_menu';
-        $hasil = $hasil && $this->tambah_config_id($tabel);
 
         // if (! $this->cek_indeks($tabel, 'anjungan_menu_config')) {
         //     Schema::table($tabel, static function (Blueprint $table) {
@@ -456,7 +451,7 @@ class Migrasi_multidb extends MY_model
         //     });
         // }
 
-        return $hasil && true;
+        return $hasil && $this->tambah_config_id($tabel);
     }
 
     protected function peta_lokasi($hasil)
@@ -578,14 +573,13 @@ class Migrasi_multidb extends MY_model
 
     protected function rtm($hasil)
     {
-        $tabel = 'tweb_rtm';
-
+        $table = 'tweb_rtm';
         $this->db->query('ALTER TABLE tweb_rtm MODIFY COLUMN tgl_daftar timestamp DEFAULT current_timestamp() NOT NULL');
-        $hasil = $hasil && $this->tambah_config_id($tabel);
+        $hasil = $hasil && $this->tambah_config_id($table);
 
-        $hasil = $hasil && $this->hapus_indeks($tabel, 'no_kk_2');
+        $hasil = $hasil && $this->hapus_indeks($table, 'no_kk_2');
 
-        $hasil = $hasil && $this->buat_ulang_index($tabel, 'no_kk', '(`config_id`, `no_kk`)');
+        $hasil = $hasil && $this->buat_ulang_index($table, 'no_kk', '(`config_id`, `no_kk`)');
 
         return $hasil && $this->db->query('CREATE OR REPLACE VIEW keluarga_aktif AS SELECT k.* FROM tweb_keluarga k LEFT JOIN tweb_penduduk p ON k.nik_kepala = p.id WHERE p.status_dasar = 1');
     }
@@ -936,7 +930,7 @@ class Migrasi_multidb extends MY_model
         $hasil = $hasil && $this->tambah_config_id($tabel);
 
         if (! $this->cek_indeks($tabel, 'nama_grup_config')) {
-            Schema::table($tabel, static function (Blueprint $table) {
+            Schema::table($tabel, static function (Blueprint $table): void {
                 $table->unique(['config_id', 'nama'], 'nama_grup_config');
             });
         }
@@ -1047,7 +1041,6 @@ class Migrasi_multidb extends MY_model
     protected function notifikasi($hasil)
     {
         $tabel = 'notifikasi';
-
         $this->db->query('ALTER TABLE notifikasi MODIFY COLUMN tgl_berikutnya timestamp DEFAULT current_timestamp() NOT NULL');
         $hasil = $hasil && $this->tambah_config_id('notifikasi');
 
@@ -1127,19 +1120,20 @@ class Migrasi_multidb extends MY_model
         return $hasil && $this->tambah_config_id('dtks_lampiran');
     }
 
+    protected function password_reset($hasil)
+    {
+        $this->db->query('ALTER TABLE password_resets MODIFY COLUMN created_at timestamp DEFAULT current_timestamp() NOT NULL');
+
+        return $hasil;
+    }
+
     protected function cek_data_kelompok($hasil)
     {
-        Kelompok::whereNotIn('id_master', static function ($q) {
-            return $q->select('id')->from('kelompok_master');
-        })->delete();
+        Kelompok::whereNotIn('id_master', static fn ($q) => $q->select('id')->from('kelompok_master'))->delete();
 
-        KelompokAnggota::whereNotIn('id_kelompok', static function ($q) {
-            return $q->select('id')->from('kelompok');
-        })->delete();
+        KelompokAnggota::whereNotIn('id_kelompok', static fn ($q) => $q->select('id')->from('kelompok'))->delete();
 
-        KelompokAnggota::whereNotIn('id_penduduk', static function ($q) {
-            return $q->select('id')->from('tweb_penduduk');
-        })->delete();
+        KelompokAnggota::whereNotIn('id_penduduk', static fn ($q) => $q->select('id')->from('tweb_penduduk'))->delete();
 
         return $hasil;
     }

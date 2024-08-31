@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -40,9 +40,11 @@ defined('BASEPATH') || exit('No direct script access allowed');
 use App\Libraries\FlxZipArchive;
 use App\Models\LogBackup;
 use App\Models\LogRestoreDesa;
+use App\Models\Migrasi;
 use App\Models\SettingAplikasi;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 use Symfony\Component\Process\Process;
 
 class Database extends Admin_Controller
@@ -57,23 +59,23 @@ class Database extends Admin_Controller
         $this->sub_modul_ini = 'database';
     }
 
-    public function index()
+    public function index(): void
     {
         $data = [
-            'act_tab'     => 1,
-            'content'     => 'database/backup',
-            'form_action' => site_url('database/restore'),
-            'size_folder' => byte_format(dirSize(DESAPATH)),
-            'size_sql'    => byte_format(getSizeDB()->size),
-            'act_tab'     => 1,
-            'inkremental' => LogBackup::where('status', '<', 2)->latest()->first(),
-            'restore'     => LogRestoreDesa::where('status', '=', 0)->exists(),
+            'content'      => 'database/backup',
+            'form_action'  => site_url('database/restore'),
+            'size_folder'  => byte_format(dirSize(DESAPATH)),
+            'size_sql'     => byte_format(getSizeDB()->size),
+            'act_tab'      => 1,
+            'inkremental'  => LogBackup::where('status', '<', 2)->latest()->first(),
+            'restore'      => LogRestoreDesa::where('status', '=', 0)->exists(),
+            'memory_limit' => Arr::get($this->setting_model->cekKebutuhanSistem(), 'memory_limit.result'),
         ];
 
         $this->load->view('database/database.tpl.php', $data);
     }
 
-    public function migrasi_cri()
+    public function migrasi_cri(): void
     {
         $data['form_action'] = site_url('database/migrasi_db_cri');
 
@@ -82,20 +84,33 @@ class Database extends Admin_Controller
         $this->load->view('database/database.tpl.php', $data);
     }
 
-    public function migrasi_db_cri()
+    public function migrasi_db_cri(): void
     {
         $this->redirect_hak_akses('u');
         session_error_clear();
-        $this->database_model->migrasi_db_cri();
-        redirect('database/migrasi_cri');
+        set_time_limit(0);              // making maximum execution time unlimited
+        ob_implicit_flush(1);           // Send content immediately to the browser on every statement which produces output
+        ob_end_flush();
+        // Migrasi::where('versi_database', VERSI_DATABASE)->delete();
+        $migrasiTerakhir = Migrasi::orderBy('id', 'desc')->first();
+        if ($migrasiTerakhir) {
+            $migrasiTerakhir->delete();
+        }
+        echo json_encode(['message' => 'Ulangi migrasi database versi ' . VERSI_DATABASE, 'status' => 0]);
+        $this->database_model->setShowProgress(1)->cek_migrasi();
+        echo json_encode(['message' => 'Proses migrasi database telah berhasil', 'status' => 1]);
     }
 
     public function exec_backup()
     {
+        if (! Arr::get($this->setting_model->cekKebutuhanSistem(), 'memory_limit.result')) {
+            return show_404();
+        }
+
         $this->ekspor_model->backup();
     }
 
-    public function desa_backup()
+    public function desa_backup(): void
     {
         $za = new FlxZipArchive();
         $za->read_dir(DESAPATH);
@@ -138,7 +153,7 @@ class Database extends Admin_Controller
         ]);
     }
 
-    public function inkremental_download()
+    public function inkremental_download(): void
     {
         $file = LogBackup::latest()->first();
         $file->update(['downloaded_at' => Carbon::now(), 'status' => 2]);
@@ -147,7 +162,7 @@ class Database extends Admin_Controller
         $za->download('backup_inkremental' . $file->created_at->format('Y_m-d') . '.zip');
     }
 
-    public function restore()
+    public function restore(): void
     {
         $this->redirect_hak_akses('h');
 
@@ -174,23 +189,25 @@ class Database extends Admin_Controller
         }
     }
 
-    // Dikhususkan untuk server yg hanya digunakan untuk web publik
     public function acak()
     {
         $this->redirect_hak_akses('u');
-        if ($this->setting->penggunaan_server != 6) {
+        if ($this->setting->penggunaan_server != 6 && ! super_admin()) {
             return;
         }
 
         $this->load->model('acak_model');
-        echo $this->load->view('database/hasil_acak', '', true);
-        $hasil = $this->acak_model->acak_penduduk();
-        $hasil = $hasil && $this->acak_model->acak_keluarga();
-        echo $this->load->view('database/hasil_acak', '', true);
+
+        $data = [
+            'penduduk' => $this->acak_model->acak_penduduk(),
+            'keluarga' => $this->acak_model->acak_keluarga(),
+        ];
+
+        return view('admin.database.acak.index', $data);
     }
 
     // Digunakan untuk server yg hanya digunakan untuk web publik
-    public function mutakhirkan_data_server()
+    public function mutakhirkan_data_server(): void
     {
         $this->redirect_hak_akses('u');
         $this->session->error_msg = null;
@@ -200,7 +217,7 @@ class Database extends Admin_Controller
         $this->load->view('database/ajax_sinkronkan');
     }
 
-    public function proses_sinkronkan()
+    public function proses_sinkronkan(): void
     {
         $this->redirect_hak_akses('u');
         $this->load->model('sinkronisasi_model');
@@ -225,13 +242,13 @@ class Database extends Admin_Controller
         redirect($_SERVER['HTTP_REFERER']);
     }
 
-    public function batal_backup()
+    public function batal_backup(): void
     {
         $this->load->library('job_prosess');
         // ambil semua data pid yang masih dalam prosess
         $last_backup = LogBackup::where('status', '=', 0)->get();
 
-        foreach ($last_backup as $key => $value) {
+        foreach ($last_backup as $value) {
             $this->job_prosess->kill($value->pid_process);
             $value->status = 3;
             $value->save();
@@ -248,7 +265,7 @@ class Database extends Admin_Controller
             return json([
                 'status'  => false,
                 'message' => 'Metode tidak ditemukan',
-            ]);
+            ], 400);
         }
 
         $user = User::when($method == 'telegram', static fn ($query) => $query->whereNotNull('telegram_verified_at'))
@@ -259,11 +276,11 @@ class Database extends Admin_Controller
             return json([
                 'status'  => false,
                 'message' => "{$method} belum terverifikasi",
-            ]);
+            ], 400);
         }
 
         try {
-            $token           = hash('sha256', $raw_token = mt_rand(100000, 999999));
+            $token           = hash('sha256', $raw_token = random_int(100000, 999999));
             $user->token     = $token;
             $user->token_exp = date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . ' +5 minutes'));
             $user->save();
@@ -275,13 +292,13 @@ class Database extends Admin_Controller
 
             return json([
                 'status'  => true,
-                'message' => "OTP sudah Terkirim ke {$method}",
+                'message' => "Kode verifikasi sudah terkirim ke {$method}",
             ]);
         } catch (Exception $e) {
             return json([
                 'status'   => false,
                 'messages' => $e->getMessage(),
-            ]);
+            ], 400);
         }
     }
 
@@ -359,13 +376,13 @@ class Database extends Admin_Controller
         }
     }
 
-    public function batal_restore()
+    public function batal_restore(): void
     {
         $this->load->library('job_prosess');
         // ambil semua data pid yang masih dalam prosess
         $last_restore = LogRestoreDesa::where('status', '=', 0)->get();
 
-        foreach ($last_restore as $key => $value) {
+        foreach ($last_restore as $value) {
             $this->job_prosess->kill($value->pid_process);
             $value->status = 3;
             $value->save();

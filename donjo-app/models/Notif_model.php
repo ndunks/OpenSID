@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,11 +37,6 @@
 
 class Notif_model extends MY_Model
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function permohonan_surat_baru()
     {
         return $this->config_id()
@@ -106,28 +101,10 @@ class Notif_model extends MY_Model
         return $notif;
     }
 
-    private function masih_berlaku($notif)
-    {
-        switch ($notif['kode']) {
-            case 'tracking_off':
-                if ($this->setting->enable_track) {
-                    $this->db->where('kode', 'tracking_off')
-                        ->update('notifikasi', ['aktif' => 0]);
-
-                    return false;
-                }
-                break;
-        }
-
-        return true;
-    }
-
-    public function update_notifikasi($kode, $non_aktifkan = false)
+    public function update_notifikasi($kode, $non_aktifkan = false): void
     {
         // update tabel notifikasi
-        $notif = $this->get_notif_by_kode($kode);
-
-        $tgl_sekarang     = date('Y-m-d H:i:s');
+        $notif            = $this->get_notif_by_kode($kode);
         $frekuensi        = $notif['frekuensi'];
         $string_frekuensi = '+' . $frekuensi . ' Days';
         $tambah_hari      = strtotime($string_frekuensi); // tgl hari ini ditambah frekuensi
@@ -163,7 +140,7 @@ class Notif_model extends MY_Model
             ->result_array();
     }
 
-    public function insert_notif($data)
+    public function insert_notif($data): void
     {
         $sql = $this->db->insert_string('notifikasi', $data) . duplicate_key_update_str($data);
         $this->db->query($sql);

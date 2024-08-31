@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -46,10 +46,8 @@ use Spipu\Html2Pdf\Html2Pdf;
  * Cek folder semua komponen surat dulu, baru cek folder export
  *
  * @param mixed $nama_surat
- *
- * @return string
  */
-function SuratExportDesa($nama_surat)
+function SuratExportDesa(string $nama_surat): string
 {
     $surat_export_desa = LOKASI_SURAT_DESA . $nama_surat . '/' . $nama_surat . '.rtf';
     if (is_file($surat_export_desa)) {
@@ -72,10 +70,8 @@ function SuratExportDesa($nama_surat)
  *    2. surat export asli SID
  *
  * @param mixed $nama_surat
- *
- * @return string
  */
-function SuratExport($nama_surat)
+function SuratExport($nama_surat): string
 {
     if (SuratExportDesa($nama_surat) != '') {
         return SuratExportDesa($nama_surat);
@@ -89,7 +85,7 @@ function SuratExport($nama_surat)
     return '';
 }
 
-function ikut_case($format, $str)
+function ikut_case(string $format, $str): string
 {
     $str = strtolower($str);
     if (ctype_upper($format[0]) && ctype_upper($format[1])) {
@@ -105,9 +101,9 @@ function ikut_case($format, $str)
 /**
  * Membuat string yang diisi &nbsp; di awal dan di akhir, dengan panjang yang ditentukan.
  *
- * @param string      Text yang akan ditambahi awal dan akhiran
- * @param awal     Jumlah karakter &nbsp; pada awal text
- * @param panjang  Panjang string yang dihasilkan,
+ * @param            string      Text yang akan ditambahi awal dan akhiran
+ * @param            awal     Jumlah karakter &nbsp; pada awal text
+ * @param            panjang  Panjang string yang dihasilkan,
  *                            di mana setiap &nbsp; dihitung sebagai satu karakter
  * @param mixed $str
  * @param mixed $awal
@@ -115,7 +111,7 @@ function ikut_case($format, $str)
  *
  * @return string berisi text yang telah diberi awalan dan akhiran &nbsp;
  */
-function padded_string_fixed_length($str, $awal, $panjang)
+function padded_string_fixed_length($str, $awal, $panjang): string
 {
     $padding         = '&nbsp;';
     $panjang_padding = strlen($padding);
@@ -127,10 +123,9 @@ function padded_string_fixed_length($str, $awal, $panjang)
 
 function padded_string_center($str, $panjang)
 {
-    $padding         = '&nbsp;';
-    $panjang_padding = strlen($padding);
-    $panjang_text    = strlen($str);
-    $to_pad          = ($panjang - $panjang_text) / 2;
+    $padding      = '&nbsp;';
+    $panjang_text = strlen($str);
+    $to_pad       = ($panjang - $panjang_text) / 2;
 
     for ($i = 0; $i < $to_pad; $i++) {
         $str = $padding . $str . $padding;
@@ -145,7 +140,7 @@ function strip_kosong($str)
 }
 
 // Simpan laporan html sebagai file PDF
-function buat_pdf($isi, $file, $style = null, $orientation = 'P', $page_size = 'A4')
+function buat_pdf(string $isi, string $file, $style = null, $orientation = 'P', $page_size = 'A4'): void
 {
     // CSS perlu ditambahkan secara eksplisit
     $style     = $style ?: APPPATH . '../assets/css/report.css';
@@ -176,7 +171,7 @@ if (! function_exists('QRCodeExist')) {
      *
      * @return Builder
      */
-    function QRCodeExist($value, $awalanQrCode = '89504e470d0a1a0a0000000d4948445200000084000000840802000000de')
+    function QRCodeExist($value, $awalanQrCode = '89504e470d0a1a0a0000000d4948445200000084000000840802000000de'): bool
     {
         $ada = false;
         // Pakai surat ubahan desa apabila ada
@@ -188,7 +183,7 @@ if (! function_exists('QRCodeExist')) {
         if (is_file($file)) {
             $handle = fopen($file, 'rb');
             $buffer = stream_get_contents($handle);
-            $ada    = strpos($buffer, $awalanQrCode) !== false;
+            $ada    = strpos($buffer, (string) $awalanQrCode) !== false;
             fclose($handle);
         }
 
@@ -267,4 +262,54 @@ if (! function_exists('QRCodeExist')) {
 
         return $inputs;
     }
+}
+
+// Untuk Lampiran
+if (! function_exists('kotak')) {
+    function kotak(array $data_kolom, $max_kolom = 26): string
+    {
+        $view = '';
+
+        for ($i = 0; $i < $max_kolom; $i++) {
+            $view .= '<td class="kotak padat tengah">';
+            if (isset($data_kolom[$i])) {
+                $view .= strtoupper($data_kolom[$i]);
+            } else {
+                $view .= '&nbsp;';
+            }
+            $view .= '</td>';
+        }
+
+        return $view;
+    }
+}
+
+if (! function_exists('checklist')) {
+    function checklist($kondisi_1, $kondisi_2): string
+    {
+        $view = '<td class="kotak padat tengah">';
+        if ($kondisi_1 == $kondisi_2) {
+            $view .= '<img src="' . base_url('assets/images/check.png') . '" height="10" width="10"/>';
+        }
+
+        return $view . '</td>';
+    }
+}
+
+function get_key_form_kategori($data, $utama = false)
+{
+    $kategori = collect($data)->mapWithKeys(static function ($item, $key) {
+        $judul = $item->judul ?: str_replace('_', ' ', $key);
+        if ($key == 'individu') {
+            $judul = 'Utama';
+        }
+
+        return [$key => $judul];
+    })->toArray();
+
+    if (! $utama) {
+        unset($kategori['individu']);
+    }
+
+    return $kategori;
 }

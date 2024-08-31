@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,11 +37,6 @@
 
 class Web_sosmed_model extends MY_Model
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function get_sosmed($sosmed)
     {
         $id = $this->get_id($sosmed);
@@ -67,7 +62,7 @@ class Web_sosmed_model extends MY_Model
         }
     }
 
-    public function update($sosmed)
+    public function update($sosmed): void
     {
         $id = $this->get_id($sosmed);
 
@@ -75,11 +70,7 @@ class Web_sosmed_model extends MY_Model
         $link = trim(strip_tags($this->input->post('link')));
 
         // untuk youtube validasi dilakukan khusus
-        if ($id === '4') {
-            $data['link'] = $this->link_sosmed($id, $link);
-        } else {
-            $data['link'] = $link;
-        }
+        $data['link'] = $id === '4' ? $this->link_sosmed($id, $link) : $link;
 
         $outp = $this->config_id()
             ->where('id', $id)
@@ -128,12 +119,11 @@ class Web_sosmed_model extends MY_Model
             $pattern = '/@[A-Za-z][A-Za-z0-9_\\-.]{2,29}/i';
             if (preg_match_all($pattern, $link, $matches)) {
                 $nickname = array_shift(array_shift($matches));
-                $link     = 'https://www.youtube.com/' . $nickname;
-            } else {
-                $link = '';
+
+                return 'https://www.youtube.com/' . $nickname;
             }
 
-            return $link;
+            return '';
         }
         // Remove all illegal characters from a url
         // remove `@` with ''

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,7 +39,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Migrasi_1906_ke_1907 extends CI_model
 {
-    public function up()
+    public function up(): void
     {
         // Menambahkan Tabel tweb_aset yang digunakan unhtuk autofield pada pemilihan aset
         if (! $this->db->table_exists('tweb_aset')) {
@@ -4320,7 +4320,7 @@ class Migrasi_1906_ke_1907 extends CI_model
         $penduduk_lahir = $this->db->get('tweb_penduduk')->result();
         $this->dbforge->modify_column('tweb_penduduk', ['berat_lahir' => ['type' => 'VARCHAR', 'constraint' => 10, 'null' => true]]);
 
-        foreach ($penduduk_lahir as $key => $value) {
+        foreach ($penduduk_lahir as $value) {
             $this->db->where('id', $value->id)->update('tweb_penduduk', ['berat_lahir' => ($value->berat_lahir == '') ? null : (int) ($value->berat_lahir)]);
         }
 

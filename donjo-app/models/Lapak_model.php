@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -66,7 +66,7 @@ class Lapak_model extends MY_Model
     {
         $this->produk();
 
-        if ($search) {
+        if ($search !== '' && $search !== '0') {
             $this->db
                 ->group_start()
                 ->like('p.nama', $search)
@@ -138,7 +138,7 @@ class Lapak_model extends MY_Model
         return $this->paging;
     }
 
-    public function produk_insert()
+    public function produk_insert(): void
     {
         $data              = $this->produk_validasi();
         $data['config_id'] = $this->config_id;
@@ -147,7 +147,7 @@ class Lapak_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function produk_update($id = 0)
+    public function produk_update($id = 0): void
     {
         $data               = $this->produk_validasi();
         $data['updated_at'] = date('Y-m-d H:i:s');
@@ -179,7 +179,8 @@ class Lapak_model extends MY_Model
             'satuan'             => alfanumerik_spasi($post['satuan']),
             'tipe_potongan'      => bilangan($post['tipe_potongan']),
             'deskripsi'          => $this->security->xss_clean($post['deskripsi']),
-            'foto'               => ($foto == []) ? null : json_encode($foto),
+            'foto'               => ($foto == []) ? null : json_encode($foto, JSON_THROW_ON_ERROR),
+            'potongan'           => ($post['potongan'] == null) ? '0' : $post['potongan'],
         ];
 
         if ($post['tipe_potongan'] == 1 && ! empty($post['persen'])) {
@@ -193,7 +194,7 @@ class Lapak_model extends MY_Model
         return $data;
     }
 
-    private function upload_foto_produk($key = 1)
+    private function upload_foto_produk(int $key = 1)
     {
         $this->load->library('MY_Upload', null, 'upload');
         // Adakah berkas yang disertakan?
@@ -229,7 +230,7 @@ class Lapak_model extends MY_Model
         return $uploadData;
     }
 
-    public function produk_delete($id = 0)
+    public function produk_delete($id = 0): void
     {
         $this->hapus_foto_produk('id', $id);
 
@@ -238,7 +239,7 @@ class Lapak_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function produk_delete_all()
+    public function produk_delete_all(): void
     {
         $id_cb = $_POST['id_cb'];
 
@@ -257,9 +258,10 @@ class Lapak_model extends MY_Model
         }
 
         foreach ($list_data as $data) {
-            $foto = json_decode($data->foto);
+            $foto    = json_decode($data->foto, null);
+            $counter = count($foto);
 
-            for ($i = 0; $i < count($foto); $i++) {
+            for ($i = 0; $i < $counter; $i++) {
                 unlink(LOKASI_PRODUK . $foto[$i]);
             }
         }
@@ -277,7 +279,7 @@ class Lapak_model extends MY_Model
     {
         $this->pelapak();
 
-        if ($search) {
+        if ($search !== '' && $search !== '0') {
             $this->db
                 ->group_start()
                 ->like('p.nama', $search)
@@ -312,7 +314,7 @@ class Lapak_model extends MY_Model
             ->result();
     }
 
-    public function pelapak_insert()
+    public function pelapak_insert(): void
     {
         $data              = $this->pelapak_validasi();
         $data['config_id'] = $this->config_id;
@@ -327,7 +329,7 @@ class Lapak_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function pelapak_update($id = 0)
+    public function pelapak_update($id = 0): void
     {
         $data = $this->pelapak_validasi();
         $outp = $this->config_id()->where('id', $id)->update('pelapak', $data);
@@ -335,7 +337,7 @@ class Lapak_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function pelapak_update_maps($id = 0)
+    public function pelapak_update_maps($id = 0): void
     {
         $post = $this->input->post();
 
@@ -359,7 +361,7 @@ class Lapak_model extends MY_Model
         ];
     }
 
-    public function pelapak_delete($id = 0)
+    public function pelapak_delete($id = 0): void
     {
         $this->hapus_foto_produk('id_pelapak', $id);
 
@@ -368,7 +370,7 @@ class Lapak_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function pelapak_delete_all()
+    public function pelapak_delete_all(): void
     {
         $id_cb = $_POST['id_cb'];
 
@@ -414,7 +416,7 @@ class Lapak_model extends MY_Model
     {
         $this->kategori();
 
-        if ($search) {
+        if ($search !== '' && $search !== '0') {
             $this->db->like('pk.kategori', $search);
         }
 
@@ -433,7 +435,7 @@ class Lapak_model extends MY_Model
             ->from('produk_kategori pk');
     }
 
-    public function kategori_insert()
+    public function kategori_insert(): void
     {
         $data              = $this->kategori_validasi();
         $data['config_id'] = $this->config_id;
@@ -442,7 +444,7 @@ class Lapak_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function kategori_update($id = 0)
+    public function kategori_update($id = 0): void
     {
         $data = $this->kategori_validasi();
         $outp = $this->config_id()->where('id', $id)->update('produk_kategori', $data);
@@ -450,7 +452,7 @@ class Lapak_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function kategori_delete($id = 0)
+    public function kategori_delete($id = 0): void
     {
         $this->hapus_foto_produk('id_produk_kategori', $id);
 
@@ -459,7 +461,7 @@ class Lapak_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function kategori_delete_all()
+    public function kategori_delete_all(): void
     {
         $id_cb = $_POST['id_cb'];
 
@@ -478,7 +480,7 @@ class Lapak_model extends MY_Model
         ];
     }
 
-    public function status($table, $id, $status = 1)
+    public function status($table, $id, $status = 1): void
     {
         $outp = $this->config_id()
             ->where('id', $id)

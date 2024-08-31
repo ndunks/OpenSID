@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -54,10 +54,7 @@ class Email_repository implements Password_interface
      */
     protected $ci;
 
-    /**
-     * @var Password_reset_interface
-     */
-    protected $tokens;
+    protected Password_reset_interface $tokens;
 
     public function __construct(Password_reset_interface $token)
     {
@@ -66,12 +63,13 @@ class Email_repository implements Password_interface
         $this->tokens     = $token;
 
         $this->ci->load->library('email');
+        $this->ci->email->initialize(config_email());
     }
 
     /**
      * {@inheritDoc}
      */
-    public function sendResetLink(array $credentials, ?Closure $callback = null)
+    public function sendResetLink(array $credentials, ?Closure $callback = null): string
     {
         // First we will check to see if we found a user at the given credentials and
         // if we did not we will redirect back to this current URI with a piece of
@@ -88,7 +86,7 @@ class Email_repository implements Password_interface
 
         $token = $this->tokens->create($user);
 
-        if ($callback) {
+        if ($callback instanceof Closure) {
             $callback($user, $token);
         } else {
             // Once we have the reset token, we are ready to send the message out to this
@@ -107,7 +105,7 @@ class Email_repository implements Password_interface
                 return static::RESET_LINK_SENT;
             }
 
-            throw new \Exception($this->ci->email->print_debugger());
+            throw new Exception($this->ci->email->print_debugger());
         }
 
         return static::RESET_LINK_SENT;
@@ -116,7 +114,7 @@ class Email_repository implements Password_interface
     /**
      * {@inheritDoc}
      */
-    public function sendVerifyLink(array $credentials, ?Closure $callback = null)
+    public function sendVerifyLink(array $credentials, ?Closure $callback = null): string
     {
         // First we will check to see if we found a user at the given credentials and
         // if we did not we will redirect back to this current URI with a piece of
@@ -127,7 +125,7 @@ class Email_repository implements Password_interface
             return static::INVALID_USER;
         }
 
-        if ($callback) {
+        if ($callback instanceof Closure) {
             $callback($user);
         } else {
             // We are ready to send verify the message out to this user with a link
@@ -147,7 +145,7 @@ class Email_repository implements Password_interface
                 return static::VERIFY_LINK_SENT;
             }
 
-            throw new \Exception($this->ci->email->print_debugger());
+            throw new Exception($this->ci->email->print_debugger());
         }
 
         return static::VERIFY_LINK_SENT;
@@ -200,7 +198,7 @@ class Email_repository implements Password_interface
     /**
      * {@inheritDoc}
      */
-    public function deleteToken($user)
+    public function deleteToken($user): void
     {
         $this->tokens->destroy($user);
     }
@@ -216,7 +214,7 @@ class Email_repository implements Password_interface
     /**
      * {@inheritDoc}
      */
-    public function getRepository()
+    public function getRepository(): Password_reset_interface
     {
         return $this->tokens;
     }

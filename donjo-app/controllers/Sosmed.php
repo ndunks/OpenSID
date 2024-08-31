@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -48,7 +48,7 @@ class Sosmed extends Admin_Controller
         $this->sub_modul_ini = 'media-sosial';
     }
 
-    public function index()
+    public function index(): void
     {
         $sosmed = $this->session->userdata('sosmed');
 
@@ -66,18 +66,18 @@ class Sosmed extends Admin_Controller
         $this->render('sosmed/sosmed', $data);
     }
 
-    public function tab($sosmed)
+    public function tab($sosmed): void
     {
         $this->session->set_userdata('sosmed', $sosmed);
 
         redirect('sosmed');
     }
 
-    public function update($sosmed)
+    public function update($sosmed): void
     {
         $this->redirect_hak_akses('u');
         $this->web_sosmed_model->update($sosmed);
-        $redirect = (! empty($sosmed)) ? "sosmed/tab/{$sosmed}" : 'sosmed';
+        $redirect = (empty($sosmed)) ? 'sosmed' : "sosmed/tab/{$sosmed}";
         redirect($redirect);
     }
 }

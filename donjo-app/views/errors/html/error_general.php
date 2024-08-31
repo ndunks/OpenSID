@@ -1,24 +1,12 @@
 <?php defined('BASEPATH') || exit('No direct script access allowed'); ?>
-<?php
-	$CI = null;
-	if( class_exists('CI_Controller') ) {
-		$CI = &get_instance();
-		if (! isset($CI)) {
-			$CI = new CI_Controller();
-		}
-	}
-	global $base_url;
-	$base_url = $base_url ?? "/";
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
 	<title>Error</title>
-	<link rel="stylesheet" type="text/css" href="<?= $base_url ?>assets/bootstrap/css/bootstrap.min.css" />
-	<link rel="stylesheet" type="text/css" href="<?= $base_url ?>assets/css/font-awesome.min.css" />
-	<link rel="stylesheet" type="text/css" href="<?= $base_url ?>assets/css/AdminLTE.css" />
+	<link rel="stylesheet" type="text/css" href="<?= asset('bootstrap/css/bootstrap.min.css') ?>" />
+	<link rel="stylesheet" type="text/css" href="<?= asset('css/font-awesome.min.css') ?>" />
+	<link rel="stylesheet" type="text/css" href="<?= asset('css/AdminLTE.css') ?>" />
 </head>
 
 <body>
@@ -32,7 +20,7 @@
 				<p>
 					<?= $message; ?>
 
-					Versi <?= config_item('nama_aplikasi') . ' ' . AmbilVersi() ?>. PHP versi <?= preg_split('/-/', PHP_VERSION)[0] ?>.
+					Versi <?= config_item('nama_aplikasi') . ' ' . AmbilVersi() ?>.
 
 					<?php if ($status_code >= 500) : ?>
 						<br><br>

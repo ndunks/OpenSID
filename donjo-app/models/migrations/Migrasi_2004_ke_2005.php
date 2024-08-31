@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,7 +39,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Migrasi_2004_ke_2005 extends CI_model
 {
-    public function up()
+    public function up(): void
     {
         $this->covid19();
         $this->covid19Monitoring();
@@ -101,7 +101,7 @@ class Migrasi_2004_ke_2005 extends CI_model
         $this->db->query('CREATE VIEW dokumen_hidup AS SELECT * FROM dokumen WHERE deleted <> 1');
     }
 
-    private function covid19()
+    private function covid19(): void
     {
         // Menambahkan menu 'Group / Hak Akses' ke table 'setting_modul'
         $data[] = [
@@ -218,7 +218,7 @@ class Migrasi_2004_ke_2005 extends CI_model
         }
     }
 
-    private function covid19Monitoring()
+    private function covid19Monitoring(): void
     {
         // Update Menu Siaga Covid-19 Menjadi Menu Parent
         $this->db->where('id', 206)

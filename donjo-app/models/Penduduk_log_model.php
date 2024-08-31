@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -41,6 +41,7 @@ use App\Models\LogKeluarga;
 use App\Models\LogPenduduk;
 use App\Models\Penduduk;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -79,10 +80,8 @@ class Penduduk_log_model extends MY_Model
      * Update log penduduk
      *
      * @param $id_log id log penduduk
-     *
-     * @return void
      */
-    public function update($id_log)
+    public function update($id_log): void
     {
         unset($_SESSION['success']);
         $data['catatan'] = htmlentities($this->input->post('catatan'));
@@ -141,26 +140,78 @@ class Penduduk_log_model extends MY_Model
      */
     public function kembalikan_status($id_log)
     {
-        $log = LogPenduduk::findOrFail($id_log);
-
+        $log = LogPenduduk::with('penduduk')->findOrFail($id_log);
+        DB::beginTransaction();
         // Kembalikan status selain lahir dan masuk
         if (! in_array($log->kode_peristiwa, [LogPenduduk::BARU_LAHIR, LogPenduduk::BARU_PINDAH_MASUK])) {
             $outp = Penduduk::where('id', $log->id_pend)
                 ->update([
                     'status_dasar' => StatusDasarEnum::HIDUP,
                 ]);
+            $penduduk = DB::table('tweb_penduduk')->where('nik', $log->penduduk->nik)->where('id', '!=', $log->id_pend)->where('status_dasar', StatusDasarEnum::HIDUP)->get();
 
-            // Hapus log_keluarga, jika terkait
-            $logKeluarga = LogKeluarga::where('id_log_penduduk', $log->id)->first();
-            if ($logKeluarga) {
-                $outp = $outp && $logKeluarga->delete();
+            if (count($penduduk) > 0) {
+                try {
+                    // tambah log penduduk datang
+                    DB::table('log_penduduk')->insert([
+                        'id_pend'        => $log->id_pend,
+                        'config_id'      => identitas('id'),
+                        'kode_peristiwa' => 1,
+                        'tgl_lapor'      => date('Y-m-d'),
+                        'tgl_peristiwa'  => date('Y-m-d'),
+                        'ref_pindah'     => $log->ref_pindah,
+                    ]);
+
+                    foreach ($penduduk as $pindah) {
+                        // ubah status Dasar selain $log->id_pend menjadi LogPenduduk::PINDAH_KELUAR
+                        DB::table('tweb_penduduk')->where('id', $pindah->id)->update([
+                            'status_dasar' => LogPenduduk::PINDAH_KELUAR,
+                        ]);
+
+                        // tambah log penduduk pindah
+                        $id_log = DB::table('log_penduduk')->insertGetId([
+                            'id_pend'        => $pindah->id,
+                            'config_id'      => $pindah->config_id,
+                            'kode_peristiwa' => 3,
+                            'tgl_lapor'      => date('Y-m-d'),
+                            'tgl_peristiwa'  => date('Y-m-d'),
+                            'ref_pindah'     => $log->ref_pindah,
+                        ]);
+
+                        if ($pindah->id_kk) {
+                            DB::table('log_keluarga')->insert([
+                                'id_kk'           => $pindah->id,
+                                'config_id'       => $pindah->config_id,
+                                'id_peristiwa'    => 3,
+                                'updated_by'      => auth()->id,
+                                'id_log_penduduk' => $id_log,
+                            ]);
+                        }
+                    }
+                    DB::commit();
+
+                    return status_sukses(true);
+                } catch (Exception $e) {
+                    DB::rollback();
+
+                    return session_error($e->getMessage());
+                }
+            } else {
+                // Hapus log_keluarga, jika terkait
+                $logKeluarga = LogKeluarga::where('id_log_penduduk', $log->id)->first();
+                if ($logKeluarga) {
+                    $outp = $outp && $logKeluarga->delete();
+                }
+
+                // Hapus log penduduk
+                $outp = $outp && LogPenduduk::find($id_log)->delete();
+                DB::commit();
+
+                return status_sukses($outp);
             }
-
-            // Hapus log penduduk
-            $outp = $outp && LogPenduduk::find($id_log)->delete();
-
-            return status_sukses($outp);
         }
+
+        DB::rollback();
 
         return session_error(', tidak dapat mengubah status dasar.');
     }
@@ -169,10 +220,8 @@ class Penduduk_log_model extends MY_Model
      * Kembalikan status dasar penduduk dari PERGI ke HIDUP
      *
      * @param $id_log id log penduduk
-     *
-     * @return void
      */
-    public function kembalikan_status_pergi($id_log)
+    public function kembalikan_status_pergi($id_log): void
     {
         $log = LogPenduduk::findOrFail($id_log);
 
@@ -188,8 +237,8 @@ class Penduduk_log_model extends MY_Model
 
         // Kembalikan status_dasar hanya jika penduduk pindah keluar (3) atau tidak tetap pergi (6)
         if (in_array($log->kode_peristiwa, [LogPenduduk::PINDAH_KELUAR, LogPenduduk::TIDAK_TETAP_PERGI])) {
-            $outp = Penduduk::find($log->id_pend)
-                ->updated([
+            $outp = Penduduk::where('id', $log->id_pend)
+                ->update([
                     'status_dasar' => StatusDasarEnum::HIDUP,
                 ]);
 
@@ -232,10 +281,8 @@ class Penduduk_log_model extends MY_Model
 
     /**
      * Kembalikan status dasar sekumpulan penduduk ke hidup
-     *
-     * @return void
      */
-    public function kembalikan_status_all()
+    public function kembalikan_status_all(): void
     {
         unset($_SESSION['success']);
         $id_cb = $_POST['id_cb'];
@@ -245,7 +292,7 @@ class Penduduk_log_model extends MY_Model
         }
     }
 
-    private function search_sql()
+    private function search_sql(): void
     {
         if ($kw = $this->session->cari) {
             $this->db
@@ -256,56 +303,56 @@ class Penduduk_log_model extends MY_Model
         }
     }
 
-    private function sex_sql()
+    private function sex_sql(): void
     {
         if ($kf = $this->session->sex) {
             $this->db->where('u.sex', $kf);
         }
     }
 
-    private function agama_sql()
+    private function agama_sql(): void
     {
         if ($kf = $this->session->agama) {
             $this->db->where('u.agama_id', $kf);
         }
     }
 
-    private function dusun_sql()
+    private function dusun_sql(): void
     {
         if ($kf = $this->session->dusun) {
             $this->db->where('a.dusun', $kf);
         }
     }
 
-    private function rw_sql()
+    private function rw_sql(): void
     {
         if ($kf = $this->session->rw) {
             $this->db->where('a.rw', $kf);
         }
     }
 
-    private function rt_sql()
+    private function rt_sql(): void
     {
         if ($kf = $this->session->rt) {
             $this->db->where('a.rt', $kf);
         }
     }
 
-    private function kode_peristiwa()
+    private function kode_peristiwa(): void
     {
         if ($kf = $this->session->kode_peristiwa) {
             $this->db->where_in('log.kode_peristiwa', $kf);
         }
     }
 
-    private function status_penduduk()
+    private function status_penduduk(): void
     {
         if ($kf = $this->session->status_penduduk) {
             $this->db->where('u.status', $kf);
         }
     }
 
-    private function tahun_bulan()
+    private function tahun_bulan(): void
     {
         $kt = $this->session->filter_tahun;
         $kb = $this->session->filter_bulan;
@@ -318,7 +365,7 @@ class Penduduk_log_model extends MY_Model
         }
     }
 
-    private function tgl_lengkap()
+    private function tgl_lengkap(): void
     {
         if ($kf = $this->session->tgl_lengkap) {
             $this->db->where('log.tgl_lapor >=', $kf);
@@ -329,8 +376,6 @@ class Penduduk_log_model extends MY_Model
     // Mengambil tahun terkecil dari database, kemudian ditambahkan sampai tahun skrg
     public function list_tahun()
     {
-        $list_tahun = [];
-
         $list_tahun = $this->config_id()
             ->select('MIN(YEAR(tgl_lapor)) as tahun')
             ->from('log_penduduk')
@@ -382,7 +427,7 @@ class Penduduk_log_model extends MY_Model
     }
 
     // Digunakan untuk paging dan query utama supaya jumlah data selalu sama
-    private function list_data_sql()
+    private function list_data_sql(): void
     {
         $this->config_id('log')
             ->from('log_penduduk log')
@@ -412,9 +457,9 @@ class Penduduk_log_model extends MY_Model
     {
         //Main Query
         $this->db
-            ->select('u.id, u.nik, u.sex as id_sex, u.tempatlahir, u.tanggallahir, u.id_kk, u.nama, u.foto, u.status_dasar, a.dusun, a.rw, a.rt, d.alamat, log.id as id_log, log.no_kk AS no_kk, log.catatan as catatan, log.nama_kk as nama_kk, v.nama AS warganegara, u.created_at, log.meninggal_di, u.alamat_sebelumnya, log.alamat_tujuan,')
+            ->select('u.id, u.nik, u.sex as id_sex, u.tempatlahir, u.tanggallahir, log.tgl_peristiwa, u.id_kk, u.nama, u.foto, u.status_dasar, a.dusun, a.rw, a.rt, d.alamat, log.id as id_log, log.no_kk AS no_kk, log.catatan as catatan, log.nama_kk as nama_kk, v.nama AS warganegara, u.created_at, log.meninggal_di, u.alamat_sebelumnya, log.alamat_tujuan,')
             ->select('(CASE when log.kode_peristiwa = 3 then rp.nama else ra.nama end) as nama_peristiwa')
-            ->select("(SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(log.tgl_peristiwa)-TO_DAYS(u.tanggallahir)), '%Y')+0) AS umur_pada_peristiwa")
+            ->select('TIMESTAMPDIFF(YEAR, u.tanggallahir, CURDATE()) AS umur_pada_peristiwa')
             ->select('x.nama AS sex, g.nama AS agama, log.tgl_lapor, log.tgl_peristiwa, log.kode_peristiwa, h.nik as nik_hapus');
 
         $this->list_data_sql();
@@ -473,11 +518,12 @@ class Penduduk_log_model extends MY_Model
         $data = $this->db->get()->result_array();
 
         //Formating Output
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             // Ubah alamat penduduk lepas
-            if (! $data[$i]['id_kk'] || $data[$i]['id_kk'] == 0) {
+            if (! $data[$i]['id_kk'] || $data[$i]['id_kk'] == null) {
                 // Ambil alamat penduduk
                 $query = $this->db->select('p.id_cluster, p.alamat_sekarang, c.dusun, c.rw, c.rt')
                     ->from('tweb_penduduk p')
@@ -503,7 +549,7 @@ class Penduduk_log_model extends MY_Model
             // tampilkan hanya jika beda tanggal lapor
             $tgl_lapor                  = Carbon::parse($data[$i]['tgl_lapor'])->format('m-Y');
             $tgl_sekarang               = Carbon::now()->format('m-Y');
-            $data[$i]['kembali_datang'] = $tgl_lapor >= $tgl_sekarang ? false : true;
+            $data[$i]['kembali_datang'] = $tgl_lapor < $tgl_sekarang;
             $j++;
         }
 

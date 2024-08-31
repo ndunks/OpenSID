@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -59,19 +59,21 @@ class Saas
         if ($layanan = $this->ci->cache->file->get('status_langganan')) {
             return collect($layanan->body->pemesanan)
                 ->map(static function ($data) {
-                    $saas                   = collect($data->layanan)->where('nama', 'Langganan SaaS')->first();
-                    $saas->tgl_mulai        = Carbon::parse($data->tgl_mulai);
-                    $saas->tgl_akhir        = Carbon::parse($data->tgl_akhir);
-                    $saas->status_pemesanan = $data->status_pemesanan;
-                    $saas->sisa_aktif       = $saas->tgl_akhir->diffInDays(Carbon::now()) + 1;
+                    $kategori_siappakai = $data->kategori_siappakai ?? 'Dasbor SiapPakai';
+                    $saas               = collect($data->layanan)->firstWhere('nama', $kategori_siappakai);
 
-                    return $saas;
-                })
-                ->filter(static function ($data) {
-                    if (isset($data->nama)) {
-                        return $data;
+                    if ($saas !== null) {
+                        $saas->tgl_mulai        = Carbon::parse($data->tgl_mulai);
+                        $saas->tgl_akhir        = Carbon::parse($data->tgl_akhir);
+                        $saas->status_pemesanan = $data->status_pemesanan;
+                        $saas->sisa_aktif       = $saas->tgl_akhir->diffInDays(Carbon::now()) + 1;
+
+                        return $saas;
                     }
-                });
+
+                    return null;
+                })
+                ->filter();
         }
 
         return collect();

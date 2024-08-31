@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -63,17 +63,15 @@ class Tanah_kas_desa_model extends MY_Model
             ->join('ref_persil_kelas p', 'tkd.kelas = p.id')
             ->where('tkd.visible', 1);
 
-        if (empty($search)) {
-            $search = $builder;
-        } else {
-            $search = $builder
-                ->group_start()
-                ->like('tkd.nama_pemilik_asal', $search)
-                ->or_like('tkd.letter_c', $search)
-                ->group_end();
+        if ($search === '') {
+            return $builder;
         }
 
-        return $search;
+        return $builder
+            ->group_start()
+            ->like('tkd.nama_pemilik_asal', $search)
+            ->or_like('tkd.letter_c', $search)
+            ->group_end();
     }
 
     public function view_tanah_kas_desa_by_id($id)
@@ -86,7 +84,7 @@ class Tanah_kas_desa_model extends MY_Model
             ->row();
     }
 
-    public function add_tanah_kas_desa()
+    public function add_tanah_kas_desa(): void
     {
         unset($this->session->validation_error, $this->session->success);
 
@@ -139,13 +137,13 @@ class Tanah_kas_desa_model extends MY_Model
         status_sukses($hasil);
     }
 
-    public function delete_tanah_kas_desa($id)
+    public function delete_tanah_kas_desa($id): void
     {
         $hasil = $this->config_id()->update($this->table, ['visible' => 0], ['id' => $id]);
         status_sukses($hasil);
     }
 
-    public function update_tanah_kas_desa()
+    public function update_tanah_kas_desa(): void
     {
         unset($this->session->validation_error, $this->session->success);
 
@@ -237,7 +235,6 @@ class Tanah_kas_desa_model extends MY_Model
         $data['tidak_ada_patok']      = bilangan($data['tidak_ada_patok']);
         $data['ada_papan_nama']       = bilangan($data['ada_papan_nama']);
         $data['tidak_ada_papan_nama'] = bilangan($data['tidak_ada_papan_nama']);
-        $data['tanggal_perolehan']    = $data['tanggal_perolehan'];
         $data['lokasi']               = strip_tags($data['lokasi']);
         $data['peruntukan']           = strip_tags($data['peruntukan']);
         $data['mutasi']               = strip_tags($data['mutasi']);
@@ -246,7 +243,7 @@ class Tanah_kas_desa_model extends MY_Model
         $data['updated_by']           = $this->session->user;
         $data['visible']              = 1;
 
-        if (! empty($valid)) {
+        if ($valid !== []) {
             $this->session->validation_error = true;
         }
 

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -48,6 +48,8 @@ class Periksa extends CI_Controller
     {
         parent::__construct();
 
+        $this->load->database();
+
         if ($this->session->db_error['code'] === 1049) {
             redirect('koneksi-database');
         }
@@ -59,9 +61,7 @@ class Periksa extends CI_Controller
 
     public function index()
     {
-        if ($this->session->periksa_data != 1) {
-            redirect('periksa/login');
-        }
+        $this->cek_user();
 
         if ($this->session->message_query || $this->session->message_exception) {
             log_message('error', $this->session->message_query);
@@ -71,19 +71,33 @@ class Periksa extends CI_Controller
         return view('periksa.index', array_merge($this->periksa_model->periksa, ['header' => $this->header]));
     }
 
-    public function perbaiki()
+    private function cek_user(): void
     {
         if ($this->session->periksa_data != 1) {
             redirect('periksa/login');
         }
+    }
+
+    public function perbaiki(): void
+    {
+        $this->cek_user();
         $this->periksa_model->perbaiki();
         $this->session->unset_userdata(['db_error', 'message', 'message_query', 'heading', 'message_exception']);
 
         redirect('/');
     }
 
+    public function perbaiki_sebagian($masalah): void
+    {
+        $this->cek_user();
+        $this->periksa_model->perbaiki_sebagian($masalah);
+        $this->session->unset_userdata(['db_error', 'message', 'message_query', 'heading', 'message_exception']);
+
+        redirect('/');
+    }
+
     // Login khusus untuk periksa
-    public function login()
+    public function login(): void
     {
         if ($this->session->periksa_data == 1) {
             redirect('periksa');
@@ -96,13 +110,16 @@ class Periksa extends CI_Controller
             'latar_login' => $this->latar_login,
         ];
 
-        $this->setting->sebutan_desa      = $this->periksa_model->getSetting('sebutan_desa');
-        $this->setting->sebutan_kabupaten = $this->periksa_model->getSetting('sebutan_kabupaten');
+        if ($this->setting) {
+            $this->setting->sebutan_desa      = $this->periksa_model->getSetting('sebutan_desa');
+            $this->setting->sebutan_kabupaten = $this->periksa_model->getSetting('sebutan_kabupaten');
+        }
+
         $this->load->view('siteman', $data);
     }
 
     // Login khusus untuk periksa
-    public function auth()
+    public function auth(): void
     {
         $method       = $this->input->method(true);
         $allow_method = ['POST'];

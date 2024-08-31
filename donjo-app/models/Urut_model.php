@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -66,7 +66,7 @@ class Urut_model extends MY_Model
             ->row()->urut;
     }
 
-    private function urut_semua($subset = ['1' => '1'])
+    private function urut_semua($subset = ['1' => '1']): void
     {
         $urut_duplikat = $this->config_id_exist($this->tabel)
             ->select('urut, COUNT(*) c')
@@ -92,8 +92,9 @@ class Urut_model extends MY_Model
                 ->get($this->tabel)
                 ->result_array();
         }
+        $counter = count($daftar);
 
-        for ($i = 0; $i < count($daftar); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data['urut'] = $i + 1;
             $this->config_id_exist($this->tabel)->where($this->kolom_id, $daftar[$i][$this->kolom_id])->update($this->tabel, $data);
         }
@@ -126,7 +127,9 @@ class Urut_model extends MY_Model
 
     private function urut_daftar($id, $arah, $daftar, $unsur1)
     {
-        for ($i = 0; $i < count($daftar); $i++) {
+        $counter = count($daftar);
+
+        for ($i = 0; $i < $counter; $i++) {
             if ($daftar[$i][$this->kolom_id] == $id) {
                 break;
             }

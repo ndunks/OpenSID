@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,17 +39,12 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Klasifikasi_model extends MY_model
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function autocomplete()
     {
         return $this->autocomplete_str('nama', 'klasifikasi_surat');
     }
 
-    public function search_sql()
+    public function search_sql(): void
     {
         if ($cari = $this->session->cari) {
             $this->db
@@ -60,7 +55,7 @@ class Klasifikasi_model extends MY_model
         }
     }
 
-    public function filter_sql()
+    public function filter_sql(): void
     {
         if ($filter = $this->session->filter) {
             $this->db->where('enabled', $filter);
@@ -84,7 +79,7 @@ class Klasifikasi_model extends MY_model
     }
 
     // Digunakan untuk paging dan query utama supaya jumlah data selalu sama
-    private function list_data_sql()
+    private function list_data_sql(): void
     {
         $this->db
             ->from('klasifikasi_surat u')
@@ -123,9 +118,10 @@ class Klasifikasi_model extends MY_model
             ->get()
             ->result_array();
         //Formating Output
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $j + 1;
             $j++;
         }
@@ -171,7 +167,7 @@ class Klasifikasi_model extends MY_model
         return $this->config_id()->where('id', $id)->update('klasifikasi_surat', $data);
     }
 
-    public function delete($id = '', $semua = false)
+    public function delete($id = '', $semua = false): void
     {
         if (! $semua) {
             $this->session->success = 1;
@@ -182,7 +178,7 @@ class Klasifikasi_model extends MY_model
         status_sukses($outp, true); //Tampilkan Pesan
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->session->success = 1;
 
@@ -193,14 +189,10 @@ class Klasifikasi_model extends MY_model
         }
     }
 
-    public function lock($id = '', $val = 0)
+    public function lock($id = '', $val = 0): void
     {
-        $outp = $this->config_id()->where('id', $id)->update('klasifikasi_surat', ['enabled' => $val]);
-        if ($outp) {
-            $_SESSION['success'] = 1;
-        } else {
-            $_SESSION['success'] = -1;
-        }
+        $outp                = $this->config_id()->where('id', $id)->update('klasifikasi_surat', ['enabled' => $val]);
+        $_SESSION['success'] = $outp ? 1 : -1;
     }
 
     public function get_klasifikasi($id = 0)
@@ -215,7 +207,7 @@ class Klasifikasi_model extends MY_model
      *
      * @param mixed $file
      */
-    public function impor($file)
+    public function impor($file): void
     {
         ini_set('auto_detect_line_endings', '1');
         if (($handle = fopen($file, 'rb')) == false) {

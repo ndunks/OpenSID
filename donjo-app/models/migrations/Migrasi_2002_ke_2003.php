@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,7 +39,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Migrasi_2002_ke_2003 extends CI_model
 {
-    public function up()
+    public function up(): void
     {
         $this->surat_mandiri();
         $this->surat_mandiri_tersedia();
@@ -87,7 +87,7 @@ class Migrasi_2002_ke_2003 extends CI_model
         $this->db->query($sql);
     }
 
-    private function surat_mandiri()
+    private function surat_mandiri(): void
     {
         // Table ref_syarat_surat tempat nama dokumen sbg syarat Permohonan surat
         if (! $this->db->table_exists('ref_syarat_surat')) {
@@ -252,7 +252,7 @@ class Migrasi_2002_ke_2003 extends CI_model
         $this->db->query($sql);
     }
 
-    private function surat_mandiri_tersedia()
+    private function surat_mandiri_tersedia(): void
     {
         // Surat yg tersedia di permohonan surat melalui layanan mandiri plus syarat masing2
         $surat_tersedia = [
@@ -272,19 +272,17 @@ class Migrasi_2002_ke_2003 extends CI_model
         foreach ($surat_tersedia as $surat_format_id => $list_syarat) {
             $this->db->where('id', $surat_format_id)->update('tweb_surat_format', ['mandiri' => 1]);
 
-            if ($list_syarat) {
-                foreach ($list_syarat as $syarat_id) {
-                    $ada = $this->db->where('surat_format_id', $surat_format_id)->where('ref_syarat_id', $syarat_id)
-                        ->get('syarat_surat')->num_rows();
-                    if (! $ada) {
-                        $this->db->insert('syarat_surat', ['surat_format_id' => $surat_format_id, 'ref_syarat_id' => $syarat_id]);
-                    }
+            foreach ($list_syarat as $syarat_id) {
+                $ada = $this->db->where('surat_format_id', $surat_format_id)->where('ref_syarat_id', $syarat_id)
+                    ->get('syarat_surat')->num_rows();
+                if (! $ada) {
+                    $this->db->insert('syarat_surat', ['surat_format_id' => $surat_format_id, 'ref_syarat_id' => $syarat_id]);
                 }
             }
         }
     }
 
-    private function mailbox()
+    private function mailbox(): void
     {
         $modul_mailbox = [
             'modul' => 'Kotak Pesan',

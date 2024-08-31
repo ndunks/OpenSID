@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,17 +39,12 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Web_komentar_model extends MY_Model
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function autocomplete()
     {
         return $this->autocomplete_str('komentar', 'komentar');
     }
 
-    private function search_sql()
+    private function search_sql(): void
     {
         if ($cari = $this->session->cari) {
             $this->db->like('komentar', $cari)
@@ -57,21 +52,21 @@ class Web_komentar_model extends MY_Model
         }
     }
 
-    private function filter_status_sql()
+    private function filter_status_sql(): void
     {
         if ($filter = $this->session->filter_status) {
             $this->db->like('k.status', $filter);
         }
     }
 
-    private function filter_nik_sql()
+    private function filter_nik_sql(): void
     {
         if ($filter_nik = $this->session->filter_nik) {
             $this->db->where('k.email', $filter_nik);
         }
     }
 
-    private function filter_archived_sql()
+    private function filter_archived_sql(): void
     {
         $archive = $this->session->filter_archived ?? 0;
         $this->db->where('k.is_archived', $archive);
@@ -92,7 +87,7 @@ class Web_komentar_model extends MY_Model
         return $this->paging;
     }
 
-    private function list_data_sql($kat = 0)
+    private function list_data_sql($kat = 0): void
     {
         $this->config_id('k')
             ->from('komentar k')
@@ -153,15 +148,12 @@ class Web_komentar_model extends MY_Model
             ->limit($limit, $offset)
             ->get()->result_array();
 
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
-            $data[$i]['no'] = $j + 1;
-            if ($data[$i]['status'] == 1) {
-                $data[$i]['aktif'] = 'Ya';
-            } else {
-                $data[$i]['aktif'] = 'Tidak';
-            }
+        for ($i = 0; $i < $counter; $i++) {
+            $data[$i]['no']    = $j + 1;
+            $data[$i]['aktif'] = $data[$i]['status'] == 1 ? 'Ya' : 'Tidak';
             $j++;
         }
 
@@ -184,7 +176,7 @@ class Web_komentar_model extends MY_Model
         return $data;
     }
 
-    public function insert()
+    public function insert(): void
     {
         $data              = $this->bersihkan_data($this->input->post());
         $data['config_id'] = identitas('id');
@@ -194,7 +186,7 @@ class Web_komentar_model extends MY_Model
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function update($id = 0)
+    public function update($id = 0): void
     {
         $data               = $this->bersihkan_data($this->input->post());
         $data['updated_at'] = date('Y-m-d H:i:s');
@@ -205,7 +197,7 @@ class Web_komentar_model extends MY_Model
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function archive($id)
+    public function archive($id): void
     {
         $archive = [
             'is_archived' => 1,
@@ -213,18 +205,14 @@ class Web_komentar_model extends MY_Model
         ];
         $outp = $this->config_id()->where('id', $id)->update('komentar', $archive);
 
-        if ($outp) {
-            $this->session->success = 1;
-        } else {
-            $this->session->success = -1;
-        }
+        $this->session->success = $outp ? 1 : -1;
     }
 
-    public function archive_all()
+    public function archive_all(): void
     {
         $id_cb = $this->input->post('id_cb');
 
-        if (count($id_cb)) {
+        if (count($id_cb) > 0) {
             foreach ($id_cb as $id) {
                 $archive = [
                     'is_archived' => 1,
@@ -236,14 +224,10 @@ class Web_komentar_model extends MY_Model
             $outp = false;
         }
 
-        if ($outp) {
-            $this->session->success = 1;
-        } else {
-            $this->session->success = -1;
-        }
+        $this->session->success = $outp ? 1 : -1;
     }
 
-    public function delete($id = '', $semua = false)
+    public function delete($id = '', $semua = false): void
     {
         if (! $semua) {
             $this->session->success = 1;
@@ -256,7 +240,7 @@ class Web_komentar_model extends MY_Model
         status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->session->success = 1;
 
@@ -267,7 +251,7 @@ class Web_komentar_model extends MY_Model
         }
     }
 
-    public function komentar_lock($id = '', $val = 0)
+    public function komentar_lock($id = '', $val = 0): void
     {
         $outp = $this->config_id()
             ->where('id', $id)

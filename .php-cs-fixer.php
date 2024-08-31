@@ -13,7 +13,7 @@ declare(strict_types=1);
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -31,7 +31,7 @@ declare(strict_types=1);
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -88,13 +88,14 @@ $finder = Symfony\Component\Finder\Finder::create()
     ->append([
         __DIR__ . '/index.php',
         __DIR__ . '/.php-cs-fixer.php',
+        __DIR__ . '/.rector.php',
     ])
     ->name('*.php')
     ->notName(['*.blade.php', 'Data_awal_seeder.php', 'Data_awal.php'])
     ->ignoreDotFiles(true)
     ->ignoreVCS(true);
 
-return (new \PhpCsFixer\Config())
+return (new PhpCsFixer\Config())
     ->setRules(
         [
             'align_multiline_comment'                  => ['comment_type' => 'phpdocs_only'],

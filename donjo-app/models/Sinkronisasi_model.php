@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,15 +39,10 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Sinkronisasi_model extends CI_model
 {
-    private $zip_file = '';
-
-    public function __construct()
-    {
-        parent::__construct();
-    }
+    private string $zip_file = '';
 
     // $file = nama file yg akan diproses
-    private function extract_file($file)
+    private function extract_file(string $file)
     {
         $data  = get_csv($this->zip_file, $file);
         $count = count($data);
@@ -92,16 +87,16 @@ class Sinkronisasi_model extends CI_model
                     unset($data_tabel[$k]);
                 } else {
                     // Data CSV berisi string 'NULL' untuk kolom dengan nilai NULL
-                    $data_tabel[$k] = array_map(static function ($a) {
-                        return $a == 'NULL' ? null : $a;
-                    }, $data_tabel[$k]);
+                    $data_tabel[$k] = array_map(static fn ($a) => $a == 'NULL' ? null : $a, $data_tabel[$k]);
                 }
             }
-            if (! empty($data_tabel)) {
-                if (! $this->db->update_batch($tabel['tabel'], $data_tabel, 'id')) {
-                    $_SESSION['success'] = -1;
-                }
+            if (empty($data_tabel)) {
+                continue;
             }
+            if ($this->db->update_batch($tabel['tabel'], $data_tabel, 'id')) {
+                continue;
+            }
+            $_SESSION['success'] = -1;
         }
 
         return $hasil;

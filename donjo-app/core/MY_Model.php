@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -40,6 +40,7 @@ use App\Models\FormatSurat;
 use App\Models\Migrasi;
 use App\Models\SettingAplikasi;
 use App\Models\User;
+use App\Models\UserGrup;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -75,10 +76,14 @@ class MY_Model extends CI_Model
         $this->config_id = Config::appKey()->first()->id;
     }
 
-    public function autocomplete_str($kolom, $tabel, $cari = '')
+    public function autocomplete_str($kolom, $tabel, $cari = '', $where = '')
     {
         if ($cari) {
             $this->db->like($kolom, $cari);
+        }
+
+        if ($where) {
+            $this->db->where($where);
         }
 
         $data = $this->config_id_exist($tabel)
@@ -158,6 +163,8 @@ class MY_Model extends CI_Model
             if ($duplikat > 0) {
                 session_error('--> Silahkan Cek <a href="' . site_url('info_sistem') . '">Info Sistem > Log</a>.');
                 log_message('error', "Data kolom {$kolom} pada tabel {$tabel} ada yang duplikat dan perlu diperbaiki sebelum migrasi dilanjutkan.");
+
+                return false;
             }
         }
 
@@ -188,15 +195,32 @@ class MY_Model extends CI_Model
 
     public function tambah_modul($modul)
     {
-        // Modul
-        $sql = $this->db->insert_string('setting_modul', $modul) . ' ON DUPLICATE KEY UPDATE modul = VALUES(modul), url = VALUES(url), ikon = VALUES(ikon), hidden = VALUES(hidden), urut = VALUES(urut), parent = VALUES(parent)';
+        if (isset($modul['slug']) && $this->config_id()->get_where('setting_modul', ['slug' => $modul['slug']])->result()) {
+            return true;
+        }
 
+        // Modul
+        $sql   = $this->db->insert_string('setting_modul', $modul) . ' ON DUPLICATE KEY UPDATE modul = VALUES(modul), url = VALUES(url), ikon = VALUES(ikon), hidden = VALUES(hidden), urut = VALUES(urut), parent = VALUES(parent)';
         $hasil = $this->db->query($sql);
 
         // Hak Akses Default Operator
         // Hanya lakukan jika tabel grup_akses sudah ada. Tabel ini belum ada sebelum Migrasi_fitur_premium_2105.php
         if ($this->db->table_exists('grup_akses')) {
-            $hasil = $hasil && $this->grupAkses(2, $modul['id'], 3);
+            if ($modul['id']) {
+                $id = $modul['id'];
+            } else {
+                // cari id dari modul yang dibuat berdasarkan slug
+                $query = $this->db->select('id');
+
+                if (Schema::hasColumn('setting_modul', 'config_id')) {
+                    $query = $query->where('config_id', $modul['config_id'] ?? $this->config_id);
+                }
+
+                $id = $query->where('slug', $modul['slug'])->get('setting_modul')->row()->id;
+            }
+
+            $grupOperator = UserGrup::getGrupId(UserGrup::OPERATOR);
+            $hasil        = $hasil && $this->grupAkses($grupOperator, $id, 3, $modul['config_id'] ?? null);
         }
 
         // Hapus cache menu navigasi
@@ -205,9 +229,19 @@ class MY_Model extends CI_Model
         return $hasil;
     }
 
-    public function grupAkses($id_grup, $id_modul, $akses)
+    public function grupAkses($id_grup, $id_modul, $akses, $config_id = null)
     {
-        return $this->db->insert('grup_akses', ['id_grup' => $id_grup, 'id_modul' => $id_modul, 'akses' => $akses]);
+        $insert = [
+            'id_grup'  => $id_grup,
+            'id_modul' => $id_modul,
+            'akses'    => $akses,
+        ];
+
+        if ($this->db->field_exists('config_id', 'grup_akses')) {
+            $insert['config_id'] = $config_id ?? $this->config_id;
+        }
+
+        return $this->db->insert('grup_akses', $insert);
     }
 
     /**
@@ -235,10 +269,10 @@ class MY_Model extends CI_Model
 
     public function tambah_setting($setting, $config_id = null)
     {
-        hapus_cache('identitas_desa');
+        cache()->forget('identitas_desa');
 
         if (Schema::hasColumn('setting_aplikasi', 'config_id')) {
-            $cek = SettingAplikasi::withoutGlobalScope('App\Scopes\ConfigIdScope')->where('config_id', $config_id ?? $this->config_id)->where('key', $setting['key']);
+            $cek = SettingAplikasi::withoutGlobalScope(App\Scopes\ConfigIdScope::class)->where('config_id', $config_id ?? $this->config_id)->where('key', $setting['key']);
 
             if ($cek->exists()) {
                 unset($setting['value']);
@@ -257,20 +291,27 @@ class MY_Model extends CI_Model
         return true;
     }
 
-    public function tambah_surat_tinymce($data)
+    public function tambah_surat_tinymce($data, $config_id = null)
     {
-        $data['url_surat']    = 'surat-' . strtolower(str_replace([' ', '_'], '-', $data['nama']));
+        $config_id ??= $this->config_id;
+        $data['url_surat']    = 'surat-' . url_title($data['nama'], '-', true);
         $data['jenis']        = FormatSurat::TINYMCE_SISTEM;
-        $data['syarat_surat'] = json_encode($data['syarat_surat']);
+        $data['syarat_surat'] = json_encode($data['syarat_surat'], JSON_THROW_ON_ERROR);
         $data['created_by']   = auth()->id;
         $data['updated_by']   = auth()->id;
+        if (is_array($data['form_isian'])) {
+            $data['form_isian'] = json_encode($data['form_isian'], JSON_THROW_ON_ERROR);
+        }
+        if (is_array($data['kode_isian'])) {
+            $data['kode_isian'] = json_encode($data['kode_isian'], JSON_THROW_ON_ERROR);
+        }
 
         // Tambah data baru dan update (hanya kolom template) jika ada sudah ada
         $cek_surat = DB::table('tweb_surat_format')->where('url_surat', $data['url_surat']);
 
         if (Schema::hasColumn('tweb_surat_format', 'config_id')) {
-            $cek_surat->where('config_id', $this->config_id);
-            $data['config_id'] = $this->config_id;
+            $cek_surat->where('config_id', $config_id);
+            $data['config_id'] = $config_id;
         }
 
         if ($cek_surat->exists()) {
@@ -319,7 +360,7 @@ class MY_Model extends CI_Model
         }
 
         if ($query->num_rows() == 0) {
-            $hasil = $hasil && $this->dbforge->add_column($di_tbl, [
+            return $hasil && $this->dbforge->add_column($di_tbl, [
                 "CONSTRAINT `{$nama_constraint}` FOREIGN KEY (`{$fk}`) REFERENCES `{$ke_tbl}` (`{$ke_kolom}`) ON DELETE CASCADE ON UPDATE CASCADE",
             ]);
         }
@@ -339,7 +380,7 @@ class MY_Model extends CI_Model
 
         $hasil = true;
         if ($query->num_rows() > 0) {
-            $hasil = $hasil && $this->db->query("ALTER TABLE `{$drop}` DROP FOREIGN KEY `{$nama_constraint}`");
+            return $hasil && $this->db->query("ALTER TABLE `{$drop}` DROP FOREIGN KEY `{$nama_constraint}`");
         }
 
         return $hasil;
@@ -450,7 +491,7 @@ class MY_Model extends CI_Model
             }
 
             // Hapus data dengan config_id = null
-            DB::table($tabel)->where('config_id', 0)->orWhere('config_id', null)->delete();
+            // DB::table($tabel)->where('config_id', 0)->orWhere('config_id', null)->delete();
         }
 
         return $hasil && $this->tambahForeignKey("{$tabel}_config_fk", $tabel, 'config_id', 'config', 'id');
@@ -472,7 +513,7 @@ class MY_Model extends CI_Model
         // Hapus index nik pada tabel tweb_penduduk
         // Tambahkan unique index pada kolom config_id dan nik pada tabel tweb_penduduk
         if ($this->cek_indeks($tabel, $unique_name) && ! $this->cek_indeks($tabel, $unique_name . '_config')) {
-            $hasil = $hasil && $this->db->query("ALTER TABLE `{$tabel}` DROP INDEX `{$unique_name}`, ADD {$index} INDEX `{$unique_name}_config` {$unique_colom}");
+            return $hasil && $this->db->query("ALTER TABLE `{$tabel}` DROP INDEX `{$unique_name}`, ADD {$index} INDEX `{$unique_name}_config` {$unique_colom}");
         }
 
         return $hasil;
@@ -529,19 +570,23 @@ class MY_Model extends CI_Model
             return true;
         }
 
-        if ($this->db->table_exists($tabel) && count($data) > 0) {
+        // ubah config id jika masih kosong, akibat seeder awal
+        if (DB::table($tabel)->where('config_id', null)->exists()) {
+            DB::table($tabel)->update(['config_id' => $config_id]);
+        }
+
+        if ($this->db->table_exists($tabel) && $data !== []) {
             collect($data)
                 ->chunk(100)
                 // tambahkan config_id terlebih dahulu
-                ->map(static function ($chunk) use ($config_id) {
-                    return $chunk->map(static function ($item) use ($config_id) {
-                        $item['config_id'] = $config_id;
+                ->map(static fn ($chunk) => $chunk->map(static function (array $item) use ($config_id): array {
+                    $item['config_id'] = $config_id;
 
-                        return $item;
-                    });
-                })
-                ->each(static function ($chunk) use ($tabel) {
-                    DB::table($tabel)->insertOrIgnore($chunk->all());
+                    return $item;
+                }))
+                ->each(static function ($chunk) use ($tabel): void {
+                    // upsert agar tidak duplikat
+                    DB::table($tabel)->upsert($chunk->all(), 'config_id');
                 });
 
             return true;

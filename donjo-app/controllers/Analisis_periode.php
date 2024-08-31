@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -57,30 +57,22 @@ class Analisis_periode extends Admin_Controller
         $this->sub_modul_ini     = 'master-analisis';
     }
 
-    public function clear()
+    public function clear(): void
     {
         $this->session->unset_userdata(['cari', 'state']);
 
         redirect($this->controller);
     }
 
-    public function index($p = 1, $o = 0)
+    public function index($p = 1, $o = 0): void
     {
         unset($_SESSION['cari2']);
         $data['p'] = $p;
         $data['o'] = $o;
 
-        if (isset($_SESSION['cari'])) {
-            $data['cari'] = $_SESSION['cari'];
-        } else {
-            $data['cari'] = '';
-        }
+        $data['cari'] = $_SESSION['cari'] ?? '';
 
-        if (isset($_SESSION['state'])) {
-            $data['state'] = $_SESSION['state'];
-        } else {
-            $data['state'] = '';
-        }
+        $data['state'] = $_SESSION['state'] ?? '';
         if (isset($_POST['per_page'])) {
             $_SESSION['per_page'] = $_POST['per_page'];
         }
@@ -95,7 +87,7 @@ class Analisis_periode extends Admin_Controller
         $this->render('analisis_periode/table', $data);
     }
 
-    public function form($p = 1, $o = 0, $id = 0)
+    public function form($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $data['p'] = $p;
@@ -114,7 +106,7 @@ class Analisis_periode extends Admin_Controller
         $this->render('analisis_periode/form', $data);
     }
 
-    public function search()
+    public function search(): void
     {
         $cari = $this->input->post('cari');
         if ($cari != '') {
@@ -126,7 +118,7 @@ class Analisis_periode extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function state()
+    public function state(): void
     {
         $filter = $this->input->post('state');
         if ($filter != 0) {
@@ -138,7 +130,7 @@ class Analisis_periode extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function insert()
+    public function insert(): void
     {
         $this->redirect_hak_akses('u');
         $this->analisis_periode_model->insert();
@@ -146,7 +138,7 @@ class Analisis_periode extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function update($p = 1, $o = 0, $id = 0)
+    public function update($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $this->analisis_periode_model->update($id);
@@ -154,7 +146,7 @@ class Analisis_periode extends Admin_Controller
         redirect("{$this->controller}/index/{$p}/{$o}");
     }
 
-    public function delete($p = 1, $o = 0, $id = 0)
+    public function delete($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('h');
         $this->analisis_periode_model->delete($id);
@@ -162,7 +154,7 @@ class Analisis_periode extends Admin_Controller
         redirect("{$this->controller}/index/{$p}/{$o}");
     }
 
-    public function delete_all($p = 1, $o = 0)
+    public function delete_all($p = 1, $o = 0): void
     {
         $this->redirect_hak_akses('h');
         $this->analisis_periode_model->delete_all();

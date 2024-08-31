@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -38,48 +38,13 @@
 use App\Models\KelompokAnggota;
 use App\Models\Penduduk;
 
-/*
- *
- * File ini bagian dari:
- *
- * OpenSID
- *
- * Sistem informasi desa sumber terbuka untuk memajukan desa
- *
- * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
- *
- * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- *
- * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
- * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
- * tanpa batasan, termasuk hak untuk menggunakan, menyalin, mengubah dan/atau mendistribusikan,
- * asal tunduk pada syarat berikut:
- *
- * Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan dalam
- * setiap salinan atau bagian penting Aplikasi Ini. Barang siapa yang menghapus atau menghilangkan
- * pemberitahuan ini melanggar ketentuan lisensi Aplikasi Ini.
- *
- * PERANGKAT LUNAK INI DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN, BAIK TERSURAT MAUPUN
- * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
- * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
- *
- * @package   OpenSID
- * @author    Tim Pengembang OpenDesa
- * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- * @license   http://www.gnu.org/licenses/gpl.html GPL V3
- * @link      https://github.com/OpenSID/OpenSID
- *
- */
-
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Kelompok extends Admin_Controller
 {
-    private $_set_page;
-    private $_list_session;
-    protected $tipe = 'kelompok';
+    private array $_set_page     = ['20', '50', '100'];
+    private array $_list_session = ['cari', 'filter', 'penerima_bantuan', 'sex', 'status_dasar'];
+    protected $tipe              = 'kelompok';
 
     public function __construct()
     {
@@ -87,12 +52,10 @@ class Kelompok extends Admin_Controller
         $this->load->model(['kelompok_model', 'pamong_model']);
         $this->modul_ini     = 'kependudukan';
         $this->sub_modul_ini = 'kelompok';
-        $this->_set_page     = ['20', '50', '100'];
-        $this->_list_session = ['cari', 'filter', 'penerima_bantuan', 'sex', 'status_dasar'];
         $this->kelompok_model->set_tipe($this->tipe);
     }
 
-    public function clear()
+    public function clear(): void
     {
         $this->session->unset_userdata($this->_list_session);
         $this->session->per_page     = $this->_set_page[0];
@@ -101,7 +64,7 @@ class Kelompok extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function index($p = 1, $o = 0)
+    public function index($p = 1, $o = 0): void
     {
         $data['p'] = $p;
         $data['o'] = $o;
@@ -127,7 +90,7 @@ class Kelompok extends Admin_Controller
         $this->render('kelompok/table', $data);
     }
 
-    public function anggota($id = 0, $p = 1, $o = 0)
+    public function anggota($id = 0, $p = 1, $o = 0): void
     {
         $data['p'] = $p;
         $data['o'] = $o;
@@ -146,7 +109,7 @@ class Kelompok extends Admin_Controller
         $this->render('kelompok/anggota/table', $data);
     }
 
-    public function form($p = 1, $o = 0, $id = 0)
+    public function form($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $data['p']   = $p;
@@ -170,20 +133,19 @@ class Kelompok extends Admin_Controller
 
         $data['list_master']   = $list_master;
         $data['list_penduduk'] = $this->kelompok_model->list_penduduk();
-
         $this->render('kelompok/form', $data);
     }
 
-    public function aksi($aksi = '', $id = 0)
+    public function aksi($aksi = '', $id = 0): void
     {
         $this->session->set_userdata('aksi', $aksi);
 
         redirect("{$this->controller}/form_anggota/{$id}");
     }
 
-    public function form_anggota($id = 0, $id_a = 0)
+    public function form_anggota($id = 0, $id_a = 0): void
     {
-        $anggota = KelompokAnggota::tipe()->where('id_kelompok', '=', 2)->pluck('id_penduduk');
+        KelompokAnggota::tipe()->where('id_kelompok', '=', 2)->pluck('id_penduduk');
         $this->redirect_hak_akses('u');
         $data['kelompok']      = $id;
         $data['list_penduduk'] = $this->kelompok_model->list_penduduk($id, $id_a);
@@ -205,11 +167,12 @@ class Kelompok extends Admin_Controller
     {
         if ($this->input->is_ajax_request()) {
             $cari     = $this->input->get('q');
+            $tipe     = $this->input->get('tipe');
             $kelompok = $this->input->get('kelompok');
-            $anggota  = KelompokAnggota::tipe()->where('id_kelompok', '=', $kelompok)->pluck('id_penduduk');
+            $anggota  = KelompokAnggota::tipe($tipe)->where('id_kelompok', '=', $kelompok)->pluck('id_penduduk');
 
             $penduduk = Penduduk::select(['id', 'nik', 'nama', 'id_cluster'])
-                ->when($cari, static function ($query) use ($cari) {
+                ->when($cari, static function ($query) use ($cari): void {
                     $query->orWhere('nik', 'like', "%{$cari}%")
                         ->orWhere('nama', 'like', "%{$cari}%");
                 })
@@ -218,12 +181,10 @@ class Kelompok extends Admin_Controller
 
             return json([
                 'results' => collect($penduduk->items())
-                    ->map(static function ($item) {
-                        return [
-                            'id'   => $item->id,
-                            'text' => 'NIK : ' . $item->nik . ' - ' . $item->nama . ' RT-' . $item->wilayah->rt . ', RW-' . $item->wilayah->rw . ', ' . strtoupper(setting('sebutan_dusun')),
-                        ];
-                    }),
+                    ->map(static fn ($item): array => [
+                        'id'   => $item->id,
+                        'text' => 'NIK : ' . $item->nik . ' - ' . $item->nama . ' RT-' . $item->wilayah->rt . ', RW-' . $item->wilayah->rw . ', ' . strtoupper(setting('sebutan_dusun') . ' ' . $item->wilayah->dusun),
+                    ]),
                 'pagination' => [
                     'more' => $penduduk->currentPage() < $penduduk->lastPage(),
                 ],
@@ -234,7 +195,7 @@ class Kelompok extends Admin_Controller
     }
 
     // $aksi = cetak/unduh
-    public function dialog($aksi = 'cetak')
+    public function dialog($aksi = 'cetak'): void
     {
         $data                = $this->modal_penandatangan();
         $data['aksi']        = ucwords($aksi);
@@ -243,7 +204,7 @@ class Kelompok extends Admin_Controller
         $this->load->view('global/ttd_pamong', $data);
     }
 
-    public function daftar($aksi = 'cetak')
+    public function daftar($aksi = 'cetak'): void
     {
         $post                   = $this->input->post();
         $data['aksi']           = $aksi;
@@ -259,7 +220,7 @@ class Kelompok extends Admin_Controller
     }
 
     // $aksi = cetak/unduh
-    public function dialog_anggota($aksi = 'cetak', $id = 0)
+    public function dialog_anggota($aksi = 'cetak', $id = 0): void
     {
         $data                = $this->modal_penandatangan();
         $data['aksi']        = ucwords($aksi);
@@ -268,7 +229,7 @@ class Kelompok extends Admin_Controller
         $this->load->view('global/ttd_pamong', $data);
     }
 
-    public function daftar_anggota($aksi = 'cetak', $id = 0)
+    public function daftar_anggota($aksi = 'cetak', $id = 0): void
     {
         $post                   = $this->input->post();
         $data['aksi']           = $aksi;
@@ -284,7 +245,7 @@ class Kelompok extends Admin_Controller
         $this->load->view('global/format_cetak', $data);
     }
 
-    public function filter($filter)
+    public function filter($filter): void
     {
         $value = $this->input->post($filter);
         if ($value != '') {
@@ -296,7 +257,7 @@ class Kelompok extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function insert()
+    public function insert(): void
     {
         $this->redirect_hak_akses('u');
         $this->kelompok_model->insert();
@@ -304,7 +265,7 @@ class Kelompok extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function update($p = 1, $o = 0, $id = 0)
+    public function update($p = 1, $o = 0, $id = 0): void
     {
         $this->redirect_hak_akses('u');
         $this->kelompok_model->update($id);
@@ -312,15 +273,22 @@ class Kelompok extends Admin_Controller
         redirect("{$this->controller}/index/{$p}/{$o}");
     }
 
-    public function delete($id = 0)
+    public function delete($id = 0): void
     {
         $this->redirect_hak_akses('h');
-        $this->kelompok_model->delete($id);
+
+        if ($this->kelompok_model->get_kelompok_having_anggota($id)) {
+            $this->kelompok_model->delete($id);
+
+            redirect($this->controller);
+        }
+
+        status_sukses(false, false, "Tidak bisa menghapus {$this->tipe} yang sudah memiliki anggota");
 
         redirect($this->controller);
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->redirect_hak_akses('h');
         $this->kelompok_model->delete_all();
@@ -328,7 +296,7 @@ class Kelompok extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function insert_a($id = 0)
+    public function insert_a($id = 0): void
     {
         $this->redirect_hak_akses('u');
         $this->kelompok_model->insert_a($id);
@@ -339,7 +307,7 @@ class Kelompok extends Admin_Controller
         redirect($redirect);
     }
 
-    public function update_a($id = 0, $id_a = 0)
+    public function update_a($id = 0, $id_a = 0): void
     {
         $this->redirect_hak_akses('u');
         $this->kelompok_model->update_a($id, $id_a);
@@ -347,7 +315,7 @@ class Kelompok extends Admin_Controller
         redirect("{$this->controller}/anggota/{$id}");
     }
 
-    public function delete_anggota($id = 0, $a = 0)
+    public function delete_anggota($id = 0, $a = 0): void
     {
         $this->redirect_hak_akses('h');
         $this->kelompok_model->delete_anggota($a);
@@ -355,7 +323,7 @@ class Kelompok extends Admin_Controller
         redirect("{$this->controller}/anggota/{$id}");
     }
 
-    public function delete_anggota_all($id = 0)
+    public function delete_anggota_all($id = 0): void
     {
         $this->redirect_hak_akses('h');
         $this->kelompok_model->delete_anggota_all();
@@ -363,7 +331,7 @@ class Kelompok extends Admin_Controller
         redirect("{$this->controller}/anggota/{$id}");
     }
 
-    public function to_master($id = 0)
+    public function to_master($id = 0): void
     {
         $filter = $id;
         if ($filter != 0) {
@@ -375,7 +343,7 @@ class Kelompok extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function statistik($tipe = '0', $nomor = 0, $sex = null)
+    public function statistik($tipe = '0', $nomor = 0, $sex = null): void
     {
         if ($sex == null) {
             if ($nomor != 0) {
@@ -390,28 +358,24 @@ class Kelompok extends Admin_Controller
         $this->session->unset_userdata('program_bantuan');
         $this->session->sex = ($sex == 0) ? null : $sex;
 
-        switch ($tipe) {
-            case $tipe > 50:
-                $program_id                     = preg_replace('/^50/', '', $tipe);
-                $this->session->program_bantuan = $program_id;
-
-                // TODO: Sederhanakan query ini, pindahkan ke model
-                $nama = $this->db
-                    ->select('nama')
-                    ->where('id', $program_id)
-                    ->where('config_id', identitas('id'))
-                    ->get('program')
-                    ->row()
-                    ->nama;
-
-                if (! in_array($nomor, [BELUM_MENGISI, TOTAL])) {
-                    $this->session->status_dasar = null; // tampilkan semua peserta walaupun bukan hidup/aktif
-                    $nomor                       = $program_id;
-                }
-                $kategori = $nama . ' : ';
-                $session  = 'penerima_bantuan';
-                $tipe     = 'penerima_bantuan';
-                break;
+        if ($tipe === $tipe > 50) {
+            $program_id                     = preg_replace('/^50/', '', $tipe);
+            $this->session->program_bantuan = $program_id;
+            // TODO: Sederhanakan query ini, pindahkan ke model
+            $nama = $this->db
+                ->select('nama')
+                ->where('id', $program_id)
+                ->where('config_id', identitas('id'))
+                ->get('program')
+                ->row()
+                ->nama;
+            if (! in_array($nomor, [BELUM_MENGISI, TOTAL])) {
+                $this->session->status_dasar = null; // tampilkan semua peserta walaupun bukan hidup/aktif
+                $nomor                       = $program_id;
+            }
+            $kategori = $nama . ' : ';
+            $session  = 'penerima_bantuan';
+            $tipe     = 'penerima_bantuan';
         }
 
         $this->session->{$session} = ($nomor != TOTAL) ? $nomor : null;

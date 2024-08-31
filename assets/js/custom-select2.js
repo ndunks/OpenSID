@@ -79,6 +79,9 @@ $(document).ready(function()
 	}
 	$('.select2-ikon').select2(
 	{
+	placeholder: function() {
+		$(this).data('placeholder');
+	},
     templateResult: format_ikon,
     templateSelection: format_ikon,
     escapeMarkup: function(m) { return m; }
@@ -115,6 +118,8 @@ $(document).ready(function()
 				return {
 					q: params.term || '',
 					page: params.page || 1,
+					suplemen: $(this).data('suplemen'),
+					sasaran: $(this).data('sasaran'),
 				};
 			},
 			cache: true
@@ -138,6 +143,7 @@ $(document).ready(function()
 				return {
 					q: params.term || '',
 					page: params.page || 1,
+					tipe: $(this).data('tipe'),
 					kelompok: $(this).data('kelompok'),
 				};
 			},

@@ -4,11 +4,13 @@
 			<div class="col-md-12">
 				<div id="foto-produk" class="carousel slide" data-ride="carousel">
 					<div class="carousel-inner">
-						<?php $foto = json_decode($main->foto); ?>
+						<?php $foto = json_decode($main->foto, null); ?>
 						<?php for ($i = 0; $i < $this->setting->banyak_foto_tiap_produk; $i++): ?>
 							<?php if ($foto[$i]): ?>
 								<div class="item <?= jecho($i, 0, 'active'); ?>">
-									<img src="<?= to_base64(LOKASI_PRODUK . $foto[$i]); ?>" alt="Foto <?= ($i + 1); ?>">
+									<div class="image-container">
+										<img src="<?= is_file(LOKASI_PRODUK . $foto[$i]) ? to_base64(LOKASI_PRODUK . $foto[$i]) : to_base64('assets/images/404-image-not-found.jpg') ?>" alt="Foto <?= ($i + 1); ?>">
+									</div>
 									<div class="carousel-caption">
 										Foto <?= ($i == 0) ? 'Utama' : 'Tambahan'; ?>
 									</div>

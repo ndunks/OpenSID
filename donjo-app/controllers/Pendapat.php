@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,42 +29,46 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Enums\JawabanKepuasanEnum;
+use App\Models\Pendapat as ModelsPendapat;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Pendapat extends Admin_Controller
 {
+    protected ModelsPendapat $pendapat;
+
     public function __construct()
     {
         parent::__construct();
-        $this->load->model(['pendapat_model']);
         $this->modul_ini     = 'layanan-mandiri';
         $this->sub_modul_ini = 'pendapat';
+        $this->pendapat      = new ModelsPendapat();
     }
 
     public function index()
     {
-        $tipe                  = $this->session->flashdata('tipe');
-        $data['list_pendapat'] = unserialize(NILAI_PENDAPAT);
+        $tipe                  = session('tipe');
+        $data['list_pendapat'] = JawabanKepuasanEnum::all();
 
-        foreach ($data['list_pendapat'] as $key => $value) {
-            $data["pilihan_{$key}"] = $this->pendapat_model->get_pilihan($tipe, $key);
+        foreach (array_keys($data['list_pendapat']) as $key) {
+            $data["pilihan_{$key}"] = $this->pendapat->pendapat($tipe, $key)['total'];
         }
+        $data['main']   = $this->pendapat->pendapat($tipe);
+        $data['detail'] = $this->pendapat->with('penduduk')->whereRaw($this->pendapat->kondisi($tipe)['where'])->get()->toArray();
 
-        $data['main']   = $this->pendapat_model->get_pendapat($tipe);
-        $data['detail'] = $this->pendapat_model->get_data($tipe);
-
-        $this->render('pendapat/index', $data);
+        return view('admin.pendapat.index', $data);
     }
 
-    public function detail(int $tipe = 1)
+    public function detail(int $tipe = 1): void
     {
-        $this->session->set_flashdata('tipe', $tipe);
+        set_session('tipe', $tipe);
 
         redirect('pendapat');
     }

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -68,9 +68,8 @@ class Migrasi_fitur_premium_2212 extends MY_model
         $hasil = $hasil && $this->suratKeteranganBedaIdentitas($hasil);
         $hasil = $hasil && $this->migrasi_2022112851($hasil);
         $hasil = $hasil && $this->migrasi_2022112971($hasil);
-        $hasil = $hasil && $this->migrasi_2022113052($hasil);
 
-        return $hasil && true;
+        return $hasil && $this->migrasi_2022113052($hasil);
     }
 
     protected function migrasi_2022110171($hasil)
@@ -376,7 +375,7 @@ class Migrasi_fitur_premium_2212 extends MY_model
 
         if ($this->db->table_exists('setting_aplikasi_options')) {
             // Hapus tabel setting aplikasi options
-            $hasil = $hasil && $this->dbforge->drop_table('setting_aplikasi_options');
+            return $hasil && $this->dbforge->drop_table('setting_aplikasi_options');
         }
 
         return $hasil;
@@ -385,7 +384,7 @@ class Migrasi_fitur_premium_2212 extends MY_model
     protected function migrasi_2022110951($hasil)
     {
         if (! $this->db->field_exists('satuan_waktu', 'pembangunan')) {
-            $hasil = $hasil && $this->dbforge->add_column('pembangunan', [
+            return $hasil && $this->dbforge->add_column('pembangunan', [
                 'satuan_waktu' => [
                     'type'       => 'TINYINT',
                     'constraint' => 1,
@@ -403,7 +402,7 @@ class Migrasi_fitur_premium_2212 extends MY_model
     protected function migrasi_2022111653($hasil)
     {
         if (! $this->db->field_exists('ip_address', 'pengaduan')) {
-            $hasil = $hasil && $this->dbforge->add_column('pengaduan', [
+            return $hasil && $this->dbforge->add_column('pengaduan', [
                 'ip_address' => [
                     'type'       => 'VARCHAR',
                     'constraint' => 100,
@@ -487,7 +486,7 @@ class Migrasi_fitur_premium_2212 extends MY_model
         $daftar_rtm = DB::table('tweb_rtm')->get(['nik_kepala', 'no_kk']);
 
         if ($daftar_rtm) {
-            foreach ($daftar_rtm as $key => $value) {
+            foreach ($daftar_rtm as $value) {
                 DB::table('tweb_penduduk')
                     ->where('id', '=', $value->nik_kepala)
                     ->update([
@@ -545,7 +544,7 @@ class Migrasi_fitur_premium_2212 extends MY_model
     protected function migrasi_2022112851($hasil)
     {
         if ($this->db->where('nama', 'SK Kades')->get('ref_dokumen')->row()) {
-            $hasil = $hasil && $this->db->update(
+            return $hasil && $this->db->update(
                 'ref_dokumen',
                 ['nama' => 'Keputusan Kades'],
                 ['id'   => 2]
@@ -578,13 +577,13 @@ class Migrasi_fitur_premium_2212 extends MY_model
     protected function migrasi_2022113052($hasil)
     {
         $tables = $this->db
-            ->query("SELECT TABLE_NAME, TABLE_COLLATION FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = '{$this->db->database}' AND TABLE_COLLATION != 'utf8_general_ci'")
+            ->query("SELECT TABLE_NAME, TABLE_COLLATION FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = '{$this->db->database}' AND TABLE_COLLATION != '{$this->db->dbcollat}'")
             ->result_array();
 
         if ($tables) {
             foreach ($tables as $tbl) {
                 if ($this->db->table_exists($tbl['TABLE_NAME'])) {
-                    $hasil = $hasil && $this->db->query("ALTER TABLE {$tbl['TABLE_NAME']} CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci");
+                    $hasil = $hasil && $this->db->query("ALTER TABLE {$tbl['TABLE_NAME']} CONVERT TO CHARACTER SET utf8 COLLATE {$this->db->dbcollat}");
                 }
             }
         }

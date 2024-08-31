@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,7 +39,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Web_gallery_model extends MY_Model
 {
-    private $urut_model;
+    private Urut_Model $urut_model;
 
     public function __construct()
     {
@@ -53,14 +53,14 @@ class Web_gallery_model extends MY_Model
         return $this->autocomplete_str('nama', 'gambar_gallery');
     }
 
-    private function search_sql()
+    private function search_sql(): void
     {
         if ($cari = $this->session->cari) {
             $this->db->like('gambar', $cari, 'BOTH')->or_like('nama', $cari, 'BOTH');
         }
     }
 
-    private function filter_sql()
+    private function filter_sql(): void
     {
         if ($kf = $this->session->filter) {
             $this->db->where('enabled', $kf);
@@ -83,7 +83,7 @@ class Web_gallery_model extends MY_Model
         return $this->paging;
     }
 
-    private function list_data_sql()
+    private function list_data_sql(): void
     {
         $this->config_id()
             ->from('gambar_gallery')
@@ -121,16 +121,13 @@ class Web_gallery_model extends MY_Model
 
         $data = $this->db->get()->result_array();
 
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $j + 1;
 
-            if ($data[$i]['enabled'] == 1) {
-                $data[$i]['aktif'] = 'Ya';
-            } else {
-                $data[$i]['aktif'] = 'Tidak';
-            }
+            $data[$i]['aktif'] = $data[$i]['enabled'] == 1 ? 'Ya' : 'Tidak';
 
             $j++;
         }
@@ -138,7 +135,7 @@ class Web_gallery_model extends MY_Model
         return $data;
     }
 
-    public function insert()
+    public function insert(): void
     {
         $_SESSION['success']   = 1;
         $_SESSION['error_msg'] = '';
@@ -176,7 +173,7 @@ class Web_gallery_model extends MY_Model
         }
     }
 
-    public function update($id = 0)
+    public function update($id = 0): void
     {
         $_SESSION['success']   = 1;
         $_SESSION['error_msg'] = '';
@@ -219,7 +216,7 @@ class Web_gallery_model extends MY_Model
         unset($data['old_gambar']);
     }
 
-    public function delete_gallery($id = '', $semua = false)
+    public function delete_gallery($id = '', $semua = false): void
     {
         if (! $semua) {
             $this->session->success = 1;
@@ -237,7 +234,7 @@ class Web_gallery_model extends MY_Model
         }
     }
 
-    public function delete_all_gallery()
+    public function delete_all_gallery(): void
     {
         $this->session->success = 1;
 
@@ -248,7 +245,7 @@ class Web_gallery_model extends MY_Model
         }
     }
 
-    public function delete($id = '', $semua = false)
+    public function delete($id = '', $semua = false): void
     {
         if (! $semua) {
             $this->session->success = 1;
@@ -267,7 +264,7 @@ class Web_gallery_model extends MY_Model
         status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->session->success = 1;
 
@@ -278,7 +275,7 @@ class Web_gallery_model extends MY_Model
         }
     }
 
-    public function delete_gallery_image($id)
+    public function delete_gallery_image($id): void
     {
         $image = $this->config_id()
             ->select('gambar')
@@ -294,10 +291,10 @@ class Web_gallery_model extends MY_Model
         }
     }
 
-    public function gallery_lock($id = '', $val = 0)
+    public function gallery_lock($id = '', $val = 0): void
     {
         // Jangan kunci jika digunakan untuk slider
-        if ($val == 2) {
+        if ($val == 1) {
             $this->db
                 ->group_start()
                 ->where('slider <>', 1)
@@ -311,7 +308,7 @@ class Web_gallery_model extends MY_Model
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function gallery_slider($id = '', $val = 0)
+    public function gallery_slider($id = '', $val = 0): void
     {
         if ($val == 1) {
             // Hanya satu gallery yang boleh tampil di slider
@@ -409,22 +406,19 @@ class Web_gallery_model extends MY_Model
 
         $this->db->limit($limit, $offset);
         $this->list_sub_gallery_sql($gal);
-        $data = $this->db->get()->result_array();
+        $data    = $this->db->get()->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $i + 1;
 
-            if ($data[$i]['enabled'] == 1) {
-                $data[$i]['aktif'] = 'Ya';
-            } else {
-                $data[$i]['aktif'] = 'Tidak';
-            }
+            $data[$i]['aktif'] = $data[$i]['enabled'] == 1 ? 'Ya' : 'Tidak';
         }
 
         return $data;
     }
 
-    public function insert_sub_gallery($parrent = 0)
+    public function insert_sub_gallery($parrent = 0): void
     {
         $_SESSION['success']   = 1;
         $_SESSION['error_msg'] = '';
@@ -464,7 +458,7 @@ class Web_gallery_model extends MY_Model
         }
     }
 
-    public function update_sub_gallery($id = 0)
+    public function update_sub_gallery($id = 0): void
     {
         $_SESSION['success']   = 1;
         $_SESSION['error_msg'] = '';
@@ -502,9 +496,9 @@ class Web_gallery_model extends MY_Model
     // $arah:
     //		1 - turun
     // 		2 - naik
-    public function urut($id, $arah, $gallery = '')
+    public function urut($id, $arah, $gallery = ''): void
     {
-        $subset = ! empty($gallery) ? ['parrent' => $gallery] : ['parrent' => 0];
+        $subset = empty($gallery) ? ['parrent' => 0] : ['parrent' => $gallery];
         $this->urut_model->urut($id, $arah, $subset);
     }
 }

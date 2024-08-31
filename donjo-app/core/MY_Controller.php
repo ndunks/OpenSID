@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,16 +29,22 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Enums\FirebaseEnum;
 use App\Models\Config;
+use App\Models\FcmToken;
+use App\Models\FcmTokenMandiri;
+use App\Models\LogNotifikasiAdmin;
+use App\Models\LogNotifikasiMandiri;
 use App\Models\LogSurat;
 use App\Models\Pamong;
 use App\Models\Pesan;
+use App\Models\User;
 use App\Models\UserGrup;
 use App\Models\Wilayah;
 use Illuminate\Support\Facades\Schema;
@@ -82,27 +88,12 @@ class MY_Controller extends CI_Controller
 
         $this->cek_config();
 
-        /*
-        | Tambahkan model yg akan diautoload di sini.
-        | donjo-app/config/autoload.php digunakan untuk autoload model untuk mengisi data awal
-        | pada waktu install, di mana database masih kosong
-        */
-        $this->load->model(['setting_model', 'anjungan_model']);
         $this->controller = strtolower($this->router->fetch_class());
-        $this->setting_model->init();
-        $this->request = $this->input->post();
-
-        // Untuk anjungan
-        if (Schema::hasColumn('anjungan', 'tipe') && Schema::hasColumn('anjungan', 'status_alasan')) {
-            $this->cek_anjungan = $this->anjungan_model->cek_anjungan();
-        }
-
-        // Cek perangkat lupa absen keluar
-        cek_kehadiran();
+        $this->request    = $this->input->post();
     }
 
     // Bersihkan session cluster wilayah
-    public function clear_cluster_session()
+    public function clear_cluster_session(): void
     {
         $cluster_session = ['dusun', 'rw', 'rt'];
 
@@ -111,11 +102,18 @@ class MY_Controller extends CI_Controller
         }
     }
 
-    private function cek_config()
+    private function cek_config(): void
     {
-        if (! $this->db) {
-            $this->load->database();
+        // jika belum install
+        if (! file_exists(DESAPATH)) {
+            redirect('install');
         }
+
+        $this->load->database();
+
+        // Tambahkan model yg akan diautoload di sini. Seeder di load disini setelah
+        // installer berhasil dijalankan dengan kondisi folder desa sudah ada.
+        $this->load->model(['seeders/seeder', 'setting_model', 'anjungan_model']);
 
         $appKey   = get_app_key();
         $appKeyDb = Config::first();
@@ -131,6 +129,122 @@ class MY_Controller extends CI_Controller
             $this->session->cek_app_key = true;
             redirect('koneksi_database/config');
         }
+
+        $this->setting_model->init();
+
+        // Untuk anjungan
+        if (Schema::hasColumn('anjungan', 'tipe') && Schema::hasColumn('anjungan', 'status_alasan')) {
+            $this->cek_anjungan = $this->anjungan_model->cek_anjungan();
+        }
+
+        // Cek perangkat lupa absen keluar
+        cek_kehadiran();
+    }
+
+    public function create_log_notifikasi_admin($next, $isi): void
+    {
+        $users = User::whereHas('pamong', static function ($query) use ($next) {
+            if ($next == 'verifikasi_sekdes') {
+                return $query->where('jabatan_id', '=', sekdes()->id);
+            }
+            if ($next == 'verifikasi_kades') {
+                return $query->where('jabatan_id', '=', kades()->id);
+            }
+
+            return $query->where('jabatan_id', '!=', kades()->id)->where('jabatan_id', '!=', sekdes()->id);
+        })
+            ->when($next != 'verifikasi_sekdes' && $next != 'verifikasi_kades', static fn ($query) => $query->orWhereNull('pamong_id'))
+            ->get();
+
+        if (is_array($isi) && $users->count() > 0) {
+            $logs = $users->map(static function ($user) use ($isi): array {
+                $data_user = ['id_user' => $user->id, 'config_id' => $user->config_id];
+
+                return array_merge($data_user, $isi);
+            });
+            LogNotifikasiAdmin::insert($logs->toArray());
+        }
+    }
+
+    public function kirim_notifikasi_admin($next, $pesan, $judul, $payload = ''): void
+    {
+        $allToken = FcmToken::whereHas('user', static fn ($user) => $user->WhereHas('pamong', static function ($query) use ($next) {
+            if ($next == 'verifikasi_sekdes') {
+                return $query->where('jabatan_id', '=', sekdes()->id);
+            }
+            if ($next == 'verifikasi_kades') {
+                return $query->where('jabatan_id', '=', kades()->id);
+            }
+
+            return $query->where('jabatan_id', '!=', kades()->id)->where('jabatan_id', '!=', sekdes()->id);
+        })->when(next != 'verifikasi_sekdes' && $next != 'verifikasi_kades', static fn ($query) => $query->orWhereNull('pamong_id')))->get();
+
+        if (cek_koneksi_internet()) {
+            // kirim ke aplikasi android admin.
+            try {
+                $client       = new Fcm\FcmClient(FirebaseEnum::SERVER_KEY, FirebaseEnum::SENDER_ID);
+                $notification = new Fcm\Push\Notification();
+
+                $notification
+                    ->addRecipient($allToken->pluck('token')->all())
+                    ->setTitle($judul)
+                    ->setBody($pesan)
+                    ->addData('payload', $payload);
+                $client->send($notification);
+            } catch (Exception $e) {
+                log_message('error', $e->getMessage());
+            }
+        }
+
+        $isi = [
+            'judul'      => $judul,
+            'isi'        => $pesan,
+            'payload'    => $payload,
+            'read'       => 0,
+            'created_at' => date('Y-m-d H:i:s'),
+        ];
+
+        $this->create_log_notifikasi_admin($next, $isi);
+    }
+
+    public function create_log_notifikasi_penduduk($isi): void
+    {
+        if (is_array($isi)) {
+            LogNotifikasiMandiri::create($isi);
+        }
+    }
+
+    public function kirim_notifikasi_penduduk($id_penduduk, $pesan, $judul, $payload = ''): void
+    {
+        $allToken = FcmTokenMandiri::where('id_user_mandiri', $id_penduduk)->get();
+
+        if (cek_koneksi_internet()) {
+            // kirim ke aplikasi android admin.
+            try {
+                $client       = new Fcm\FcmClient(FirebaseEnum::SERVER_KEY, FirebaseEnum::SENDER_ID);
+                $notification = new Fcm\Push\Notification();
+
+                $notification
+                    ->addRecipient($allToken->pluck('token')->all())
+                    ->setTitle($judul)
+                    ->setBody($pesan)
+                    ->addData('payload', $payload);
+                $client->send($notification);
+            } catch (Exception $e) {
+                log_message('error', $e->getMessage());
+            }
+        }
+
+        $isi = [
+            'judul'           => $judul,
+            'isi'             => $pesan,
+            'payload'         => $payload,
+            'read'            => 0,
+            'id_user_mandiri' => $id_penduduk,
+            'created_at'      => date('Y-m-d H:i:s'),
+        ];
+
+        $this->create_log_notifikasi_penduduk($isi);
     }
 }
 
@@ -144,6 +258,16 @@ class Web_Controller extends MY_Controller
         parent::__construct();
 
         $this->header = identitas();
+
+        $this->load->model('theme_model');
+        $this->load->helper('theme');
+        $this->theme        = $this->theme_model->tema;
+        $this->theme_folder = $this->theme_model->folder;
+
+        // Variabel untuk tema
+        $this->set_template();
+        $this->includes['folder_themes'] = "../../{$this->theme_folder}/{$this->theme}";
+
         if ($this->setting->offline_mode == 2) {
             $this->view_maintenance();
         } elseif ($this->setting->offline_mode == 1) {
@@ -154,15 +278,6 @@ class Web_Controller extends MY_Controller
             }
         }
 
-        $this->load->model('theme_model');
-        $this->theme        = $this->theme_model->tema;
-        $this->theme_folder = $this->theme_model->folder;
-
-        // Variabel untuk tema
-        $this->set_template();
-        $this->folder_themes_ref = "../../{$this->theme_folder}/{$this->theme}";
-        $this->includes['folder_themes'] = &$this->folder_themes_ref;
-
         $this->load->model('web_menu_model');
     }
 
@@ -170,10 +285,8 @@ class Web_Controller extends MY_Controller
      * set_template function
      *
      * @param string $template_file
-     *
-     * @return void
      */
-    public function set_template($template_file = 'template')
+    public function set_template($template_file = 'template'): void
     {
         $this->template = "../../{$this->theme_folder}/{$this->theme}/{$template_file}";
         if( $template_file != 'template' && !file_exists($this->template)){
@@ -185,7 +298,7 @@ class Web_Controller extends MY_Controller
         }
     }
 
-    public function _get_common_data(&$data)
+    public function _get_common_data(&$data): void
     {
         $this->load->model('statistik_pengunjung_model');
         $this->load->model('first_menu_m');
@@ -233,17 +346,13 @@ class Web_Controller extends MY_Controller
 
     private function view_maintenance()
     {
-        $main         = $this->header;
-        $pamong_kades = Pamong::ttd('a.n')->first()->toArray();
+        $data['jabatan']          = kades()->nama;
+        $data['nama_kepala_desa'] = $this->header['nama_kepala_desa'];
+        $data['nip_kepala_desa']  = $this->header['nip_kepala_desa'];
 
-        // TODO : Gunakan view blade
-        if (file_exists(DESAPATH . 'offline_mode.php')) {
-            include DESAPATH . 'offline_mode.php';
-        } else {
-            include VIEWPATH . 'offline_mode.php';
-        }
+        $this->config->set_item('views_blade', array_merge(config_item('views_blade'), ["{$this->theme_folder}/{$this->theme}"]));
 
-        exit();
+        return view('layouts.maintenance', $data);
     }
 }
 
@@ -270,7 +379,7 @@ class Mandiri_Controller extends MY_Controller
         }
     }
 
-    public function render($view, ?array $data = null)
+    public function render($view, ?array $data = null): void
     {
         $data['desa']         = $this->header;
         $data['cek_anjungan'] = $this->cek_anjungan;
@@ -282,12 +391,6 @@ class Mandiri_Controller extends MY_Controller
 // Untuk API read-only, seperti Api_informasi_publik
 class Api_Controller extends MY_Controller
 {
-    // Constructor
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     protected function log_request()
     {
         $message = 'API Request ' . $this->input->server('REQUEST_URI') . ' dari ' . $this->input->ip_address();
@@ -301,6 +404,8 @@ class Admin_Controller extends MY_Controller
     public $CI;
     public $modul_ini;
     public $sub_modul_ini;
+    public $akses_modul;
+    protected $aliasController;
 
     public function __construct()
     {
@@ -308,7 +413,16 @@ class Admin_Controller extends MY_Controller
         $this->CI = CI_Controller::get_instance();
         $this->load->model('header_model');
         $this->header = $this->header_model->get_data();
+
         $this->cek_identitas_desa();
+        // paksa untuk logout jika melakukan ubah password
+        if (! $this->session->change_password) {
+            return;
+        }
+        if ($this->router->class === 'pengguna') {
+            return;
+        }
+        redirect('pengguna');
     }
 
     /*
@@ -317,7 +431,7 @@ class Admin_Controller extends MY_Controller
      * 1. Config desa sudah diisi
      * 2. Password standard (sid304)
      */
-    private function cek_identitas_desa()
+    private function cek_identitas_desa(): void
     {
         $kode_desa = empty(Config::appKey()->first()->kode_desa);
 
@@ -329,7 +443,7 @@ class Admin_Controller extends MY_Controller
 
         $force    = $this->session->force_change_password;
 
-        if ($force && ! $kode_desa && ! in_array($this->router->class, ['pengguna'])) {
+        if ($force && ! $kode_desa && $this->router->class != 'pengguna') {
             redirect('pengguna#sandi');
         }
 
@@ -342,17 +456,19 @@ class Admin_Controller extends MY_Controller
 
         $this->grup = $this->user_model->sesi_grup($this->session->sesi);
         $this->load->model('modul_model');
-        if (! $this->modul_model->modul_aktif($this->controller) && $this->controller != 'pengguna') {
+        $aliasController = $this->aliasController ?? $this->controller;
+        if (! $this->modul_model->modul_aktif($aliasController)) {
             session_error('Fitur ini tidak aktif');
             redirect($_SERVER['HTTP_REFERER']);
         }
 
-        if (! $this->user_model->hak_akses($this->grup, $this->controller, 'b')) {
+        if (! $this->user_model->hak_akses($this->grup, $aliasController, 'b')) {
             if (empty($this->grup)) {
                 $_SESSION['request_uri'] = $_SERVER['REQUEST_URI'];
                 redirect('siteman');
             } else {
-                session_error('Anda tidak mempunyai akses pada fitur itu');
+                // TODO:: cek masalah ini kenapa selalu muncul error di untuk can('u', 'pelanggan)
+                // session_error('Anda tidak mempunyai akses pada fitur itu');
                 unset($_SESSION['request_uri']);
                 redirect('main');
             }
@@ -367,24 +483,13 @@ class Admin_Controller extends MY_Controller
         $isAdmin                                = $this->session->isAdmin->pamong;
         $this->header['notif_permohonan']       = 0;
         if ($this->db->field_exists('verifikasi_operator', 'log_surat') && $this->db->field_exists('deleted_at', 'log_surat')) {
-            $this->header['notif_permohonan'] = LogSurat::whereNull('deleted_at')->when($isAdmin->jabatan_id == kades()->id, static function ($q) {
-                return $q->when(setting('tte') == 1, static function ($tte) {
-                    return $tte->where('verifikasi_kades', '=', 0)->orWhere('tte', '=', 0);
-                })->when(setting('tte') == 0, static function ($tte) {
-                    return $tte->where('verifikasi_kades', '=', 0);
-                });
-            })
-                ->when($isAdmin->jabatan_id == sekdes()->id, static function ($q) {
-                    return $q->where('verifikasi_sekdes', '=', '0');
-                })
-                ->when($isAdmin == null || ! in_array($isAdmin->jabatan_id, [kades()->id, sekdes()->id]), static function ($q) {
-                    return $q->where('verifikasi_operator', '=', '0')->orWhere('verifikasi_operator', '=', '-1');
-                })
+            $this->header['notif_permohonan'] = LogSurat::whereNull('deleted_at')->when($isAdmin->jabatan_id == kades()->id, static fn ($q) => $q->when(setting('tte') == 1, static fn ($tte) => $tte->where('verifikasi_kades', '=', 0)->orWhere('tte', '=', 0))->when(setting('tte') == 0, static fn ($tte) => $tte->where('verifikasi_kades', '=', 0)))
+                ->when($isAdmin->jabatan_id == sekdes()->id, static fn ($q) => $q->where('verifikasi_sekdes', '=', '0'))
+                ->when($isAdmin == null || ! in_array($isAdmin->jabatan_id, [kades()->id, sekdes()->id]), static fn ($q) => $q->where('verifikasi_operator', '=', '0')->orWhere('verifikasi_operator', '=', '-1'))
                 ->count();
         }
 
         if (! config_item('demo_mode')) {
-            // cek langganan premium
             $info_langganan = $this->cache->file->get_metadata('status_langganan');
 
             if ((strtotime('+30 day', $info_langganan['mtime']) < strtotime('now')) || ($this->cache->file->get_metadata('status_langganan') == false && $this->setting->layanan_opendesa_token != null)) {
@@ -414,6 +519,7 @@ class Admin_Controller extends MY_Controller
         return $pengumuman;
     }
 
+    // TODO:: hapus method ini jika sudah tidak digunakan
     // Untuk kasus di mana method controller berbeda hak_akses. Misalnya 'setting_qrcode' readonly, tetapi 'setting/analisis' boleh ubah
     protected function redirect_hak_akses_url($akses, $redirect = '', $controller = '')
     {
@@ -429,6 +535,7 @@ class Admin_Controller extends MY_Controller
         }
     }
 
+    // TODO:: hapus method ini jika sudah tidak digunakan
     protected function redirect_hak_akses($akses, $redirect = '', $controller = '', $admin_only = false)
     {
         if (empty($controller)) {
@@ -445,6 +552,7 @@ class Admin_Controller extends MY_Controller
         }
     }
 
+    // TODO:: hapus method ini jika sudah tidak digunakan
     // Untuk kasus di mana method controller berbeda hak_akses. Misalnya 'setting_qrcode' readonly, tetapi 'setting/analisis' boleh ubah
     public function cek_hak_akses_url($akses, $controller = '')
     {
@@ -455,6 +563,7 @@ class Admin_Controller extends MY_Controller
         return $this->user_model->hak_akses_url($this->grup, $controller, $akses);
     }
 
+    // TODO:: hapus method ini jika sudah tidak digunakan
     public function cek_hak_akses($akses, $controller = '')
     {
         if (empty($controller)) {
@@ -464,7 +573,8 @@ class Admin_Controller extends MY_Controller
         return $this->user_model->hak_akses($this->grup, $controller, $akses);
     }
 
-    public function redirect_tidak_valid($valid)
+    // TODO:: hapus method ini jika sudah tidak digunakan
+    public function redirect_tidak_valid($valid): void
     {
         if ($valid) {
             return;
@@ -474,7 +584,7 @@ class Admin_Controller extends MY_Controller
         redirect($_SERVER['HTTP_REFERER']);
     }
 
-    public function render($view, ?array $data = null)
+    public function render($view, ?array $data = null): void
     {
         $this->load->view('header', $this->header);
         $this->load->view('nav');
@@ -515,6 +625,17 @@ class Admin_Controller extends MY_Controller
         }
         if (can('u')) {
             $this->session->ubah_tambah_gambar_rfm = true;
+        }
+    }
+}
+
+class Tte_Controller extends MY_Controller
+{
+    public function __construct()
+    {
+        parent::__construct();
+        if ($this->session->siteman != 1) {
+            redirect('siteman');
         }
     }
 }

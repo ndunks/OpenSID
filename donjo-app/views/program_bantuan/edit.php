@@ -3,7 +3,7 @@
 	<section class="content-header">
 		<h1>Ubah Program Bantuan <?= $nama_excerpt; ?></h1>
 		<ol class="breadcrumb">
-			<li><a href="<?=site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?=site_url('beranda')?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li><a href="<?=site_url('program_bantuan')?>"> Daftar Program Bantuan</a></li>
 			<li class="active">Ubah Program Bantuan <?= $nama_excerpt; ?></li>
 		</ol>
@@ -65,7 +65,7 @@ $val             = $data['asaldana']; ?>
 								<div class="input-group-addon">
 									<i class="fa fa-calendar"></i>
 								</div>
-								<input class="form-control input-sm pull-right" id="tgl_1" name="sdate" placeholder="Tgl. Mulai" type="text" value="<?= date('d/m/Y', strtotime($data['sdate'])); ?>">
+								<input class="form-control input-sm pull-right" id="tgl_mulai" name="sdate" placeholder="Tgl. Mulai" type="text" value="<?= date('d/m/Y', strtotime($data['sdate'])); ?>">
 							</div>
 						</div>
 						<div class="col-sm-4">
@@ -73,7 +73,7 @@ $val             = $data['asaldana']; ?>
 								<div class="input-group-addon">
 									<i class="fa fa-calendar"></i>
 								</div>
-								<input class="form-control input-sm pull-right" id="tgl_2" name="edate" placeholder="Tgl. Akhir" type="text" value="<?= date('d/m/Y', strtotime($data['edate'])); ?>">
+								<input class="form-control input-sm pull-right" id="tgl_akhir" name="edate" placeholder="Tgl. Akhir" type="text" value="<?= date('d/m/Y', strtotime($data['edate'])); ?>">
 							</div>
 						</div>
 					</div>

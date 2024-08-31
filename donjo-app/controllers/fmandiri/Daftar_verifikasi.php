@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -51,7 +51,7 @@ class Daftar_verifikasi extends Web_Controller
         }
     }
 
-    public function index()
+    public function index(): void
     {
         if ($this->session->mandiri == 1) {
             redirect('layanan-mandiri/beranda');
@@ -98,7 +98,7 @@ class Daftar_verifikasi extends Web_Controller
     /**
      * Verifikasi Telegram
      */
-    public function telegram()
+    public function telegram(): void
     {
         $data = [
             'header'                  => $this->header,
@@ -127,11 +127,11 @@ class Daftar_verifikasi extends Web_Controller
     /**
      * Langkah 2 Verifikasi Telegram
      */
-    public function kirim_otp_telegram()
+    public function kirim_otp_telegram(): void
     {
         $post    = $this->input->post();
         $userID  = $post['telegram_userID'];
-        $token   = hash('sha256', $raw_token = mt_rand(100000, 999999));
+        $token   = hash('sha256', $raw_token = random_int(100000, 999999));
         $id_pend = $this->session->is_verifikasi['id'];
 
         $this->db->trans_begin();
@@ -148,7 +148,7 @@ class Daftar_verifikasi extends Web_Controller
                 $this->otp_library->driver('telegram')->kirim_otp($userID, $raw_token);
 
                 $this->db->trans_commit();
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 log_message('error', $e);
 
                 $this->session->set_flashdata('daftar_notif_telegram', [
@@ -181,7 +181,7 @@ class Daftar_verifikasi extends Web_Controller
     /**
      * Langkah 3 Verifikasi Telegram
      */
-    public function verifikasi_telegram()
+    public function verifikasi_telegram(): void
     {
         $post = $this->input->post();
         $otp  = $post['token_telegram'];
@@ -198,7 +198,7 @@ class Daftar_verifikasi extends Web_Controller
 
             try {
                 $this->otp_library->driver('telegram')->verifikasi_berhasil($telegramID, $nama);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 log_message('error', $e);
             }
 
@@ -216,7 +216,7 @@ class Daftar_verifikasi extends Web_Controller
     /**
      * Verifikasi Email
      */
-    public function email()
+    public function email(): void
     {
         $data = [
             'header'                  => $this->header,
@@ -245,11 +245,11 @@ class Daftar_verifikasi extends Web_Controller
     /**
      * Langkah 2 Verifikasi Email
      */
-    public function kirim_otp_email()
+    public function kirim_otp_email(): void
     {
         $post    = $this->input->post();
         $email   = $post['alamat_email'];
-        $token   = hash('sha256', $raw_token = mt_rand(100000, 999999));
+        $token   = hash('sha256', $raw_token = random_int(100000, 999999));
         $id_pend = $this->session->is_verifikasi['id'];
 
         $this->db->trans_begin();
@@ -266,7 +266,7 @@ class Daftar_verifikasi extends Web_Controller
                 $this->otp_library->driver('email')->kirim_otp($email, $raw_token);
 
                 $this->db->trans_commit();
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 log_message('error', $e);
 
                 $this->session->set_flashdata('daftar_notif_telegram', [
@@ -299,7 +299,7 @@ class Daftar_verifikasi extends Web_Controller
     /**
      * Langkah 3 Verifikasi Email
      */
-    public function verifikasi_email()
+    public function verifikasi_email(): void
     {
         $post = $this->input->post();
         $otp  = $post['token_email'];
@@ -316,7 +316,7 @@ class Daftar_verifikasi extends Web_Controller
 
             try {
                 $this->otp_library->driver('email')->verifikasi_berhasil($email, $nama);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 log_message('error', $e);
             }
 

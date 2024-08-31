@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -99,9 +99,10 @@ class Sms_model extends MY_Model
         $data  = $query->result_array();
 
         //Formating Output
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $j + 1;
             $j++;
         }
@@ -169,9 +170,10 @@ class Sms_model extends MY_Model
         $data  = $query->result_array();
 
         //Formating Output
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $j + 1;
             $j++;
         }
@@ -239,9 +241,10 @@ class Sms_model extends MY_Model
         $data  = $query->result_array();
 
         //Formating Output
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no'] = $j + 1;
             $j++;
         }
@@ -249,7 +252,7 @@ class Sms_model extends MY_Model
         return $data;
     }
 
-    public function insert()
+    public function insert(): void
     {
         $post                      = $this->input->post();
         $data['DestinationNumber'] = bilangan($post['DestinationNumber']);
@@ -260,7 +263,7 @@ class Sms_model extends MY_Model
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function update($id = '')
+    public function update($id = ''): void
     {
         $post                = $this->input->post();
         $data['TextDecoded'] = htmlentities($post['TextDecoded']);
@@ -269,7 +272,7 @@ class Sms_model extends MY_Model
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function delete($Class = 0, $ID = '')
+    public function delete($Class = 0, $ID = ''): void
     {
         if ($Class == 2) {
             $tabel = 'sentitems';
@@ -284,11 +287,11 @@ class Sms_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function deleteAll($Class = 0)
+    public function deleteAll($Class = 0): void
     {
         $id_cb = $_POST['id_cb'];
 
-        if (count($id_cb)) {
+        if (count($id_cb) > 0) {
             foreach ($id_cb as $ID) {
                 $this->delete($Class, $ID);
             }

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -65,19 +65,15 @@ $capsule->addConnection([
     'prefix'    => $db['default']['dbprefix'],
     'stricton'  => $db['default']['stricton'],
     'options'   => [
-        \PDO::ATTR_EMULATE_PREPARES => true,
+        PDO::ATTR_EMULATE_PREPARES => true,
     ],
 ]);
 
 Container::setInstance($capsule->getContainer());
 
-$capsule->getContainer()->singleton('events', static function () use ($capsule) {
-    return new Dispatcher($capsule->getContainer());
-});
+$capsule->getContainer()->singleton('events', static fn (): \Illuminate\Events\Dispatcher => new Dispatcher($capsule->getContainer()));
 
-$capsule->getContainer()->singleton('db', static function () use ($capsule) {
-    return $capsule->getDatabaseManager();
-});
+$capsule->getContainer()->singleton('db', static fn () => $capsule->getDatabaseManager());
 
 $capsule->setAsGlobal();
 $capsule->setEventDispatcher($capsule->getContainer()->get('events'));
@@ -89,47 +85,41 @@ Facade::setFacadeApplication($capsule->getContainer());
 Paginator::$defaultView       = 'admin/layouts/components/pagination_default';
 Paginator::$defaultSimpleView = 'admin/layouts/components/pagination_simple_default';
 
-Paginator::viewFactoryResolver(static function () {
-    return view();
-});
+Paginator::viewFactoryResolver(static fn () => view());
 
-Paginator::currentPathResolver(static function () {
-    return current_url();
-});
+Paginator::currentPathResolver(static fn () => current_url());
 
 Paginator::currentPageResolver(static function ($pageName = 'page') {
     $page = get_instance()->input->get($pageName);
-
-    if (filter_var($page, FILTER_VALIDATE_INT) !== false && (int) $page >= 1) {
-        return (int) $page;
+    if (filter_var($page, FILTER_VALIDATE_INT) === false) {
+        return 1;
+    }
+    if ((int) $page < 1) {
+        return 1;
     }
 
-    return 1;
+    return (int) $page;
 });
 
-Paginator::queryStringResolver(static function () {
-    return get_instance()->uri->uri_string();
-});
+Paginator::queryStringResolver(static fn () => get_instance()->uri->uri_string());
 
-CursorPaginator::currentCursorResolver(static function ($cursorName = 'cursor') {
-    return Cursor::fromEncoded(get_instance()->input->get($cursorName));
-});
+CursorPaginator::currentCursorResolver(static fn ($cursorName = 'cursor') => Cursor::fromEncoded(get_instance()->input->get($cursorName)));
 
-\Illuminate\Database\Query\Builder::macro('toRawSql', function () {
-    return array_reduce($this->getBindings(), static function ($sql, $binding) {
-        return preg_replace('/\?/', is_numeric($binding) ? $binding : "'{$binding}'", $sql, 1);
-    }, $this->toSql());
-});
+Illuminate\Database\Query\Builder::macro('toRawSql', fn () => array_reduce($this->getBindings(), static fn ($sql, $binding) => preg_replace('/\?/', is_numeric($binding) ? $binding : "'{$binding}'", $sql, 1), $this->toSql()));
 
-\Illuminate\Database\Eloquent\Builder::macro('toRawSql', function () {
-    return $this->getQuery()->toRawSql();
-});
+Illuminate\Database\Eloquent\Builder::macro('toRawSql', fn () => $this->getQuery()->toRawSql());
 
-/**
- * Uncomment untuk listen semua query dari laravel database.
- */
-// \Illuminate\Support\Facades\Event::listen(\Illuminate\Database\Events\QueryExecuted::class, function ($query) {
-//     log_message('notice', $query->time . ' | ' . array_reduce($query->bindings, static function ($sql, $binding) {
-//         return preg_replace('/\?/', is_numeric($binding) ? $binding : "'{$binding}'", $sql, 1);
-//     }, $query->sql));
-// });
+if (ENVIRONMENT == 'development') {
+    get_instance()->capsule  = $capsule;
+    get_instance()->queryOrm = [];
+
+    /**
+     * Uncomment untuk listen semua query dari laravel database.
+     */
+    Illuminate\Support\Facades\Event::listen(Illuminate\Database\Events\QueryExecuted::class, static function ($query): void {
+        // log_message('error', array_reduce($query->bindings, static function ($sql, $binding) {
+        //     return preg_replace('/\?/', is_numeric($binding) ? $binding : "'{$binding}'", $sql, 1);
+        // }, $query->sql));
+        get_instance()->queryOrm[] = $query;
+    });
+}

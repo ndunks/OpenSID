@@ -1,10 +1,6 @@
-				<footer class="main-footer">
-					<div class="pull-right hidden-xs">
-						<b>Versi</b> <?= AmbilVersi() ?>
-					</div>
-					<strong>Aplikasi <a href="https://github.com/OpenSID/OpenSID" target="_blank"><?= config_item('nama_aplikasi') ?></a>, dikembangkan oleh <a href="https://www.facebook.com/groups/OpenSID/" target="_blank">Komunitas <?= config_item('nama_aplikasi') ?></a>.</strong>
-				</footer>
-				<?php include RESOURCESPATH . 'views/admin/layouts/partials/control_sidebar.blade.php'; ?>
+				<?= view('admin.layouts.partials.footer') ?>
+
+				<?= view('admin.layouts.partials.control_sidebar') ?>
 				</div>
 				</div>
 
@@ -47,6 +43,7 @@
 				<script src="<?= asset('js/numeral.min.js') ?>"></script>
 				<!-- Script-->
 				<script src="<?= asset('js/script.js') ?>"></script>
+				<script src="<?= asset('js/admin.js') ?>"></script>
 				<script src="<?= asset('js/custom-select2.js') ?>"></script>
 				<script src="<?= asset('js/custom-datetimepicker.js') ?>"></script>
 
@@ -55,6 +52,7 @@
 
 				<!-- Sweet Alert -->
 				<script src="<?= asset('js/sweetalert2/sweetalert2.all.min.js') ?>"></script>
+				<script src="<?= asset('js/Leaflet.fullscreen.min.js') ?>"></script>
 				<script type="text/javascript">
 					numeral.register("locale", "id-id", {
 						delimiters: {
@@ -74,6 +72,16 @@
 					numeral.locale('id-id');
 					numeral.defaultFormat('0,0.00');
 					console.log(numeral.locale())
+
+					// pengaturan peta
+					var pengaturan_peta = {
+						maxZoom: <?= setting('max_zoom_peta') ?>,
+						minZoom: <?= setting('min_zoom_peta') ?>,
+						fullscreenControl: {
+							position: 'topright' // Menentukan posisi tombol fullscreen
+						}
+					};
+
 				</script>
 
 				<!-- Token Field -->
@@ -234,6 +242,35 @@
 				</script>
 				<?php session_error_clear(); ?>
 
+				<?php if (isset($perbaharui_langganan) && ! config_item('demo_mode')) : ?>
+					<!-- cek status langganan -->
+					<script type="text/javascript">
+						var controller = '<?= $this->controller ?>';
+						$.ajax({
+								url: `<?= config_item('server_layanan') ?>/api/v1/pelanggan/pemesanan`,
+								headers: {
+									"Authorization": `Bearer <?= setting('layanan_opendesa_token') ?>`,
+									"X-Requested-With": `XMLHttpRequest`,
+								},
+								type: 'Post',
+							})
+							.done(function(response) {
+								let data = {
+									body: response
+								}
+								$.ajax({
+									url: `${SITE_URL}pelanggan/pemesanan`,
+									type: 'Post',
+									dataType: 'json',
+									data: data,
+								}).done(function() {
+									if (controller == 'pelanggan') {
+										location.reload();
+									}
+								});
+							})
+					</script>
+				<?php endif ?>
 				</body>
 
 				</html>

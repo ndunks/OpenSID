@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,20 +29,25 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Enums\StatusDasarEnum;
 use App\Models\CovidVaksin;
 use App\Models\InventarisAsset;
+use App\Models\Keluarga;
+use App\Models\KlasifikasiSurat;
 use App\Models\LogPenduduk;
 use App\Models\LogPerubahanPenduduk;
+use App\Models\Penduduk;
 use App\Models\PendudukMandiri;
 use App\Models\RefJabatan;
 use App\Models\SettingAplikasi;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 defined('BASEPATH') || exit('No direct script access allowed');
@@ -84,11 +89,6 @@ class Periksa_model extends MY_Model
                 $this->periksa['masalah'][]   = 'no_kk_ganda';
                 $this->periksa['no_kk_ganda'] = $kk_ganda;
                 $calon                        = version_compare($calon, $calon_ini, '<') ? $calon : $calon_ini;
-            }
-
-            // Tabel ref_persil_kelas dan tabel ref inventaris lain terhapus isinya
-            if ($db_error_code == 99001 && preg_match('/ref_persil_kelas|ref_persil_mutasi|ref_peruntukan_tanah_kas/', $db_error_message)) {
-                $this->periksa['masalah'][] = 'ref_inventaris_kosong';
             }
 
             // pamong_id belum ada
@@ -204,24 +204,36 @@ class Periksa_model extends MY_Model
                 $calon = version_compare($calon, $calon_ini, '<') ? $calon : $calon_ini;
             }
 
-            $zero_date_default_value = $this->deteksi_zero_date_default_value();
-            if (! empty($zero_date_default_value)) {
-                $this->periksa['masalah'][]               = 'zero_date_default_value';
-                $this->periksa['zero_date_default_value'] = $zero_date_default_value;
-            }
-
             // Error table doesn't exist
             if ($db_error_code === 1146) {
                 $calon_ini                  = $this->deteksi_table_doesnt_exist($db_error_message);
                 $this->periksa['masalah'][] = 'table_not_exist';
                 $calon                      = version_compare($calon, $calon_ini, '<') ? $calon : $calon_ini;
             }
+        }
 
-            // Deteksi jabatan kades atau sekdes tidak ada
-            if (! empty($jabatan = $this->deteksi_jabatan())) {
-                $this->periksa['masalah'][]    = 'data_jabatan_tidak_ada';
-                $this->periksa['data_jabatan'] = $jabatan;
-            }
+        // error config_id
+        if ($db_error_code == 1054) {
+            $calon_ini                  = '23.04';
+            $this->periksa['masalah'][] = 'config_id';
+            $calon                      = version_compare($calon, $calon_ini, '<') ? $calon : $calon_ini;
+        }
+
+        // Deteksi jabatan kades atau sekdes tidak ada
+        if (! empty($jabatan = $this->deteksi_jabatan())) {
+            $this->periksa['masalah'][]    = 'data_jabatan_tidak_ada';
+            $this->periksa['data_jabatan'] = $jabatan;
+        }
+
+        $zero_date_default_value = $this->deteksi_zero_date_default_value();
+        if (! empty($zero_date_default_value)) {
+            $this->periksa['masalah'][]               = 'zero_date_default_value';
+            $this->periksa['zero_date_default_value'] = $zero_date_default_value;
+        }
+
+        // Tabel ref_persil_kelas dan tabel ref inventaris lain terhapus isinya
+        if ($db_error_code == 99001 && preg_match('/ref_persil_kelas|ref_persil_mutasi|ref_peruntukan_tanah_kas/', $db_error_message)) {
+            $this->periksa['masalah'][] = 'ref_inventaris_kosong';
         }
 
         // Error invalid date
@@ -235,9 +247,7 @@ class Periksa_model extends MY_Model
         if ($db_error_code == 1364) {
             $pos = strpos($db_error_message, "Field 'id' doesn't have a default value");
             if ($pos !== false) {
-                $calon_ini                  = '23.04';
                 $this->periksa['masalah'][] = 'autoincrement';
-                $calon                      = version_compare($calon, $calon_ini, '<') ? $calon : $calon_ini;
             }
         }
 
@@ -245,17 +255,53 @@ class Periksa_model extends MY_Model
         $collation_table = $this->deteksi_collation_table_tidak_sesuai();
         $error_msg       = strpos($this->session->message_query, 'Illegal mix of collations');
         if (! empty($collation_table) || $error_msg) {
-            $calon_ini                        = '23.04';
             $this->periksa['masalah'][]       = 'collation';
             $this->periksa['collation_table'] = $collation_table;
-            $calon                            = version_compare($calon, $calon_ini, '<') ? $calon : $calon_ini;
         }
 
-        // error config_id
-        if ($db_error_code == 1054) {
-            $calon_ini                  = '23.04';
-            $this->periksa['masalah'][] = 'config_id';
-            $calon                      = version_compare($calon, $calon_ini, '<') ? $calon : $calon_ini;
+        // Error penduduk tanpa ada keluarga di tweb_keluarga
+        $penduduk_tanpa_keluarga = $this->deteksi_penduduk_tanpa_keluarga();
+
+        if (! $penduduk_tanpa_keluarga->isEmpty()) {
+            $this->periksa['masalah'][]               = 'penduduk_tanpa_keluarga';
+            $this->periksa['penduduk_tanpa_keluarga'] = $penduduk_tanpa_keluarga->toArray();
+        }
+
+        $log_penduduk_tidak_sinkron = $this->deteksi_log_penduduk_tidak_sinkron();
+        if (! $log_penduduk_tidak_sinkron->isEmpty()) {
+            $this->periksa['masalah'][]                  = 'log_penduduk_tidak_sinkron';
+            $this->periksa['log_penduduk_tidak_sinkron'] = $log_penduduk_tidak_sinkron->toArray();
+        }
+
+        $log_penduduk_null = $this->deteksi_log_penduduk_null();
+        if (! $log_penduduk_null->isEmpty()) {
+            $this->periksa['masalah'][]         = 'log_penduduk_null';
+            $this->periksa['log_penduduk_null'] = $log_penduduk_null->toArray();
+        }
+
+        $log_keluarga_bermasalah = $this->deteksi_log_keluarga_bermasalah();
+        if (! $log_keluarga_bermasalah->isEmpty()) {
+            $this->periksa['masalah'][]               = 'log_keluarga_bermasalah';
+            $this->periksa['log_keluarga_bermasalah'] = $log_keluarga_bermasalah->toArray();
+        }
+
+        $log_keluarga_ganda = $this->deteksi_log_keluarga_ganda();
+        if (! $log_keluarga_ganda->isEmpty()) {
+            $this->periksa['masalah'][]          = 'log_keluarga_ganda';
+            $this->periksa['log_keluarga_ganda'] = $log_keluarga_ganda->toArray();
+        }
+
+        // deteksi no anggota ganda
+        $no_anggota_ganda = $this->deteksi_no_anggota_ganda();
+        if (! $no_anggota_ganda->isEmpty()) {
+            $this->periksa['masalah'][]        = 'no_anggota_ganda';
+            $this->periksa['no_anggota_ganda'] = $no_anggota_ganda->toArray();
+        }
+
+        $klasifikasi_surat_ganda = $this->deteksi_klasifikasi_surat_ganda();
+        if (! $klasifikasi_surat_ganda->isEmpty()) {
+            $this->periksa['masalah'][]               = 'klasifikasi_surat_ganda';
+            $this->periksa['klasifikasi_surat_ganda'] = $klasifikasi_surat_ganda->toArray();
         }
 
         return $calon;
@@ -359,13 +405,17 @@ class Periksa_model extends MY_Model
             ->having('jml >', 1)
             ->get()
             ->result_array();
-        if (! empty($email) && empty($this->session->db_error)) {
-            // Berikan kode kustom karena exception dihindari di migrasi.
-            $this->session->db_error = [
-                'code'    => 99001,
-                'message' => 'Email penduduk ganda',
-            ];
+        if (empty($email)) {
+            return $email;
         }
+        if (! empty($this->session->db_error)) {
+            return $email;
+        }
+        // Berikan kode kustom karena exception dihindari di migrasi.
+        $this->session->db_error = [
+            'code'    => 99001,
+            'message' => 'Email penduduk ganda',
+        ];
 
         return $email;
     }
@@ -408,7 +458,7 @@ class Periksa_model extends MY_Model
     private function deteksi_collation_table_tidak_sesuai()
     {
         return $this->db
-            ->query("SELECT TABLE_NAME, TABLE_COLLATION FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = '{$this->db->database}' AND TABLE_COLLATION != 'utf8_general_ci'")
+            ->query("SELECT TABLE_NAME, TABLE_COLLATION FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = '{$this->db->database}' AND TABLE_COLLATION != '{$this->db->dbcollat}'")
             ->result_array();
     }
 
@@ -450,16 +500,22 @@ class Periksa_model extends MY_Model
             $tabel['inventaris_asset'] = $inventaris_asset;
         }
 
+        // Tabel covid19_vaksin
         $covidVaksin = CovidVaksin::select(['id_penduduk', 'tgl_vaksin_1', 'tgl_vaksin_2', 'tgl_vaksin_3'])->where(
-            static function ($q) {
-                return $q->where('tgl_vaksin_1', '0000-00-00')
-                    ->orwhere('tgl_vaksin_2', '0000-00-00')
-                    ->orwhere('tgl_vaksin_3', '0000-00-00');
-            }
+            static fn ($q) => $q->where('tgl_vaksin_1', '0000-00-00')
+                ->orwhere('tgl_vaksin_2', '0000-00-00')
+                ->orwhere('tgl_vaksin_3', '0000-00-00')
         )->get();
 
         if ($covidVaksin->count() > 0) {
             $tabel['covid19_vaksin'] = $covidVaksin;
+        }
+
+        // tabel tweb_penduduk column tanggal_cetak_ktp
+        $tanggal_cetak_ktp = Penduduk::setEagerLoads([])->where('tanggal_cetak_ktp', '0000-00-00')->get();
+
+        if ($tanggal_cetak_ktp->count() > 0) {
+            $tabel['tweb_penduduk'] = $tanggal_cetak_ktp;
         }
 
         return $tabel;
@@ -468,26 +524,33 @@ class Periksa_model extends MY_Model
     private function deteksi_jabatan()
     {
         $jabatan = [];
-        $user    = auth()->id ?? User::first()->id;
+        // perlu cek ketika insert ? apakah ada data jenis 1/2
+        // penggantian find ke where 'jenis'. cari data jabatan berdasarkan jenis. ?
 
-        // Cek jabatan kades
-        if (Schema::hasTable('ref_jabatan') && ! RefJabatan::find(RefJabatan::KADES)) {
-            $jabatan[] = [
-                'nama'       => 'Kepala ' . ucwords($this->getSetting('sebutan_desa')),
-                'jenis'      => RefJabatan::KADES,
-                'created_by' => $user,
-                'updated_by' => $user,
-            ];
-        }
+        if (Schema::hasTable('ref_jabatan')) {
+            $user = auth()->id ?? User::first()->id;
 
-        // Cek jabatan sekdes
-        if (Schema::hasTable('ref_jabatan') && ! RefJabatan::find(RefJabatan::SEKDES)) {
-            $jabatan[] = [
-                'nama'       => 'Sekretaris',
-                'jenis'      => RefJabatan::SEKDES,
-                'created_by' => $user,
-                'updated_by' => $user,
-            ];
+            // Cek jabatan kades
+            if (! kades()) {
+                $jabatan[] = [
+                    'config_id'  => identitas('id'),
+                    'nama'       => 'Kepala ' . ucwords($this->getSetting('sebutan_desa')),
+                    'jenis'      => RefJabatan::KADES,
+                    'created_by' => $user,
+                    'updated_by' => $user,
+                ];
+            }
+
+            // Cek jabatan sekdes
+            if (! sekdes()) {
+                $jabatan[] = [
+                    'config_id'  => identitas('id'),
+                    'nama'       => 'Sekretaris',
+                    'jenis'      => RefJabatan::SEKDES,
+                    'created_by' => $user,
+                    'updated_by' => $user,
+                ];
+            }
         }
 
         return $jabatan;
@@ -520,7 +583,84 @@ class Periksa_model extends MY_Model
             ->result_array();
     }
 
-    public function perbaiki()
+    public function deteksi_penduduk_tanpa_keluarga()
+    {
+        $config_id = identitas('id');
+
+        return Penduduk::select('id', 'nama', 'nik', 'id_cluster', 'id_kk', 'alamat_sekarang', 'created_at')
+            ->kepalaKeluarga()
+            ->whereNotNull('id_kk')
+            ->wheredoesntHave('keluarga', static fn ($q) => $q->where('config_id', $config_id))
+            ->get();
+    }
+
+    // status dasar penduduk seharusnya mengikuti status terakhir dari log_penduduk
+    public function deteksi_log_penduduk_tidak_sinkron()
+    {
+        $config_id = identitas('id');
+
+        $sqlRaw                = "( SELECT MAX(id) max_id, id_pend FROM log_penduduk where config_id = {$config_id} GROUP BY  id_pend)";
+        $statusDasarBukanHidup = Penduduk::select('tweb_penduduk.id', 'nama', 'nik', 'status_dasar', 'alamat_sekarang', 'kode_peristiwa', 'tweb_penduduk.created_at')
+            ->where('status_dasar', '=', StatusDasarEnum::HIDUP)
+            ->join(DB::raw("({$sqlRaw}) as log"), 'log.id_pend', '=', 'tweb_penduduk.id')
+            ->join('log_penduduk', static function ($q) use ($config_id): void {
+                $q->on('log_penduduk.id', '=', 'log.max_id')
+                    ->where('log_penduduk.config_id', $config_id)
+                    ->whereIn('kode_peristiwa', [LogPenduduk::MATI, LogPenduduk::PINDAH_KELUAR, LogPenduduk::HILANG, LogPenduduk::TIDAK_TETAP_PERGI]);
+            });
+
+        return Penduduk::select('tweb_penduduk.id', 'nama', 'nik', 'status_dasar', 'alamat_sekarang', 'kode_peristiwa', 'tweb_penduduk.created_at')
+            ->where('status_dasar', '!=', StatusDasarEnum::HIDUP)
+            ->join(DB::raw("({$sqlRaw}) as log"), 'log.id_pend', '=', 'tweb_penduduk.id')
+            ->join('log_penduduk', static function ($q) use ($config_id): void {
+                $q->on('log_penduduk.id', '=', 'log.max_id')
+                    ->where('log_penduduk.config_id', $config_id)
+                    ->whereNotIn('kode_peristiwa', [LogPenduduk::MATI, LogPenduduk::PINDAH_KELUAR, LogPenduduk::HILANG, LogPenduduk::TIDAK_TETAP_PERGI]);
+            })->union(
+                $statusDasarBukanHidup
+            )
+            ->get();
+    }
+
+    public function deteksi_log_penduduk_null()
+    {
+        identitas('id');
+
+        return LogPenduduk::select('log_penduduk.id', 'nama', 'nik', 'kode_peristiwa', 'log_penduduk.created_at')
+            ->whereNull('kode_peristiwa')
+            ->join('tweb_penduduk', 'tweb_penduduk.id', '=', 'log_penduduk.id_pend')
+            ->get();
+    }
+
+    public function deteksi_log_keluarga_bermasalah()
+    {
+        return Keluarga::whereDoesntHave('LogKeluarga')->get();
+    }
+
+    public function deteksi_log_keluarga_ganda()
+    {
+        $config_id = identitas('id');
+
+        return Keluarga::whereIn('id', static fn ($query) => $query->from('log_keluarga')->where(['config_id' => $config_id])->select(['id_kk'])->groupBy(['id_kk', 'tgl_peristiwa'])->having(DB::raw('count(tgl_peristiwa)'), '>', 1))->get();
+    }
+
+    private function deteksi_no_anggota_ganda()
+    {
+        return DB::table('kelompok_anggota')
+            ->selectRaw('count(id) as jml, config_id, id_kelompok, no_anggota')
+            ->groupBy('config_id', 'id_kelompok', 'no_anggota')
+            ->having('jml', '>', 1)
+            ->get();
+    }
+
+    private function deteksi_klasifikasi_surat_ganda()
+    {
+        $config_id = identitas('id');
+
+        return KlasifikasiSurat::where(['config_id' => $config_id])->whereIn('kode', static fn ($q) => $q->from('klasifikasi_surat')->select(['kode'])->where(['config_id' => $config_id])->groupBy('kode')->having(DB::raw('count(kode)'), '>', 1))->orderBy('kode')->get();
+    }
+
+    public function perbaiki(): void
     {
         // TODO: login
         $this->session->user_id = $this->session->user_id ?: 1;
@@ -529,74 +669,7 @@ class Periksa_model extends MY_Model
         log_message('error', '========= Perbaiki masalah data =========');
 
         foreach ($this->periksa['masalah'] as $masalah_ini) {
-            switch ($masalah_ini) {
-                case 'kode_kelompok':
-                    $this->perbaiki_kode_kelompok();
-                    break;
-
-                case 'ref_inventaris_kosong':
-                    $this->perbaiki_referensi_kosong();
-                    break;
-
-                case 'id_cluster_null':
-                    $this->perbaiki_id_cluster_null();
-                    break;
-
-                case 'nik_ganda':
-                    $this->perbaiki_nik_ganda();
-                    break;
-
-                case 'email_ganda':
-                    $this->perbaiki_email();
-                    break;
-
-                case 'kk_panjang':
-                    $this->perbaiki_kk_panjang();
-                    break;
-
-                case 'no_kk_ganda':
-                    $this->perbaiki_no_kk_ganda();
-                    break;
-
-                case 'email_user_ganda':
-                    $this->perbaiki_email_user();
-                    break;
-
-                case 'username_user_ganda':
-                    $this->perbaiki_username_user();
-                    break;
-
-                case 'tag_id_ganda':
-                    $this->perbaiki_tag_id();
-                    break;
-
-                case 'kartu_alamat':
-                    $this->perbaiki_kartu_alamat();
-                    break;
-
-                case 'autoincrement':
-                    $this->perbaiki_autoincrement();
-                    break;
-
-                case 'collation':
-                    $this->perbaiki_collation_table();
-                    break;
-
-                case 'tabel_invalid_date':
-                    $this->perbaiki_invalid_date();
-                    break;
-
-                case 'data_jabatan_tidak_ada':
-                    $this->perbaiki_jabatan();
-                    break;
-
-                case 'zero_date_default_value':
-                    $this->perbaiki_zero_date_default_value();
-                    break;
-
-                default:
-                    break;
-            }
+            $this->selesaikan_masalah($masalah_ini);
         }
         $this->session->db_error = null;
 
@@ -607,11 +680,6 @@ class Periksa_model extends MY_Model
                     'type'           => 'INT',
                     'constraint'     => 11,
                     'auto_increment' => true,
-                ],
-                'versi_database' => [
-                    'type'       => 'VARCHAR',
-                    'constraint' => 10,
-                    'null'       => false,
                 ],
                 'versi_database' => [
                     'type'       => 'VARCHAR',
@@ -638,7 +706,17 @@ class Periksa_model extends MY_Model
         $this->database_model->migrasi_db_cri();
     }
 
-    private function perbaiki_kode_kelompok()
+    public function perbaiki_sebagian($masalah_ini): void
+    {
+        // TODO: login
+        $this->session->user_id = $this->session->user_id ?: 1;
+
+        $this->selesaikan_masalah($masalah_ini);
+
+        $this->session->db_error = null;
+    }
+
+    private function perbaiki_kode_kelompok(): void
     {
         if (empty($this->periksa['kode_panjang'])) {
             return;
@@ -655,7 +733,7 @@ class Periksa_model extends MY_Model
 
     // Isi kembali tabel referensi:
     // ref_persil_kelas, ref_persil_mutasi, ref_peruntukan_tanah_kas
-    private function perbaiki_referensi_kosong()
+    private function perbaiki_referensi_kosong(): void
     {
         $this->load->model('migrations/Migrasi_2007_ke_2008', 'migrasi1');
         $this->migrasi1->buat_ref_persil_kelas();
@@ -666,7 +744,7 @@ class Periksa_model extends MY_Model
     }
 
     // Hanya terjadi pada keluarga yg tidak memiliki anggota lagi
-    private function perbaiki_id_cluster_null()
+    private function perbaiki_id_cluster_null(): void
     {
         if (empty($this->periksa['id_cluster_null'])) {
             return;
@@ -682,8 +760,36 @@ class Periksa_model extends MY_Model
             ->update('tweb_keluarga');
     }
 
+    // Migrasi 23.11 gagal jika ada no anggota ganda
+    private function perbaiki_no_anggota_ganda(): void
+    {
+        $no_anggota_ganda = $this->periksa['no_anggota_ganda'];
+
+        if ($no_anggota_ganda) {
+            foreach ($no_anggota_ganda as $value) {
+                $duplikat = DB::table('kelompok_anggota')
+                    ->selectRaw('id, id_penduduk, config_id, id_kelompok, no_anggota')
+                    ->where('config_id', $value->config_id)
+                    ->where('id_kelompok', $value->id_kelompok)
+                    ->where('no_anggota', $value->no_anggota)
+                    ->get();
+
+                foreach ($duplikat as $item) {
+                    DB::table('kelompok_anggota')
+                        ->where('id', $item->id)
+                        ->where('config_id', $item->config_id)
+                        ->where('id_kelompok', $item->id_kelompok)
+                        ->where('no_anggota', $item->no_anggota)
+                        ->update(['no_anggota' => $item->id_penduduk]);
+
+                    log_message('notice', 'No Anggota berikut telah diubah sbb : ' . print_r(['No Anggota Lama' => $item->no_anggota, 'No Anggota Baru' => $item->id_penduduk], true));
+                }
+            }
+        }
+    }
+
     // Migrasi 21.09 gagal jika ada NIK ganda
-    private function perbaiki_nik_ganda()
+    private function perbaiki_nik_ganda(): void
     {
         if (empty($this->periksa['nik_ganda'])) {
             return;
@@ -734,7 +840,7 @@ class Periksa_model extends MY_Model
     }
 
     // Migrasi 22.02 sengaja gagal jika ada email ganda
-    private function perbaiki_email()
+    private function perbaiki_email(): void
     {
         if (empty($this->periksa['email_ganda'])) {
             return;
@@ -759,7 +865,7 @@ class Periksa_model extends MY_Model
                 ->get()
                 ->result_array();
             log_message('error', 'Email penduduk berikut telah diubah dengan menambah id: ' . print_r($daftar_ubah, true));
-            $email_ganda = array_merge($email_ganda, array_column($daftar_ubah, 'id'));
+            $email_ganda = [...$email_ganda, ...array_column($daftar_ubah, 'id')];
         }
         // Ubah email ganda dengan menambah id
         $this->db
@@ -769,7 +875,7 @@ class Periksa_model extends MY_Model
     }
 
     // Migrasi 21.11 gagal jika ada no KK melebihi 16 karakter
-    private function perbaiki_kk_panjang()
+    private function perbaiki_kk_panjang(): void
     {
         if (empty($this->periksa['kk_panjang'])) {
             return;
@@ -803,7 +909,7 @@ class Periksa_model extends MY_Model
         log_message('error', ' No KK berikut telah diubah menjadi No KK sementara: ' . print_r($kk_panjang, true));
     }
 
-    private function perbaiki_no_kk_ganda()
+    private function perbaiki_no_kk_ganda(): void
     {
         $this->load->model('keluarga_model');
 
@@ -829,7 +935,7 @@ class Periksa_model extends MY_Model
     }
 
     // Migrasi 22.02 gagal jika ada email user ganda
-    private function perbaiki_email_user()
+    private function perbaiki_email_user(): void
     {
         if (empty($this->periksa['email_user_ganda'])) {
             return;
@@ -854,7 +960,7 @@ class Periksa_model extends MY_Model
                 ->get()
                 ->result_array();
             log_message('error', 'Email user berikut telah diubah dengan menambah id: ' . print_r($daftar_ubah, true));
-            $email_ganda = array_merge($email_ganda, array_column($daftar_ubah, 'id'));
+            $email_ganda = [...$email_ganda, ...array_column($daftar_ubah, 'id')];
         }
         // Ubah email user ganda dengan menambah id
         $this->db
@@ -864,7 +970,7 @@ class Periksa_model extends MY_Model
     }
 
     // Migrasi 22.02 gagal jika ada username user ganda
-    private function perbaiki_username_user()
+    private function perbaiki_username_user(): void
     {
         if (empty($this->periksa['username_user_ganda'])) {
             return;
@@ -884,11 +990,11 @@ class Periksa_model extends MY_Model
                 ->get()
                 ->result_array();
             log_message('error', 'Username user berikut telah diubah dengan menambah id: ' . print_r($daftar_ubah, true));
-            $username_ganda = array_merge($username_ganda, array_column($daftar_ubah, 'id'));
+            $username_ganda = [...$username_ganda, ...array_column($daftar_ubah, 'id')];
         }
 
         // Ubah username user ganda dengan menambah id dan set tidak aktif
-        if ($username_ganda) {
+        if ($username_ganda !== []) {
             $this->db
                 ->set('username', 'CONCAT(id, "_", username)', false)
                 ->set('active', 0)
@@ -906,7 +1012,7 @@ class Periksa_model extends MY_Model
     }
 
     // Migrasi 21.04 tidak antiCONCAT(id, "_", email)sipasi tag_id_card ganda
-    private function perbaiki_tag_id()
+    private function perbaiki_tag_id(): void
     {
         if (empty($this->periksa['tag_id_ganda'])) {
             return;
@@ -938,7 +1044,7 @@ class Periksa_model extends MY_Model
                 ->get()
                 ->result_array();
             log_message('error', 'Ubah tag_id_card penduduk berikut menjadi kosong: ' . print_r($daftar_ubah, true));
-            $daftar_tag_id = array_merge($daftar_tag_id, array_column($daftar_ubah, 'id'));
+            $daftar_tag_id = [...$daftar_tag_id, ...array_column($daftar_ubah, 'id')];
         }
         // Ubah tag_id ganda menjadi kosong
         $this->db
@@ -948,7 +1054,7 @@ class Periksa_model extends MY_Model
     }
 
     // Migrasi 21.05 tidak antisipasi kartu_tempat_lahir atau kartu_alamat berisi null
-    private function perbaiki_kartu_alamat()
+    private function perbaiki_kartu_alamat(): void
     {
         $this->db
             ->set('kartu_tempat_lahir', '')
@@ -1017,9 +1123,9 @@ class Periksa_model extends MY_Model
         if ($tables) {
             foreach ($tables as $tbl) {
                 if ($this->db->table_exists($tbl['TABLE_NAME'])) {
-                    $hasil = $hasil && $this->db->query("ALTER TABLE {$tbl['TABLE_NAME']} CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci");
+                    $hasil = $hasil && $this->db->query("ALTER TABLE {$tbl['TABLE_NAME']} CONVERT TO CHARACTER SET utf8 COLLATE {$this->db->dbcollat}");
 
-                    log_message('error', 'Tabel ' . $tbl['TABLE_NAME'] . ' collation diubah dari ' . $tbl['TABLE_COLLATION'] . ' menjadi utf8_general_ci.');
+                    log_message('error', 'Tabel ' . $tbl['TABLE_NAME'] . ' collation diubah dari ' . $tbl['TABLE_COLLATION'] . " menjadi {$this->db->dbcollat}.");
                 }
             }
         }
@@ -1052,12 +1158,14 @@ class Periksa_model extends MY_Model
                 if ($log->tgl_lapor != null && $log->tgl_lapor->format('Y-m-d H:i:s') == '-0001-11-30 00:00:00') {
                     $hasil = $hasil && $update->update(['tgl_lapor' => $log->created_at->format('Y-m-d H:i:s')]);
                 }
-
                 // tgl_peristiwa, ambil data dari default 1971-01-01 00:00:00 (agar tidak merusak laporan yg sudah ada)
-
-                if ($log->tgl_peristiwa != null && $log->tgl_peristiwa->format('Y-m-d H:i:s') == '-0001-11-30 00:00:00') {
-                    $hasil = $hasil && $update->update(['tgl_peristiwa' => '1971-01-01 00:00:00']);
+                if ($log->tgl_peristiwa == null) {
+                    continue;
                 }
+                if ($log->tgl_peristiwa->format('Y-m-d H:i:s') != '-0001-11-30 00:00:00') {
+                    continue;
+                }
+                $hasil = $hasil && $update->update(['tgl_peristiwa' => '1971-01-01 00:00:00']);
             }
 
             log_message('error', 'Sesuaikan tanggal invalid pada kolom tgl_lapor, tgl_peristiwa dan created_at tabel log_pendudk pada data berikut ini : ' . print_r($logPenduduk->toArray(), true));
@@ -1103,6 +1211,17 @@ class Periksa_model extends MY_Model
             log_message('error', 'Sesuaikan tanggal invalid pada kolom tgl_vaksin_1, tgl_vaksin_2, tgl_vaksin_3 tabel covid19_vaksin pada data berikut ini : ' . print_r($covidVaksin->toArray(), true));
         }
 
+        if ($twebPenduduk = $this->periksa['tabel_invalid_date']['tweb_penduduk']) {
+            foreach ($twebPenduduk as $penduduk) {
+                if ($penduduk->getRawOriginal('tanggal_cetak_ktp') == '0000-00-00') {
+                    $penduduk->tanggal_cetak_ktp = null;
+                }
+                $hasil = $hasil && $penduduk->save();
+            }
+
+            log_message('error', 'Sesuaikan tanggal invalid pada kolom tanggal_cetak_ktp tabel tweb_penduduk pada data berikut ini : ' . print_r($twebPenduduk->toArray(), true));
+        }
+
         return $hasil;
     }
 
@@ -1111,7 +1230,7 @@ class Periksa_model extends MY_Model
         $hasil = true;
 
         if ($zero_date_default_value = $this->periksa['zero_date_default_value']) {
-            foreach ($zero_date_default_value as $key => $value) {
+            foreach ($zero_date_default_value as $value) {
                 $fields = [
                     $value['column_name'] => [
                         'type'    => $value['data_type'],
@@ -1137,7 +1256,7 @@ class Periksa_model extends MY_Model
         return true;
     }
 
-    private function perbaiki_anjungan()
+    private function perbaiki_anjungan(): void
     {
         if (! $this->db->field_exists('id_pengunjung', 'anjungan')) {
             $fields_id_pengunjung = [
@@ -1173,6 +1292,150 @@ class Periksa_model extends MY_Model
                 ],
             ];
             $this->dbforge->add_column('teks_berjalan', $fields);
+        }
+    }
+
+    private function perbaiki_penduduk_tanpa_keluarga(): void
+    {
+        $config_id     = identitas('id');
+        $kode_desa     = identitas('kode_desa');
+        $data_penduduk = Penduduk::select('id', 'id_cluster', 'id_kk', 'alamat_sekarang', 'created_at')
+            ->kepalaKeluarga()
+            ->whereNotNull('id_kk')
+            ->wheredoesntHave('keluarga', static fn ($q) => $q->where('config_id', $config_id))
+            ->get();
+        // nomer urut kk sementara
+        $digit = Keluarga::nomerKKSementara();
+
+        $id_sementara = [];
+
+        foreach ($data_penduduk as $value) {
+            if (isset($id_sementara[$value->id_kk])) {
+                continue;
+            }
+            $nokk_sementara = '0' . $kode_desa . sprintf('%05d', $digit);
+            $hasil          = Keluarga::create([
+                'id'         => $value->id_kk,
+                'config_id'  => $config_id,
+                'no_kk'      => $nokk_sementara,
+                'nik_kepala' => $value->id,
+                'tgl_daftar' => $value->created_at,
+                'id_cluster' => $value->id_cluster,
+                'alamat'     => $value->alamat_sekarang,
+                'updated_at' => $value->created_at,
+                'updated_by' => 1,
+            ]);
+
+            $digit++;
+            $id_sementara[$value->id_kk] = 1;
+            if ($hasil) {
+                log_message('notice', 'Berhasil. Penduduk ' . $value->id . ' sudah terdaftar di keluarga');
+            } else {
+                log_message('error', 'Gagal. Penduduk ' . $value->id . ' belum terdaftar di keluarga');
+            }
+        }
+    }
+
+    private function perbaiki_log_penduduk_null(): void
+    {
+        LogPenduduk::whereIn('id', array_column($this->periksa['log_penduduk_null'], 'id'))->update(['kode_peristiwa' => LogPenduduk::BARU_PINDAH_MASUK]);
+    }
+
+    private function perbaiki_log_keluarga_bermasalah(): void
+    {
+        $configId = identitas('id');
+        $userId   = auth()->id;
+        $sql      = "insert into log_keluarga (config_id, id_kk, id_peristiwa, tgl_peristiwa, updated_by)
+                select {$configId} as config_id, id as id_kk, 1 as id_peristiwa, tgl_daftar as tgl_peristiwa, {$userId} as updated_by
+                from tweb_keluarga  where id not in ( select id_kk from log_keluarga where id_peristiwa = 1 ) ";
+        DB::statement($sql);
+    }
+
+    private function selesaikan_masalah($masalah_ini): void
+    {
+        switch ($masalah_ini) {
+            case 'kode_kelompok':
+                $this->perbaiki_kode_kelompok();
+                break;
+
+            case 'ref_inventaris_kosong':
+                $this->perbaiki_referensi_kosong();
+                break;
+
+            case 'id_cluster_null':
+                $this->perbaiki_id_cluster_null();
+                break;
+
+            case 'nik_ganda':
+                $this->perbaiki_nik_ganda();
+                break;
+
+            case 'email_ganda':
+                $this->perbaiki_email();
+                break;
+
+            case 'kk_panjang':
+                $this->perbaiki_kk_panjang();
+                break;
+
+            case 'no_kk_ganda':
+                $this->perbaiki_no_kk_ganda();
+                break;
+
+            case 'email_user_ganda':
+                $this->perbaiki_email_user();
+                break;
+
+            case 'username_user_ganda':
+                $this->perbaiki_username_user();
+                break;
+
+            case 'tag_id_ganda':
+                $this->perbaiki_tag_id();
+                break;
+
+            case 'kartu_alamat':
+                $this->perbaiki_kartu_alamat();
+                break;
+
+            case 'autoincrement':
+                $this->perbaiki_autoincrement();
+                break;
+
+            case 'collation':
+                $this->perbaiki_collation_table();
+                break;
+
+            case 'tabel_invalid_date':
+                $this->perbaiki_invalid_date();
+                break;
+
+            case 'data_jabatan_tidak_ada':
+                $this->perbaiki_jabatan();
+                break;
+
+            case 'zero_date_default_value':
+                $this->perbaiki_zero_date_default_value();
+                break;
+
+            case 'penduduk_tanpa_keluarga':
+                $this->perbaiki_penduduk_tanpa_keluarga();
+                break;
+
+            case 'log_penduduk_null':
+                $this->perbaiki_log_penduduk_null();
+                break;
+
+            case 'log_keluarga_bermasalah':
+                $this->perbaiki_log_keluarga_bermasalah();
+                break;
+
+            case 'no_anggota_ganda':
+                $this->perbaiki_no_anggota_ganda();
+                break;
+
+            default:
+                break;
         }
     }
 }

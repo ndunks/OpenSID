@@ -1,10 +1,6 @@
 # Abaikan folder desa
 desa/*
 
-# Abaikan backup_inkremental
-backup_inkremental/*
-!backup_inkremental/index.html
-
 # Abaikan file
 *.log
 log-*.php
@@ -12,8 +8,7 @@ info.php
 **/.DS_Store
 sftp-config.json
 .php-cs-fixer.cache
-rector.php
-.htaccess
+/.htaccess
 *.sql
 mitra
 
@@ -61,7 +56,5 @@ vendor/libreoffice/*
 vendor/mikey179/*
 .vscode/*
 /node_modules
-
-# Struktur Laravel
-storage/framework/
-assets/filemanager/index.html
+.cache-rector/*
+!.cache-rector/.gitkeep

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -55,9 +55,8 @@ class Migrasi_fitur_premium_2305 extends MY_model
         $hasil = $hasil && $this->suratPermohonanCerai($hasil);
         $hasil = $hasil && $this->migrasi_2023041251($hasil);
         $hasil = $hasil && $this->migrasi_2023041951($hasil);
-        $hasil = $hasil && $this->jalankan_migrasi('migrasi_multidb', false);
 
-        return $hasil && true;
+        return $hasil && $this->jalankan_migrasi('migrasi_multidb', false);
     }
 
     protected function migrasi_2023040151($hasil)
@@ -269,14 +268,15 @@ class Migrasi_fitur_premium_2305 extends MY_model
                 ->pluck('pertanyaan', 'id');
 
             if (count($data) !== 0) {
+                $batch_pertanyaan = [];
+
                 foreach ($data as $id => $pertanyaan_statis) {
                     $batch_pertanyaan[] = [
                         'id'                => $id,
                         'pertanyaan_statis' => $pertanyaan_statis,
                     ];
                 }
-
-                if ($batch_pertanyaan) {
+                if (count($batch_pertanyaan) > 0) {
                     $hasil = $hasil && $this->db->update_batch('buku_kepuasan', $batch_pertanyaan, 'id');
                 }
             }
@@ -302,14 +302,15 @@ class Migrasi_fitur_premium_2305 extends MY_model
                 ->pluck('bidang', 'id');
 
             if (count($data) !== 0) {
+                $batch_bidang = [];
+
                 foreach ($data as $id => $bidang) {
                     $batch_bidang[] = [
                         'id'     => $id,
                         'bidang' => $bidang,
                     ];
                 }
-
-                if ($batch_bidang) {
+                if (count($batch_bidang) > 0) {
                     $hasil = $hasil && $this->db->update_batch('buku_tamu', $batch_bidang, 'id');
                 }
             }
@@ -337,14 +338,15 @@ class Migrasi_fitur_premium_2305 extends MY_model
                 ->pluck('keperluan', 'id');
 
             if (count($data) !== 0) {
+                $batch_keperluan = [];
+
                 foreach ($data as $id => $keperluan) {
                     $batch_keperluan[] = [
                         'id'        => $id,
                         'keperluan' => $keperluan,
                     ];
                 }
-
-                if ($batch_keperluan) {
+                if (count($batch_keperluan) > 0) {
                     $hasil = $hasil && $this->db->update_batch('buku_tamu', $batch_keperluan, 'id');
                 }
             }
@@ -360,14 +362,16 @@ class Migrasi_fitur_premium_2305 extends MY_model
         $config = DB::table('config')->get();
 
         if ($config->count() > 0) {
-            foreach ($config as $key => $value) {
+            foreach ($config as $value) {
                 DB::table('config')
                     ->where('id', $value->id)
                     ->update([
                         'kode_desa'      => $value->kode_desa ? bilangan($value->kode_desa) : '',
                         'kode_kecamatan' => $value->kode_kecamatan ? bilangan($value->kode_kecamatan) : '',
                         'kode_kabupaten' => $value->kode_kabupaten ? bilangan($value->kode_kabupaten) : '',
+                        'nama_kabupaten' => $value->nama_kabupaten ? ucwords(hapus_kab_kota(nama_terbatas($value->nama_kabupaten))) : '',
                         'kode_propinsi'  => $value->kode_propinsi ? bilangan($value->kode_propinsi) : '',
+                        'nama_propinsi'  => $value->nama_propinsi ? ucwords(nama_terbatas($value->nama_propinsi)) : '',
                     ]);
             }
         }

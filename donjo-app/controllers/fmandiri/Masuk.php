@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -52,7 +52,7 @@ class Masuk extends Web_Controller
         }
     }
 
-    public function index()
+    public function index(): void
     {
         $mac_address = $this->input->get('mac_address', true);
         $token       = $this->input->get('token_layanan', true);
@@ -83,7 +83,7 @@ class Masuk extends Web_Controller
         $this->load->view(MANDIRI . '/masuk', $data);
     }
 
-    public function cek()
+    public function cek(): void
     {
         $this->mandiri_model->siteman();
 		if( $this->input->is_ajax_request() ){
@@ -92,7 +92,7 @@ class Masuk extends Web_Controller
         redirect('layanan-mandiri/beranda');
     }
 
-    public function lupa_pin()
+    public function lupa_pin(): void
     {
         $data = [
             'header'              => $this->header,
@@ -104,7 +104,7 @@ class Masuk extends Web_Controller
         $this->load->view(MANDIRI . '/lupa_pin', $data);
     }
 
-    public function cek_pin()
+    public function cek_pin(): void
     {
         $nik = bilangan($this->input->post('nik'));
         $this->mandiri_model->cek_verifikasi($nik);

@@ -13,7 +13,7 @@
 	<section class="content-header">
 		<h1>Pengaturan Komentar</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda')?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li class="active">Pengaturan Komentar</li>
 		</ol>
 	</section>
@@ -92,6 +92,7 @@
 																</tr>
 															</thead>
 															<tbody>
+																<?php if($main) : ?>
 																<?php foreach ($main as $data): ?>
 																	<tr>
 																		<?php if ($this->CI->cek_hak_akses('h')): ?>
@@ -124,6 +125,7 @@
 																		<td nowrap><?= tgl_indo2($data['tgl_upload'])?></td>
 																	</tr>
 																<?php endforeach; ?>
+																<?php else: tidak_ada_data(10); endif; ?>
 															</tbody>
 														</table>
 													</div>

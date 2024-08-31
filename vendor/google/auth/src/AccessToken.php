@@ -38,6 +38,7 @@ use SimpleJWT\InvalidTokenException;
 use SimpleJWT\JWT as SimpleJWT;
 use SimpleJWT\Keys\KeyFactory;
 use SimpleJWT\Keys\KeySet;
+use TypeError;
 use UnexpectedValueException;
 
 /**
@@ -399,6 +400,10 @@ class AccessToken
         }
     }
 
+    /**
+     * @return string
+     * @throws TypeError If the key cannot be initialized to a string.
+     */
     private function loadPhpsecPublicKey(string $modulus, string $exponent): string
     {
         if (class_exists(RSA::class) && class_exists(BigInteger2::class)) {

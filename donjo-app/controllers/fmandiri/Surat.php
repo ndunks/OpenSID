@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -50,28 +50,27 @@ class Surat extends Mandiri_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->model(['keluar_model', 'permohonan_surat_model', 'surat_model', 'surat_master_model', 'lapor_model', 'penduduk_model', 'anjungan_model']);
+        $this->load->model(['keluar_model', 'permohonan_surat_model', 'surat_model', 'surat_master_model', 'lapor_model', 'penduduk_model']);
     }
 
     // Kat 1 = Permohonan
     // Kat 2 = Arsip
-    public function index($kat = 1)
+    public function index($kat = 1): void
     {
         $arsip      = $this->keluar_model->list_data_perorangan($this->is_login->id_pend);
         $permohonan = $this->permohonan_surat_model->list_permohonan_perorangan($this->is_login->id_pend, 1);
 
         $data = [
-            'kat'          => $kat,
-            'judul'        => ($kat == 1) ? 'Permohonan Surat' : 'Arsip Surat',
-            'main'         => ($kat == 1) ? $permohonan : $arsip,
-            'printer'      => $this->print_connector(),
-            'cek_anjungan' => $this->cek_anjungan,
+            'kat'     => $kat,
+            'judul'   => ($kat == 1) ? 'Permohonan Surat' : 'Arsip Surat',
+            'main'    => ($kat == 1) ? $permohonan : $arsip,
+            'printer' => $this->print_connector(),
         ];
 
         $this->render('surat', $data);
     }
 
-    public function buat($id = '')
+    public function buat($id = ''): void
     {
         $id_pend = $this->is_login->id_pend;
 
@@ -117,7 +116,8 @@ class Surat extends Mandiri_Controller
             $no = 1;
 
             foreach ($syaratSurat as $baris) {
-                if (in_array($baris->ref_syarat_id, json_decode($suratMaster->syarat_surat))) {
+                $syarat_surat = json_decode($suratMaster->syarat_surat, true);
+                if (is_array($syarat_surat) && in_array($baris->ref_syarat_id, $syarat_surat)) {
                     $row   = [];
                     $row[] = $no++;
                     $row[] = $baris->ref_syarat_nama;
@@ -155,7 +155,7 @@ class Surat extends Mandiri_Controller
             }
 
             $data['permohonan'] = $permohonan;
-            $data['isian_form'] = json_encode($this->permohonan_surat_model->ambil_isi_form($permohonan['isian_form']));
+            $data['isian_form'] = json_encode($this->permohonan_surat_model->ambil_isi_form($permohonan['isian_form']), JSON_THROW_ON_ERROR);
             $data['id_surat']   = $permohonan['id_surat'];
         } else {
             if (! $post) {
@@ -185,7 +185,7 @@ class Surat extends Mandiri_Controller
         return $this->render('permohonan_surat', $data);
     }
 
-    public function kirim($id = '')
+    public function kirim($id = ''): void
     {
         $this->load->library('Telegram/telegram');
 
@@ -195,11 +195,11 @@ class Surat extends Mandiri_Controller
         $data = [
             'id_pemohon'  => bilangan($post['nik']),
             'id_surat'    => (int) $post['id_surat'],
-            'isian_form'  => json_encode($post),
+            'isian_form'  => json_encode($post, JSON_THROW_ON_ERROR),
             'status'      => 1, // Selalu 1 bagi penggun layanan mandiri
             'keterangan'  => $this->security->xss_clean($data_permohonan['keterangan']),
             'no_hp_aktif' => bilangan($data_permohonan['no_hp_aktif']),
-            'syarat'      => json_encode($data_permohonan['syarat']),
+            'syarat'      => json_encode($data_permohonan['syarat'], JSON_THROW_ON_ERROR),
         ];
 
         if ($id) {
@@ -208,7 +208,7 @@ class Surat extends Mandiri_Controller
         } else {
             $this->permohonan_surat_model->insert($data);
 
-            if (! empty($this->setting->telegram_token) && cek_koneksi_internet()) {
+            if (setting('telegram_notifikasi') && cek_koneksi_internet()) {
                 try {
                     // Data pesan telegram yang akan digantikan
                     $pesanTelegram = [
@@ -216,6 +216,7 @@ class Surat extends Mandiri_Controller
                         '[judul_surat]'   => FormatSurat::find($post['id_surat'])->nama,
                         '[tanggal]'       => tgl_indo2(date('Y-m-d H:i:s')),
                         '[melalui]'       => 'Layanan Mandiri',
+                        '[website]'       => APP_URL,
                     ];
 
                     $kirimPesan = setting('notifikasi_pengajuan_surat');
@@ -236,7 +237,7 @@ class Surat extends Mandiri_Controller
         redirect('layanan-mandiri/permohonan-surat');
     }
 
-    private function get_data_untuk_form($url, &$data)
+    private function get_data_untuk_form($url, array &$data): void
     {
         // RTF
         if (in_array($data['surat']['jenis'], FormatSurat::RTF)) {
@@ -259,14 +260,18 @@ class Surat extends Mandiri_Controller
         }
     }
 
-    public function proses($id = '')
+    public function proses($id = ''): void
     {
+        $permohanan = PermohonanSurat::find($id);
         $this->permohonan_surat_model->proses($id, 5, $this->is_login->id_pend);
+
+        $isi = 'Penduduk atas nama : ' . $this->is_login->nama . ' - Telah membatalkan permohonan surat ' . $permohanan->surat->nama;
+        $this->kirim_notifikasi_admin('verifikasi_operator', $isi, 'Pembatalan Permohanan Surat - ' . $permohanan->surat->nama);
 
         redirect('layanan-mandiri/permohonan-surat');
     }
 
-    public function cetak_no_antrian(string $no_antrian)
+    public function cetak_no_antrian(string $no_antrian): void
     {
         try {
             $connector = new NetworkPrintConnector($this->cek_anjungan['printer_ip'], $this->cek_anjungan['printer_port'], 5);

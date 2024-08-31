@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -85,7 +85,7 @@ class Migrasi_fitur_premium_2108 extends MY_Model
     protected function migrasi_2021072672($hasil)
     {
         if (! $this->db->field_exists('bdt', 'tweb_rtm')) {
-            $hasil = $hasil && $this->dbforge->add_column('tweb_rtm', ['bdt' => ['type' => 'VARCHAR', 'constraint' => '16', 'null' => true]]);
+            return $hasil && $this->dbforge->add_column('tweb_rtm', ['bdt' => ['type' => 'VARCHAR', 'constraint' => '16', 'null' => true]]);
         }
 
         return $hasil;
@@ -182,7 +182,7 @@ class Migrasi_fitur_premium_2108 extends MY_Model
         ]);
     }
 
-    private function ubah_pengaturan_aplikasi($hasil)
+    private function ubah_pengaturan_aplikasi(bool $hasil)
     {
         return $hasil && $this->db
             ->where_in('key', ['api_opendk_server', 'api_opendk_key', 'api_opendk_user', 'api_opendk_password'])

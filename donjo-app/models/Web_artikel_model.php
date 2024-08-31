@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -66,7 +66,7 @@ class Web_artikel_model extends MY_Model
         return autocomplete_data_ke_str($data);
     }
 
-    private function search_sql()
+    private function search_sql(): void
     {
         $cari = $this->session->cari;
 
@@ -75,7 +75,7 @@ class Web_artikel_model extends MY_Model
         }
     }
 
-    private function filter_sql()
+    private function filter_sql(): void
     {
         $status = $this->session->status;
 
@@ -85,10 +85,10 @@ class Web_artikel_model extends MY_Model
     }
 
     // TODO : Gunakan $this->group_akses(); jika sudah menggunakan query builder
-    private function grup_sql()
+    private function grup_sql(): void
     {
         // Kontributor dan lainnya (group yg dibuat sendiri) hanya dapat melihat artikel yg dibuatnya sendiri
-        if (! in_array($this->session->grup, UserGrup::getGrupSistem())) {
+        if (! in_array($this->session->grup, (new UserGrup())->getGrupSistem())) {
             $this->db->where('a.id_user', $this->session->user);
         }
     }
@@ -109,7 +109,7 @@ class Web_artikel_model extends MY_Model
         return $this->paging;
     }
 
-    private function list_data_sql($cat)
+    private function list_data_sql($cat): void
     {
         $this->config_id('a')
             ->from('artikel a')
@@ -158,9 +158,10 @@ class Web_artikel_model extends MY_Model
 
         $data = $this->db->get()->result_array();
 
-        $j = $offset;
+        $j       = $offset;
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no']         = $j + 1;
             $data[$i]['boleh_ubah'] = $this->boleh_ubah($data[$i]['id'], $this->session->user);
             $data[$i]['judul']      = e($data[$i]['judul']);
@@ -183,9 +184,10 @@ class Web_artikel_model extends MY_Model
     // TODO: pindahkan dan gunakan web_kategori_model
     public function list_kategori()
     {
-        $data = $this->kategori(0);
+        $data    = $this->kategori(0);
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['submenu'] = $this->kategori($data[$i]['id']);
         }
 
@@ -213,7 +215,7 @@ class Web_artikel_model extends MY_Model
             ->row_array();
     }
 
-    public function insert($cat = 1)
+    public function insert($cat = 1): void
     {
         session_error_clear();
         $data = $this->input->post();
@@ -224,7 +226,6 @@ class Web_artikel_model extends MY_Model
             return;
         }
 
-        $data['isi'] = bersihkan_xss($data['isi']); // hapus potensi xss
         // Batasi judul menggunakan teks polos
         $data['judul'] = judul($data['judul']);
 
@@ -236,7 +237,7 @@ class Web_artikel_model extends MY_Model
             $nama_file   = $fp . '_' . $_FILES[$gambar]['name'];
             if (! empty($lokasi_file)) {
                 $tipe_file = TipeFile($_FILES[$gambar]);
-                $hasil     = UploadArtikel($nama_file, $gambar, $fp, $tipe_file);
+                $hasil     = UploadArtikel($nama_file, $gambar);
                 if ($hasil) {
                     $data[$gambar] = $nama_file;
                 } else {
@@ -253,12 +254,12 @@ class Web_artikel_model extends MY_Model
         }
 
         // Upload dokumen lampiran
-
+        // TODO: Sederhanakan cara unggah ini
         $lokasi_file = $_FILES['dokumen']['tmp_name'];
         $tipe_file   = TipeFile($_FILES['dokumen']);
         $nama_file   = $_FILES['dokumen']['name'];
         $ext         = get_extension($nama_file);
-        $nama_file   = str_replace(' ', '-', $nama_file); // normalkan nama file
+        $nama_file   = time() . random_int(10000, 999999) . $ext;
 
         if ($nama_file && ! empty($lokasi_file)) {
             if (! in_array($tipe_file, unserialize(MIME_TYPE_DOKUMEN), true) || ! in_array($ext, unserialize(EXT_DOKUMEN))) {
@@ -293,11 +294,7 @@ class Web_artikel_model extends MY_Model
         $data['slug']      = unique_slug('artikel', $data['judul']);
         $data['config_id'] = identitas('id');
 
-        if ($cat == AGENDA) {
-            $outp = $this->insert_agenda($data);
-        } else {
-            $outp = $this->db->insert('artikel', $data);
-        }
+        $outp = $cat == AGENDA ? $this->insert_agenda($data) : $this->db->insert('artikel', $data);
         status_sukses($outp);
     }
 
@@ -328,11 +325,12 @@ class Web_artikel_model extends MY_Model
         return $outp;
     }
 
-    public function update($cat, $id = 0)
+    public function update($cat, $id = 0): void
     {
         session_error_clear();
 
-        $data           = $_POST;
+        $data = $_POST;
+
         $hapus_lampiran = $data['hapus_lampiran'];
         unset($data['hapus_lampiran']);
 
@@ -343,7 +341,6 @@ class Web_artikel_model extends MY_Model
             return;
         }
 
-        $data['isi'] = bersihkan_xss($data['isi']); // hapus potensi xss
         // Batasi judul menggunakan teks polos
         $data['judul'] = judul($data['judul']);
 
@@ -377,11 +374,12 @@ class Web_artikel_model extends MY_Model
         }
 
         // Upload dokumen lampiran
+        // TODO: Sederhanakan cara unggah ini
         $lokasi_file = $_FILES['dokumen']['tmp_name'];
         $tipe_file   = TipeFile($_FILES['dokumen']);
         $nama_file   = $_FILES['dokumen']['name'];
         $ext         = get_extension($nama_file);
-        $nama_file   = str_replace(' ', '-', $nama_file); // normalkan nama file
+        $nama_file   = time() . random_int(10000, 999999) . $ext;
 
         if ($nama_file && ! empty($lokasi_file)) {
             if (! in_array($tipe_file, unserialize(MIME_TYPE_DOKUMEN)) || ! in_array($ext, unserialize(EXT_DOKUMEN))) {
@@ -448,12 +446,12 @@ class Web_artikel_model extends MY_Model
         return $outp;
     }
 
-    public function update_kategori($id, $id_kategori)
+    public function update_kategori($id, $id_kategori): void
     {
         $this->config_id()->where('id', $id)->update('artikel', ['id_kategori' => $id_kategori]);
     }
 
-    public function delete($id = 0, $semua = false)
+    public function delete($id = 0, $semua = false): void
     {
         if (! $semua) {
             $this->session->success = 1;
@@ -469,12 +467,12 @@ class Web_artikel_model extends MY_Model
             ->row_array();
 
         if ($list_gambar) {
-            foreach ($list_gambar as $key => $gambar) {
+            foreach ($list_gambar as $gambar) {
                 HapusArtikel($gambar);
             }
         }
 
-        if (! in_array($this->session->grup, UserGrup::getGrupSistem())) {
+        if (! in_array($this->session->grup, (new UserGrup())->getGrupSistem())) {
             $this->db->where('id_user', $this->session->user);
         }
 
@@ -484,7 +482,7 @@ class Web_artikel_model extends MY_Model
         status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->session->success = 1;
 
@@ -498,7 +496,7 @@ class Web_artikel_model extends MY_Model
     }
 
     // TODO: pindahkan dan gunakan web_kategori_model
-    public function hapus($id = 0, $semua = false)
+    public function hapus($id = 0, $semua = false): void
     {
         if (! $semua) {
             $this->session->success = 1;
@@ -508,7 +506,7 @@ class Web_artikel_model extends MY_Model
         status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
     }
 
-    public function artikel_lock($id = 0, $val = 1)
+    public function artikel_lock($id = 0, $val = 1): void
     {
         $this->group_akses();
 
@@ -517,7 +515,7 @@ class Web_artikel_model extends MY_Model
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function komentar_lock($id = 0, $val = 1)
+    public function komentar_lock($id = 0, $val = 1): void
     {
         $outp = $this->config_id()->where('id', $id)->update('artikel', ['boleh_komentar' => $val]);
 
@@ -583,7 +581,7 @@ class Web_artikel_model extends MY_Model
     }
 
     // TODO: pindahkan dan gunakan web_kategori_model
-    public function insert_kategori()
+    public function insert_kategori(): void
     {
         $data['kategori']  = $_POST['kategori'];
         $data['tipe']      = '2';
@@ -603,24 +601,21 @@ class Web_artikel_model extends MY_Model
             ->result_array();
     }
 
-    public function headline($id = 0)
+    public function headline($id = 0): void
     {
-        $outp = $this->config_id()->where('headline', 1)->update('artikel', ['headline' => 0]);
-
-        $outp = $this->config_id()->where('headline', 1)->update('artikel', ['id' => $id]);
+        $outp = $this->config_id()->update('artikel', ['headline' => 0]);
+        $outp = $this->config_id()->where('id', $id)->update('artikel', ['headline' => 1]);
 
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function slide($id = 0)
+    public function slide($id = 0): void
     {
         $data = $this->config_id()->get_where('artikel', ['id' => $id])->row_array();
 
-        if ($data['headline'] == '3') {
-            $outp = $this->config_id()->where('id', $id)->update('artikel', ['headline' => 0]);
-        } else {
-            $outp = $this->config_id()->where('id', $id)->update('artikel', ['headline' => 3]);
-        }
+        $slider = $data['slider'] == '1' ? 0 : 1;
+
+        $outp = $this->config_id()->where('id', $id)->update('artikel', ['slider' => $slider]);
 
         status_sukses($outp); //Tampilkan Pesan
     }
@@ -633,7 +628,7 @@ class Web_artikel_model extends MY_Model
         return $user == $id_user || $this->session->grup != 4;
     }
 
-    public function reset($cat)
+    public function reset($cat): void
     {
         // Normalkan kembali hit artikel kategori 999 (yg ditampilkan di menu) akibat robot (crawler)
         $persen    = $this->input->post('hit');
@@ -667,10 +662,10 @@ class Web_artikel_model extends MY_Model
             ->result_array();
     }
 
-    private function group_akses()
+    private function group_akses(): void
     {
         // Kontributor dan lainnya (group yg dibuat sendiri) hanya dapat melihat artikel yg dibuatnya sendiri
-        if (! in_array($this->session->grup, UserGrup::getGrupSistem())) {
+        if (! in_array($this->session->grup, (new UserGrup())->getGrupSistem())) {
             $this->db->where('a.id_user', $this->session->user);
         }
     }

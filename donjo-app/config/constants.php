@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -158,6 +158,7 @@ define('KEHADIRAN', 'kehadiran');
  * Custom path directory
  */
 define('DESAPATH', 'desa' . DIRECTORY_SEPARATOR);
+define('DESAPATHPERMISSION', 0755);
 define('RESOURCESPATH', 'resources' . DIRECTORY_SEPARATOR);
 define('STORAGEPATH', 'storage' . DIRECTORY_SEPARATOR);
 define('BACKUPPATH', 'backup_inkremental' . DIRECTORY_SEPARATOR);
@@ -224,6 +225,8 @@ define('LOKASI_PENDAFTARAN', 'desa/upload/pendaftaran');
 define('LOKASI_ICON_MENU_ANJUNGAN', 'desa/anjungan/menu/');
 define('LATAR_LOGIN', 'desa/pengaturan/siteman/images/');
 define('LOKASI_FOTO_DTKS', 'desa/upload/dtks/');
+define('LOKASI_FONT_DESA', 'desa/upload/fonts/');
+define('FONT_SYSTEM_TINYMCE', ['Andale Mono', 'Arial', 'Arial Black', 'Bookman Old Style', 'Comic Sans MS', 'Courier New', 'Georgia', 'Helvetica', 'Impact', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana']);
 
 // File
 define('LATAR_SITEMAN', 'desa/pengaturan/siteman/images/latar_login.jpg');

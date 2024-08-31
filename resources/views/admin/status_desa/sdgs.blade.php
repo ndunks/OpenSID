@@ -85,10 +85,11 @@
     @include('admin.status_desa.navigasi')
 
     <div class="box box-info">
-        <div class="box-header with-border">
-            <a class="btn btn-social btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"
-                {!! !cek_koneksi_internet() ? 'disabled title="Perangkat tidak terhubung dengan jaringan"' : 'id="perbarui"' !!}><i class="fa fa-refresh"></i>Perbarui {{ $header }}</a>
-        </div>
+        @if (can('u'))
+            <div class="box-header with-border">
+                <a class="btn btn-social btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" {!! !cek_koneksi_internet() ? 'disabled title="Perangkat tidak terhubung dengan jaringan"' : 'id="perbarui"' !!}><i class="fa fa-refresh"></i>Perbarui {{ $header }}</a>
+            </div>
+        @endif
         <div class="box-body">
             @if ($sdgs->error_msg)
                 <div class="alert alert-danger">
@@ -110,8 +111,7 @@
                         <div class="col-md-4 col-sm-6 col-xs-12">
                             <div class="info-box info-box-sdgs">
                                 <span class="info-box-icon info-box-icon-sdgs">
-                                    <img class="sdgs-logo" src="{{ asset("images/sdgs/{$value->image}") }}"
-                                        alt="{{ $value->image }}">
+                                    <img class="sdgs-logo" src="{{ asset("images/sdgs/{$value->image}") }}" alt="{{ $value->image }}">
                                 </span>
                                 <div class="info-box-content info-box-sdgs-content">
                                     <span class="info-box-number info-box-sdgs-number total-bumds">{{ $value->score }}
@@ -126,66 +126,69 @@
         </div>
     </div>
 @endsection
-@push('scripts')
-    <script type="text/javascript">
-        $(document).ready(function() {
-            var server_pantau = "{{ config_item('server_pantau') }}";
-            var token_pantau = "{{ config_item('token_pantau') }}";
-            var kode_desa = "{{ $kode_desa }}";
 
-            $('#perbarui').click(function(event) {
-                event.preventDefault;
-                Swal.fire({
-                    title: 'Sedang Memproses',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    showConfirmButton: false,
-                    didOpen: () => {
-                        Swal.showLoading()
-                    }
-                });
-                $.ajax({
-                        type: 'GET',
-                        url: server_pantau + '/index.php/api/wilayah/kodedesa?token=' + token_pantau +
-                            '&kode=' + kode_desa,
-                        dataType: 'json',
-                    })
-                    .done(function(response) {
-                        $.ajax({
-                                url: '{{ route('status_desa.perbarui_bps') }}',
-                                type: 'Post',
-                                dataType: 'json',
-                                data: {
-                                    'kode_bps': response.bps_kemendagri_desa.kode_desa_bps
-                                }
-                            })
-                            .done(function(value) {
-                                if (value.status) {
-                                    location.replace('{{ route('status_desa.perbarui_sdgs') }}')
-                                } else {
+@if (can('u'))
+    @push('scripts')
+        <script type="text/javascript">
+            $(document).ready(function() {
+                var server_pantau = "{{ config_item('server_pantau') }}";
+                var token_pantau = "{{ config_item('token_pantau') }}";
+                var kode_desa = "{{ $kode_desa }}";
+
+                $('#perbarui').click(function(event) {
+                    event.preventDefault;
+                    Swal.fire({
+                        title: 'Sedang Memproses',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading()
+                        }
+                    });
+                    $.ajax({
+                            type: 'GET',
+                            url: server_pantau + '/index.php/api/wilayah/kodedesa?token=' + token_pantau +
+                                '&kode=' + kode_desa,
+                            dataType: 'json',
+                        })
+                        .done(function(response) {
+                            $.ajax({
+                                    url: '{{ route('status_desa.perbarui_bps') }}',
+                                    type: 'Post',
+                                    dataType: 'json',
+                                    data: {
+                                        'kode_bps': response.bps_kemendagri_desa.kode_desa_bps
+                                    }
+                                })
+                                .done(function(value) {
+                                    if (value.status) {
+                                        location.replace('{{ route('status_desa.perbarui_sdgs') }}')
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            text: value.message,
+                                            showCloseButton: false
+                                        })
+                                    }
+                                })
+                                .fail(function(e) {
                                     Swal.fire({
                                         icon: 'error',
-                                        text: value.message,
+                                        text: e,
                                         showCloseButton: false
                                     })
-                                }
-                            })
-                            .fail(function(e) {
-                                Swal.fire({
-                                    icon: 'error',
-                                    text: e,
-                                    showCloseButton: false
-                                })
-                            });
-                    })
-                    .fail(function(e) {
-                        Swal.fire({
-                            icon: 'error',
-                            text: e,
-                            showCloseButton: false
+                                });
                         })
-                    });
+                        .fail(function(e) {
+                            Swal.fire({
+                                icon: 'error',
+                                text: e,
+                                showCloseButton: false
+                            })
+                        });
+                });
             });
-        });
-    </script>
-@endpush
+        </script>
+    @endpush
+@endif

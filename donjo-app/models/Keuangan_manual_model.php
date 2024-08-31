@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -42,7 +42,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Keuangan_manual_model extends MY_Model
 {
-    private $tabel = 'keuangan_manual_rinci';
+    private string $tabel = 'keuangan_manual_rinci';
 
     public function list_tahun_anggaran_manual()
     {
@@ -158,7 +158,7 @@ class Keuangan_manual_model extends MY_Model
             ->result_array();
     }
 
-    public function delete_input($id = '')
+    public function delete_input($id = ''): void
     {
         $this->config_id()
             ->where('id', $id)
@@ -171,7 +171,7 @@ class Keuangan_manual_model extends MY_Model
         }
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $id_cb = $this->input->post('id_cb');
         // Cek apakah ada data yang dicentang atau dipilih
@@ -207,7 +207,12 @@ class Keuangan_manual_model extends MY_Model
 
     public function salin_anggaran_tpl($thn_apbdes)
     {
-        $config_id  = $this->config_id;
+        $config_id = $this->config_id;
+
+        if (KeuanganManualRinci::where('tahun', $thn_apbdes)->exists()) {
+            return false;
+        }
+
         $result_set = KeuanganManualTemplate::get(['Kd_Akun', 'Kd_Keg', 'Kd_Rincian', 'Nilai_Anggaran', 'Nilai_Realisasi'])
             ->map(static function ($item) use ($config_id, $thn_apbdes) {
                 $item->config_id = $config_id;

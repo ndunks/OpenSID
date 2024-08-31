@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,6 +37,7 @@
 
 namespace App\Models;
 
+use App\Enums\StatusEnum;
 use App\Traits\Author;
 use App\Traits\ConfigId;
 use Illuminate\Support\Facades\DB;
@@ -94,7 +95,7 @@ class RefJabatan extends BaseModel
     }
 
     // get data jabatan jenis sekdes
-    public static function getKadesSekdes()
+    public static function getKadesSekdes(): array
     {
         return [
             self::getKades()->id,
@@ -106,5 +107,15 @@ class RefJabatan extends BaseModel
     public function scopeUrut($query, $order = 'ASC')
     {
         return $query->orderBy(DB::raw('CASE WHEN jenis = 0 THEN 9999 ELSE jenis END'), $order);
+    }
+
+    public static function scopeNonAktif()
+    {
+        return self::select('id')->whereNotExists(static function ($query): void {
+            $query->select(DB::raw(1))
+                ->from('tweb_desa_pamong')
+                ->where('tweb_desa_pamong.pamong_status', StatusEnum::YA)
+                ->whereRaw('ref_jabatan.id = tweb_desa_pamong.jabatan_id');
+        })->get();
     }
 }

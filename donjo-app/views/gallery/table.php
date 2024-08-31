@@ -11,7 +11,7 @@
 	<section class="content-header">
 		<h1>Daftar Album</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda') ?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li class="active">Daftar Album</li>
 		</ol>
 	</section>
@@ -89,6 +89,7 @@
 																</tr>
 															</thead>
 															<tbody>
+																<?php if($main) : ?>
 																<?php foreach ($main as $data) : ?>
 																	<tr>
 																		<?php if ($this->CI->cek_hak_akses('h')) : ?>
@@ -110,7 +111,7 @@
 																				<?php endif; ?>
 																				<?php if ($data['enabled'] == '2') : ?>
 																					<a href="<?= site_url('gallery/gallery_lock/' . encrypt($data['id'])) ?>" class="btn bg-navy btn-flat btn-sm" title="Aktifkan Album"><i class="fa fa-lock"></i></a>
-																				<?php elseif ($data['enabled'] == '1') : ?>
+																				<?php elseif ($data['enabled'] == '1' && $data['slider'] != '1') : ?>
 																					<a href="<?= site_url('gallery/gallery_unlock/' . encrypt($data['id'])) ?>" class="btn bg-navy btn-flat btn-sm" title="Non Aktifkan Album"><i class="fa fa-unlock"></i></a>
 																				<?php endif ?>
 																			<?php endif; ?>
@@ -125,6 +126,7 @@
 																		<td nowrap><?= tgl_indo2($data['tgl_upload']) ?></td>
 																	</tr>
 																<?php endforeach; ?>
+																<?php else: tidak_ada_data(6); endif; ?>
 															</tbody>
 														</table>
 													</div>

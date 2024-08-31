@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -48,12 +48,22 @@ $route['status-sdgs']    = WEB . '/sdgs/index';
 $route['peta']           = WEB . '/peta/index';
 $route['peraturan-desa'] = WEB . '/peraturan/index';
 
+// Informasi Publik
+$route['informasi-publik/tampilkan/(:num)/(:num)'] = WEB . '/informasi_publik/tampilkan/$1/$2';
+$route['informasi-publik/tampilkan/(:num)']        = WEB . '/informasi_publik/tampilkan/$1';
+$route['informasi-publik/data']                    = WEB . '/informasi_publik/ajax_informasi_publik';
+$route['informasi-publik']                         = WEB . '/informasi_publik/index';
+
 // Tampil Assets
 $route['tampil/(:any)'] = 'dokumen_web/tampil/$1';
 $route['unduh/(:any)']  = 'dokumen_web/unduh/$1';
+
 // Buku Tamu
 $route['buku-tamu/jawaban/(:num)/(:num)'] = WEB . '/buku_tamu/jawaban/$1/$2';
 $route['buku-tamu/kepuasan/(:num)']       = WEB . '/buku_tamu/kepuasan/$1';
 $route['buku-tamu/kepuasan']              = WEB . '/buku_tamu/kepuasan';
 $route['buku-tamu/registrasi']            = WEB . '/buku_tamu/registrasi';
 $route['buku-tamu']                       = WEB . '/buku_tamu/index';
+
+// Statistik
+$route['data-statistik/(:any)'] = WEB . '/statistik/index/$1';

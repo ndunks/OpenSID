@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -103,7 +103,7 @@ class Release
      *
      * return $this
      */
-    public function setApiUrl(string $url)
+    public function setApiUrl(string $url): self
     {
         $this->api = $url;
 
@@ -117,7 +117,7 @@ class Release
      *
      * return $this
      */
-    public function setInterval(int $interval)
+    public function setInterval(int $interval): self
     {
         $this->interval = $interval * 86400; // N * 86400 detik (1 hari)
 
@@ -133,17 +133,13 @@ class Release
      *
      * return $this
      */
-    public function setCacheFolder(string $folder)
+    public function setCacheFolder(string $folder): self
     {
         $folder = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $folder);
         $folder = str_replace(FCPATH, '', $folder);
         $folder = trim($folder, DIRECTORY_SEPARATOR);
 
-        if (! is_dir($folder) || ! is_writable($folder)) {
-            $folder = FCPATH;
-        } else {
-            $folder = FCPATH . $folder . DIRECTORY_SEPARATOR;
-        }
+        $folder = ! is_dir($folder) || ! is_writable($folder) ? FCPATH : FCPATH . $folder . DIRECTORY_SEPARATOR;
 
         $this->cache = $folder . 'version.json';
 
@@ -153,10 +149,8 @@ class Release
     /**
      * Cek apakah ada rilis baru atau tidak.
      * Caranya dengan membandingkan versi saat ini dengan versi yang ada di repositori.
-     *
-     * @return bool
      */
-    public function isAvailable()
+    public function isAvailable(): bool
     {
         return $this->fixVersioning($this->getCurrentVersion()) < $this->fixVersioning($this->getLatestVersion());
     }
@@ -167,7 +161,7 @@ class Release
      *
      * return $this
      */
-    public function setCurrentVersion(?string $version = null)
+    public function setCurrentVersion(?string $version = null): self
     {
         $this->version = 'v' . ltrim($version ?? VERSION, 'v');
 
@@ -209,10 +203,8 @@ class Release
 
     /**
      * Ambil url download rilis
-     *
-     * @return string
      */
-    public function getReleaseDownload()
+    public function getReleaseDownload(): string
     {
         // Bisa menggunakan zipball_url, tapi penamaan file dan foldernya tidak sesuai rilis.
         // Jadi digunakan html_url dengan penyesuaian.
@@ -225,10 +217,8 @@ class Release
      * Contoh return value di rilis v20.07:
      * 'Di rilis ini, versi 20.07, tersedia fitur untuk membuat file QR Code yg bisa dipasang di artikel,
      * surat atau materi lain. Rilis ini juga berisi perbaikan lain yang diminta Komunitas SID ... dst.'
-     *
-     * @return string
      */
-    public function getReleaseBody()
+    public function getReleaseBody(): ?string
     {
         return $this->convertMarkdownLink($this->resync()->body);
     }
@@ -237,12 +227,10 @@ class Release
      * Convert markdown link ke html.
      *
      * @see https://stackoverflow.com/questions/24985530/parsing-a-markdown-style-link-safely
-     *
-     * @return string
      */
-    protected function convertMarkdownLink(?string $body = null)
+    protected function convertMarkdownLink(?string $body = null): ?string
     {
-        return preg_replace_callback('/\[(.*?)\]\((.*?)\)/', static fn ($matches) => '<a href="' . $matches[2] . '">' . $matches[1] . '</a>', htmlspecialchars($body));
+        return preg_replace_callback('/\[(.*?)\]\((.*?)\)/', static fn ($matches): string => '<a href="' . $matches[2] . '">' . $matches[1] . '</a>', htmlspecialchars($body));
     }
 
     /**
@@ -252,11 +240,7 @@ class Release
      */
     public function resync()
     {
-        if( $this->cacheResponse ){
-            return $this->cacheResponse;
-        }
-
-        if (! $this->api) {
+        if ($this->api === '' || $this->api === '0') {
             throw new Exception('Please specify the API endpoint URL.');
         }
 
@@ -274,7 +258,7 @@ class Release
                     $this->write($response->getBody()->getContents());
                 }
 
-                return json_decode($this->read(), null, 512, JSON_THROW_ON_ERROR);
+                return json_decode($this->read(), null);
             } catch (ClientException $cx) {
                 log_message('error', $cx->getMessage());
             } catch (Exception $e) {
@@ -283,7 +267,7 @@ class Release
         }
 
         try {
-            return json_decode($this->read(), null, 512, JSON_THROW_ON_ERROR);
+            return json_decode($this->read(), null);
         } catch (Exception $e) {
             log_message('error', $e->getMessage());
 
@@ -297,10 +281,8 @@ class Release
      *   - File cachenya belum ada di server kita, atau
      *   - File cache sudah ada tetapi waktu modified-time filenya sudah
      *     lebih dari interval yang ditentukan.
-     *
-     * @return bool
      */
-    public function cacheIsOutdated()
+    public function cacheIsOutdated(): bool
     {
         return ! is_file($this->cache) || (time() > (filemtime($this->cache) + $this->interval));
     }
@@ -309,10 +291,8 @@ class Release
      * Ubah versi rilis menjadi integer agar bisa dibandingkan
      *
      * Contoh : 2304.0.0 => 230400000000
-     *
-     * @return int
      */
-    public function fixVersioning(?string $version = null)
+    public function fixVersioning(?string $version = null): int
     {
         $version = str_replace('v', '', $version);
         $version = explode('.', $version);
@@ -327,10 +307,8 @@ class Release
 
     /**
      * Buat/timpa file cache jika sudah kadaluwarsa.
-     *
-     * @return void
      */
-    public function write(string $cache)
+    public function write(string $cache): void
     {
         $file = $this->cache;
 

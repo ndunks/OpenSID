@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -52,17 +52,27 @@ class Pengguna extends Admin_Controller
 
     public function index()
     {
+        $userData = User::findOrFail(auth()->id);
+
         return view('admin.pengguna.index', [
             'form_action'     => 'pengguna/update',
             'password_action' => 'pengguna/update_password',
+            'userData'        => $userData,
         ]);
     }
 
-    public function update()
+    public function update(): void
     {
-        $data = User::findOrFail(auth()->id);
+        $data    = User::findOrFail(auth()->id);
+        $newData = $this->validate($this->request);
+        if ($data->email != $newData['email']) {
+            $newData['email_verified_at'] = null;
+        }
+        if ($data->id_telegram != $newData['id_telegram']) {
+            $newData['telegram_verified_at'] = null;
+        }
 
-        if ($data->update($this->validate($this->request))) {
+        if ($data->update($newData)) {
             $this->session->isAdmin = $data;
             redirect_with('success', 'Berhasil Ubah Data');
         }
@@ -70,23 +80,25 @@ class Pengguna extends Admin_Controller
         redirect_with('error', 'Gagal Ubah Data');
     }
 
-    private function validate($request = [])
+    private function validate($request = []): array
     {
         return [
             'nama'           => nama($request['nama']),
+            'email'          => email($request['email']),
             'notif_telegram' => (int) $request['notif_telegram'],
             'id_telegram'    => alfanumerik(empty($request['id_telegram']) ? 0 : $request['id_telegram']),
             'foto'           => $this->user_model->urusFoto(Auth()->id),
-
         ];
     }
 
-    public function update_password($request = [])
+    public function update_password(): void
     {
         $user = $this->validate_password($this->request);
 
         if ($user['status']) {
+            $this->session->change_password       = true;
             $this->session->force_change_password = false;
+
             redirect_with('success', $user['pesan']);
         }
 
@@ -98,16 +110,9 @@ class Pengguna extends Admin_Controller
         $pass_lama  = $request['pass_lama'];
         $pass_baru  = $request['pass_baru'];
         $pass_baru1 = $request['pass_baru1'];
-        $pwMasihMD5 = (strlen(auth()->password) == 32) && (stripos(auth()->password, '$') === false) ? true : false;
+        $pwMasihMD5 = (strlen(auth()->password) == 32) && (stripos(auth()->password, '$') === false);
 
         switch (true) {
-            case config_item('demo_mode'):
-                $respon = [
-                    'status' => false,
-                    'pesan'  => 'Sandi gagal diganti, <b>Demo</b> tidak bisa mengubah <b>Sandi</b>.',
-                ];
-                break;
-
             case empty($pass_lama) || empty($pass_baru) || empty($pass_baru1):
                 $respon = [
                     'status' => false,
@@ -123,13 +128,8 @@ class Pengguna extends Admin_Controller
                 break;
 
             case $pwMasihMD5 && (md5($pass_lama) != auth()->password):
-                $respon = [
-                    'status' => false,
-                    'pesan'  => 'Sandi gagal diganti, <b>Sandi Lama</b> yang anda masukkan tidak sesuai.',
-                ];
-                break;
 
-            case ! $pwMasihMD5 && (password_verify($pass_lama, auth()->password) === false):
+            case ! $pwMasihMD5 && (! password_verify($pass_lama, auth()->password)):
                 $respon = [
                     'status' => false,
                     'pesan'  => 'Sandi gagal diganti, <b>Sandi Lama</b> yang anda masukkan tidak sesuai.',
@@ -171,37 +171,28 @@ class Pengguna extends Admin_Controller
         return $respon;
     }
 
-    public function kirim_verifikasi()
+    public function kirim_verifikasi(): void
     {
         $user = $this->db->where('id', $this->session->user)->get('user')->row();
 
         if ($user->email_verified_at !== null) {
-            $this->session->success = 1;
-
-            redirect('pengguna');
+            redirect_with('success', 'Email berhasil terkirim');
         }
 
         try {
             $status = $this->password->driver('email')->sendVerifyLink([
                 'email' => $user->email,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             log_message('error', $e);
-
-            $this->session->success   = -1;
-            $this->session->error_msg = 'Tidak berhasil mengirim verifikasi email';
-
-            redirect('pengguna');
+            redirect_with('error', 'Tidak berhasil mengirim verifikasi email');
         }
 
         if ($status === 'verify') {
-            $this->session->success = 6;
-        } else {
-            $this->session->success   = -1;
-            $this->session->error_msg = lang($status);
+            redirect_with('success', 'Silahkan Cek Pesan di Email Anda');
         }
 
-        redirect('pengguna');
+        redirect_with('error', lang($status));
     }
 
     public function kirim_otp_telegram()
@@ -217,7 +208,7 @@ class Pengguna extends Admin_Controller
 
         try {
             $user  = User::find($this->session->user);
-            $token = hash('sha256', $raw_token = mt_rand(100000, 999999));
+            $token = hash('sha256', $raw_token = random_int(100000, 999999));
 
             $user->id_telegram = $id_telegram;
             $user->token       = $token;
@@ -274,46 +265,33 @@ class Pengguna extends Admin_Controller
         ]);
     }
 
-    public function verifikasi(string $hash)
+    public function verifikasi(string $hash): void
     {
         $user = $this->db->where('id', $this->session->user)->get('user')->row();
 
         if ($user->email_verified_at !== null) {
-            $this->session->success = 1;
-
-            redirect('pengguna');
+            redirect_with('success', 'Verifikasi berhasil');
         }
 
         // Check if hash equal with current user email.
         if (! hash_equals($hash, sha1($user->email))) {
-            $this->session->success   = -1;
-            $this->session->error_msg = lang('token');
-
-            redirect('pengguna');
+            redirect_with('error', lang('token'));
         }
 
         $signature = hash_hmac('sha256', $user->email, config_item('encryption_key'));
 
         // Check signature key
         if (! hash_equals($signature, $this->input->get('signature'))) {
-            $this->session->success   = -1;
-            $this->session->error_msg = lang('token');
-
-            redirect('pengguna');
+            redirect_with('error', lang('token'));
         }
 
         // Check for token if expired
         if ($this->input->get('expires') < strtotime(date('Y-m-d H:i:s'))) {
-            $this->session->success   = -1;
-            $this->session->error_msg = lang('expired');
-
-            redirect('pengguna');
+            redirect_with('error', lang('expired'));
         }
 
         $this->db->where('id', $this->session->user)->update('user', ['email_verified_at' => date('Y-m-d H:i:s')]);
 
-        $this->session->success = 1;
-
-        redirect('pengguna');
+        redirect_with('success', 'Verifikasi berhasil');
     }
 }

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -49,9 +49,8 @@ class Migrasi_dtks extends MY_model
         $hasil = $hasil && $this->createDTKSAnggotaTable($hasil);
         $hasil = $hasil && $this->createDTKSPengaturanProgramTable($hasil);
         $hasil = $hasil && $this->createLampiranFotoTable($hasil);
-        $hasil = $hasil && $this->addIDKeluargaInDTKSTable($hasil);
 
-        return $hasil && true;
+        return $hasil && $this->addIDKeluargaInDTKSTable($hasil);
     }
 
     protected function tambahMenuSatuDataDanSubMenuDTKSK($hasil)
@@ -285,8 +284,6 @@ class Migrasi_dtks extends MY_model
             CONSTRAINT FK_dtks_rtm FOREIGN KEY (id_rtm) REFERENCES tweb_rtm(id) ON UPDATE CASCADE ON DELETE SET NULL
         )
         ");
-
-        return $hasil;
     }
 
     protected function createDTKSAnggotaTable($hasil)

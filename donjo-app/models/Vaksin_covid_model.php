@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -50,6 +50,7 @@ class Vaksin_covid_model extends MY_Model
     {
         parent::__construct();
         $this->load->model('referensi_model');
+        $this->load->library('MY_Upload', null, 'upload');
     }
 
     public function jenis_vaksin()
@@ -70,15 +71,15 @@ class Vaksin_covid_model extends MY_Model
         return array_values(array_filter($jenis_vaksin));
     }
 
-    public function dusun_sql()
+    public function dusun_sql(): void
     {
         $kf = $this->session->dusun;
         if (isset($kf)) {
-            $this->db->where("((p.id_kk <> '0' AND cp.dusun = '{$kf}') OR (p.id_kk = '0' AND ck.dusun = '{$kf}'))");
+            $this->db->where("((p.id_kk is not null AND cp.dusun = '{$kf}') OR (p.id_kk is null AND ck.dusun = '{$kf}'))");
         }
     }
 
-    public function vaksin_sql()
+    public function vaksin_sql(): void
     {
         $kf = $this->session->vaksin;
 
@@ -101,7 +102,7 @@ class Vaksin_covid_model extends MY_Model
         }
     }
 
-    public function jenis_vaksin_sql()
+    public function jenis_vaksin_sql(): void
     {
         $kf = $this->session->jenis_vaksin;
 
@@ -114,7 +115,7 @@ class Vaksin_covid_model extends MY_Model
         }
     }
 
-    public function tanggal_vaksin_sql()
+    public function tanggal_vaksin_sql(): void
     {
         $kf = $this->session->tanggal_vaksin;
 
@@ -128,16 +129,20 @@ class Vaksin_covid_model extends MY_Model
         }
     }
 
-    public function umur_sql($umur)
+    public function umur_sql($umur): void
     {
         $umur = explode('-', $umur);
         $this->db->where("(DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW()) - TO_DAYS(p.tanggallahir)),'%Y') + 0) >= " . (int) $umur[0]);
-        if (isset($umur[1]) && $umur[1] > $umur[0]) {
-            $this->db->where("(DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW()) - TO_DAYS(p.tanggallahir)),'%Y') + 0) <=  " . (int) $umur[1]);
+        if (! isset($umur[1])) {
+            return;
         }
+        if ($umur[1] <= $umur[0]) {
+            return;
+        }
+        $this->db->where("(DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW()) - TO_DAYS(p.tanggallahir)),'%Y') + 0) <=  " . (int) $umur[1]);
     }
 
-    public function cari($value = '')
+    public function cari($value = ''): void
     {
         $kf = $this->session->cari;
         if (isset($kf)) {
@@ -161,14 +166,14 @@ class Vaksin_covid_model extends MY_Model
         return $this->db->get()->row();
     }
 
-    public function penduduk_sql()
+    public function penduduk_sql(): void
     {
         $sebutan_dusun = ucwords($this->setting->sebutan_dusun);
         $this->db
             ->select('p.*, v.*, kk.no_kk, ck.rt, ck.rw, ck.dusun, s.nama as jenis_kelamin ')
             ->select("(DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(p.tanggallahir)), '%Y')+0) AS umur")
             ->select("(
-                case when (p.id_kk IS NULL or p.id_kk = 0)
+                case when (p.id_kk IS NULL)
                     then
                         case when (cp.dusun = '-' or cp.dusun = '')
                             then CONCAT(COALESCE(p.alamat_sekarang, ''), ' RT ', cp.rt, ' / RW ', cp.rw)
@@ -231,7 +236,7 @@ class Vaksin_covid_model extends MY_Model
         return $this->db->get("{$this->tabel_penduduk} as p")->row();
     }
 
-    public function update_vaksin()
+    public function update_vaksin(): void
     {
         unset($this->session->validation_error, $this->session->success);
         $data           = $this->input->post();
@@ -277,10 +282,8 @@ class Vaksin_covid_model extends MY_Model
         status_sukses($hasil);
     }
 
-    public function upload_sertifikat(&$data)
+    public function upload_sertifikat(&$data): void
     {
-        $this->load->library('upload');
-
         for ($i = 1; $i <= 3; $i++) {
             $file = "vaksin_{$i}";
             if ($_FILES[$file]['size'] != 0 && $data["tgl_vaksin_{$i}"]) {
@@ -329,9 +332,8 @@ class Vaksin_covid_model extends MY_Model
         }
     }
 
-    public function upload_surat(&$data)
+    public function upload_surat(&$data): void
     {
-        $this->load->library('upload');
         if ($_FILES['surat_dokter']['size'] != 0 && $data['tunda'] == 1) {
             $file                 = 'surat_dokter';
             $data['surat_dokter'] = $this->do_upload($file, $data);
@@ -356,12 +358,10 @@ class Vaksin_covid_model extends MY_Model
         $data['tgl_vaksin_3']   = (! isset($data['tgl_vaksin_3']) || $data['tgl_vaksin_3'] == '') ? null : rev_tgl($data['tgl_vaksin_3']);
         $data['jenis_vaksin_3'] = (isset($data['jenis_vaksin_3']) || $data['jenis_vaksin_3'] != '') ? alfanumerik_spasi($data['jenis_vaksin_3']) : null;
         $data['tunda']          = (int) ($data['tunda']);
-        $data['surat_dokter']   = $data['surat_dokter'] ?? null;
-        $data['keterangan']     = alfanumerik_spasi($data['keterangan']);
+        $data['surat_dokter'] ??= null;
+        $data['keterangan'] = alfanumerik_spasi($data['keterangan']);
 
-        if (! empty($valid)) {
-            $this->session->success = -1;
-        }
+        $this->session->success = -1;
 
         return $valid;
     }
@@ -417,8 +417,6 @@ class Vaksin_covid_model extends MY_Model
      */
     public function impor()
     {
-        $this->load->library('upload');
-
         $config['upload_path']   = sys_get_temp_dir();
         $config['allowed_types'] = 'xlsx';
 
@@ -428,7 +426,7 @@ class Vaksin_covid_model extends MY_Model
             return session_error($this->upload->display_errors());
         }
 
-        $upload = $this->upload->data();
+        $this->upload->data();
 
         $reader = ReaderEntityFactory::createXLSXReader();
         $reader->open($_FILES['userfile']['tmp_name']);
@@ -455,7 +453,7 @@ class Vaksin_covid_model extends MY_Model
 
                     $nik = (string) $cells[0];
 
-                    if (empty($nik)) {
+                    if ($nik === '') {
                         $pesan .= "Pesan Gagal : Baris {$nomor_baris} Kolom NIK Tidak Boleh Kosong.</br>";
                         $gagal++;
                         $outp = false;
@@ -466,7 +464,7 @@ class Vaksin_covid_model extends MY_Model
                     if ($penduduk = $this->cekPenduduk($nik)) {
                         $id_penduduk = $penduduk['id'];
 
-                        if (empty((string) $cells[7])) {
+                        if ((string) $cells[7] === '') {
                             $tunda      = 0;
                             $keterangan = null;
                             if (! empty($tgl_vaksin_1 = $this->cekTgl((string) $cells[1]))) {
@@ -566,7 +564,7 @@ class Vaksin_covid_model extends MY_Model
         return status_sukses($outp, false, 'Terjadi kesalahan impor data Penerima Vaksin');
     }
 
-    private function cekPenduduk($nik = '')
+    private function cekPenduduk(string $nik = '')
     {
         return $this->config_id()
             ->select('id', 'nama')
@@ -582,7 +580,7 @@ class Vaksin_covid_model extends MY_Model
 
     protected function jenisVaksin(string $cells = '', $default = '')
     {
-        if (empty($cells)) {
+        if ($cells === '') {
             $this->load->model('referensi_model');
 
             if (! $default) {

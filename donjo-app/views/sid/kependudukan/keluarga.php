@@ -22,7 +22,7 @@
 	<section class="content-header">
 		<h1>Data Keluarga</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda')?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li class="active">Data Keluarga</li>
 		</ol>
 	</section>
@@ -130,7 +130,7 @@
 							<table class="table table-bordered dataTable table-striped table-hover tabel-daftar">
 								<thead class="bg-gray disabled color-palette">
 									<tr>
-										<th><input type="checkbox" id="checkall"/></th>
+										<th><input type="checkbox" id="checkall" <?= data_lengkap() ? '' : 'disabled' ?>/></th>
 										<th>No</th>
 										<th>Aksi</th>
 										<th>Foto</th>
@@ -138,7 +138,7 @@
 										<th><?= url_order($o, "{$this->controller}/index/{$p}", 3, 'Kepala Keluarga'); ?></th>
 										<th>NIK</th>
 										<th>Tag ID Card</th>
-										<th>Jumlah Anggota</th>
+										<th><?= url_order($o, "{$this->controller}/index/{$p}", 9, 'Jumlah Anggota'); ?></th>
 										<th>Jenis Kelamin</th>
 										<th>Alamat</th>
 										<th><?= ucwords($this->setting->sebutan_dusun)?></th>
@@ -149,9 +149,10 @@
 									</tr>
 								</thead>
 								<tbody>
+									<?php if($main): ?>
 									<?php foreach ($main as $data): ?>
-										<tr <?= jecho(get_nokk($data['no_kk']), '0', 'class="danger"') ?>>
-											<td class="padat"><input type="checkbox" name="id_cb[]" value="<?= $data['id']?>" /></td>
+										<tr <?= valid_nik_nokk($data['no_kk']) ?>>
+											<td class="padat"><input type="checkbox" name="id_cb[]" value="<?= $data['id']?>" <?= data_lengkap() ? '' : 'disabled' ?> /></td>
 											<td class="padat"><?= $data['no']?></td>
 											<td class="aksi">
 												<a href="<?= site_url("keluarga/anggota/{$p}/{$o}/{$data['id']}")?>" class="btn bg-purple btn-flat btn-sm" title="Rincian Anggota Keluarga (KK)"><i class="fa fa-list-ol"></i></a>
@@ -164,6 +165,9 @@
 															</li>
 															<li>
 																<a href="<?= site_url("keluarga/form_peristiwa_a/5/{$p}/{$o}/{$data['id']}")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Anggota Keluarga Masuk"><i class="fa fa-plus"></i> Anggota Keluarga Masuk</a>
+															</li>
+															<li>
+																<a href="<?= site_url("keluarga/ajax_add_anggota/{$p}/{$o}/{$data['id']}")?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Anggota Dari Penduduk Yang Sudah Ada" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Tambah Anggota Keluarga"><i class="fa fa-plus"></i> Dari Penduduk Sudah Ada</a>
 															</li>
 														</ul>
 													</div>
@@ -191,7 +195,7 @@
 											<td nowrap><?= strtoupper($data['kepala_kk'])?></td>
 											<td><a href="<?= site_url("penduduk/detail/1/0/{$data['id_pend']}")?>"><?= strtoupper($data['nik'])?></a></td>
 											<td><?= $data['tag_id_card']?></td>
-											<td class="padat"><a href="<?= site_url("keluarga/anggota/{$p}/{$o}/{$data['id']}")?>"><?= $data['jumlah_anggota']?></a></td>
+											<td class="padat"><?= $data['jumlah_anggota'] ?></td>
 											<td class="padat"><?= strtoupper($data['sex']) ?></td>
 											<td><?= strtoupper($data['alamat'])?></td>
 											<td><?= strtoupper($data['dusun'])?></td>
@@ -201,6 +205,7 @@
 											<td class="padat"><?= tgl_indo($data['tgl_cetak_kk'])?></td>
 										</tr>
 									<?php endforeach; ?>
+									<?php else: tidak_ada_data(16); endif; ?>
 								</tbody>
 							</table>
 						</div>

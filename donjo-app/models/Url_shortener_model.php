@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -41,14 +41,9 @@ class Url_shortener_model extends MY_Model
 {
     public function url_pendek($log_surat = [])
     {
-        $urls_id = $log_surat['urls_id'];
+        $url = site_url("c1/{$log_surat['id']}");
+        $id  = $this->add_url($url);
 
-        if ($urls_id) {
-            $id = $urls_id;
-        } else {
-            $url = site_url("c1/{$log_surat['id']}");
-            $id  = $this->add_url($url);
-        }
         $urlData = $this->getUrlById($id);
 
         return [
@@ -89,7 +84,7 @@ class Url_shortener_model extends MY_Model
 
     public function random_code($length)
     {
-        return substr(base_convert(sha1(uniqid(mt_rand())), 16, 36), 0, $length);
+        return substr(base_convert(sha1(uniqid(random_int(0, mt_getrandmax()))), 16, 36), 0, $length);
     }
 
     public function encode_id($plainText)
@@ -108,6 +103,6 @@ class Url_shortener_model extends MY_Model
         $base64    = base64_decode($base64url, true);
         $exp       = explode(',', $base64);
 
-        return ($exp[1] != $exp[3]) ? $plainText : $exp[1];
+        return ($exp[1] !== $exp[3]) ? $plainText : $exp[1];
     }
 }

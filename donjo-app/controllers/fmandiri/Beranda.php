@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Models\Pendapat;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -42,11 +44,11 @@ class Beranda extends Mandiri_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->model(['mandiri_model', 'penduduk_model', 'kelompok_model', 'web_dokumen_model', 'pendapat_model', 'mailbox_model']);
+        $this->load->model(['mandiri_model', 'penduduk_model', 'kelompok_model', 'web_dokumen_model', 'mailbox_model']);
         $this->load->helper('download');
     }
 
-    public function index()
+    public function index(): void
     {
         $inbox = $this->mailbox_model->count_inbox_pesan($this->is_login->nik);
         if ($inbox) {
@@ -56,7 +58,7 @@ class Beranda extends Mandiri_Controller
         }
     }
 
-    public function profil()
+    public function profil(): void
     {
         $data = [
             'penduduk' => $this->penduduk_model->get_penduduk($this->is_login->id_pend),
@@ -66,7 +68,7 @@ class Beranda extends Mandiri_Controller
         $this->render('profil', $data);
     }
 
-    public function cetak_biodata()
+    public function cetak_biodata(): void
     {
         $data = [
             'desa'     => $this->header,
@@ -76,9 +78,9 @@ class Beranda extends Mandiri_Controller
         $this->load->view('sid/kependudukan/cetak_biodata', $data);
     }
 
-    public function cetak_kk()
+    public function cetak_kk(): void
     {
-        if ($this->is_login->id_kk == 0) {
+        if ($this->is_login->id_kk == null) {
             // Jika diakses melalui URL
             $respon = [
                 'status' => 1,
@@ -94,7 +96,7 @@ class Beranda extends Mandiri_Controller
         $this->load->view('sid/kependudukan/cetak_kk_all', $data);
     }
 
-    public function ganti_pin()
+    public function ganti_pin(): void
     {
         $data = [
             'tgl_verifikasi_telegram' => $this->otp_library->driver('telegram')->cek_verifikasi_otp($this->is_login->id_pend),
@@ -106,20 +108,20 @@ class Beranda extends Mandiri_Controller
         $this->render('ganti_pin', $data);
     }
 
-    public function proses_ganti_pin()
+    public function proses_ganti_pin(): void
     {
         $this->mandiri_model->ganti_pin();
         redirect('layanan-mandiri/ganti-pin');
     }
 
-    public function keluar()
+    public function keluar(): void
     {
         $this->mandiri_model->logout();
         redirect('layanan-mandiri/masuk');
     }
 
     // TODO: Pindahkan ke model
-    public function pendapat(int $pilihan = 1)
+    public function pendapat(int $pilihan = 1): void
     {
         $data = [
             'config_id' => identitas('id'),
@@ -127,7 +129,7 @@ class Beranda extends Mandiri_Controller
             'pilihan'   => $pilihan,
         ];
 
-        $this->pendapat_model->insert($data);
+        Pendapat::create($data);
         redirect('layanan-mandiri/keluar');
     }
 }

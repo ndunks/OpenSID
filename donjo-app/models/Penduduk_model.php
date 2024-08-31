@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -53,9 +53,9 @@ class Penduduk_model extends MY_Model
         $this->penolong_kelahiran = array_flip(unserialize(PENOLONG_KELAHIRAN));
     }
 
-    public function autocomplete($cari = '')
+    public function autocomplete($cari = '', $where = '')
     {
-        return $this->autocomplete_str('nama', 'tweb_penduduk', $cari);
+        return $this->autocomplete_str('nama', 'tweb_penduduk', $cari, $where);
     }
 
     protected function search_sql()
@@ -95,7 +95,7 @@ class Penduduk_model extends MY_Model
     {
         if (! empty($this->session->dusun)) {
             $kf = $this->session->dusun;
-            $this->db->where("((u.id_kk <> '0' AND a.dusun = '{$kf}') OR (u.id_kk = '0' AND a2.dusun = '{$kf}'))");
+            $this->db->where("((u.id_kk IS NOT NULL AND a.dusun = '{$kf}') OR (u.id_kk IS NULL AND a2.dusun = '{$kf}'))");
         }
     }
 
@@ -103,7 +103,7 @@ class Penduduk_model extends MY_Model
     {
         if (! empty($this->session->rw)) {
             $kf = $this->session->rw;
-            $this->db->where("((u.id_kk <> '0' AND a.rw = '{$kf}') OR (u.id_kk = '0' AND a2.rw = '{$kf}'))");
+            $this->db->where("((u.id_kk IS NOT NULL AND a.rw = '{$kf}') OR (u.id_kk IS NULL AND a2.rw = '{$kf}'))");
         }
     }
 
@@ -111,7 +111,7 @@ class Penduduk_model extends MY_Model
     {
         if (! empty($this->session->rt)) {
             $kf = $this->session->rt;
-            $this->db->where("((u.id_kk <> '0' AND a.rt = '{$kf}') OR (u.id_kk = '0' AND a2.rt = '{$kf}'))");
+            $this->db->where("((u.id_kk IS NOT NULL AND a.rt = '{$kf}') OR (u.id_kk IS NULL AND a2.rt = '{$kf}'))");
         }
     }
 
@@ -122,17 +122,9 @@ class Penduduk_model extends MY_Model
         }
 
         if ($kf == JUMLAH) {
-            $this->db
-                ->group_start()
-                ->where("{$kolom} IS NOT NULL")
-                ->where("{$kolom} !=", '')
-                ->group_end();
+            $this->db->where("{$kolom} IS NOT NULL");
         } elseif ($kf == BELUM_MENGISI) {
-            $this->db
-                ->group_start()
-                ->where("{$kolom} IS NULL")
-                ->or_where($kolom, '')
-                ->group_end();
+            $this->db->where("{$kolom} IS NULL");
         } elseif ($kf == $this->session->status_dasar) {
             $this->db->where_in($kolom, $kf);
         } else {
@@ -191,10 +183,13 @@ class Penduduk_model extends MY_Model
         if (isset($kf) && $this->session->umur == 'tahun') {
             $this->db->where(" DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(`tanggallahir`)), '%Y')+0  <= {$kf}");
         }
-
-        if (isset($kf) && $this->session->umur == 'bulan') {
-            $this->db->where(" TIMESTAMPDIFF(MONTH, tanggallahir, now())  <= {$kf}");
+        if (! isset($kf)) {
+            return;
         }
+        if ($this->session->umur != 'bulan') {
+            return;
+        }
+        $this->db->where(" TIMESTAMPDIFF(MONTH, tanggallahir, now())  <= {$kf}");
     }
 
     protected function umur_min_sql()
@@ -203,10 +198,13 @@ class Penduduk_model extends MY_Model
         if (isset($kf) && $this->session->umur == 'tahun') {
             $this->db->where(" DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(`tanggallahir`)), '%Y')+0 >= {$kf}");
         }
-
-        if (isset($kf) && $this->session->umur == 'bulan') {
-            $this->db->where(" TIMESTAMPDIFF(MONTH, tanggallahir, now()) >= {$kf}");
+        if (! isset($kf)) {
+            return;
         }
+        if ($this->session->umur != 'bulan') {
+            return;
+        }
+        $this->db->where(" TIMESTAMPDIFF(MONTH, tanggallahir, now()) >= {$kf}");
     }
 
     protected function umur_sql()
@@ -243,7 +241,7 @@ class Penduduk_model extends MY_Model
         }
     }
 
-    private function tahun_bulan()
+    private function tahun_bulan(): void
     {
         $kt = $this->session->filter_tahun;
         $kb = $this->session->filter_bulan;
@@ -305,7 +303,7 @@ class Penduduk_model extends MY_Model
     {
         // Alamat anggota keluarga diambil dari tabel keluarga
         $penduduk = $this->config_id()->select('id_kk')->where('id', $id)->get('tweb_penduduk')->row_array();
-        if ($penduduk['id_kk'] > 0) {
+        if ($penduduk['id_kk'] != null) {
             return $this->keluarga_model->get_alamat_wilayah($penduduk['id_kk']);
         }
         // Alamat penduduk lepas diambil dari kolom alamat_sekarang
@@ -319,7 +317,7 @@ class Penduduk_model extends MY_Model
         return trim("{$data['alamat']} RT {$data['rt']} / RW {$data['rw']} " . ikut_case($data['dusun'], $this->setting->sebutan_dusun) . " {$data['dusun']}");
     }
 
-    private function filter_bantuan()
+    private function filter_bantuan(): void
     {
         $status = (string) $this->session->filter_global['status'];
         if ($status != '') {
@@ -336,7 +334,7 @@ class Penduduk_model extends MY_Model
         }
     }
 
-    private function bantuan_penduduk_sql()
+    private function bantuan_penduduk_sql(): void
     {
         // Yg berikut hanya untuk menampilkan peserta bantuan
         $bantuan_penduduk = $this->session->bantuan_penduduk;
@@ -344,14 +342,11 @@ class Penduduk_model extends MY_Model
             // Salin program_id
             $this->session->program_bantuan = $bantuan_penduduk;
         }
-        if ($bantuan_penduduk && $bantuan_penduduk != BELUM_MENGISI) {
-            if ($bantuan_penduduk != JUMLAH && $this->session->program_bantuan) {
-                $this->db
-                    ->join('program_peserta bt', 'bt.peserta = u.nik')
-                    ->join('program rcb', 'bt.program_id = rcb.id', 'left');
-
-                $this->filter_bantuan();
-            }
+        if ($bantuan_penduduk && $bantuan_penduduk != BELUM_MENGISI && ($bantuan_penduduk != JUMLAH && $this->session->program_bantuan)) {
+            $this->db
+                ->join('program_peserta bt', 'bt.peserta = u.nik')
+                ->join('program rcb', 'bt.program_id = rcb.id', 'left');
+            $this->filter_bantuan();
         }
         // Untuk BUKAN PESERTA program bantuan tertentu
         if ($bantuan_penduduk == BELUM_MENGISI) {
@@ -374,7 +369,7 @@ class Penduduk_model extends MY_Model
         }
     }
 
-    private function filter_id()
+    private function filter_id(): void
     {
         if ($id = $this->input->get('id_cb')) {
             $this->db->where_in('u.id', explode(',', $id));
@@ -382,7 +377,7 @@ class Penduduk_model extends MY_Model
     }
 
     // Digunakan untuk paging dan query utama supaya jumlah data selalu sama
-    private function list_data_sql()
+    private function list_data_sql(): void
     {
         // Join di sini untuk mendukung urut penduduk
         $this->config_id('u')
@@ -438,10 +433,8 @@ class Penduduk_model extends MY_Model
             ['bpjs_ketenagakerjaan', 'u.bpjs_ketenagakerjaan'], // Kode bpjs_ketenagakerjaan
         ];
 
-        if ($this->session->bantuan_penduduk && $this->session->bantuan_penduduk != BELUM_MENGISI) {
-            if ($this->session->bantuan_penduduk != JUMLAH && $this->session->program_bantuan) {
-                $kolom_kode[] = ['bantuan_penduduk', 'rcb.id'];
-            }
+        if ($this->session->bantuan_penduduk && $this->session->bantuan_penduduk != BELUM_MENGISI && ($this->session->bantuan_penduduk != JUMLAH && $this->session->program_bantuan)) {
+            $kolom_kode[] = ['bantuan_penduduk', 'rcb.id'];
         }
 
         foreach ($kolom_kode as $kolom) {
@@ -460,8 +453,14 @@ class Penduduk_model extends MY_Model
     }
 
     // Perlu di urut sebelum paging dan sesudah paging
-    private function order_by_list($order_by)
+    private function order_by_list($order_by): void
     {
+        $this->db->order_by("CASE
+                WHEN CHAR_LENGTH(u.nik) < 16 THEN 1
+                WHEN u.nik LIKE '0%' AND CHAR_LENGTH(u.nik) = 16 THEN 2
+                ELSE 3
+            END");
+
         //Urut data
         switch ($order_by) {
             case 1:
@@ -481,11 +480,11 @@ class Penduduk_model extends MY_Model
                 break;
 
             case 5:
-                $this->db->order_by('CONCAT(d.no_kk, u.id_kk, u.kk_level)');
+                $this->db->order_by('CONCAT(COALESCE(d.no_kk, 0), u.id_kk, u.kk_level)');
                 break;
 
             case 6:
-                $this->db->order_by('d.no_kk DESC, u.id_kk, u.kk_level');
+                $this->db->order_by('COALESCE(d.no_kk, 0) DESC, u.id_kk, u.kk_level');
                 break;
 
             case 7:
@@ -519,26 +518,24 @@ class Penduduk_model extends MY_Model
     }
 
     // $page = 0 mengambil semua
-    public function list_data($order_by = 1, $page = 1)
+    public function list_data($order_by = 0, $page = 1)
     {
         //Main Query
         $this->list_data_sql();
         $this->db->select("(DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(u.tanggallahir)), '%Y')+0) AS umur");
         $this->order_by_list($order_by);
 
-        if ($page > 0) {
-            if ($this->session->per_page > 0) {
-                $jumlah_pilahan = $this->db->count_all_results('', false);
-                $paging         = $this->paginasi($page, $jumlah_pilahan);
-                $this->db->limit($paging->per_page, $paging->offset);
-            }
+        if ($page > 0 && $this->session->per_page > 0) {
+            $jumlah_pilahan = $this->db->count_all_results('', false);
+            $paging         = $this->paginasi($page, $jumlah_pilahan);
+            $this->db->limit($paging->per_page, $paging->offset);
         }
 
         $query_dasar = $this->db->select('u.*')->get_compiled_select();
 
         // Proses berikutnya dilakukan setelah paginasi, untuk mempercepat proses join di lookup_ref_penduduk
         // yang cukup banyak.
-        $this->db->select("u.id, u.nik, u.tanggallahir, u.tempatlahir, u.foto, u.status, u.status_dasar, u.id_kk, u.nama, u.nama_ayah, u.nama_ibu, u.alamat_sebelumnya, u.suku, u.bpjs_ketenagakerjaan, a.dusun, a.rw, a.rt, d.alamat, d.no_kk AS no_kk, u.kk_level, u.tag_id_card, u.created_at, u.sex as id_sex, u.negara_asal, u.tempat_cetak_ktp, u.tanggal_cetak_ktp, v.nama AS warganegara, l.inisial as bahasa, l.nama as bahasa_nama, u.ket, log.tgl_peristiwa, log.maksud_tujuan_kedatangan, log.tgl_lapor,
+        $this->db->select("u.id, u.nik, u.tanggallahir, u.tempatlahir, u.foto, u.status, u.status_dasar, u.id_kk, u.nama, u.nama_ayah, u.nama_ibu, u.alamat_sekarang, u.alamat_sebelumnya, u.suku, u.bpjs_ketenagakerjaan, a.dusun, a.rw, a.rt, d.alamat, d.no_kk AS no_kk, u.kk_level, u.tag_id_card, u.created_at, u.sex as id_sex, u.negara_asal, u.tempat_cetak_ktp, u.tanggal_cetak_ktp, v.nama AS warganegara, l.inisial as bahasa, l.nama as bahasa_nama, u.ket, log.tgl_peristiwa, log.maksud_tujuan_kedatangan, log.tgl_lapor,
             (CASE
                 WHEN u.status_kawin IS NULL THEN ''
                 WHEN u.status_kawin <> 2 THEN k.nama
@@ -564,6 +561,7 @@ class Penduduk_model extends MY_Model
         $this->filter_id();
 
         $sql = str_replace(['(#', '#)'], '', $this->db->get_compiled_select());
+        $sql = str_replace('`` LIMIT`', '` LIMIT', $sql);
 
         $data = $this->db->query($sql)->result_array();
 
@@ -571,14 +569,15 @@ class Penduduk_model extends MY_Model
         if (empty($this->input->get('id_cb'))) {
             $j = $paging->offset;
         }
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             // Untuk penduduk mati atau hilang, gunakan umur pada tgl peristiwa
             if (in_array($data[$i]['status_dasar'], ['2', '4'])) {
                 $data[$i]['umur'] = $data[$i]['umur_pada_peristiwa'];
             }
             // Ubah alamat penduduk lepas
-            if (! $data[$i]['id_kk'] || $data[$i]['id_kk'] == 0) {
+            if ($data[$i]['id_kk'] == null) {
                 // Ambil alamat penduduk
                 $this->db
                     ->select('p.id_cluster, p.alamat_sekarang, c.dusun, c.rw, c.rt')
@@ -648,7 +647,7 @@ class Penduduk_model extends MY_Model
         return $data;
     }
 
-    private function lookup_ref_penduduk()
+    private function lookup_ref_penduduk(): void
     {
         $this->db
             ->join('tweb_keluarga d', 'u.id_kk = d.id', 'left')
@@ -684,20 +683,20 @@ class Penduduk_model extends MY_Model
     {
         //Main Query
         $this->db
-            ->select("u.id, u.nik, u.nama, u.sex as id_sex, map.lat, map.lng, a.dusun, a.rw, a.rt, u.foto, d.no_kk AS no_kk,
+            ->select("u.id, u.nik, u.nama, u.sex as id_sex, u.id_kk, map.lat, map.lng, a.dusun, a.rw, a.rt, u.foto, d.no_kk AS no_kk,
                 DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(`tanggallahir`)), '%Y')+0	AS umur,
                     x.nama AS sex, sd.nama AS pendidikan_sedang, n.nama AS pendidikan, p.nama AS pekerjaan, k.nama AS kawin, g.nama AS agama, m.nama AS gol_darah, hub.nama AS hubungan,
                     @alamat:=trim(concat_ws('',
                         case
-                            when a.rt != '-' then concat('RT-', a.rt)
+                            when a.rt != '-' then concat(' RT-', a.rt)
                             else ''
                         end,
                         case
-                            when a.rw != '-' then concat('RW-', a.rw)
+                            when a.rw != '-' then concat(' RW-', a.rw)
                             else ''
                         end,
                         case
-                            when a.dusun != '-' then concat('Dusun ', a.dusun)
+                            when a.dusun != '-' then concat(' Dusun ', a.dusun)
                             else ''
                         end
                     )),
@@ -705,6 +704,7 @@ class Penduduk_model extends MY_Model
                         when length(@alamat) > 0 then @alamat
                         else 'Alamat penduduk belum valid'
                     end as alamat")
+            ->select('(SELECT COUNT(*) FROM tweb_penduduk WHERE id_kk = u.id_kk) AS jumlah_anggota')
             ->from('tweb_penduduk u')
             ->join('tweb_penduduk_map map', 'u.id = map.id')
             ->join('tweb_wil_clusterdesa a', 'u.id_cluster = a.id', 'left')
@@ -793,7 +793,6 @@ class Penduduk_model extends MY_Model
         $data['panjang_lahir']      = $data['panjang_lahir'] ?: null;
         $data['cacat_id']           = $data['cacat_id'] ?: null;
         $data['sakit_menahun_id']   = $data['sakit_menahun_id'] ?: null;
-        $data['kk_level']           = $data['kk_level'];
         $data['ket']                = htmlentities($data['ket']);
         if (empty($data['id_asuransi']) || $data['id_asuransi'] == 1) {
             $data['no_asuransi'] = null;
@@ -926,7 +925,7 @@ class Penduduk_model extends MY_Model
                 $valid[] = "Telegram {$data['telegram']} sudah digunakan";
             }
         }
-        if (! empty($valid)) {
+        if ($valid !== []) {
             $_SESSION['validation_error'] = true;
         }
 
@@ -938,7 +937,7 @@ class Penduduk_model extends MY_Model
         return $valid;
     }
 
-    private function nik_error($nilai, $judul)
+    private function nik_error($nilai, string $judul)
     {
         if (empty($nilai)) {
             return false;
@@ -946,11 +945,14 @@ class Penduduk_model extends MY_Model
         if (! ctype_digit($nilai)) {
             return $judul . ' hanya berisi angka';
         }
-        if (strlen($nilai) != 16 && $nilai != '0') {
-            return $judul . ' panjangnya harus 16 atau bernilai 0';
+        if (strlen($nilai) == 16) {
+            return false;
+        }
+        if ($nilai == '0') {
+            return false;
         }
 
-        return false;
+        return $judul . ' panjangnya harus 16 atau bernilai 0';
     }
 
     // Tambah penduduk domisili (tidak ada nomor KK)
@@ -983,12 +985,8 @@ class Penduduk_model extends MY_Model
         $maksud_tujuan = $data['maksud_tujuan_kedatangan'];
         unset($data['maksud_tujuan_kedatangan']);
 
-        $tgl_lapor = rev_tgl($_POST['tgl_lapor'], date('Y-m-d H:i:s'));
-        if ($_POST['tgl_peristiwa']) {
-            $tgl_peristiwa = rev_tgl($_POST['tgl_peristiwa']);
-        } else {
-            $tgl_peristiwa = rev_tgl($_POST['tanggallahir']);
-        }
+        $tgl_lapor     = rev_tgl($_POST['tgl_lapor'], date('Y-m-d H:i:s'));
+        $tgl_peristiwa = $_POST['tgl_peristiwa'] ? rev_tgl($_POST['tgl_peristiwa']) : rev_tgl($_POST['tanggallahir']);
         unset($data['tgl_lapor'], $data['tgl_peristiwa']);
 
         $data['created_at'] = date('Y-m-d H:i:s');
@@ -1008,7 +1006,7 @@ class Penduduk_model extends MY_Model
         $outp                 = $this->db->insert('tweb_penduduk', $data);
         $idku                 = $this->db->insert_id();
 
-        if ($foto = upload_foto_penduduk(time() . '-' . $idku . '-' . mt_rand(10000, 999999))) {
+        if ($foto = upload_foto_penduduk(time() . '-' . $idku . '-' . random_int(10000, 999999))) {
             $this->config_id()->where('id', $idku)->update('tweb_penduduk', ['foto' => $foto]);
         }
 
@@ -1037,7 +1035,7 @@ class Penduduk_model extends MY_Model
         return $idku;
     }
 
-    public function update($id = 0)
+    public function update($id = 0): void
     {
         unset($_SESSION['validation_error'], $_SESSION['success'], $_SESSION['error_msg']);
 
@@ -1045,7 +1043,7 @@ class Penduduk_model extends MY_Model
         $error_validasi = $this->validasi_data_penduduk($data, $id);
         if (! empty($error_validasi)) {
             foreach ($error_validasi as $error) {
-                $_SESSION['error_msg'] .= ': ' . $error . '\n';
+                $_SESSION['error_msg'] .= ": {$error}\n";
             }
             // Form menggunakan kolom id_sex = sex dan id_status = status
             $_POST['id_sex']    = $_POST['sex'];
@@ -1082,7 +1080,7 @@ class Penduduk_model extends MY_Model
             unset($data['alamat']);
         }
 
-        if ($foto = upload_foto_penduduk(time() . '-' . $id . '-' . mt_rand(10000, 999999))) {
+        if ($foto = upload_foto_penduduk(time() . '-' . $id . '-' . random_int(10000, 999999))) {
             $data['foto'] = $foto;
         } else {
             unset($data['foto']);
@@ -1093,8 +1091,6 @@ class Penduduk_model extends MY_Model
         $tgl_lapor = rev_tgl($_POST['tgl_lapor']);
         if ($_POST['tgl_peristiwa']) {
             $tgl_peristiwa = rev_tgl($_POST['tgl_peristiwa']);
-        } else {
-            $tgl_peristiwa = rev_tgl($_POST['tanggallahir']);
         }
         unset($data['tgl_lapor'], $data['tgl_peristiwa']);
 
@@ -1118,11 +1114,12 @@ class Penduduk_model extends MY_Model
         if ($_POST['tgl_lapor']) {
             $log['tgl_lapor'] = $tgl_lapor;
         }
-
-        if ($get_pendudukId->status_dasar == 1) {
-            $this->config_id()->where('id_pend', $id)->where_in('kode_peristiwa', [1, 5])->update('log_penduduk', $log);
-        } else {
-            $this->config_id()->where('id_pend', $id)->where('kode_peristiwa', $get_pendudukId->status_dasar)->update('log_penduduk', $log);
+        if ($_POST['tgl_peristiwa']) {
+            if ($get_pendudukId->status_dasar == 1) {
+                $this->config_id()->where('id_pend', $id)->where_in('kode_peristiwa', [LogPenduduk::BARU_LAHIR, LogPenduduk::BARU_PINDAH_MASUK])->update('log_penduduk', $log);
+            } else {
+                $this->config_id()->where('id_pend', $id)->where('kode_peristiwa', $get_pendudukId->status_dasar)->update('log_penduduk', $log);
+            }
         }
 
         // Reset data terkait kewarganegaarn dari WNA / Dua Kewarganegaraan menjadi WNI
@@ -1143,7 +1140,7 @@ class Penduduk_model extends MY_Model
         status_sukses($outp); //Tampilkan Pesan
     }
 
-    public function update_position($id = 0)
+    public function update_position($id = 0): void
     {
         $cek = $this->config_id('p')
             ->select('m.id, p.status_dasar')
@@ -1166,11 +1163,9 @@ class Penduduk_model extends MY_Model
                 $this->db->where('id', $id);
                 $outp = $this->db->update('tweb_penduduk_map', $data);
             }
-        } else {
-            if ($data['lat']) {
-                $data['id'] = $id;
-                $outp       = $this->db->insert('tweb_penduduk_map', $data);
-            }
+        } elseif ($data['lat']) {
+            $data['id'] = $id;
+            $outp       = $this->db->insert('tweb_penduduk_map', $data);
         }
         status_sukses($outp); //Tampilkan Pesan
     }
@@ -1186,7 +1181,7 @@ class Penduduk_model extends MY_Model
             ->row_array();
     }
 
-    public function update_status_dasar($id = 0)
+    public function update_status_dasar($id = 0): void
     {
         akun_demo($id);
 
@@ -1218,13 +1213,13 @@ class Penduduk_model extends MY_Model
 
         if ($log['kode_peristiwa'] == 3) {
             $pindah               = $this->input->post('ref_pindah');
-            $log['ref_pindah']    = ! empty($pindah) ? $pindah : 1;
+            $log['ref_pindah']    = empty($pindah) ? 1 : $pindah;
             $log['alamat_tujuan'] = $this->input->post('alamat_tujuan');
         }
         $id_log_penduduk = $this->tulis_log_penduduk_data($log);
 
         // Tulis log_keluarga jika penduduk adalah kepala keluarga
-        if ($penduduk['kk_level'] == 1) {
+        if ($penduduk['kk_level'] == 1 && $this->keluarga_model->get_keluarga($penduduk['id_kk'])) {
             $id_peristiwa = $penduduk['status_dasar_id']; // lihat kode di keluarga_model
             $this->keluarga_model->log_keluarga($penduduk['id_kk'], $id_peristiwa, null, $id_log_penduduk);
         }
@@ -1234,10 +1229,8 @@ class Penduduk_model extends MY_Model
      * Kembalikan status dasar penduduk ke hidup
      *
      * @param $id id penduduk
-     *
-     * @return void
      */
-    public function kembalikan_status($id)
+    public function kembalikan_status($id): void
     {
         $_SESSION['success']  = 1;
         $data['status_dasar'] = 1; // status dasar hidup
@@ -1248,13 +1241,13 @@ class Penduduk_model extends MY_Model
         }
     }
 
-    public function tulis_log_hapus_penduduk($log)
+    public function tulis_log_hapus_penduduk($log): void
     {
         $log['config_id'] = $this->config_id;
         $this->db->insert('log_hapus_penduduk', $log);
     }
 
-    public function delete($id = '', $semua = false)
+    public function delete($id = '', $semua = false): void
     {
         akun_demo($id);
 
@@ -1291,7 +1284,7 @@ class Penduduk_model extends MY_Model
         status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         $this->session->success = 1;
 
@@ -1326,7 +1319,7 @@ class Penduduk_model extends MY_Model
     }
 
     // TODO: digunakan dimana?
-    public function get_id_kk($id = 0)
+    public function get_id_kk($id = null)
     {
         $data = $this->config_id()
             ->select('id_kk')
@@ -1386,7 +1379,7 @@ class Penduduk_model extends MY_Model
             $data['tanggalperceraian']    = tgl_indo_out($data['tanggalperceraian']);
             $data['tanggal_cetak_ktp']    = tgl_indo_out($data['tanggal_cetak_ktp']);
             // Penduduk lepas, pakai alamat penduduk
-            if ($data['id_kk'] == 0 || $data['id_kk'] == '') {
+            if ($data['id_kk'] == null) {
                 $data['alamat'] = $data['alamat_sekarang'];
                 $this->db->where('id', $data['id_cluster']);
                 $query         = $this->db->get('tweb_wil_clusterdesa');
@@ -1494,7 +1487,9 @@ class Penduduk_model extends MY_Model
     {
         $data = $this->db->get('tweb_penduduk_pekerjaan')->result_array();
         if ($case == 'ucwords') {
-            for ($i = 0; $i < count($data); $i++) {
+            $counter = count($data);
+
+            for ($i = 0; $i < $counter; $i++) {
                 $data[$i]['nama'] = kasus_lain('pekerjaan', ucwords(strtolower($data[$i]['nama'])));
             }
         }
@@ -1547,7 +1542,7 @@ class Penduduk_model extends MY_Model
             ->get('tweb_penduduk')
             ->row_array();
 
-        return (bool) ($penduduk['id_kk'] > 0);
+        return $penduduk['id_kk'] != null;
     }
 
     public function tulis_log_penduduk_data($log)
@@ -1560,7 +1555,7 @@ class Penduduk_model extends MY_Model
         return $this->db->insert_id();
     }
 
-    public function tulis_log_penduduk($id_pend, $kode_peristiwa, $bulan, $tahun)
+    public function tulis_log_penduduk($id_pend, $kode_peristiwa, $bulan, $tahun): void
     {
         $data = [
             'id_pend'        => $id_pend,
@@ -1588,6 +1583,7 @@ class Penduduk_model extends MY_Model
                     break;
 
                 case 1:
+                case 'bpjs-tenagakerja':
                     $table = 'tweb_penduduk_pekerjaan';
                     break;
 
@@ -1646,10 +1642,6 @@ class Penduduk_model extends MY_Model
                     $table = 'tweb_penduduk_asuransi';
                     break;
 
-                case 'bpjs-tenagakerja':
-                    $table = 'tweb_penduduk_pekerjaan';
-                    break;
-
                 case 'covid':
                     $table = 'ref_status_covid';
                     break;
@@ -1670,6 +1662,10 @@ class Penduduk_model extends MY_Model
 
                 case 'hamil':
                     $table = 'ref_penduduk_hamil';
+                    break;
+
+                case 'buku-nikah':
+                    $table = 'tweb_penduduk_kawin';
                     break;
             }
 
@@ -1734,8 +1730,9 @@ class Penduduk_model extends MY_Model
             ->where('deleted', 0)
             ->get('dokumen_hidup')
             ->result_array();
+        $counter = count($data);
 
-        for ($i = 0; $i < count($data); $i++) {
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no']     = $i + 1;
             $data[$i]['hidden'] = false;
 
@@ -1760,7 +1757,9 @@ class Penduduk_model extends MY_Model
             ->result_array();
 
         if ($data) {
-            for ($i = 0; $i < count($data); $i++) {
+            $counter = count($data);
+
+            for ($i = 0; $i < $counter; $i++) {
                 $data[$i]['no'] = $i + 1;
             }
         }
@@ -1789,25 +1788,23 @@ class Penduduk_model extends MY_Model
 
     public function get_suku()
     {
-        $suku = [];
-        // ref pendduduk
-        $suku['ref'] = $this->db
-            ->select('suku')
-            ->order_by('suku')
-            ->get('ref_penduduk_suku')
-            ->result_array();
-
-        // dari penduduk
-        $suku['penduduk'] = $this->config_id()
-            ->distinct()
-            ->select('suku')
-            ->where('suku IS NOT NULL')
-            ->where('suku <>', '')
-            ->order_by('suku')
-            ->get('tweb_penduduk')
-            ->result_array();
-
-        return $suku;
+        return [
+            // ref pendduduk
+            'ref' => $this->db
+                ->select('suku')
+                ->order_by('suku')
+                ->get('ref_penduduk_suku')
+                ->result_array(),
+            // dari penduduk
+            'penduduk' => $this->config_id()
+                ->distinct()
+                ->select('suku')
+                ->where('suku IS NOT NULL')
+                ->where('suku <>', '')
+                ->order_by('suku')
+                ->get('tweb_penduduk')
+                ->result_array(),
+        ];
     }
 
     public function nik_sementara()
@@ -1834,6 +1831,6 @@ class Penduduk_model extends MY_Model
 
         $tag_id_card = $this->config_id()->select('tag_id_card')->get_where('tweb_penduduk', ['tag_id_card !=' => null])->result_array();
 
-        return (bool) (in_array($cek, array_column($tag_id_card, 'tag_id_card')));
+        return in_array($cek, array_column($tag_id_card, 'tag_id_card'));
     }
 }

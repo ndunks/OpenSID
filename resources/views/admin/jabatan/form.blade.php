@@ -2,7 +2,7 @@
 
 @section('title')
     <h1>
-        Dokumen Persyaratan Surat
+        Jabatan Pengurus
         <small>{{ $action }} Data</small>
     </h1>
 @endsection
@@ -22,8 +22,7 @@
         <div id="umum-content" class="col-sm-9">
             <div class="box box-info">
                 <div class="box-header with-border">
-                    <a href="{{ route('pengurus.jabatan') }}"
-                        class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
+                    <a href="{{ route('pengurus.jabatan') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
                         <i class="fa fa-arrow-circle-left"></i>Kembali ke Daftar Jabatan
                     </a>
                 </div>
@@ -32,8 +31,7 @@
                     <div class="box-body">
                         <div class="form-group">
                             <label class="control-label">Nama Jabatan</label>
-                            <input type="text" class="form-control input-sm nama_terbatas required" id="nama"
-                                name="nama" placeholder="Nama Jabatan" value="{{ $jabatan->nama }}" />
+                            <input type="text" class="form-control input-sm nama_terbatas required" id="nama" name="nama" placeholder="Nama Jabatan" value="{{ $jabatan->nama }}" />
                         </div>
                         <div class="form-group">
                             <label class="control-label">Tupoksi Jabatan</label>
@@ -54,24 +52,27 @@
 @endsection
 
 @push('scripts')
-    <script type="text/javascript" src="{{ asset('js/tinymce/tinymce.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('js/tinymce-651/tinymce.min.js') }}"></script>
     <script>
         $(document).ready(function() {
             tinymce.init({
                 selector: '.editor',
+                promotion: false,
                 height: 700,
                 theme: 'silver',
                 plugins: [
-                    "advlist autolink lists charmap hr pagebreak",
-                    "searchreplace wordcount visualblocks visualchars insertdatetime nonbreaking",
-                    "table contextmenu directionality emoticons paste textcolor code salintemplate kodeisian",
+                    'advlist', 'autolink', 'lists', 'charmap', 'hr', 'pagebreak',
+                    'searchreplace', 'wordcount', 'visualblocks', 'visualchars', 'insertdatetime',
+                    'nonbreaking',
+                    'table', 'contextmenu', 'directionality', 'emoticons', 'paste', 'textcolor',
                 ],
-                toolbar1: "bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | styleselect | code | fontselect fontsizeselect | salintemplate | kodeisian",
+                toolbar1: "removeformat | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | blocks fontfamily fontsizeinput",
                 image_advtab: true,
                 content_css: [
                     '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
                     '//www.tinymce.com/css/codepen.min.css'
                 ],
+                skin: 'tinymce-5',
                 relative_urls: false,
                 remove_script_host: false
             });

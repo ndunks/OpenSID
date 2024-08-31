@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -67,7 +67,7 @@ class Daftar_kontak extends Admin_Controller
                     }
                 })
                 ->addIndexColumn()
-                ->addColumn('aksi', static function ($row) {
+                ->addColumn('aksi', static function ($row): string {
                     $aksi = '';
 
                     if (can('u')) {
@@ -127,7 +127,7 @@ class Daftar_kontak extends Admin_Controller
             $daftarKontak = null;
         }
 
-        return view('admin.daftar_kontak.form', compact('title', 'navigasi', 'action', 'formAction', 'daftarKontak'));
+        return view('admin.daftar_kontak.form', ['navigasi' => $navigasi, 'action' => $action, 'formAction' => $formAction, 'daftarKontak' => $daftarKontak]);
     }
 
     public function form_penduduk($id = null)
@@ -139,10 +139,10 @@ class Daftar_kontak extends Admin_Controller
         $formAction   = route('daftar_kontak.update_penduduk', $id);
         $daftarKontak = Penduduk::findOrFail($id);
 
-        return view('admin.daftar_kontak.form', compact('title', 'navigasi', 'action', 'formAction', 'daftarKontak'));
+        return view('admin.daftar_kontak.form', ['navigasi' => $navigasi, 'action' => $action, 'formAction' => $formAction, 'daftarKontak' => $daftarKontak]);
     }
 
-    public function insert()
+    public function insert(): void
     {
         $this->redirect_hak_akses('u');
 
@@ -152,7 +152,7 @@ class Daftar_kontak extends Admin_Controller
         redirect_with('error', 'Gagal Tambah Data');
     }
 
-    public function update($id = null)
+    public function update($id = null): void
     {
         $this->redirect_hak_akses('u');
 
@@ -164,7 +164,7 @@ class Daftar_kontak extends Admin_Controller
         redirect_with('error', 'Gagal Ubah Data');
     }
 
-    public function update_penduduk($id = null)
+    public function update_penduduk($id = null): void
     {
         $this->redirect_hak_akses('u');
 
@@ -176,18 +176,18 @@ class Daftar_kontak extends Admin_Controller
         redirect_with('error', 'Gagal Ubah Data', 'daftar_kontak/penduduk');
     }
 
-    public function delete($id = null)
+    public function delete($id = null): void
     {
         $this->redirect_hak_akses('h');
 
-        if (DaftarKontak::destroy($this->request['id_cb'] ?? $id)) {
+        if (DaftarKontak::destroy($this->request['id_cb'] ?? $id) !== 0) {
             redirect_with('success', 'Berhasil Hapus Data');
         }
         redirect_with('error', 'Gagal Hapus Data');
     }
 
     // Hanya filter inputan
-    protected static function validate($request = [])
+    protected static function validate($request = []): array
     {
         return [
             'nama'         => nama_terbatas($request['nama']),

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -111,7 +111,7 @@ class Surat_master_model extends MY_Model
         return $id;
     }
 
-    private function validasi_surat(&$data)
+    private function validasi_surat(&$data): void
     {
         $data['nama'] = nama_terbatas($data['nama']);
     }
@@ -119,6 +119,7 @@ class Surat_master_model extends MY_Model
     public function update($id = 0)
     {
         $data = $this->input->post();
+        unset($data['id_surat']);
         $this->validasi_surat($data);
 
         $outp = $this->config_id()
@@ -130,7 +131,7 @@ class Surat_master_model extends MY_Model
         return $id;
     }
 
-    public function upload($url = '')
+    public function upload($url = ''): void
     {
         // Folder desa untuk surat ini
         $folder_surat = LOKASI_SURAT_DESA . $url . '/';
@@ -143,9 +144,9 @@ class Surat_master_model extends MY_Model
         $this->salin_lampiran($url, $folder_surat);
     }
 
-    // Lampiran surat perlu disalin ke folder surata di LOKASI_SURAT_DESA, karena
+    // Lampiran surat perlu disalin ke folder surat di LOKASI_SURAT_DESA, karena
     // file lampiran surat dianggap ada di folder yang sama dengan tempat template surat RTF
-    private function salin_lampiran($url, $folder_surat)
+    private function salin_lampiran($url, string $folder_surat): void
     {
         $this->load->model('surat_model');
         $surat = $this->surat_model->get_surat($url);
@@ -161,6 +162,33 @@ class Surat_master_model extends MY_Model
                 copy('template-surat/' . $url . '/' . $lampiran, $folder_surat . $lampiran);
             }
         }
+    }
+
+    public function delete_template_desa($url = '')
+    {
+        // Folder desa untuk surat ini
+        $folder_surat  = LOKASI_SURAT_DESA . $url . '/';
+        $nama_file_rtf = $url . '.rtf';
+        unlink($folder_surat . $nama_file_rtf);
+
+        return $this->hapus_lampiran($url, $folder_surat);
+    }
+
+    private function hapus_lampiran($url, string $folder_surat)
+    {
+        $this->load->model('surat_model');
+        $surat = $this->surat_model->get_surat($url);
+        if (! $surat['lampiran']) {
+            return true;
+        }
+        // $lampiran_surat dalam bentuk seperti "f-1.08.php, f-1.25.php, f-1.27.php"
+        $daftar_lampiran = explode(',', $surat['lampiran']);
+
+        foreach ($daftar_lampiran as $lampiran) {
+            unlink($folder_surat . $lampiran);
+        }
+
+        return true;
     }
 
     public function delete($id = null)
@@ -205,7 +233,7 @@ class Surat_master_model extends MY_Model
      * @param mixed $redirect
      * @param mixed $nama_file
      */
-    private function uploadBerkas($allowed_types, $upload_path, $lokasi, $redirect, $nama_file)
+    private function uploadBerkas(string $allowed_types, string $upload_path, string $lokasi, string $redirect, string $nama_file)
     {
         // Untuk dapat menggunakan library upload
         $this->load->library('upload');
@@ -220,7 +248,7 @@ class Surat_master_model extends MY_Model
         ];
         // Adakah berkas yang disertakan?
         $ada_berkas = ! empty($_FILES[$lokasi]['name']);
-        if ($ada_berkas !== true) {
+        if (! $ada_berkas) {
             return null;
         }
         // Tes tidak berisi script PHP
@@ -242,6 +270,6 @@ class Surat_master_model extends MY_Model
             redirect_with('error', 'Gagal Unggah Data');
         }
 
-        return (! empty($upload_data)) ? $upload_data['file_name'] : null;
+        return (empty($upload_data)) ? null : $upload_data['file_name'];
     }
 }

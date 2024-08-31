@@ -1,46 +1,8 @@
-<script type="text/javascript" src="<?= base_url() ?>assets/js/tinymce/tinymce.min.js"></script>
-<script type="text/javascript">
-	tinymce.init({
-		selector: 'textarea',
-		height: 500,
-		theme: 'silver',
-		plugins: [
-			"advlist autolink link image lists charmap print preview hr anchor pagebreak",
-			"searchreplace wordcount visualblocks visualchars insertdatetime media nonbreaking",
-			"table contextmenu directionality emoticons paste textcolor responsivefilemanager code laporan_keuangan penerima_bantuan sotk"
-		],
-		toolbar1: "undo redo | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | styleselect",
-		toolbar2: "| responsivefilemanager | link unlink anchor | image media | forecolor backcolor | print preview code | fontselect fontsizeselect",
-		toolbar3: "| laporan_keuangan | penerima_bantuan | sotk",
-		image_advtab: true,
-		external_filemanager_path: "<?= base_url() ?>assets/filemanager/",
-		filemanager_title: "Responsive Filemanager",
-		filemanager_access_key: "<?= $this->session->fm_key; ?>",
-		external_plugins: {
-			"filemanager": "<?= base_url() ?>assets/filemanager/plugin.min.js"
-		},
-		templates: [{
-				title: 'Test template 1',
-				content: 'Test 1'
-			},
-			{
-				title: 'Test template 2',
-				content: 'Test 2'
-			}
-		],
-		content_css: [
-			'//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
-			'//www.tinymce.com/css/codepen.min.css'
-		],
-		relative_urls: false,
-		remove_script_host: false
-	});
-</script>
 <div class="content-wrapper">
 	<section class="content-header">
 		<h1>Form Artikel <?= $kategori['kategori']; ?></h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid'); ?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda'); ?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li><a href="<?= site_url('web'); ?>"> Daftar Artikel</a></li>
 			<li class="active">Form Artikel</li>
 		</ol>
@@ -66,9 +28,7 @@
 							</div>
 							<div class="form-group">
 								<label class="control-label" for="kode_desa">Isi Artikel</label>
-								<textarea name="isi" class="form-control input-sm required" style="height:350px;">
-									<?= $artikel['isi'] ?>
-								</textarea>
+								<textarea name="isi" data-filemanager='<?= json_encode(['external_filemanager_path' => base_url('assets/kelola_file/'), 'filemanager_title' => 'Responsive Filemanager', 'filemanager_access_key' => $this->session->fm_key]) ?>' class="form-control input-sm required" style="height:350px;"><?= $artikel['isi'] ?></textarea>
 							</div>
 						</div>
 					</div>
@@ -213,7 +173,7 @@
 								<?php if ($artikel['dokumen']) : ?>
 									<div class="form-group">
 										<div class="mailbox-attachment-info bg-black">
-											<a href="<?= base_url() . LOKASI_DOKUMEN . $artikel['dokumen'] ?>" class="mailbox-attachment-name"><i class="fa fa-paperclip"></i> Unduh Dokumen</a>
+											<a href="<?= base_url(LOKASI_DOKUMEN . $artikel['dokumen']) ?>" class="mailbox-attachment-name"><i class="fa fa-paperclip"></i> Unduh Dokumen</a>
 										</div>
 									</div>
 								<?php endif; ?>
@@ -221,7 +181,7 @@
 									<label class="control-label" for="dokumen">Dokumen Lampiran</label>
 									<div class="input-group input-group-sm">
 										<input type="text" class="form-control" id="file_path4">
-										<input type="file" class="hidden" id="file4" name="dokumen">
+										<input type="file" class="hidden" id="file4" name="dokumen" accept=".pdf">
 										<span class="input-group-btn">
 											<button type="button" class="btn btn-info btn-flat" id="file_browser4"><i class="fa fa-search"></i></button>
 											<button type='button' class='btn btn-info btn-flat btn-danger' id="hapus_file"><i class='fa fa-stop'></i></button>
@@ -233,7 +193,7 @@
 								</div>
 								<div class="form-group">
 									<label class="control-label" for="nama_dokumen">Nama Dokumen</label>
-									<input id="link_dokumen" name="link_dokumen" class="form-control input-sm" type="text" value="<?= $artikel['link_dokumen'] ?>"></input>
+									<input id="link_dokumen" name="link_dokumen" class="form-control input-sm strip_tags" type="text" value="<?= e($artikel['link_dokumen']) ?>"></input>
 									<span class="help-block"><code>(Nantinya akan menjadi link unduh/download)</code></span>
 								</div>
 								<div class="form-group">
@@ -262,3 +222,45 @@
 		</form>
 	</section>
 </div>
+<script type="text/javascript" src="<?= asset('js/tinymce-651/tinymce.min.js') ?>"></script>
+<script type="text/javascript">
+	tinymce.init({
+		selector: 'textarea',
+		height: 700,
+		promotion: false,
+		theme: 'silver',
+		formats: {
+			menjorok: { block: 'p', styles: { 'text-indent': '30px' }}
+		},
+		block_formats: 'Paragraph=p; Header 1=h1; Header 2=h2; Header 3=h3; Header 4=h4; Header 5=h5; Header 6=h6; Div=div; Preformatted=pre; Blockquote=blockquote; Menjorok=menjorok',
+		style_formats_merge: true,
+		plugins: [
+			'advlist', 'autolink', 'link', 'image', 'lists', 'charmap', 'print', 'preview', 'hr', 'anchor', 'pagebreak',
+			'searchreplace', 'wordcount', 'visualblocks', 'visualchars', 'insertdatetime', 'media', 'nonbreaking',
+			'table', 'contextmenu', 'directionality', 'emoticons', 'paste', 'textcolor', 'responsivefilemanager', 'code', 'laporan_keuangan', 'penerima_bantuan', 'sotk'
+		],
+		toolbar1: "undo redo | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | blocks",
+		toolbar2: "| responsivefilemanager | link unlink anchor | image media | forecolor backcolor | print preview code | fontfamily fontsizeinput",
+		toolbar3: "| laporan_keuangan | penerima_bantuan | sotk",
+		image_advtab: true,
+		external_plugins: {
+			"filemanager": "<?= asset('kelola_file/plugin.min.js') ?>"
+		},
+		templates: [{
+				title: 'Test template 1',
+				content: 'Test 1'
+			},
+			{
+				title: 'Test template 2',
+				content: 'Test 2'
+			}
+		],
+		content_css: [
+			'//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+			'//www.tinymce.com/css/codepen.min.css'
+		],
+		skin: 'tinymce-5',
+		relative_urls: false,
+		remove_script_host: false
+	});
+</script>

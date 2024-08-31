@@ -3,7 +3,7 @@
 		<h1>Pendataan Penerima Vaksin Covid-19</h1>
 		<ol class="breadcrumb">
 			<li>
-				<a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a>
+				<a href="<?= site_url('beranda') ?>"><i class="fa fa-home"></i> Beranda</a>
 			</li>
 			<li class="active">Data Penerima Vaksin</li>
 		</ol>
@@ -98,7 +98,7 @@
 															<th>Nama</th>
 															<th>No KK</th>
 															<th>Umur</th>
-															<th>Dusun</th>
+															<th><?= ucwords(setting('sebutan_dusun')) ?></th>
 															<th>Alamat</th>
 															<th>Keterangan</th>
 														</tr>

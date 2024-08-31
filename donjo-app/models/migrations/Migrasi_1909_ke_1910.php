@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,7 +39,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Migrasi_1909_ke_1910 extends CI_model
 {
-    public function up()
+    public function up(): void
     {
         // Tambah modul Keuangan
         $this->modul_keuangan();
@@ -204,7 +204,7 @@ class Migrasi_1909_ke_1910 extends CI_model
         }
     }
 
-    private function modul_keuangan()
+    private function modul_keuangan(): void
     {
         // Penambahan widget keuangan
         $widget = $this->db->select('id, isi')->where('isi', 'keuangan.php')->get('widget')->row();
@@ -228,7 +228,7 @@ class Migrasi_1909_ke_1910 extends CI_model
         $this->data_siskeudes_2018();
     }
 
-    private function data_siskeudes_2018()
+    private function data_siskeudes_2018(): void
     {
         if ($this->db->field_exists('Alamat_Pemilik', 'keuangan_ref_bank_desa')) {
             return;
@@ -244,7 +244,7 @@ class Migrasi_1909_ke_1910 extends CI_model
         $this->dbforge->add_column('keuangan_ref_bank_desa', $fields);
     }
 
-    private function data_siskeudes()
+    private function data_siskeudes(): void
     {
         //insert tabel2 untuk keuangan
         if (! $this->db->table_exists('keuangan_master')) {

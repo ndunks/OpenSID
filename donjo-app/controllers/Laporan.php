@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,12 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Models\LogPenduduk;
 use App\Models\Pamong;
 
 defined('BASEPATH') || exit('No direct script access allowed');
@@ -49,9 +50,10 @@ class Laporan extends Admin_Controller
         $this->modul_ini          = 'statistik';
         $this->sub_modul_ini      = 'laporan-bulanan';
         $this->header['kategori'] = 'data_lengkap';
+        $this->logpenduduk        = new LogPenduduk();
     }
 
-    public function clear()
+    public function clear(): void
     {
         session_error_clear();
         $this->session->unset_userdata(['cari']);
@@ -62,7 +64,7 @@ class Laporan extends Admin_Controller
         redirect('laporan');
     }
 
-    public function index()
+    public function index(): void
     {
         if (isset($this->session->bulanku)) {
             $data['bulanku'] = $this->session->bulanku;
@@ -82,21 +84,25 @@ class Laporan extends Admin_Controller
         $data['tahun']                = $data['tahunku'];
         $data['data_lengkap']         = true;
         $data['sesudah_data_lengkap'] = true;
-        if (! $this->setting->tgl_data_lengkap_aktif || empty($this->setting->tgl_data_lengkap)) {
+
+        $tanggal_lengkap = $this->logpenduduk::min('tgl_lapor');
+
+        if (! $this->setting->tgl_data_lengkap_aktif) {
             $data['data_lengkap'] = false;
             $this->render('laporan/bulanan', $data);
 
             return;
         }
-        $tahun_bulan = (new DateTime($this->setting->tgl_data_lengkap))->format('Y-m');
+
+        $tahun_bulan = (new DateTime($tanggal_lengkap))->format('Y-m');
         if ($tahun_bulan > $data['tahunku'] . '-' . $data['bulanku']) {
             $data['sesudah_data_lengkap'] = false;
             $this->render('laporan/bulanan', $data);
 
             return;
         }
-        $this->session->tgl_lengkap = rev_tgl($this->setting->tgl_data_lengkap);
-        $data['tahun_lengkap']      = (new DateTime($this->setting->tgl_data_lengkap))->format('Y');
+        $this->session->tgl_lengkap = $tanggal_lengkap;
+        $data['tahun_lengkap']      = (new DateTime($tanggal_lengkap))->format('Y');
         $data['config']             = $this->header['desa'];
         $data['kelahiran']          = $this->laporan_bulanan_model->kelahiran();
         $data['kematian']           = $this->laporan_bulanan_model->kematian();
@@ -111,7 +117,7 @@ class Laporan extends Admin_Controller
 
     // TODO: Gunakan view global ttd
     // TODO: Satukan dialog cetak dan unduh
-    public function dialog_cetak()
+    public function dialog_cetak(): void
     {
         $data['aksi']        = 'Cetak';
         $data['pamong']      = Pamong::penandaTangan()->get();
@@ -120,7 +126,7 @@ class Laporan extends Admin_Controller
     }
 
     // TODO: Satukan dialog cetak dan unduh
-    public function dialog_unduh()
+    public function dialog_unduh(): void
     {
         $data['aksi']        = 'Unduh';
         $data['pamong']      = Pamong::penandaTangan()->get();
@@ -129,14 +135,14 @@ class Laporan extends Admin_Controller
     }
 
     // TODO: Satukan aksi cetak dan unduh
-    public function cetak()
+    public function cetak(): void
     {
         $data = $this->data_cetak();
         $this->load->view('laporan/bulanan_print', $data);
     }
 
     // TODO: Satukan aksi cetak dan unduh
-    public function unduh()
+    public function unduh(): void
     {
         $data = $this->data_cetak();
         $this->load->view('laporan/bulanan_excel', $data);
@@ -162,7 +168,7 @@ class Laporan extends Admin_Controller
         return $data;
     }
 
-    public function bulan()
+    public function bulan(): void
     {
         $bulanku = $this->input->post('bulan');
         if ($bulanku != '') {
@@ -180,68 +186,65 @@ class Laporan extends Admin_Controller
         redirect('laporan');
     }
 
-    public function detail_penduduk($rincian, $tipe)
+    public function detail_penduduk($rincian, $tipe): void
     {
-        $data     = [];
-        $keluarga = ['kk', 'kk_l', 'kk_p'];
+        $data         = [];
+        $keluarga     = ['kk', 'kk_l', 'kk_p'];
+        $tahun        = $this->session->tahunku;
+        $bulan        = $this->session->bulanku;
+        $titlePeriode = strtoupper(getBulan($bulan)) . ' ' . $tahun;
 
         switch (strtolower($rincian)) {
             case 'awal':
                 $data = [
-                    'title' => 'PENDUDUK/KELUARGA AWAL BULAN INI',
+                    'title' => 'PENDUDUK/KELUARGA AWAL BULAN ' . $titlePeriode,
                     'main'  => $this->laporan_bulanan_model->penduduk_awal($rincian, $tipe),
                 ];
                 break;
 
             case 'lahir':
                 $data = [
-                    'title' => in_array($tipe, $keluarga) ? 'KELUARGA BARU BULAN INI' : 'KELAHIRAN BULAN INI',
+                    'title' => (in_array($tipe, $keluarga) ? 'KELUARGA BARU BULAN ' : 'KELAHIRAN BULAN ') . $titlePeriode,
                     'main'  => $this->laporan_bulanan_model->kelahiran($rincian, $tipe),
                 ];
                 break;
 
             case 'mati':
                 $data = [
-                    'title' => 'KEMATIAN BULAN INI',
+                    'title' => 'KEMATIAN BULAN ' . $titlePeriode,
                     'main'  => $this->laporan_bulanan_model->kematian($rincian, $tipe),
                 ];
                 break;
 
             case 'datang':
                 $data = [
-                    'title' => 'PENDATANG BULAN INI',
+                    'title' => 'PENDATANG BULAN ' . $titlePeriode,
                     'main'  => $this->laporan_bulanan_model->pendatang($rincian, $tipe),
                 ];
                 break;
 
             case 'pindah':
                 $data = [
-                    'title' => 'PINDAH/KELUAR PERGI BULAN INI',
+                    'title' => 'PINDAH/KELUAR PERGI BULAN ' . $titlePeriode,
                     'main'  => $this->laporan_bulanan_model->pindah($rincian, $tipe),
                 ];
                 break;
 
             case 'hilang':
                 $data = [
-                    'title' => 'PENDUDUK HILANG BULAN INI',
+                    'title' => 'PENDUDUK HILANG BULAN ' . $titlePeriode,
                     'main'  => $this->laporan_bulanan_model->hilang($rincian, $tipe),
                 ];
                 break;
 
             case 'akhir':
                 $data = [
-                    'title' => 'PENDUDUK/KELUARGA AKHIR BULAN INI',
+                    'title' => 'PENDUDUK/KELUARGA AKHIR BULAN ' . $titlePeriode,
                     'main'  => $this->laporan_bulanan_model->penduduk_akhir($rincian, $tipe),
                 ];
                 break;
         }
 
         $this->render('laporan/tabel_bulanan_detil', $data);
-    }
-
-    public function perbaiki()
-    {
-        $this->laporan_bulanan_model->perbaikiLogKeluarga();
-        redirect('laporan');
     }
 }

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -184,7 +184,7 @@ class Migrasi_fitur_premium_2202 extends MY_model
         }
 
         if ($fields) {
-            $hasil = $hasil && $this->dbforge->add_column('keuangan_ta_pencairan', $fields);
+            return $hasil && $this->dbforge->add_column('keuangan_ta_pencairan', $fields);
         }
 
         return $hasil;
@@ -203,7 +203,7 @@ class Migrasi_fitur_premium_2202 extends MY_model
         }
 
         if ($fields) {
-            $hasil = $hasil && $this->dbforge->add_column('keuangan_ta_spjpot', $fields);
+            return $hasil && $this->dbforge->add_column('keuangan_ta_spjpot', $fields);
         }
 
         return $hasil;
@@ -246,7 +246,7 @@ class Migrasi_fitur_premium_2202 extends MY_model
         }
 
         if ($fields) {
-            $hasil = $hasil && $this->dbforge->add_column('keuangan_ta_spj_bukti', $fields);
+            return $hasil && $this->dbforge->add_column('keuangan_ta_spj_bukti', $fields);
         }
 
         return $hasil;
@@ -289,7 +289,7 @@ class Migrasi_fitur_premium_2202 extends MY_model
         }
 
         if ($fields) {
-            $hasil = $hasil && $this->dbforge->add_column('keuangan_ta_sppbukti', $fields);
+            return $hasil && $this->dbforge->add_column('keuangan_ta_sppbukti', $fields);
         }
 
         return $hasil;
@@ -308,7 +308,7 @@ class Migrasi_fitur_premium_2202 extends MY_model
         }
 
         if ($fields) {
-            $hasil = $hasil && $this->dbforge->add_column('keuangan_ta_spppot', $fields);
+            return $hasil && $this->dbforge->add_column('keuangan_ta_spppot', $fields);
         }
 
         return $hasil;
@@ -354,6 +354,8 @@ class Migrasi_fitur_premium_2202 extends MY_model
             'email' => ['type' => 'varchar', 'constraint' => 100, 'null' => true],
         ]);
 
+        $penduduk = [];
+
         foreach ($this->db->get_where('tweb_penduduk', ['email' => ''])->result_object() as $row) {
             $penduduk[] = [
                 'id'    => $row->id,
@@ -361,7 +363,7 @@ class Migrasi_fitur_premium_2202 extends MY_model
             ];
         }
 
-        if ($penduduk) {
+        if (count($penduduk) > 0) {
             $hasil = $hasil && $this->db->update_batch('tweb_penduduk', $penduduk, 'id');
         }
 
@@ -394,19 +396,17 @@ class Migrasi_fitur_premium_2202 extends MY_model
             'polygon'              => 'color',
         ];
 
-        if ($daftar_ubah) {
-            foreach ($daftar_ubah as $tabel => $kolom) {
-                if ($this->db->field_exists($kolom, $tabel)) {
-                    $fields = [
-                        $kolom => [
-                            'type'       => 'varchar',
-                            'constraint' => 25,
-                            'null'       => true,
-                        ],
-                    ];
+        foreach ($daftar_ubah as $tabel => $kolom) {
+            if ($this->db->field_exists($kolom, $tabel)) {
+                $fields = [
+                    $kolom => [
+                        'type'       => 'varchar',
+                        'constraint' => 25,
+                        'null'       => true,
+                    ],
+                ];
 
-                    $hasil = $hasil && $this->dbforge->modify_column($tabel, $fields);
-                }
+                $hasil = $hasil && $this->dbforge->modify_column($tabel, $fields);
             }
         }
 
@@ -435,6 +435,7 @@ class Migrasi_fitur_premium_2202 extends MY_model
             'email'    => ['type' => 'varchar', 'constraint' => 100, 'null' => true],
             'username' => ['type' => 'varchar', 'constraint' => 100, 'null' => true],
         ]);
+        $users = [];
 
         foreach ($this->db->get_where('user', ['email' => ''])->result_object() as $row) {
             $users[] = [
@@ -442,8 +443,7 @@ class Migrasi_fitur_premium_2202 extends MY_model
                 'email' => null,
             ];
         }
-
-        if ($users) {
+        if (count($users) > 0) {
             $hasil = $hasil && $this->db->update_batch('user', $users, 'id');
         }
 

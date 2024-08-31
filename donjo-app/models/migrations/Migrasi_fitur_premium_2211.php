@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -80,7 +80,7 @@ class Migrasi_fitur_premium_2211 extends MY_model
     {
         // ganti jenis data untuk realisasi dan rencana keuangan
         if ($this->db->field_exists('Nilai_Anggaran', 'keuangan_manual_rinci')) {
-            foreach (KeuanganManualRinci::all() as $key => $value) {
+            foreach (KeuanganManualRinci::all() as $value) {
                 $value->Nilai_Anggaran = (float) $value->Nilai_Anggaran;
                 $value->save();
             }
@@ -96,7 +96,7 @@ class Migrasi_fitur_premium_2211 extends MY_model
         }
 
         if ($this->db->field_exists('Nilai_Realisasi', 'keuangan_manual_rinci')) {
-            foreach (KeuanganManualRinci::all() as $key => $value) {
+            foreach (KeuanganManualRinci::all() as $value) {
                 $value->Nilai_Realisasi = (float) $value->Nilai_Realisasi;
                 $value->save();
             }
@@ -256,7 +256,7 @@ class Migrasi_fitur_premium_2211 extends MY_model
         }
 
         if (DB::table('setting_aplikasi')->whereKey('tampilan_anjungan_audio')->exists()) {
-            $hasil = $hasil && $this->db->where('key', 'tampilan_anjungan_audio')
+            return $hasil && $this->db->where('key', 'tampilan_anjungan_audio')
                 ->update('setting_aplikasi', [
                     'kategori' => 'anjungan',
                 ]);

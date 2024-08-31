@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,14 +39,14 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Migrasi_1912_ke_2001 extends CI_model
 {
-    public function up()
+    public function up(): void
     {
         $this->siskeudes_2019();
         // Sesuaikan dengan sql_mode STRICT_TRANS_TABLES
         $this->db->query('ALTER TABLE user MODIFY COLUMN last_login datetime NULL');
     }
 
-    private function siskeudes_2019()
+    private function siskeudes_2019(): void
     {
         // Ubah tabel keuangan untuk Siskeudes 2019
         if (! $this->db->field_exists('Kd_SubRinci', 'keuangan_ta_anggaran')) {

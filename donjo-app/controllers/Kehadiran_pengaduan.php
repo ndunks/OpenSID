@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -64,9 +64,7 @@ class Kehadiran_pengaduan extends Admin_Controller
                         return '<a href="' . route('kehadiran_pengaduan.form', $row->id) . '" class="btn btn-warning btn-sm"  title="Ubah Data"><i class="fa fa-edit"></i></a> ';
                     }
                 })
-                ->editColumn('waktu', static function ($row) {
-                    return tgl_indo2($row->waktu);
-                })
+                ->editColumn('waktu', static fn ($row) => tgl_indo2($row->waktu))
                 ->rawColumns(['aksi'])
                 ->make();
         }
@@ -83,10 +81,10 @@ class Kehadiran_pengaduan extends Admin_Controller
 
         $kehadiran_pengaduan = KehadiranPengaduan::findOrFail($id);
 
-        return view('admin.pengaduan.form', compact('action', 'form_action', 'kehadiran_pengaduan'));
+        return view('admin.pengaduan.form', ['action' => $action, 'form_action' => $form_action, 'kehadiran_pengaduan' => $kehadiran_pengaduan]);
     }
 
-    public function update($id = '')
+    public function update($id = ''): void
     {
         $this->redirect_hak_akses('u');
 
@@ -99,7 +97,7 @@ class Kehadiran_pengaduan extends Admin_Controller
         redirect_with('error', 'Gagal Ubah Data');
     }
 
-    private function validate($request = [])
+    private function validate($request = []): array
     {
         return [
             'keterangan' => strip_tags($request['keterangan']),

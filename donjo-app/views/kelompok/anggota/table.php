@@ -48,7 +48,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 	<section class="content-header">
 		<h1>Data <?= ucwords($tipe . ' ' . $kelompok['nama']); ?></h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid'); ?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('beranda'); ?>"><i class="fa fa-home"></i> Beranda</a></li>
 			<li><a href="<?= site_url($this->controller); ?>"> Daftar <?= $tipe; ?></a></li>
 			<li class="active"><?= ucwords($kelompok['nama']); ?></li>
 		</ol>
@@ -64,10 +64,10 @@ defined('BASEPATH') || exit('No direct script access allowed');
 									<a class="btn btn-social btn-flat btn-success btn-sm" data-toggle="dropdown"><i class='fa fa-plus'></i> Tambah Anggota <?= $tipe; ?></a>
 									<ul class="dropdown-menu" role="menu">
 										<li>
-											<a href="<?= site_url("{$this->controller}/aksi/1/" . $kelompok['id']); ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Satu Peserta Baru "><i class="fa fa-plus"></i> Tambah Satu Anggota <?= $tipe; ?></a>
+											<a href="<?= site_url("{$this->controller}/aksi/1/" . $kelompok['id']); ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Satu Anggota <?= $tipe; ?>"><i class="fa fa-plus"></i> Tambah Satu Anggota <?= $tipe; ?></a>
 										</li>
 										<li>
-											<a href="<?= site_url("{$this->controller}/aksi/2/" . $kelompok['id']); ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Beberapa Peserta Baru"><i class="fa fa-plus"></i> Tambah Beberapa Anggota <?= $tipe; ?></a>
+											<a href="<?= site_url("{$this->controller}/aksi/2/" . $kelompok['id']); ?>" class="btn btn-social btn-flat btn-block btn-sm" title="Tambah Beberapa Anggota <?= $tipe; ?>"><i class="fa fa-plus"></i> Tambah Beberapa Anggota <?= $tipe; ?></a>
 										</li>
 									</ul>
 								</div>

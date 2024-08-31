@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -46,7 +46,7 @@ class Dokumen extends Mandiri_Controller
         $this->controller = 'layanan-mandiri/dokumen';
     }
 
-    public function index()
+    public function index(): void
     {
         $this->render('dokumen/index', [
             'dokumen'            => $this->penduduk_model->list_dokumen($this->is_login->id_pend),
@@ -54,7 +54,7 @@ class Dokumen extends Mandiri_Controller
         ]);
     }
 
-    public function form($id = '')
+    public function form($id = ''): void
     {
         if ($this->is_login->kk_level == '1') { //Jika Kepala Keluarga
             $data['kk'] = $this->keluarga_model->list_anggota($this->is_login->id_kk);
@@ -77,7 +77,7 @@ class Dokumen extends Mandiri_Controller
         $this->render('dokumen/form', $data);
     }
 
-    public function tambah()
+    public function tambah(): void
     {
         if ($this->web_dokumen_model->insert($this->is_login->id_pend, true)) {
             redirect_with('success', 'Berhasil tambah dokumen');
@@ -86,7 +86,7 @@ class Dokumen extends Mandiri_Controller
         }
     }
 
-    public function ubah($id = '')
+    public function ubah($id = ''): void
     {
         $this->web_dokumen_model->get_dokumen($id) ?? show_404();
 
@@ -97,7 +97,7 @@ class Dokumen extends Mandiri_Controller
         }
     }
 
-    public function hapus($id = '')
+    public function hapus($id = ''): void
     {
         $this->web_dokumen_model->get_dokumen($id, $this->session->is_login->id_pend) ?? show_404();
 
@@ -108,7 +108,7 @@ class Dokumen extends Mandiri_Controller
         }
     }
 
-    public function unduh($id = '')
+    public function unduh($id = ''): void
     {
         // Ambil nama berkas dari database
         if ($berkas = $this->web_dokumen_model->get_nama_berkas($id, $this->is_login->id_pend)) {

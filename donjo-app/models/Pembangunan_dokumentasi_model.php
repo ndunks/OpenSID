@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -56,7 +56,7 @@ class Pembangunan_dokumentasi_model extends MY_Model
             ->join('pembangunan p', sprintf('d.id_pembangunan = p.id and p.config_id = %s', identitas('id')))
             ->where('d.id_pembangunan', $id);
 
-        if ($search) {
+        if ($search !== '' && $search !== '0') {
             $this->db
                 ->group_start()
                 ->like('d.keterangan', $search)
@@ -66,7 +66,7 @@ class Pembangunan_dokumentasi_model extends MY_Model
         return $this->db;
     }
 
-    public function insert($id_pembangunan = 0)
+    public function insert($id_pembangunan = 0): void
     {
         $post = $this->input->post();
 
@@ -91,7 +91,7 @@ class Pembangunan_dokumentasi_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function update($id = 0, $id_pembangunan = 0)
+    public function update($id = 0, $id_pembangunan = 0): void
     {
         $post = $this->input->post();
 
@@ -116,7 +116,7 @@ class Pembangunan_dokumentasi_model extends MY_Model
         status_sukses($outp);
     }
 
-    private function upload_gambar_pembangunan($jenis, $id = null)
+    private function upload_gambar_pembangunan(string $jenis, $id = null)
     {
         // Inisialisasi library 'upload'
         $this->load->library('MY_Upload', null, 'upload');
@@ -130,7 +130,7 @@ class Pembangunan_dokumentasi_model extends MY_Model
         $uploadData = null;
         // Adakah berkas yang disertakan?
         $adaBerkas = ! empty($_FILES[$jenis]['name']);
-        if ($adaBerkas !== true) {
+        if (! $adaBerkas) {
             return null;
         }
 
@@ -158,10 +158,10 @@ class Pembangunan_dokumentasi_model extends MY_Model
             return redirect("admin_pembangunan/dokumentasi_form/{$id}");
         }
 
-        return (! empty($uploadData)) ? $uploadData['file_name'] : null;
+        return (empty($uploadData)) ? null : $uploadData['file_name'];
     }
 
-    public function delete($id)
+    public function delete($id): void
     {
         $data = $this->find($id);
 

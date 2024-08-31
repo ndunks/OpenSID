@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -49,6 +49,7 @@ $config = [
         LOKASI_LAMPIRAN_SURAT_DESA => [0775],
         LOKASI_TEMA_DESA           => [0775],
         LOKASI_UPLOAD              => [0775, 'htaccess1'],
+        LOKASI_FONT_DESA           => [0775, 'htaccess1', ['vendor/tecnickcom/tcpdf/fonts/helvetica.php']],
         LOKASI_FOTO_ARTIKEL        => [0775, 'htaccess1'],
         LOKASI_FOTO_BUKU_TAMU      => [0775, 'htaccess1'],
         LOKASI_DOKUMEN             => [0775, 'htaccess2'],
@@ -73,11 +74,12 @@ $config = [
     ],
 
     'lainnya' => [
-        'storage/framework/'  => [0775],
-        'storage/logs/'       => [0775],
-        'backup_inkremental/' => [0775],
-        'assets/'             => [0755, 'htaccess3'],
-        'assets/filemanager/' => [0755, 'htaccess4'],
+        'storage/framework/'         => [0775, 'htaccess3'],
+        'storage/logs/'              => [0775, 'htaccess3'],
+        'backup_inkremental/'        => [0775, 'htaccess3'],
+        'assets/'                    => [0755, 'htaccess3'],
+        'assets/kelola_file/'        => [0755, 'htaccess4'],
+        'assets/kelola_file/config/' => [0755, 'htaccess4'],
     ],
 
     'config' => <<<'EOS'
@@ -97,16 +99,10 @@ $config = [
         // Misalnya, ganti dengan id = 1 jika ingin membuat pengguna admin sebagai pengguna terpecaya.
         $config['user_admin'] = 0;
 
-        // Ijinkan agar bisa melakukan impor data penduduk dari OpenKAB
-        $config['impor_massal'] = false;
+        // Untuk menghindari masalah keamanan, Anda mungkin ingin mengonfigurasi daftar "host tepercaya".
+        // Contoh: ['localhost', 'my-development.com', 'my-production.com', 'subdomain.domain.com']
+        $config['trusted_hosts'] = [];
 
-
-        // config email
-        $config['protocol']       = 'smtp';  // mail	mail, sendmail, or smtp	The mail sending protocol.
-        $config['smtp_host']      = '';      // SMTP Server Address.
-        $config['smtp_user']      = '';      // SMTP Username.
-        $config['smtp_pass']      = '';      // SMTP Password.
-        $config['smtp_port']      = '';      // SMTP Port."
         EOS,
 
     'database' => <<<'EOS'
@@ -123,7 +119,8 @@ $config = [
         $db['default']['username'] = 'root';
         $db['default']['password'] = '';
         $db['default']['port']     = 3306;
-        $db['default']['database'] = 'umum';
+        $db['default']['database'] = 'premium';
+        $db['default']['dbcollat'] = 'utf8_general_ci';
 
         /*
         | Untuk setting koneksi database 'Strict Mode'
@@ -172,40 +169,6 @@ $config = [
             order allow,deny
             allow from all
         </FilesMatch>
-        EOS,
-
-    'offline_mode' => <<<'EOS'
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Offline Mode - <?= ucwords($this->setting->sebutan_desa).' '.$main['nama_desa'] ?></title>
-            <link rel="shortcut icon" href="<?= favico_desa() ?>"/>
-        </head>
-        <body>
-            <br/><br/><br/>
-            <div align="center">
-                <img class="profile-user-img img-responsive img-circle" src="<?= gambar_desa($main['logo']); ?>" alt="Logo">
-                <p>
-                    Selamat datang di Halaman Situs Resmi <?= ucwords($this->setting->sebutan_desa).' '.$main['nama_desa'] ?><br/>
-                    Kami mohon maaf untuk sementara halaman tidak dapat di akses, dikarenakan sedang adanya perbaikan oleh tim terkait.
-                </p>
-                <p>
-                    Jika ada keperluan yang mendesak silakan langsung datang ke Kantor <?= ucwords($this->setting->sebutan_desa)?>.<br>
-                    Alamat : <?= $main['alamat_kantor'] ?><br>
-                    Email : <?= $main['email_desa'] ?><br>
-                    Telepon : <?= $main['telepon'] ?>
-                </p>
-                <p>
-                    <?= ucwords($pamong_kades['jabatan']).' '.$main['nama_desa'] ?>
-                    <br>
-                    <br>
-                    <br>
-                    <u><b><?= $main['nama_kepala_desa'] ?></b></u><br>
-                    NIP. <?= $main['nip_kepala_desa'] ?>
-                </p>
-            </div>
-        </body>
-        </html>
         EOS,
 
     'siteman_css' => <<<'EOS'
@@ -265,4 +228,75 @@ $config = [
             background-color: #f4f4da; /* misalnya coba ganti menjadi #c8f1c8 */
         }
         EOS,
+
+    'folders' => [
+        'storage.framework' => [
+            'name'  => STORAGEPATH . 'framework',
+            'check' => static fn (): bool => substr(sprintf('%o', fileperms(STORAGEPATH . 'framework')), -4) >= '0755',
+        ],
+        'storage.logs' => [
+            'name'  => STORAGEPATH . 'logs',
+            'check' => static fn (): bool => substr(sprintf('%o', fileperms(STORAGEPATH . 'logs')), -4) >= '0755',
+        ],
+        'backup_inkremental' => [
+            'name'  => BACKUPPATH,
+            'check' => static fn (): bool => is_dir(BACKUPPATH) ? substr(sprintf('%o', fileperms(BACKUPPATH)), -4) >= '0755' : true,
+        ],
+    ],
+
+    'server' => [
+        'php' => [
+            'name'    => 'PHP Version',
+            'version' => '>= 7.4.0 | <= 8.2.0',
+            'check'   => static fn (): bool => version_compare(PHP_VERSION, '7.4', '>=') && version_compare(PHP_VERSION, '8.2', '<='),
+        ],
+        'pdo' => [
+            'name'  => 'PDO',
+            'check' => static fn (): bool => extension_loaded('pdo_mysql'),
+        ],
+        'curl' => [
+            'name'  => 'Curl extention',
+            'check' => static fn (): bool => extension_loaded('curl'),
+        ],
+        'fileinfo' => [
+            'name'  => 'Fileinfo extension',
+            'check' => static fn (): bool => extension_loaded('fileinfo'),
+        ],
+        'gd' => [
+            'name'  => 'GD extension',
+            'check' => static fn (): bool => extension_loaded('gd'),
+        ],
+        'iconv' => [
+            'name'  => 'Iconv extension',
+            'check' => static fn (): bool => extension_loaded('iconv'),
+        ],
+        'json' => [
+            'name'  => 'Json extension',
+            'check' => static fn (): bool => extension_loaded('json'),
+        ],
+        'mbstring' => [
+            'name'  => 'Mbstring extension',
+            'check' => static fn (): bool => extension_loaded('mbstring'),
+        ],
+        'mysqli' => [
+            'name'  => 'Mysqli extension',
+            'check' => static fn (): bool => extension_loaded('mysqli'),
+        ],
+        'mysqlnd' => [
+            'name'  => 'Mysqlnd extension',
+            'check' => static fn (): bool => extension_loaded('mysqlnd'),
+        ],
+        'tidy' => [
+            'name'  => 'Tidy extension',
+            'check' => static fn (): bool => extension_loaded('tidy'),
+        ],
+        'zip' => [
+            'name'  => 'Zip extension',
+            'check' => static fn (): bool => extension_loaded('zip'),
+        ],
+        'exif' => [
+            'name'  => 'Exif extension',
+            'check' => static fn (): bool => extension_loaded('exif'),
+        ],
+    ],
 ];

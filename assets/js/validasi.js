@@ -142,7 +142,11 @@ $(document).ready(function() {
 		highlight:function (element){
 			$(element).closest(".form-group").addClass("has-error");
 		},
-		unhighlight:function (element){
+		unhighlight:function (element) {
+			$('.select2').on("select2:close", function (e) {  
+				$(this).valid(); 
+			});
+
 			$(element).closest(".form-group").removeClass("has-error");
 		},
 		errorPlacement: function (error, element) {
@@ -205,7 +209,7 @@ $(document).ready(function() {
 	}, "Hanya boleh berisi karakter alpha, spasi, titik, koma, tanda petik dan strip");
 	
 	jQuery.validator.addMethod("nama_desa", function(value, element) {
-		valid = /^[a-zA-Z0-9 '\.,`\-]+$/.test(value);
+		valid = /^[a-zA-Z0-9 '\.,`\-\/\(\)]+$/.test(value);
 		return this.optional(element) || valid;
 	}, "Hanya boleh berisi karakter alpha, spasi, titik, koma, tanda petik, garis miring dan strip");
 
@@ -223,6 +227,11 @@ $(document).ready(function() {
 		valid = /^[a-zA-Z0-9 \-]+$/i.test(value);
 		return this.optional(element) || valid;
 	}, "Hanya boleh berisi karakter alfanumerik, spasi dan strip");
+
+	jQuery.validator.addMethod("nama_surat", function(value, element) {
+		valid = /^[a-zA-Z0-9 ()\-]+$/i.test(value);
+		return this.optional(element) || valid;
+	}, "Hanya boleh berisi karakter alfanumerik, spasi, strip, (, )");
 
 	jQuery.validator.addMethod("nama_produk", function(value, element) {
 		valid = /^[a-zA-Z0-9()&_:=°% \-]+$/i.test(value);
@@ -249,11 +258,31 @@ $(document).ready(function() {
 		return this.optional(element) || valid;
 	}, "Hanya boleh berisi karakter numerik dan titik");
 
+	jQuery.validator.addMethod("strip_tags", function(value, element) {
+		var strippedText = value.replace(/<\/?[^>]+(>|$)/g, "");
+		return strippedText === value;
+	}, "Tidak boleh mengandung tag HTML");
+
+	jQuery.validator.addMethod("judul", function(value, element) {
+		const valid = /^[a-zA-Z0-9()[\]&_:;=°%'".,/\- ]+$/i.test(value);
+		return this.optional(element) || valid;
+	}, "Hanya boleh berisi karakter alfanumerik, spasi, strip, titik, koma (,), [, ], &, :, ;, =, °, %, ', \", -, dan /");
+
+	jQuery.validator.addMethod("judul_tinymce", function(value, element) {
+		valid = /^[a-zA-Z0-9\s]+$/.test(value);
+		return this.optional(element) || valid;
+	}, "Hanya boleh berisi karakter huruf besar, huruf kecil, dan spasi");
+
+
+	jQuery.validator.addMethod("prefix_tinymce", function(value, element) {
+		valid = /^[a-z_]+$/.test(value);
+		return this.optional(element) || valid;
+	}, "Hanya boleh berisi karakter alpha kecil dan garis bawah (_)");
+
 	$('.bilangan_titik').each(function() {
-		$(this).rules("add",
-			{
-				bilangan_titik: true,
-			});
+		$(this).rules("add", {
+			bilangan_titik: true,
+		});
 	});
 
 	jQuery.validator.addMethod("bilangan_spasi", function(value, element) {
@@ -282,11 +311,10 @@ $(document).ready(function() {
 			});
 	});
 
-	// Untuk donjo-app/views/man_user/manajemen_user_form.php di mana 'radiisi' berarti password tidak diubah
 	// Ketentuan kata sandi sesuai US National Institute of Standards and Technology (NIST)
 	jQuery.validator.addMethod("pwdLengthNist_atau_kosong", function(value, element) {
 		valid = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,20}$/.test(value);
-		return this.optional(element) || valid || value == 'radiisi';
+		return this.optional(element) || valid;
 	}, "Harus 8 sampai 20 karakter dan sekurangnya berisi satu angka dan satu huruf besar dan satu huruf kecil dan satu karakter khusus");
 
 	jQuery.validator.addMethod("bilangan", function(value, element) {
@@ -355,6 +383,16 @@ $(document).ready(function() {
 	jQuery.validator.addMethod("telepon", function(value, element) {
  		return this.optional(element) || value.length > 9;
 	}, `Minimal 10 dan maksimal 20 karakter`);
+
+	jQuery.validator.addMethod("id_telegram", function(value, element) {
+		valid = /^[0-9]{5,10}$/.test(value);
+		return this.optional(element) || valid;
+	},`Minimal 5 dan maksimal 10 karakter dan harus angka`);
+
+	jQuery.validator.addMethod("kode_isian", function(value, element) {
+		valid = /^\[\w+\]$/.test(value);
+		return this.optional(element) || valid;
+	},`Harus diawali [ dan diakhiri ]`);
 });
 
 function validate(elementClassId) {
@@ -371,13 +409,13 @@ function validate(elementClassId) {
 		errorPlacement: function (error, element) {
 			if (element.parent('.input-group').length) {
 				error.insertAfter(element.parent());
-				element.parent().focus();
+				// element.parent().focus();
 			} else if (element.hasClass('select2')) {
 				error.insertAfter(element.next('span'));
-				element.next('span').focus();
+				// element.next('span').focus();
 			} else {
 				error.insertAfter(element);
-				element.focus();
+				// element.focus();
 			}
 		},
 		invalidHandler: function(e, validator){

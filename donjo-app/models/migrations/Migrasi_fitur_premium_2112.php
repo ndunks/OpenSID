@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -318,7 +318,6 @@ class Migrasi_fitur_premium_2112 extends MY_Model
     protected function migrasi_2021112171($hasil)
     {
         $hasil = $hasil && $this->tambah_kolom($hasil);
-        $hasil = $hasil && $this->hapus_tabel_migrations($hasil);
 
         return $hasil && $this->tambah_tabel($hasil);
     }
@@ -344,16 +343,10 @@ class Migrasi_fitur_premium_2112 extends MY_Model
         }
 
         if (! $this->db->field_exists('updated_at', $table)) {
-            $hasil = $hasil && $this->dbforge->add_column($table, 'updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP');
+            return $hasil && $this->dbforge->add_column($table, 'updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP');
         }
 
         return $hasil;
-    }
-
-    protected function hapus_tabel_migrations($hasil)
-    {
-        // Hapus tabel migrations bagi yang terlanjur menjalankan php artisan migrate di api
-        return $hasil && $this->dbforge->drop_table('migrations', true);
     }
 
     protected function tambah_tabel($hasil)

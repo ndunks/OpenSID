@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -41,11 +41,6 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Koneksi_database extends CI_Controller
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function index()
     {
         if ($this->session->db_error['code'] !== 1049) {
@@ -60,7 +55,7 @@ class Koneksi_database extends CI_Controller
         return view('periksa.config', $this->cekConfig());
     }
 
-    public function updateKey()
+    public function updateKey(): void
     {
         $this->cekConfig();
 
@@ -71,8 +66,10 @@ class Koneksi_database extends CI_Controller
         redirect(site_url());
     }
 
-    public function desaBaru()
+    public function desaBaru(): void
     {
+        $this->load->database();
+
         if ($this->session->cek_app_key) {
             // Tambahkan data sementara
             Config::create([
@@ -106,7 +103,7 @@ class Koneksi_database extends CI_Controller
         if (! $this->session->cek_app_key) {
             redirect(site_url());
         }
-
+        $this->load->database();
         $appKey   = get_app_key();
         $appKeyDb = Config::first();
 

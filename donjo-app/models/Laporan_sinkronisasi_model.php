@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -47,8 +47,8 @@ class Laporan_sinkronisasi_model extends MY_Model
         6 => 'kirim',
     ];
 
-    private $table  = 'laporan_sinkronisasi';
-    protected $tipe = 'laporan_apbdes';
+    private string $table = 'laporan_sinkronisasi';
+    protected $tipe       = 'laporan_apbdes';
 
     public function set_tipe(string $tipe)
     {
@@ -61,7 +61,7 @@ class Laporan_sinkronisasi_model extends MY_Model
     {
         $this->config_id()->from($this->table);
 
-        if ($search) {
+        if ($search !== '' && $search !== '0') {
             $this->db
                 ->group_start()
                 ->like('judul', $search)
@@ -97,7 +97,7 @@ class Laporan_sinkronisasi_model extends MY_Model
             ->result();
     }
 
-    public function insert($data = null)
+    public function insert($data = null): void
     {
         // $data bisa dikirim dari laporan yg dibuat otomatis; kalau kosong ambil dari form
         $data              = $data ?: $this->validasi();
@@ -107,7 +107,7 @@ class Laporan_sinkronisasi_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function update($id, $data = null)
+    public function update($id, $data = null): void
     {
         $data               = $data ?: $this->validasi();
         $data['updated_at'] = date('Y-m-d H:i:s');
@@ -117,7 +117,7 @@ class Laporan_sinkronisasi_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function insert_or_update($where = null, $data = null)
+    public function insert_or_update($where = null, $data = null): void
     {
         $id = $this->config_id()->select('id')->get_where($this->table, $where)->row()->id;
 
@@ -126,7 +126,7 @@ class Laporan_sinkronisasi_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function delete($id)
+    public function delete($id): void
     {
         $outp = $this->config_id()->where('id', $id)->where('kirim', null)->delete($this->table);
 
@@ -137,7 +137,7 @@ class Laporan_sinkronisasi_model extends MY_Model
         status_sukses($outp);
     }
 
-    public function delete_all()
+    public function delete_all(): void
     {
         foreach ($this->input->post('id_cb') as $id) {
             $this->delete($id);
@@ -162,7 +162,7 @@ class Laporan_sinkronisasi_model extends MY_Model
 
     private function upload($nama_file)
     {
-        $this->load->library('upload');
+        $this->load->library('MY_Upload', null, 'upload');
 
         $config['upload_path']   = LOKASI_DOKUMEN;
         $config['allowed_types'] = 'pdf';
@@ -223,7 +223,7 @@ class Laporan_sinkronisasi_model extends MY_Model
         return base64_encode(file_get_contents(LOKASI_DOKUMEN . $nama_file));
     }
 
-    public function kirim($id)
+    public function kirim($id): void
     {
         $data['kirim'] = date('Y-m-d H:i:s');
         $outp          = $this->config_id()->where_in('id', $id)->update($this->table, $data);

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -85,7 +85,11 @@ class Laporan_bulanan_model extends MY_Model
 
         //	$data = null;
         //Formating Output
-        for ($i = 0; $i < count($data); $i++) {
+        $counter = count($data);
+
+        //	$data = null;
+        //Formating Output
+        for ($i = 0; $i < $counter; $i++) {
             $data[$i]['no']    = $i + 1;
             $data[$i]['tabel'] = $data[$i]['rt'];
         }
@@ -111,17 +115,24 @@ class Laporan_bulanan_model extends MY_Model
         if ($rincian && $tipe) {
             return $this->rincian_awal($tipe);
         }
+        $configId = identitas('id');
+        $bln      = $this->session->bulanku;
+        $thn      = $this->session->tahunku;
+        $pad_bln  = str_pad($bln, 2, '0', STR_PAD_LEFT); // Untuk membandingkan dengan tgl mysql
 
-        $bln     = $this->session->bulanku;
-        $thn     = $this->session->tahunku;
-        $pad_bln = str_pad($bln, 2, '0', STR_PAD_LEFT); // Untuk membandingkan dengan tgl mysql
-
-        // Perubahan penduduk sebelum bulan laporan
+        // Cari penduduk yang hidup sampai dengan akhir bulan sebelumnya, jadi harus cari berdasarkan log_penduduk
+        // tidak bisa menggunakan status_dasar pada tabel tweb_penduduk
         $penduduk_mutasi_sql = $this->config_id('l')
             ->select('p.*, l.kode_peristiwa')
-            ->from('log_penduduk l')
-            ->join('tweb_penduduk p', 'l.id_pend = p.id and p.status_dasar = 1')
-            ->where("DATE_FORMAT(l.tgl_lapor, '%Y-%m') < '{$thn}-{$pad_bln}'")
+            ->from('tweb_penduduk p')
+            // Ambil log yg terakhir saja
+            ->join("(
+                SELECT    MAX(id) max_id, id_pend
+                FROM      log_penduduk
+                where DATE_FORMAT(tgl_lapor, '%Y-%m') < '{$thn}-{$pad_bln}'
+                GROUP BY  id_pend
+            ) log_max", 'log_max.id_pend = p.id')
+            ->join('log_penduduk l', 'log_max.max_id = l.id and l.kode_peristiwa not in (2, 3, 4)')
             ->get_compiled_select();
 
         $penduduk_mutasi = $this->db
@@ -141,15 +152,29 @@ class Laporan_bulanan_model extends MY_Model
         $keluarga_mutasi_sql = $this->config_id('l')
             ->select('p.*, l.id_peristiwa')
             ->from('log_keluarga l')
+            // Ambil log yg terakhir saja
+            ->join("(
+                select max(id) id from log_keluarga where id_kk IS NOT NULL and config_id = {$configId} and tgl_peristiwa < '{$thn}-{$pad_bln}-01'  group by id_kk
+            ) log_max_keluarga", 'log_max_keluarga.id = l.id')
             ->join('tweb_keluarga k', 'k.id = l.id_kk')
-            ->join('tweb_penduduk p', 'p.id = k.nik_kepala and p.status_dasar = 1')
-            ->where("DATE_FORMAT(l.tgl_peristiwa, '%Y-%m') < '{$thn}-{$pad_bln}'")
+            // Ambil log yg terakhir saja
+            ->join("(
+                SELECT    MAX(id) max_id, id_pend
+                FROM      log_penduduk
+                where DATE_FORMAT(tgl_lapor, '%Y-%m') < '{$thn}-{$pad_bln}'
+                and config_id = {$configId}
+                GROUP BY  id_pend
+            ) log_max", 'log_max.id_pend = k.nik_kepala')
+            ->join('log_penduduk lp', 'log_max.max_id = lp.id and lp.kode_peristiwa not in (2, 3, 4) ')
+            ->join('tweb_penduduk p', 'p.id = lp.id_pend and p.kk_level = 1')
+            ->where("l.tgl_peristiwa < '{$thn}-{$pad_bln}-01'")
+            ->where('l.id_peristiwa not in (2,3,4)')
             ->get_compiled_select();
 
         $keluarga_mutasi = $this->db
-            ->select('sum(case when id_peristiwa = 1 then 1 else 0 end) AS KK_PLUS')
-            ->select('sum(case when sex = 1 and id_peristiwa = 1 then 1 else 0 end) AS KK_L_PLUS')
-            ->select('sum(case when sex = 2 and id_peristiwa = 1 then 1 else 0 end) AS KK_P_PLUS')
+            ->select('sum(case when id_peristiwa in (1, 12) then 1 else 0 end) AS KK_PLUS')
+            ->select('sum(case when sex = 1 and id_peristiwa in (1, 12) then 1 else 0 end) AS KK_L_PLUS')
+            ->select('sum(case when sex = 2 and id_peristiwa in (1, 12) then 1 else 0 end) AS KK_P_PLUS')
             ->select('sum(case when id_peristiwa in (2, 3, 4) then 1 else 0 end) AS KK_MINUS')
             ->select('sum(case when sex = 1 and id_peristiwa in (2, 3, 4) then 1 else 0 end) AS KK_L_MINUS')
             ->select('sum(case when sex = 2 and id_peristiwa in (2, 3, 4) then 1 else 0 end) AS KK_P_MINUS')
@@ -186,9 +211,15 @@ class Laporan_bulanan_model extends MY_Model
                 // Perubahan penduduk sebelum bulan laporan
                 $this->config_id('l')
                     ->select('p.*, l.kode_peristiwa')
-                    ->from('log_penduduk l')
-                    ->join('tweb_penduduk p', 'l.id_pend = p.id and p.status_dasar = 1')
-                    ->where("DATE_FORMAT(l.tgl_lapor, '%Y-%m') < '{$thn}-{$pad_bln}'");
+                    ->from('tweb_penduduk p')
+                    // Ambil log yg terakhir saja
+                    ->join("(
+                        SELECT    MAX(id) max_id, id_pend
+                        FROM      log_penduduk
+                        where DATE_FORMAT(tgl_lapor, '%Y-%m') < '{$thn}-{$pad_bln}'
+                        GROUP BY  id_pend
+                    ) log_max", 'log_max.id_pend = p.id')
+                    ->join('log_penduduk l', 'log_max.max_id = l.id and l.kode_peristiwa not in (2, 3, 4)');
                 break;
 
             case in_array($tipe, $keluarga):
@@ -247,7 +278,7 @@ class Laporan_bulanan_model extends MY_Model
         return $this->db->get()->result_array();
     }
 
-    private function rincian_dasar($tipe)
+    private function rincian_dasar($tipe): void
     {
         switch ($tipe) {
             case 'wni_l': $this->db->where('sex = 1 AND warganegara_id <> 2');
@@ -262,18 +293,16 @@ class Laporan_bulanan_model extends MY_Model
             case 'wna_p': $this->db->where('sex = 2 AND warganegara_id = 2');
                 break;
 
-            case 'jml': break;
-
-            case 'jml_l': $this->db->where('sex = 1');
-                break;
-
-            case 'jml_p': $this->db->where('sex = 2');
-                break;
+            case 'jml':
 
             case 'kk': break;
 
+            case 'jml_l':
+
             case 'kk_l': $this->db->where('sex = 1');
                 break;
+
+            case 'jml_p':
 
             case 'kk_p': $this->db->where('sex = 2');
                 break;
@@ -378,7 +407,7 @@ class Laporan_bulanan_model extends MY_Model
     }
 
     // Perubahan penduduk pada bulan laporan
-    private function mutasi_pada_bln_thn($kode_peristiwa)
+    private function mutasi_pada_bln_thn(int $kode_peristiwa)
     {
         $bln = $this->session->bulanku;
         $thn = $this->session->tahunku;
@@ -411,7 +440,7 @@ class Laporan_bulanan_model extends MY_Model
      *
      * @param mixed $kode_peristiwa
      */
-    private function mutasi_keluarga_bln_thn($kode_peristiwa)
+    private function mutasi_keluarga_bln_thn(int $kode_peristiwa)
     {
         $bln = $this->session->bulanku;
         $thn = $this->session->tahunku;
@@ -437,7 +466,7 @@ class Laporan_bulanan_model extends MY_Model
         return $this->db->get_compiled_select();
     }
 
-    private function rincian_peristiwa($peristiwa, $tipe)
+    private function rincian_peristiwa(int $peristiwa, $tipe)
     {
         $penduduk = ['wni_l', 'wni_p', 'wna_l', 'wna_p', 'jml', 'jml_l', 'jml_p'];
         $keluarga = ['kk', 'kk_l', 'kk_p'];
@@ -489,7 +518,7 @@ class Laporan_bulanan_model extends MY_Model
         return $this->db->get()->result_array();
     }
 
-    private function mutasi_peristiwa($peristiwa, $rincian = null, $tipe = null)
+    private function mutasi_peristiwa(int $peristiwa, $rincian = null, $tipe = null)
     {
         // Jika rincian dan tipe di definisikan, maka akan masuk kedetil laporan
         if ($rincian && $tipe) {
@@ -498,7 +527,8 @@ class Laporan_bulanan_model extends MY_Model
 
         // Mutasi penduduk
         $mutasi_pada_bln_thn = $this->mutasi_pada_bln_thn($peristiwa);
-        $data                = $this->db
+
+        $data = $this->db
             ->select('sum(case when sex = 1 and warganegara_id <> 2 then 1 else 0 end) AS WNI_L')
             ->select('sum(case when sex = 2 and warganegara_id <> 2 then 1 else 0 end) AS WNI_P')
             ->select('sum(case when sex = 1 and warganegara_id = 2 then 1 else 0 end) AS WNA_L')
@@ -627,7 +657,7 @@ class Laporan_bulanan_model extends MY_Model
         }
     }
 
-    public function rekapitulasi_data()
+    public function rekapitulasi_data(): void
     {
         $bln     = $this->session->filter_bulan;
         $thn     = $this->session->filter_tahun;
@@ -670,7 +700,7 @@ class Laporan_bulanan_model extends MY_Model
         $this->rekapitulasi_query_dasar();
     }
 
-    private function rekapitulasi_query_dasar()
+    private function rekapitulasi_query_dasar(): void
     {
         $this->config_id('l')
             ->from('log_penduduk l')
@@ -689,14 +719,5 @@ class Laporan_bulanan_model extends MY_Model
         $jml = $this->db->count_all_results();
 
         return $this->paginasi($p, $jml);
-    }
-
-    public function perbaikiLogKeluarga()
-    {
-        $configId = identitas('id');
-        $sql      = "insert into log_keluarga (config_id, id_kk, id_peristiwa, tgl_peristiwa, updated_by)
-                select {$configId} as config_id, id as id_kk, 1 as id_peristiwa, tgl_daftar as tgl_peristiwa, 1 as updated_by
-                from tweb_keluarga  where id not in ( select id_kk from log_keluarga where id_peristiwa = 1 ) ";
-        $this->db->query($sql);
     }
 }

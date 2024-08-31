@@ -12,8 +12,7 @@
             <ul class="nav navbar-nav">
                 @if ($is_mobile = $ci->agent->is_mobile())
                     <li class="dropdown notifications-menu">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown"
-                            aria-expanded="true">Selengkapnya...</a>
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="true">Selengkapnya...</a>
                         <ul class="dropdown-menu">
                             <li>
                                 <ul class="menu">
@@ -21,9 +20,7 @@
                 @if ($notif['langganan'] && can('b', 'layanan-pelanggan'))
                     <li>
                         <a href="{{ route('pelanggan') }}">
-                            <i class="fa {{ $notif['langganan']['ikon'] }} fa-lg"
-                                title="Status Langganan {{ $notif['langganan']['masa'] }} hari"
-                                style="color: {{ $notif['langganan']['warna'] }}"></i>&nbsp;
+                            <i class="fa {{ $notif['langganan']['ikon'] }} fa-lg" title="Status Langganan {{ $notif['langganan']['masa'] }} hari" style="color: {{ $notif['langganan']['warna'] }}"></i>&nbsp;
                             @if ($notif['langganan']['status'] > 2)
                                 <span class="badge" id="b_langganan"></span>
                             @endif
@@ -34,7 +31,8 @@
                     </li>
                 @endif
 
-                @if (in_array('343', array_column($modul, 'id')) && can('b', 'opendk_pesan'))
+                {{-- TODO:: Cek ini kenapa statis --}}
+                @if (in_array('343', array_column($modul, 'id')) && can('b', 'pesan'))
                     <li class="komunikasi-opendk">
                         <a href="{{ route('opendk_pesan.clear') }}">
                             <i class="fa fa-university fa-lg" title="Komunikasi OpenDK"></i>&nbsp;
@@ -48,7 +46,7 @@
                     </li>
                 @endif
 
-                @if (can('b', 'permohonan_surat_admin'))
+                @if (can('b', 'permohonan-surat'))
                     <li>
                         <a href="{{ route('permohonan_surat_admin') }}">
                             <i class="fa fa-print fa-lg" title="Cetak Surat"></i>&nbsp;
@@ -76,7 +74,7 @@
                     </li>
                 @endif
 
-                @if (can('b', 'mailbox'))
+                @if (can('b', 'kotak-pesan'))
                     <li>
                         <a href="{{ route('mailbox') }}">
                             <i class="fa fa-envelope-o fa-lg" title="Pesan Masuk"></i>&nbsp;
@@ -90,7 +88,7 @@
                     </li>
                 @endif
 
-                @if (can('b', 'keluar') && (setting('verifikasi_kades') || setting('verifikasi_sekdes')))
+                @if (can('b', 'arsip-layanan') && (setting('verifikasi_kades') || setting('verifikasi_sekdes')))
                     <li>
                         <a href="{{ route('keluar.clear.masuk') }}">
                             <span><i class="fa fa-bell-o fa-lg" title="Permohonan Surat"></i>&nbsp;</span>
@@ -133,16 +131,14 @@
                     </li>
                 </ul>
             <li>
-                <a href="#" data-toggle="control-sidebar" title="Informasi"><i
-                        class="fa fa-question-circle fa-lg"></i></a>
+                <a href="#" data-toggle="control-sidebar" title="Informasi"><i class="fa fa-question-circle fa-lg"></i></a>
             </li>
-            @if ($kategori && can('u', $controller))
+            @if ($kategori && can('u', $akses_modul ?? ($modul_ini ?? $sub_modul_ini)))
                 <li>
-                    @if ($controller === 'pelanggan')
+                    @if ($modul_ini === 'layanan-pelanggan' || $sub_modul_ini === 'layanan-pelanggan')
                         <a href="#" class="atur-token">
                         @else
-                            <a href="#" data-remote="false" data-toggle="modal"
-                                data-title="Pengaturan {{ ucwords($controller) }}" data-target="#pengaturan">
+                            <a href="#" data-remote="false" data-toggle="modal" data-title="Pengaturan {{ ucwords($controller) }}" data-target="#pengaturan">
                     @endif
                     <span><i class="fa fa-gear"></i>&nbsp;</span>
                     </a>
