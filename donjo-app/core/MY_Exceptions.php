@@ -88,7 +88,7 @@ class MY_Exceptions extends CI_Exceptions
     /**
      * {@inheritDoc}
      */
-    public function show_error($heading, $message, $template = 'error_general', $status_code = 500)
+    public function show_errorDISABLED($heading, $message, $template = 'error_general', $status_code = 500)
     {
         if ( !$this->ci || $template !== 'error_db') {
             return parent::show_error($heading, $message, $template, $status_code);
