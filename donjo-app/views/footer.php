@@ -242,6 +242,9 @@
 					if(!window['getCsrfToken']){
 						var getCsrfToken = function(){console.warn('getCsrfToken: CSRF disabled')}
 					}
+					if(!window['csrf_semua_form']){
+						var csrf_semua_form = function(){console.warn('csrf_semua_form: CSRF disabled')}
+					}
 				</script>
 				<?php session_error_clear(); ?>
 
