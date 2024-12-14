@@ -38,6 +38,7 @@
 defined('BASEPATH') || exit('No direct script access allowed');
 
 use App\Libraries\FlxZipArchive;
+use App\Libraries\Sistem;
 use App\Models\LogBackup;
 use App\Models\LogRestoreDesa;
 use App\Models\Migrasi;
@@ -71,7 +72,7 @@ class Database extends Admin_Controller
             'act_tab'      => 1,
             'inkremental'  => LogBackup::where('status', '<', 2)->latest()->first(),
             'restore'      => LogRestoreDesa::where('status', '=', 0)->exists(),
-            'memory_limit' => Arr::get($this->setting_model->cekKebutuhanSistem(), 'memory_limit.result'),
+            'memory_limit' => Arr::get(Sistem::cekKebutuhanSistem(), 'memory_limit.result'),
         ];
 
         view('admin.database.index', $data);
@@ -93,11 +94,16 @@ class Database extends Admin_Controller
         set_time_limit(0);              // making maximum execution time unlimited
         ob_implicit_flush(1);           // Send content immediately to the browser on every statement which produces output
         ob_end_flush();
-        // Migrasi::where('versi_database', VERSI_DATABASE)->delete();
-        $migrasiTerakhir = Migrasi::orderBy('id', 'desc')->first();
-        if ($migrasiTerakhir) {
-            $migrasiTerakhir->delete();
+        $mode = $this->input->get('mode');
+        if ($mode == 'all') {
+            Migrasi::whereNotNull('id')->delete();
+        } else {
+            $migrasiTerakhir = Migrasi::orderBy('id', 'desc')->first();
+            if ($migrasiTerakhir) {
+                $migrasiTerakhir->delete();
+            }
         }
+
         echo json_encode(['message' => 'Ulangi migrasi database versi ' . VERSI_DATABASE, 'status' => 0]);
         $this->database_model->setShowProgress(1)->cek_migrasi();
         echo json_encode(['message' => 'Proses migrasi database telah berhasil', 'status' => 1]);
@@ -105,7 +111,7 @@ class Database extends Admin_Controller
 
     public function exec_backup()
     {
-        if (! Arr::get($this->setting_model->cekKebutuhanSistem(), 'memory_limit.result')) {
+        if (! Arr::get(Sistem::cekKebutuhanSistem(), 'memory_limit.result')) {
             return show_404();
         }
 

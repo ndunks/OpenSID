@@ -197,7 +197,6 @@ class Dokumen_sekretariat extends Admin_Controller
 
         $this->_set_tab($kat);
 
-        // $this->render('dokumen/form', $data);
         view('admin.dokumen.buku_kades.form', $data);
     }
 
@@ -418,6 +417,7 @@ class Dokumen_sekretariat extends Admin_Controller
 
     private function data_cetak($kat)
     {
+        $this->load->model('pamong_model');
         // Agar tidak terlalu banyak mengubah kode, karena menggunakan view global
         $ttd                    = $this->modal_penandatangan();
         $data['pamong_ttd']     = $this->pamong_model->get_data($ttd['pamong_ttd']->pamong_id);

@@ -58,10 +58,22 @@ class Teks_berjalan extends Admin_Controller
         return view('admin.web.teks_berjalan.index');
     }
 
+    public function tukar()
+    {
+        $data = $this->input->post('data');
+        TeksBerjalan::setNewOrder($data);
+        cache()->flush();
+
+        return json(['status' => 1]);
+    }
+
     public function datatables()
     {
         if ($this->input->is_ajax_request()) {
-            return datatables()->of(TeksBerjalan::with('artikel'))
+            $order = $this->input->get('order') ?? false;
+
+            return datatables()->of(TeksBerjalan::with('artikel')->when(! $order, static fn ($q) => $q->orderBy('urut')))
+                ->addColumn('drag-handle', static fn () => '<i class="fa fa-sort-alpha-desc"></i>')
                 ->addColumn('ceklist', static function ($row) {
                     if (can('h')) {
                         return '<input type="checkbox" name="id_cb[]" value="' . $row->id . '"/>';
@@ -72,8 +84,6 @@ class Teks_berjalan extends Admin_Controller
                     $aksi = '';
 
                     if (can('u')) {
-                        $aksi .= '<a href="' . ci_route('teks_berjalan.urut') . '/' . $row->id . '/1' . '" class="btn bg-olive btn-sm"  title="Pindah Posisi Ke Bawah"><i class="fa fa-arrow-down"></i></a> ';
-                        $aksi .= '<a href="' . ci_route('teks_berjalan.urut') . '/' . $row->id . '/2' . '" class="btn bg-olive btn-sm"  title="Pindah Posisi Ke Atas"><i class="fa fa-arrow-up"></i></a> ';
                         $aksi .= '<a href="' . ci_route('teks_berjalan.form', $row->id) . '" class="btn btn-warning btn-sm"  title="Ubah Data"><i class="fa fa-edit"></i></a> ';
 
                         if ($row->status == StatusEnum::YA) {
@@ -92,15 +102,21 @@ class Teks_berjalan extends Admin_Controller
                 ->addColumn('teks', static function ($row): string {
                     $text = $row->teks;
 
-                    return $text . (' <a href="' . menu_slug('artikel/' . $row->tautan) . '" target="_blank">' . $row->judul_tautan . '</a><br>');
+                    $tautan = $row->tipe == 1 ? menu_slug('artikel/' . $row->tautan) : $row->tautan;
+
+                    return $text . (' <a href="' . $tautan . '" target="_blank">' . $row->judul_tautan . '</a><br>');
                 })
-                ->editColumn('tampilkan', static fn ($row) => SistemEnum::valueOf($row->tipe))
-                ->addColumn('judul_tautan', static function ($row) {
-                    if ($row->tautan) {
-                        return '<a href="' . $row->tautan . '" target="_blank">' . tgl_indo($row->artikel->tgl_upload) . ' <br> ' . $row->artikel->judul . '</a>';
+                ->addColumn('judul_tautan', static function ($row): string {
+                    if ($row->tipe == 1) {
+                        $tautan = menu_slug('artikel/' . $row->tautan);
+                        $tampil = tgl_indo($row->artikel->tgl_upload) . ' <br> ' . $row->artikel->judul;
+                    } else {
+                        $tautan = $tampil = $row->tautan;
                     }
+
+                    return '<a href="' . $tautan . '" target="_blank">' . $tampil . '</a>';
                 })
-                ->rawColumns(['ceklist', 'aksi', 'teks', 'judul_tautan'])
+                ->rawColumns(['drag-handle', 'ceklist', 'aksi', 'teks', 'judul_tautan'])
                 ->orderColumn('teks', static function ($query, $order): void {
                     $query->orderBy('teks', $order);
                 })
@@ -149,20 +165,13 @@ class Teks_berjalan extends Admin_Controller
 
     public function delete($id = null): void
     {
-        $this->redirect_hak_akses('h');
+        isCan('h');
 
         if (TeksBerjalan::destroy($this->request['id_cb'] ?? $id) !== 0) {
             redirect_with('success', 'Berhasil Hapus Data');
         }
 
         redirect_with('error', 'Gagal Hapus Data');
-    }
-
-    public function urut($id = 0, $arah = 0): void
-    {
-        isCan('u');
-        TeksBerjalan::nomorUrut($id, $arah);
-        redirect('teks_berjalan');
     }
 
     public function lock($id = 0, $val = 1): void
@@ -178,11 +187,12 @@ class Teks_berjalan extends Admin_Controller
     {
         $data = [
             'teks'         => htmlentities($request['teks']),
-            'tautan'       => (int) $request['tautan'],
+            'tipe'         => (int) $request['tipe'], // 1 = 'Internal', 2 = 'Eksternal'
             'judul_tautan' => htmlentities($request['judul_tautan']),
-            'tipe'         => 1, // web
             'status'       => (int) $request['status'],
         ];
+
+        $data['tautan'] = $data['title'] === '' ? $request['tautan_internal'] : $request['tautan_eksternal'];
 
         if ($id === null) {
             $data['urut'] = TeksBerjalan::UrutMax();

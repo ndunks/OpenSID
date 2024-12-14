@@ -46,6 +46,9 @@ class Drive extends \Google\Service
   /** See, edit, create, and delete only the specific Google Drive files you use with this app. */
   const DRIVE_FILE =
       "https://www.googleapis.com/auth/drive.file";
+  /** See and download your Google Drive files that were created or edited by Google Meet.. */
+  const DRIVE_MEET_READONLY =
+      "https://www.googleapis.com/auth/drive.meet.readonly";
   /** View and manage metadata of files in your Google Drive. */
   const DRIVE_METADATA =
       "https://www.googleapis.com/auth/drive.metadata";
@@ -63,16 +66,20 @@ class Drive extends \Google\Service
       "https://www.googleapis.com/auth/drive.scripts";
 
   public $about;
+  public $accessproposals;
   public $apps;
   public $changes;
   public $channels;
   public $comments;
   public $drives;
   public $files;
+  public $operation;
+  public $operations;
   public $permissions;
   public $replies;
   public $revisions;
   public $teamdrives;
+  public $rootUrlTemplate;
 
   /**
    * Constructs the internal representation of the Drive service.
@@ -85,6 +92,7 @@ class Drive extends \Google\Service
   {
     parent::__construct($clientOrConfig);
     $this->rootUrl = $rootUrl ?: 'https://www.googleapis.com/';
+    $this->rootUrlTemplate = $rootUrl ?: 'https://www.UNIVERSE_DOMAIN/';
     $this->servicePath = 'drive/v3/';
     $this->batchPath = 'batch/drive/v3';
     $this->version = 'v3';
@@ -100,6 +108,64 @@ class Drive extends \Google\Service
               'path' => 'about',
               'httpMethod' => 'GET',
               'parameters' => [],
+            ],
+          ]
+        ]
+    );
+    $this->accessproposals = new Drive\Resource\Accessproposals(
+        $this,
+        $this->serviceName,
+        'accessproposals',
+        [
+          'methods' => [
+            'get' => [
+              'path' => 'files/{fileId}/accessproposals/{proposalId}',
+              'httpMethod' => 'GET',
+              'parameters' => [
+                'fileId' => [
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ],
+                'proposalId' => [
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ],
+              ],
+            ],'list' => [
+              'path' => 'files/{fileId}/accessproposals',
+              'httpMethod' => 'GET',
+              'parameters' => [
+                'fileId' => [
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ],
+                'pageSize' => [
+                  'location' => 'query',
+                  'type' => 'integer',
+                ],
+                'pageToken' => [
+                  'location' => 'query',
+                  'type' => 'string',
+                ],
+              ],
+            ],'resolve' => [
+              'path' => 'files/{fileId}/accessproposals/{proposalId}:resolve',
+              'httpMethod' => 'POST',
+              'parameters' => [
+                'fileId' => [
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ],
+                'proposalId' => [
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ],
+              ],
             ],
           ]
         ]
@@ -623,6 +689,24 @@ class Drive extends \Google\Service
                   'type' => 'boolean',
                 ],
               ],
+            ],'download' => [
+              'path' => 'files/{fileId}/download',
+              'httpMethod' => 'POST',
+              'parameters' => [
+                'fileId' => [
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ],
+                'mimeType' => [
+                  'location' => 'query',
+                  'type' => 'string',
+                ],
+                'revisionId' => [
+                  'location' => 'query',
+                  'type' => 'string',
+                ],
+              ],
             ],'emptyTrash' => [
               'path' => 'files/trash',
               'httpMethod' => 'DELETE',
@@ -869,6 +953,77 @@ class Drive extends \Google\Service
                 'supportsTeamDrives' => [
                   'location' => 'query',
                   'type' => 'boolean',
+                ],
+              ],
+            ],
+          ]
+        ]
+    );
+    $this->operation = new Drive\Resource\Operation(
+        $this,
+        $this->serviceName,
+        'operation',
+        [
+          'methods' => [
+            'cancel' => [
+              'path' => 'operation/{name}:cancel',
+              'httpMethod' => 'POST',
+              'parameters' => [
+                'name' => [
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ],
+              ],
+            ],'delete' => [
+              'path' => 'operation/{name}',
+              'httpMethod' => 'DELETE',
+              'parameters' => [
+                'name' => [
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ],
+              ],
+            ],
+          ]
+        ]
+    );
+    $this->operations = new Drive\Resource\Operations(
+        $this,
+        $this->serviceName,
+        'operations',
+        [
+          'methods' => [
+            'get' => [
+              'path' => 'operations/{name}',
+              'httpMethod' => 'GET',
+              'parameters' => [
+                'name' => [
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ],
+              ],
+            ],'list' => [
+              'path' => 'operations',
+              'httpMethod' => 'GET',
+              'parameters' => [
+                'filter' => [
+                  'location' => 'query',
+                  'type' => 'string',
+                ],
+                'name' => [
+                  'location' => 'query',
+                  'type' => 'string',
+                ],
+                'pageSize' => [
+                  'location' => 'query',
+                  'type' => 'integer',
+                ],
+                'pageToken' => [
+                  'location' => 'query',
+                  'type' => 'string',
                 ],
               ],
             ],

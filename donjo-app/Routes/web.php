@@ -79,7 +79,8 @@ Route::get('/data_analisis', 'First@data_analisis');
 Route::get('/jawaban_analisis/{stat?}/{sb?}/{per?}', 'First@jawaban_analisis');
 Route::get('/load_aparatur_desa', 'First@load_aparatur_desa');
 Route::get('/load_aparatur_wilayah/{id?}/{kd_jabatan?}', 'First@load_aparatur_wilayah');
-// barangkali ada yang akses langsung menggunakan first
+
+// Route lama, masih menggunakan first
 Route::group('/first', static function (): void {
     Route::get('/unduh_dokumen_artikel/{id}', 'First@unduh_dokumen_artikel')->name('first.unduh_dokumen_artikel');
     Route::get('/gallery/{p?}', 'First@gallery')->name('first.gallery');
@@ -90,6 +91,7 @@ Route::group('/first', static function (): void {
     Route::post('/ajax_peserta_program_bantuan', 'First@ajax_peserta_program_bantuan')->name('first.ajax_peserta_program_bantuan');
     Route::get('/dpt', 'First@dpt')->name('first.dpt');
     Route::get('/get_form_info', 'First@get_form_info')->name('first.get_form_info');
+    Route::get('/arsip/{p?}', 'First@arsip')->name('first.arsip');
 });
 
 // Captcha
@@ -126,7 +128,6 @@ Route::group('koneksi_database', static function (): void {
     Route::get('/', 'Koneksi_database@index');
     Route::get('config', 'Koneksi_database@config');
     Route::get('updateKey', 'Koneksi_database@updateKey');
-    Route::get('desaBaru', 'Koneksi_database@desaBaru');
     Route::get('encryptPassword', 'Koneksi_database@encryptPassword');
 });
 
@@ -179,8 +180,9 @@ Route::group('', ['namespace' => 'fweb'], static function (): void {
     Route::get('/data-suplemen/{slug?}', 'Suplemen@detail')->name('fweb.suplemen.detail');
     Route::get('/data-vaksinasi', 'Vaksin@index')->name('fweb.vaksin.index');
     Route::get('/v/{alias?}', 'Verifikasi_surat@cek')->name('fweb.verifikasi_surat.cek');
-    Route::get('/c1/{id_dokumen?}', 'Verifikasi_surat@encode')->name('fweb.verifikasi_surat.encode');
+    Route::get('/c1/{id_dokumen?}/{tipe?}', 'Verifikasi_surat@encode')->name('fweb.verifikasi_surat.encode');
     Route::get('/verifikasi-surat/{id_encoded?}', 'Verifikasi_surat@decode')->name('fweb.verifikasi_surat.decode');
+    Route::get('/verifikasi-surat-dinas/{id_encoded?}', 'Verifikasi_surat@decodeSuratDinas')->name('fweb.verifikasi_surat.decode-surat-dinas');
 });
 
 Route::group('kehadiran', ['namespace' => 'kehadiran'], static function (): void {

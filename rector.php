@@ -44,13 +44,13 @@ use Rector\CodeQuality\Rector\ClassMethod\LocallyCalledStaticMethodToNonStaticRe
 use Rector\CodeQuality\Rector\If_\ExplicitBoolCompareRector;
 use Rector\CodeQuality\Rector\Include_\AbsolutizeRequireAndIncludePathRector;
 use Rector\Config\RectorConfig;
-use Rector\Core\ValueObject\PhpVersion;
 use Rector\Php73\Rector\ConstFetch\SensitiveConstantNameRector;
 use Rector\Php73\Rector\FuncCall\JsonThrowOnErrorRector;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Set\ValueObject\SetList;
 use Rector\TypeDeclaration\Rector\ClassMethod\BoolReturnTypeFromStrictScalarReturnsRector;
 use Rector\TypeDeclaration\Rector\ClassMethod\ReturnTypeFromStrictTypedCallRector;
+use Rector\ValueObject\PhpVersion;
 
 return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->paths([
@@ -85,6 +85,7 @@ return static function (RectorConfig $rectorConfig): void {
         ],
         __DIR__ . '/donjo-app/libraries/Log_Viewer.php',
         __DIR__ . '/donjo-app/libraries/FeedParser.php',
+        __DIR__ . '/donjo-app/libraries/Spreadsheet_Excel_Reader.php',
         __DIR__ . '/donjo-app/third_party/DevelBar',
         __DIR__ . '/donjo-app/models/migrations',
         __DIR__ . '/donjo-app/models/seeders',

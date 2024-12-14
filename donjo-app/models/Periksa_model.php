@@ -35,6 +35,7 @@
  *
  */
 
+use App\Enums\SHDKEnum;
 use App\Enums\StatusDasarEnum;
 use App\Models\Keluarga;
 use App\Models\KlasifikasiSurat;
@@ -70,7 +71,7 @@ class Periksa_model extends MY_Model
         $calon            = $current_version;
 
         // Deteksi jabatan kades atau sekdes tidak ada
-        if (! empty($jabatan = $this->deteksi_jabatan())) {
+        if (($jabatan = $this->deteksi_jabatan()) !== []) {
             $this->periksa['masalah'][]    = 'data_jabatan_tidak_ada';
             $this->periksa['data_jabatan'] = $jabatan;
         }
@@ -124,6 +125,12 @@ class Periksa_model extends MY_Model
             $this->periksa['log_keluarga_ganda'] = $log_keluarga_ganda->toArray();
         }
 
+        $kepala_keluarga_ganda = $this->deteksi_kepala_keluarga_ganda();
+        if (! $kepala_keluarga_ganda->isEmpty()) {
+            $this->periksa['masalah'][]             = 'kepala_keluarga_ganda';
+            $this->periksa['kepala_keluarga_ganda'] = $kepala_keluarga_ganda->toArray();
+        }
+
         $klasifikasi_surat_ganda = $this->deteksi_klasifikasi_surat_ganda();
         if (! $klasifikasi_surat_ganda->isEmpty()) {
             $this->periksa['masalah'][]               = 'klasifikasi_surat_ganda';
@@ -140,7 +147,7 @@ class Periksa_model extends MY_Model
             ->result_array();
     }
 
-    private function deteksi_jabatan()
+    private function deteksi_jabatan(): array
     {
         $jabatan = [];
 
@@ -232,6 +239,20 @@ class Periksa_model extends MY_Model
         return Keluarga::whereIn('id', static fn ($query) => $query->from('log_keluarga')->where(['config_id' => $config_id])->select(['id_kk'])->groupBy(['id_kk', 'tgl_peristiwa'])->having(DB::raw('count(tgl_peristiwa)'), '>', 1))->get();
     }
 
+    public function deteksi_kepala_keluarga_ganda()
+    {
+        $config_id = identitas('id');
+
+        $kepalaKeluargaDobel = Penduduk::withOnly([])->select(['id_kk'])->where('kk_level', SHDKEnum::KEPALA_KELUARGA)->groupBy(['id_kk'])->having(DB::raw('count(id_kk)'), '>', 1)->pluck('id_kk')->toArray();
+
+        return Penduduk::withOnly(['keluarga' => static fn ($q) => $q->withOnly([])])
+            ->kepalaKeluarga()
+            ->whereIn('id_kk', $kepalaKeluargaDobel)
+            ->whereNotIn('id', static fn ($q) => $q->from('tweb_keluarga')->select(['nik_kepala'])->where(['config_id' => $config_id])->whereNotNull('nik_kepala'))
+            ->orderBy('id_kk')
+            ->get();
+    }
+
     private function deteksi_klasifikasi_surat_ganda()
     {
         $config_id = identitas('id');
@@ -245,7 +266,7 @@ class Periksa_model extends MY_Model
         $this->session->user_id = $this->session->user_id ?: 1;
 
         // Perbaiki masalah data yg terdeteksi untuk error yg dilaporkan
-        log_message('error', '========= Perbaiki masalah data =========');
+        log_message('notice', '========= Perbaiki masalah data =========');
 
         foreach ($this->periksa['masalah'] as $masalah_ini) {
             $this->selesaikan_masalah($masalah_ini);
@@ -259,7 +280,8 @@ class Periksa_model extends MY_Model
             ->set('value', $this->periksa['migrasi_utk_diulang'])
             ->where('key', 'current_version')
             ->update('setting_aplikasi');
-        cache()->forget('setting_aplikasi');
+
+        (new SettingAplikasi())->flushQueryCache();
         $this->load->model('database_model');
         $this->database_model->migrasi_db_cri();
     }
@@ -274,7 +296,7 @@ class Periksa_model extends MY_Model
         $this->session->db_error = null;
     }
 
-    private function perbaiki_autoincrement()
+    private function perbaiki_autoincrement(): bool
     {
         $hasil = true;
 
@@ -321,7 +343,7 @@ class Periksa_model extends MY_Model
         return $hasil;
     }
 
-    private function perbaiki_collation_table()
+    private function perbaiki_collation_table(): bool
     {
         $hasil  = true;
         $tables = $this->periksa['collation_table'];
@@ -331,7 +353,7 @@ class Periksa_model extends MY_Model
                 if ($this->db->table_exists($tbl['TABLE_NAME'])) {
                     $hasil = $hasil && $this->db->query("ALTER TABLE {$tbl['TABLE_NAME']} CONVERT TO CHARACTER SET utf8 COLLATE {$this->db->dbcollat}");
 
-                    log_message('error', 'Tabel ' . $tbl['TABLE_NAME'] . ' collation diubah dari ' . $tbl['TABLE_COLLATION'] . " menjadi {$this->db->dbcollat}.");
+                    log_message('notice', 'Tabel ' . $tbl['TABLE_NAME'] . ' collation diubah dari ' . $tbl['TABLE_COLLATION'] . " menjadi {$this->db->dbcollat}.");
                 }
             }
         }
@@ -339,7 +361,7 @@ class Periksa_model extends MY_Model
         return $hasil;
     }
 
-    private function perbaiki_jabatan()
+    private function perbaiki_jabatan(): bool
     {
         if ($jabatan = $this->periksa['data_jabatan']) {
             RefJabatan::insert($jabatan);
@@ -366,7 +388,7 @@ class Periksa_model extends MY_Model
             if (isset($id_sementara[$value->id_kk])) {
                 continue;
             }
-            $nokk_sementara = '0' . $kode_desa . sprintf('%05d', $digit);
+            $nokk_sementara = '0' . $kode_desa . sprintf('%05d', (int) $digit + 1);
             $hasil          = Keluarga::create([
                 'id'         => $value->id_kk,
                 'config_id'  => $config_id,
@@ -398,10 +420,25 @@ class Periksa_model extends MY_Model
     {
         $configId = identitas('id');
         $userId   = auth()->id;
-        $sql      = "insert into log_keluarga (config_id, id_kk, id_peristiwa, tgl_peristiwa, updated_by)
-                select {$configId} as config_id, id as id_kk, 1 as id_peristiwa, tgl_daftar as tgl_peristiwa, {$userId} as updated_by
-                from tweb_keluarga  where id not in ( select id_kk from log_keluarga where id_peristiwa = 1 ) ";
+        $sql      = "
+            INSERT INTO log_keluarga (config_id, id_kk, id_peristiwa, tgl_peristiwa, updated_by)
+            SELECT
+                {$configId} AS config_id,
+                id AS id_kk,
+                1 AS id_peristiwa,
+                tgl_daftar AS tgl_peristiwa,
+                {$userId} AS updated_by
+            FROM
+                tweb_keluarga
+            WHERE
+                config_id = {$configId} AND
+                id NOT IN (
+                    SELECT id_kk FROM log_keluarga WHERE config_id = {$configId} AND id_kk IS NOT NULL AND id_peristiwa = 1
+                )
+        ";
+
         DB::statement($sql);
+        DB::table('log_keluarga')->where('config_id', $configId)->whereNull('id_kk')->delete();
     }
 
     private function selesaikan_masalah($masalah_ini): void

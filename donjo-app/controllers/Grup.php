@@ -59,7 +59,7 @@ class Grup extends Admin_Controller
     {
         $data = [
             'tab_ini' => $this->tab_ini,
-            'jenis'   => [UserGrup::SISTEM => 'System', UserGrup::DESA => 'Tambahan'],
+            'jenis'   => [UserGrup::SISTEM => 'Sistem', UserGrup::DESA => 'Tambahan'],
         ];
 
         return view('admin.pengaturan.grup.index', $data);
@@ -148,8 +148,12 @@ class Grup extends Admin_Controller
             redirect_with('error', trim(validation_errors()));
         } else {
             try {
-                $nama   = $this->input->post('nama');
-                $grup   = UserGrup::create(['nama' => $nama, unique_slug('user_grup', $nama), 'jenis' => UserGrup::DESA]);
+                $nama = $this->input->post('nama');
+                $grup = UserGrup::create([
+                    'nama'  => $nama,
+                    'slug'  => unique_slug('user_grup', $nama),
+                    'jenis' => UserGrup::DESA,
+                ]);
                 $moduls = $this->input->post('modul');
                 $this->simpanAkses($grup->id, $moduls);
                 redirect_with('success', 'Grup pengguna berhasil disimpan');
@@ -187,7 +191,10 @@ class Grup extends Admin_Controller
                 if ($grup->jenis == UserGrup::SISTEM) {
                     redirect_with('error', 'Grup pengguna dari sistem tidak boleh dirubah');
                 }
-                $grup->update(['nama' => $nama, unique_slug('user_grup', $nama)]);
+                $grup->update([
+                    'nama' => $nama,
+                    'slug' => unique_slug('user_grup', $nama),
+                ]);
                 $moduls = $this->input->post('modul');
                 $this->simpanAkses($grup->id, $moduls);
                 redirect_with('success', 'Grup pengguna berhasil disimpan');
@@ -198,7 +205,7 @@ class Grup extends Admin_Controller
         }
     }
 
-    private function simpanAkses($grupId, $moduls): void
+    private function simpanAkses(string $grupId, array $moduls): void
     {
         $grupAkses = [];
         $configId  = identitas()->id;
@@ -235,7 +242,7 @@ class Grup extends Admin_Controller
             }
             GrupAkses::whereIn('id_grup', $this->request['id_cb'] ?? [$id])->delete();
             UserGrup::destroy($this->request['id_cb'] ?? $id);
-            cache()->flush();
+            // cache()->flush();
             $this->cache->hapus_cache_untuk_semua('_cache_modul');
             redirect_with('success', 'Grup pengguna berhasil dihapus');
         } catch (Exception $e) {

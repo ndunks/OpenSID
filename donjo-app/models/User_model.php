@@ -40,7 +40,6 @@ use App\Models\LogLogin;
 use App\Models\User;
 use App\Models\UserGrup;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Schema;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -166,10 +165,6 @@ class User_model extends MY_Model
         $this->session->isAdmin      = $user;
         $this->last_login($user->id);
 
-        if (! Schema:: hasTable('log_login')) {
-            return;
-        }
-
         $log_login = LogLogin::create([
             'username'   => $user->nama,
             'ip_address' => $this->input->ip_address(),
@@ -208,7 +203,7 @@ class User_model extends MY_Model
         }
     }
 
-    private function set_fm_key($key = null)
+    private function set_fm_key($key = null): string
     {
         $fmHash = $key . date('Ymdhis');
         $salt   = random_int(100000, 999999);
@@ -263,7 +258,12 @@ class User_model extends MY_Model
         return $query->row_array();
     }
 
-    private function periksa_input_password($id)
+    /**
+     * @param mixed $id
+     *
+     * @return mixed[]
+     */
+    private function periksa_input_password($id): array
     {
         $this->session->success   = 1;
         $this->session->error_msg = '';
@@ -544,7 +544,7 @@ class User_model extends MY_Model
     // get super admin
     public function get_super_admin()
     {
-        return $this->config_id()
+        return (int) $this->config_id()
             ->select('id')
             ->where('id_grup', $this->user_model->id_grup(UserGrup::ADMINISTRATOR))
             ->get('user')

@@ -49,6 +49,7 @@ use App\Models\LogPenduduk;
 use App\Models\LogSurat;
 use App\Models\Pamong;
 use App\Models\Penduduk;
+use App\Models\PermohonanSurat;
 use App\Models\RefJabatan;
 use App\Models\SettingAplikasi;
 use App\Models\Urls;
@@ -205,6 +206,13 @@ class Surat extends Admin_Controller
         if ($id) {
             // Ganti status menjadi 'Menunggu Tandatangan'
             $this->permohonan_surat_model->proses($id, 2);
+
+            //update isian form
+            $post       = $this->input->post();
+            $remove     = ['berlaku_dari', 'berlaku_sampai', 'pilih_atas_nama', 'submit_cetak'];
+            $isian_form = array_diff_key($post, array_flip($remove));
+
+            PermohonanSurat::where('id', $id)->update(['isian_form' => json_encode($isian_form)]);
         }
 
         $surat     = FormatSurat::cetak($url)->first();
@@ -285,7 +293,7 @@ class Surat extends Admin_Controller
             }
 
             if (isset($log_surat['input']['id_pengikut_pindah'])) {
-                $pengikut = Penduduk::with('pendudukHubungan')->whereIn('id', $log_surat['input']['id_pengikut_pindah'])->get();
+                $pengikut = Penduduk::with('pendudukHubungan')->whereIn('id', $log_surat['input']['id_pengikut_pindah'])->orderBy('kk_level')->get();
                 $pindah   = [];
 
                 foreach ($pengikut as $anggota) {
@@ -401,7 +409,8 @@ class Surat extends Admin_Controller
 
             // convert in PDF
             try {
-                $this->tinymce->generateSurat($isi_cetak, $cetak, $margin_cm_to_mm);
+                $defaultFont = underscore(setting('font_surat'));
+                $this->tinymce->generateSurat($isi_cetak, $cetak, $margin_cm_to_mm, $defaultFont);
                 $this->tinymce->generateLampiran($surat->id_pend, $cetak, $cetak['input']);
 
                 if ($preview) {
@@ -450,8 +459,8 @@ class Surat extends Admin_Controller
                         ->pluck('token')
                         ->all();
 
-                    $client       = new \Fcm\FcmClient(FirebaseEnum::SERVER_KEY, FirebaseEnum::SENDER_ID);
-                    $notification = new \Fcm\Push\Notification();
+                    $client       = new Fcm\FcmClient(FirebaseEnum::SERVER_KEY, FirebaseEnum::SENDER_ID);
+                    $notification = new Fcm\Push\Notification();
 
                     $notification
                         ->addRecipient($allToken)
@@ -541,7 +550,7 @@ class Surat extends Admin_Controller
             $log_surat['verifikasi_operator'] = (setting('verifikasi_sekdes') || setting('verifikasi_kades')) ? LogSurat::PERIKSA : LogSurat::TERIMA;
 
             if (LogSurat::updateOrCreate(['id' => $cetak['id']], $log_surat)) {
-                redirect_with('success', 'Berhasil Simpan Konsep');
+                redirect_with('success', 'Berhasil Simpan Konsep', 'keluar/masuk');
             }
         }
 
@@ -619,7 +628,7 @@ class Surat extends Admin_Controller
         return Pamong::kepalaDesa()->first()->pamong_id;
     }
 
-    private function nama_surat_arsip($url, $nik, $nomor)
+    private function nama_surat_arsip(string $url, string $nik, $nomor): string
     {
         $nomor_surat = str_replace("'", '', $nomor);
         $nomor_surat = preg_replace('/[^a-zA-Z0-9.	]/', '-', $nomor_surat);
@@ -644,7 +653,7 @@ class Surat extends Admin_Controller
     }
 
     // Data yang digunakan surat jenis rtf dan tinymce
-    private function get_data_untuk_form($url, &$data, $kategori = 'individu')
+    private function get_data_untuk_form($url, array &$data, $kategori = 'individu')
     {
         // TinyMCE
         // Data penduduk diambil sesuai pengaturan surat
@@ -796,7 +805,7 @@ class Surat extends Admin_Controller
         return show_404();
     }
 
-    private function pengikutDibawah18Tahun($data)
+    private function pengikutDibawah18Tahun(array $data)
     {
         $pengikut = null;
         $minUmur  = 18;
@@ -811,7 +820,7 @@ class Surat extends Admin_Controller
             if ($data['individu']['jenis_kelamin'] == JenisKelaminEnum::LAKI_LAKI) {
                 $filterColumn = 'ayah_nik';
             }
-            $anak = Penduduk::where($filterColumn, $data['individu']['nik'])->withoutGlobalScope(\App\Scopes\ConfigIdScope::class)->get();
+            $anak = Penduduk::where($filterColumn, $data['individu']['nik'])->withoutGlobalScope(App\Scopes\ConfigIdScope::class)->get();
             if ($anak) {
                 $pengikut = $anak->filter(static fn ($item): bool => $item->umur < $minUmur);
             }
@@ -820,14 +829,14 @@ class Surat extends Admin_Controller
         return $pengikut;
     }
 
-    private function pengikutSuratKIS($data)
+    private function pengikutSuratKIS(array $data)
     {
         return Penduduk::where(['id_kk' => $data['individu']['id_kk']])->get();
     }
 
-    private function pengikutPindah($data)
+    private function pengikutPindah(array $data)
     {
-        return Penduduk::where(['id_kk' => $data['individu']['id_kk']])->get();
+        return Penduduk::where(['id_kk' => $data['individu']['id_kk']])->orderBy('kk_level')->get();
     }
 
     private function groupByLabel($array)

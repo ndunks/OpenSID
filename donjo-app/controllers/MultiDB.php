@@ -41,9 +41,9 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class MultiDB extends Admin_Controller
 {
-    public $modul_ini               = 'pengaturan';
-    public $sub_modul_ini           = 'aplikasi';
-    private $tergantungDataPenduduk = [
+    public $modul_ini                     = 'pengaturan';
+    public $sub_modul_ini                 = 'aplikasi';
+    private array $tergantungDataPenduduk = [
         'tweb_keluarga'        => ['key' => 'nik_kepala', 'nik_kepala' => [], 'unique_record' => ['no_kk']],
         'tweb_rtm'             => ['key' => 'nik_kepala', 'nik_kepala' => [], 'unique_record' => ['no_kk']],
         'tweb_wil_clusterdesa' => ['key' => 'id_kepala', 'id_kepala' => [], 'unique_record' => ['rt', 'rw', 'dusun']],
@@ -314,9 +314,9 @@ class MultiDB extends Admin_Controller
         $tableNames = collect($tableNames)->filter(static fn ($tableName): bool => ! in_array($tableName, $kecuali));
 
         // $rand       = mt_rand(100000, 999999);
-        // ambil dari 6 digit terakhir kode desa
+        // ambil dari 6 digit terakhir kode desa + 999999 agar tidak duplikasi dengan data maksimal
         $kode_desa  = DB::table('config')->where('app_key', get_app_key())->value('kode_desa');
-        $rand       = (int) substr($kode_desa, -6);
+        $rand       = 999999 + (int) substr($kode_desa, -6);
         $backupData = [
             'info' => [
                 'versi'    => VERSION,
@@ -434,10 +434,12 @@ class MultiDB extends Admin_Controller
 
             // write_file(DESAPATH . 'app_key', $backupData['tabel']['config']['data'][0]['app_key']);
             // delete dulu sebelum direstore
-            foreach (array_reverse($backupData['tabel']) as $tableName => $tableDetails) {
-                if ($tableName == 'config') continue;
+            foreach (array_keys(array_reverse($backupData['tabel'])) as $tableName) {
+                if ($tableName == 'config') {
+                    continue;
+                }
                 DB::table($tableName)->where(['config_id' => identitas('id')])->delete();
-                log_message('error', 'hapus data tabel ' . $tableName);
+                // log_message('notice', 'hapus data tabel ' . $tableName);
             }
 
             foreach ($backupData['tabel'] as $tableName => $tableDetails) {
@@ -463,16 +465,16 @@ class MultiDB extends Admin_Controller
                         $idPendudukBaru = (int) $idPenduduk + $rand;
                         $nik            = $mapPenduduk[$idPendudukBaru]['nik'];
                         // get id penduduk terbaru
-                        log_message('error', 'penduduk nik ' . $nik);
+                        // log_message('error', 'penduduk nik ' . $nik);
                         $penduduk    = DB::table('tweb_penduduk')->where(['nik' => $nik, 'config_id' => identitas('id')])->first();
                         $uniqueValue = explode('__', $record);
                         if ($penduduk) {
-                            log_message('error', 'penduduk ' . $penduduk->id);
+                            // log_message('error', 'penduduk ' . $penduduk->id);
                             $condition              = array_combine($uniqueRecord, $uniqueValue);
                             $condition['config_id'] = identitas('id');
-                            log_message('error', 'kondisi ' . json_encode($condition));
+                            // log_message('error', 'kondisi ' . json_encode($condition));
                             DB::table($table)->where($condition)->update([$key => $penduduk->id]);
-                            log_message('error', 'tabel ' . $table);
+                            // log_message('error', 'tabel ' . $table);
                         }
                     }
                 }
@@ -481,7 +483,7 @@ class MultiDB extends Admin_Controller
             DB::commit();
             hapus_cache('_cache_modul');
             redirect_with('success', 'Proses restore dari backup berhasil.', ci_route('database'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             log_message('error', 'gagal restore ' . $e->getMessage() );
             redirect_with('error', 'Proses restore dari backup gagal. <br><br>' . $e->getMessage(), ci_route('database'));
@@ -513,6 +515,7 @@ class MultiDB extends Admin_Controller
                     }
 
                 }
+                reset_auto_increment($tableName, $tableDetails['primary_key']);
                 DB::table($tableName)->insert($record);
                 log_message('notice', 'Restore data ' . $tableName . ' id ' . $record['id'] . ' berhasil.');
             }
@@ -522,7 +525,7 @@ class MultiDB extends Admin_Controller
     private function reStrukturTableData($tableName, $tableDetails, $rand): void
     {
         $primary_key = $tableDetails['primary_key'];
-        log_message('notice', 'reStrukturTableData  ' . $tableName . ' id ');
+        // log_message('notice', 'reStrukturTableData  ' . $tableName . ' id ');
         $idIni = DB::table('config')->where('app_key', get_app_key())->value('id');
         if ($primary_key !== null) {
             if ($tableName == 'config') {

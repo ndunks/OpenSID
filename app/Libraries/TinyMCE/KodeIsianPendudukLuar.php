@@ -62,6 +62,14 @@ class KodeIsianPendudukLuar
         'pend_kecamatan',
         'pend_kabupaten',
         'pend_provinsi',
+        'gol_darah',
+        'status_kawin',
+        'tanggalperkawinan',
+        'hubungan_kk',
+        'dokumen_pasport',
+        'dokumen_kitas',
+        'nama_ayah',
+        'nama_ibu',
 
         // kode isian lama
         'form_nama_non_warga',
@@ -90,19 +98,16 @@ class KodeIsianPendudukLuar
 
         $prefix = '_' . $kategori;
 
-        if ($kategori == 'individu') {
+        if ($kategori === 'individu') {
             if (isset($this->inputForm['nik'])) {
                 return [];
             }
-
             $prefix = '';
             if ($this->inputForm['nik'] == $input['nik']) {
                 unset($input['nik']);
             }
-        } else {
-            if ($this->inputForm["id_pend_{$kategori}"]) {
-                return [];
-            }
+        } elseif ($this->inputForm["id_pend_{$kategori}"]) {
+            return [];
         }
 
         return collect(self::$kodeIsian)->mapWithKeys(static function (string $item) use ($prefix, $input): array {
@@ -116,15 +121,15 @@ class KodeIsianPendudukLuar
                 $tgl_lahir = $input['tanggallahir'];
             }
 
-            if ($item == 'ttl') {
+            if ($item === 'ttl') {
                 $value = $input['tempatlahir'] . '/' . formatTanggal($tgl_lahir);
             }
 
-            if ($item == 'usia') {
+            if ($item === 'usia') {
                 $value = usia($tgl_lahir, null, '%y tahun');
             }
 
-            if ($item == 'alamat') {
+            if ($item === 'alamat') {
                 $value = $input['alamat_jalan'] . ' RT ' . $input['nama_rt'] . ' RW ' . $input['nama_rw'] . ' ' . ucwords(setting('sebutan_desa') . ' ' . $input['pend_desa'] . ', ' . setting('sebutan_kecamatan') . ' ' . $input['pend_kecamatan'] . ', ' . setting('sebutan_kabupaten') . ' ' . $input['pend_kabupaten'] . ', Provinsi ' . $input['pend_provinsi']);
             }
 
@@ -135,5 +140,29 @@ class KodeIsianPendudukLuar
     public function getKategori()
     {
         return collect($this->suratMatser->form_isian)->keys()->mapWithKeys(fn ($item) => $this->alias($item))->toArray();
+    }
+
+    public static function getLabels(): array
+    {
+        return [
+            'nama'               => 'Nama Lengkap',
+            'no_ktp'             => 'NIK',
+            'tempat_lahir'       => 'Tempat Lahir',
+            'tanggal_lahir'      => 'Tanggal Lahir',
+            'jenis_kelamin'      => 'Jenis Kelamin',
+            'agama'              => 'Agama',
+            'pendidikan_kk'      => 'Pendidikan',
+            'pekerjaan'          => 'Pekerjaan',
+            'warga_negara'       => 'Warga Negara',
+            'alamat'             => 'Alamat',
+            'golongan_darah'     => 'Golongan Darah',
+            'status_perkawinan'  => 'Status Perkawinan',
+            'tanggal_perkawinan' => 'Tanggal Perkawinan',
+            'shdk'               => 'Status Hubungan Dalam Keluarga',
+            'no_paspor'          => 'No. Paspor',
+            'no_kitas'           => 'No. KITAS / KITAP',
+            'nama_ayah'          => 'Nama Ayah',
+            'nama_ibu'           => 'Nama Ibu',
+        ];
     }
 }

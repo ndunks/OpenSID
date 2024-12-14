@@ -69,7 +69,7 @@ class Web extends Admin_Controller
         if ($cat === null) {
             $cat = -1;
         }
-        $data['status']        = [StatusEnum::YA => 'Aktif', StatusEnum::TIDAK => 'Non Aktif'];
+        $data['status']        = [StatusEnum::YA => 'Aktif', StatusEnum::TIDAK => 'Tidak Aktif'];
         $data['cat']           = $cat;
         $data['list_kategori'] = Kategori::with(['children' => static fn ($q) => $q->orderBy('urut')])->whereParrent(0)->get()->toArray();
         $data['kategori']      = (int) $cat > 0 ? Kategori::select(['kategori'])->find($cat)->kategori : '';
@@ -162,7 +162,8 @@ class Web extends Admin_Controller
             $data['artikel']     = $artikel->toArray();
             $data['form_action'] = ci_route('web.update.' . $cat, $id);
             $data['id']          = $id;
-            $data['kategori']    = is_numeric($cat) && $cat > 0 ? $artikel->category->toArray() : ['kategori' => ''];
+            $data['kategori']    = is_numeric($cat) && $cat > 0 ? ($artikel->category ? $artikel->category->toArray() : ['kategori' => '']) : ['kategori' => ''];
+
         } else {
             if ($cat === null) {
                 redirect_with('error', 'Kategori tidak ditemukan');
@@ -240,9 +241,6 @@ class Web extends Admin_Controller
             }
         }
 
-        foreach ($list_gambar as $gambar) {
-            unset($data['old_' . $gambar]);
-        }
         if ($data['tgl_upload'] == '') {
             $data['tgl_upload'] = date('Y-m-d H:i:s');
         } else {
@@ -273,7 +271,7 @@ class Web extends Admin_Controller
 
     }
 
-    private function ambil_data_agenda(&$data)
+    private function ambil_data_agenda(array &$data): array
     {
         $agenda               = [];
         $agenda['tgl_agenda'] = $data['tgl_agenda'];
@@ -320,7 +318,6 @@ class Web extends Admin_Controller
                 $hasil     = UploadArtikel($nama_file, $gambar);
                 if ($hasil) {
                     $data[$gambar] = $nama_file;
-                    HapusArtikel($data['old_' . $gambar]);
                 } else {
                     unset($data[$gambar]);
                 }
@@ -359,9 +356,6 @@ class Web extends Admin_Controller
             }
         }
 
-        foreach ($list_gambar as $gambar) {
-            unset($data['old_' . $gambar]);
-        }
         if ($data['tgl_upload'] == '') {
             $data['tgl_upload'] = date('Y-m-d H:i:s');
         } else {
@@ -493,7 +487,7 @@ class Web extends Admin_Controller
 
         SettingAplikasi::where('key', 'sumber_gambar_slider')->update(['value' => $this->input->post('pilihan_sumber')]);
         SettingAplikasi::where('key', 'jumlah_gambar_slider')->update(['value' => $this->input->post('jumlah_gambar_slider')]);
-        cache()->forget('setting_aplikasi');
+        (new SettingAplikasi())->flushQueryCache();
         redirect('web/slider');
     }
 

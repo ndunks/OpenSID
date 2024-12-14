@@ -44,6 +44,7 @@ use App\Models\Suplemen;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
+// TODO:: Ganti cara hapus cache yang gunakan prefix dimodul menu ("{$grupId}_admin_menu")
 class Menu extends Admin_Controller
 {
     public $modul_ini     = 'admin-web';
@@ -59,7 +60,7 @@ class Menu extends Admin_Controller
     {
         $parent = $this->input->get('parent') ?? 0;
         $data   = [
-            'status'   => [MenuModel::UNLOCK => 'Aktif', MenuModel::LOCK => 'Non Aktif'],
+            'status'   => [MenuModel::UNLOCK => 'Aktif', MenuModel::LOCK => 'Tidak Aktif'],
             'subtitle' => $parent > 0 ? '<a href="' . ci_route('menu.index') . '?parent=0">MENU UTAMA </a> / ' . MenuModel::find($parent)->getSelfParents()->reverse()->map(static fn ($item) => $parent == $item['id'] ? strtoupper($item['nama']) : '<a href="' . ci_route('menu.index') . '?parent=' . $item['id'] . '">' . strtoupper($item['nama']) . '</a>')->join(' / ') : '',
             'parent'   => $parent,
         ];
@@ -75,7 +76,7 @@ class Menu extends Admin_Controller
             $canDelete = can('h');
             $canUpdate = can('u');
 
-            return datatables()->of(MenuModel::child($parent)->with(['parent'])->orderBy('urut', 'asc')->when($status, static fn ($q) => $q->where('enabled', $status)))
+            return datatables()->of(MenuModel::child($parent)->with(['parent'])->orderBy('urut', 'asc')->when(in_array($status, ['0', '1']), static fn ($q) => $q->where('enabled', $status)))
                 ->addColumn('drag-handle', static fn () => '<i class="fa fa-sort-alpha-desc"></i>')
                 ->addColumn('ceklist', static function ($row) use ($canDelete) {
                     if ($canDelete) {
@@ -147,6 +148,7 @@ class Menu extends Admin_Controller
 
         try {
             MenuModel::create($data);
+            // TODO:: hapus cache hanya prefix *_admin_menu
             cache()->flush();
             redirect_with('success', 'Menu berhasil disimpan', ci_route('menu.index') . '?parent=' . $parent);
         } catch (Exception $e) {

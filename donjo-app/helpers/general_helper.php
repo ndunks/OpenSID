@@ -41,6 +41,7 @@ use App\Models\JamKerja;
 use App\Models\Kehadiran;
 use App\Models\Menu;
 use App\Models\Modul;
+use App\Models\User;
 use App\Models\UserGrup;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -78,22 +79,34 @@ if (! function_exists('can')) {
      * @param string|null $akses
      * @param string|null $slugModul
      * @param bool        $adminOnly
+     * @param mixed       $demoOnly
      *
      * @return array|bool
      */
-    function can($akses = null, $slugModul = null, $adminOnly = false)
+    function can($akses = null, $slugModul = null, $adminOnly = false, $demoOnly = false)
     {
-        $grupId   = auth()->id_grup;
-        $slugGrup = UserGrup::find($grupId)->slug;
-        $data     = cache()->remember('akses_grup_' . $grupId, 604800, static function () use ($grupId, $slugGrup) {
+        if ($demoOnly && config_item('demo_mode')) {
+            return false;
+        }
+
+        if ($slugModul === Modul::DEFAULT_MODUL['beranda']['slug']) {
+            return true;
+        }
+
+        $grupId = auth()->id_grup;
+
+        $data = cache()->remember('akses_grup_' . $grupId, 604800, static function () use ($grupId) {
+            $slugGrup = UserGrup::find($grupId)->slug;
             if (in_array($grupId, UserGrup::getGrupSistem())) {
                 $grup = UserGrup::getAksesGrupBawaan()[$slugGrup];
 
                 if (count($grup) === 1 && array_keys($grup)[0] == '*') {
-                    $grupAkses = Modul::get();
-                    $rbac      = array_values($grup)[0];
+                    $grupAkses = Modul::when(! super_admin(), static function ($query) {
+                            $query->isActive();
+                        })->get();
+                    $rbac = array_values($grup)[0];
                 } else {
-                    $grupAkses = Modul::whereIn('slug', array_keys($grup))->get();
+                    $grupAkses = Modul::whereIn('slug', array_keys($grup))->isActive()->get();
                 }
 
                 return $grupAkses->mapWithKeys(static function ($item) use ($grupId, $rbac, $grup) {
@@ -151,8 +164,8 @@ if (! function_exists('can')) {
             return false;
         }
 
-        if ($adminOnly) {
-            return (bool) super_admin();
+        if ($adminOnly && auth()->id != super_admin()) {
+            return false;
         }
 
         return $data[$slugModul][$alias[$akses]];
@@ -166,16 +179,17 @@ if (! function_exists('isCan')) {
      * @param string|null $akses
      * @param string|null $slugModul
      * @param bool        $adminOnly
+     * @param mixed       $demoOnly
      */
-    function isCan($akses = null, $slugModul = null, $adminOnly = false): void
+    function isCan($akses = null, $slugModul = null, $adminOnly = false, $demoOnly = false): void
     {
         $pesan = 'Anda tidak memiliki akses untuk halaman tersebut!';
-        if (! can('b', $slugModul, $adminOnly)) {
+        if (! can('b', $slugModul, $adminOnly, $demoOnly)) {
             set_session('error', $pesan);
             session_error($pesan);
 
             redirect('beranda');
-        } elseif (! can($akses, $slugModul, $adminOnly)) {
+        } elseif (! can($akses, $slugModul, $adminOnly, $demoOnly)) {
             set_session('error', $pesan);
             session_error($pesan);
 
@@ -343,8 +357,8 @@ if (! function_exists('SebutanDesa')) {
     function SebutanDesa($params = null)
     {
         return str_replace(
-            ['[Desa]', '[desa]', '[Pemerintah Desa]'],
-            [ucwords(setting('sebutan_desa')), ucwords(setting('sebutan_desa')), ucwords(setting('sebutan_pemerintah_desa'))],
+            ['[Desa]', '[desa]', '[Pemerintah Desa]', '[dusun]'],
+            [ucwords(setting('sebutan_desa')), ucwords(setting('sebutan_desa')), ucwords(setting('sebutan_pemerintah_desa')), ucwords(setting('sebutan_dusun'))],
             $params
         );
     }
@@ -457,8 +471,6 @@ if (! function_exists('folder_desa')) {
         write_file(DESAPATH . 'pengaturan/siteman/siteman_mandiri.css', config_item('siteman_mandiri_css'), 'x');
         write_file(DESAPATH . 'app_key', set_app_key(), 'x');
 
-        config()->set('app.key', get_app_key());
-
         // set config app.key untuk proses intall
         config()->set('app.key', get_app_key());
 
@@ -534,13 +546,7 @@ if (! function_exists('case_replace')) {
 
         $result = preg_replace_callback('/(' . $dari . ')/i', $replacer, $str);
 
-        if (preg_match('/nama_kepala_camat/i', strtolower($dari))) {
-            $pecah_nama_gelar = pecah_nama_gelar($ke);
-            $gelar_depan      = $pecah_nama_gelar['gelar_depan'];
-            $gelar_belakang   = $pecah_nama_gelar['gelar_belakang'];
-
-            $result = str_ireplace([$gelar_depan, $gelar_belakang], [$gelar_depan, $gelar_belakang], $result);
-        } elseif (preg_match('/pendidikan/i', strtolower($dari))) {
+        if (preg_match('/pendidikan/i', strtolower($dari))) {
             $result = kasus_lain('pendidikan', $result);
         } elseif (preg_match('/pekerjaan/i', strtolower($dari))) {
             $result = kasus_lain('pekerjaan', $result);
@@ -565,7 +571,7 @@ if (! function_exists('kirim_versi_opensid')) {
 
             if ($versi != $ci->cache->file->get('versi_app_cache')) {
                 try {
-                    $client = new \GuzzleHttp\Client();
+                    $client = new GuzzleHttp\Client();
                     $client->post(config_item('server_layanan') . '/api/v1/pelanggan/catat-versi', [
                         'headers'     => ['X-Requested-With' => 'XMLHttpRequest'],
                         'form_params' => [
@@ -1099,5 +1105,44 @@ if (! function_exists('invalid_tags')) {
             '<section>',
             '<time>',
         ];
+    }
+}
+
+if (! function_exists('reset_auto_increment')) {
+    /**
+     * Reset auto increment.
+     *
+     * @param string $table
+     * @param string $column
+     *
+     * @return void
+     */
+    function reset_auto_increment($table, $column = 'id')
+    {
+        $max_id = DB::table($table)->max($column);
+        DB::statement("ALTER TABLE {$table} AUTO_INCREMENT = " . ($max_id + 1));
+    }
+}
+
+// TODO:: Hapus ini jika sudah menggunakan ORM Laravel semua
+if (! function_exists('shortcut_cache')) {
+    function shortcut_cache()
+    {
+        User::pluck('id')->each(static function ($id) {
+            cache()->forget('shortcut_' . $id);
+        });
+    }
+}
+
+if (! function_exists('emptyData')) {
+    function emptyData($fields): array
+    {
+        $data = [];
+
+        foreach ($fields as $key => $value) {
+            $data[$value] = '';
+        }
+
+        return $data;
     }
 }

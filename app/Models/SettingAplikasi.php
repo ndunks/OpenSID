@@ -40,15 +40,28 @@ namespace App\Models;
 use App\Enums\StatusEnum;
 use App\Models\Galery as Galeri;
 use App\Traits\ConfigId;
+use Rennokki\QueryCache\Traits\QueryCacheable;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class SettingAplikasi extends BaseModel
 {
     use ConfigId;
+    use QueryCacheable;
 
     public const WARNA_TEMA              = '#eab308';
     public const RENTANG_WAKTU_KEHADIRAN = 10;
+
+    /**
+     * Invalidate the cache automatically
+     * upon update in the database.
+     *
+     * @var bool
+     */
+    protected static $flushCacheOnUpdate = true;
+
+    // forever cache
+    public $cacheFor = -1;
 
     /**
      * The table associated with the model.
@@ -111,19 +124,6 @@ class SettingAplikasi extends BaseModel
 
     public function getOptionAttribute()
     {
-        if ($this->attributes['jenis'] == 'option' && $this->attributes['key'] == 'web_theme') {
-            // TODO : Akan dipindahkan ke modul tema
-            $list_tema  = [];
-            $tema_semua = array_merge(glob('vendor/themes/*', GLOB_ONLYDIR), glob('desa/themes/*', GLOB_ONLYDIR));
-
-            foreach ($tema_semua as $tema) {
-                if (is_file(FCPATH . $tema . '/template.php')) {
-                    $list_tema[] = str_replace(['vendor/', 'themes/'], '', $tema);
-                }
-            }
-
-            return array_combine($list_tema, $list_tema);
-        }
         if ($this->attributes['jenis'] == 'option' && $this->attributes['key'] == 'tampilan_anjungan_slider') {
             return Galeri::whereParrent(Galeri::PARRENT)->whereEnabled(StatusEnum::YA)->pluck('nama', 'id');
         }
@@ -139,6 +139,10 @@ class SettingAplikasi extends BaseModel
 
     public function getValueAttribute()
     {
+        if ($this->attributes['jenis'] == 'select-simbol') {
+            return base_url(LOKASI_SIMBOL_LOKASI . $this->attributes['value']);
+        }
+
         return $this->attributes['value'];
     }
 }

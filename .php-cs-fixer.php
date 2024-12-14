@@ -87,6 +87,7 @@ $finder = Symfony\Component\Finder\Finder::create()
         __DIR__ . '/donjo-app/third_party/*/views',
         __DIR__ . '/donjo-app/models/migrations',
         __DIR__ . '/donjo-app/models/seeders',
+        __DIR__ . '/donjo-app/libraries/Spreadsheet_Excel_Reader.php',
     ])
     ->append([
         __DIR__ . '/index.php',
@@ -94,11 +95,16 @@ $finder = Symfony\Component\Finder\Finder::create()
         __DIR__ . '/.rector.php',
     ])
     ->name('*.php')
-    ->notName(['*.blade.php', 'Data_awal_seeder.php', 'Data_awal.php'])
+    ->notName([
+        '*.blade.php',
+        'Data_awal_seeder.php',
+        'Data_awal.php',
+        'ConsoleServiceProvider.php',
+    ])
     ->ignoreDotFiles(true)
     ->ignoreVCS(true);
 
-return (new \PhpCsFixer\Config())
+return (new PhpCsFixer\Config())
     ->setRules(
         [
             'align_multiline_comment'                  => ['comment_type' => 'phpdocs_only'],

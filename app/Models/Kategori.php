@@ -37,6 +37,7 @@
 
 namespace App\Models;
 
+use App\Traits\ConfigId;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -46,6 +47,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Kategori extends BaseModel
 {
+    use ConfigId;
     use SortableTrait;
 
     public const ENABLE = 1;
@@ -146,6 +148,11 @@ class Kategori extends BaseModel
     public function children(): HasMany
     {
         return $this->hasMany(Kategori::class, 'parrent', 'id');
+    }
+
+    public function artikel(): HasMany
+    {
+        return $this->hasMany(Artikel::class, 'id_kategori');
     }
 
     public static function isUniqueKategori($kategori, $config_id, $id = null)

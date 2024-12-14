@@ -21,45 +21,47 @@
 
     <div class="box box-info">
         <div class="box-header with-border">
-            @if (can('u'))
-                <a href="{{ ci_route("{$controller}/produk_form") }}" class="btn btn-social btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Tambah Data"><i class="fa fa-plus"></i> Tambah
-                </a>
-            @endif
-            @if (can('h'))
-                <a href="#confirm-delete" title="Hapus Data" onclick="deleteAllBox('mainform','{{ ci_route("{$controller}/produk_delete_all") }}')" class="btn btn-social btn-danger btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block hapus-terpilih"><i
-                        class='fa fa-trash-o'
-                    ></i> Hapus</a>
-            @endif
+            @includeIf('admin.layouts.components.buttons.tambah', ['url' => 'lapak_admin/produk_form'])
+            @includeIf('admin.layouts.components.buttons.hapus', [
+                'url' => 'lapak_admin/produk_delete_all',
+            ])
+            @includeIf('admin.layouts.components.buttons.cetak', [
+                'modal' => true,
+                'url' => 'lapak_admin/produk/dialog/cetak',
+            ])
+            @includeIf('admin.layouts.components.buttons.unduh', [
+                'modal' => true,
+                'url' => 'lapak_admin/produk/dialog/unduh',
+            ])
         </div>
         <form id="mainform" name="mainform" method="post">
-            <div class="box-header with-border form-inline">
-                <div class="row">
+            <div class="box-body">
+                <div class="row mepet">
                     <div class="col-sm-2">
                         <select class="form-control input-sm select2" id="status" name="status">
-                            <option value="">Semua Status</option>
-                            <option value="1">Aktif</option>
-                            <option value="2">Non Aktif</option>
+                            <option value="">Pilih Status</option>
+                            <option value="1" selected>Aktif</option>
+                            <option value="2">Tidak Aktif</option>
                         </select>
                     </div>
-                    <div class="col-sm-2">
+                    <div class="col-sm-3">
                         <select class="form-control input-sm select2" id="id_pend" name="id_pend">
-                            <option value="">Semua Pelapak</option>
+                            <option value="">Pilih Pelapak</option>
                             @foreach ($pelapak as $pel)
                                 <option value="{{ $pel->id_pend }}">{{ $pel->nik . ' - ' . $pel->pelapak }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-sm-2">
+                    <div class="col-sm-3">
                         <select class="form-control input-sm select2" id="id_produk_kategori" name="id_produk_kategori">
-                            <option value="">Semua Kategori</option>
+                            <option value="">Pilih Kategori</option>
                             @foreach ($kategori as $kat)
                                 <option value="{{ $kat->id }}">{{ $kat->kategori }}</option>
                             @endforeach
                         </select>
                     </div>
                 </div>
-            </div>
-            <div class="box-body">
+                <hr class="batas">
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped dataTable table-hover tabel-daftar" id="tabel-produk">
                         <thead class="bg-gray disabled color-palette">
@@ -139,9 +141,11 @@
                         'data': function(data) {
                             let status;
                             if (data.status == 1) {
-                                status = `<a href="{{ ci_route("{$controller}/produk_status/") }}${data.id}/2" class="btn bg-navy btn-sm" title="Non Aktifkan Produk"><i class="fa fa-unlock"></i></a>`
+                                status =
+                                    `<a href="{{ ci_route("{$controller}/produk_status/") }}${data.id}/2" class="btn bg-navy btn-sm" title="Non Aktifkan Produk"><i class="fa fa-unlock"></i></a>`
                             } else {
-                                status = `<a href="{{ ci_route("{$controller}/produk_status/") }}${data.id}/1" class="btn bg-navy btn-sm" title="Aktifkan Produk"><i class="fa fa-lock"></i></a>`
+                                status =
+                                    `<a href="{{ ci_route("{$controller}/produk_status/") }}${data.id}/1" class="btn bg-navy btn-sm" title="Aktifkan Produk"><i class="fa fa-lock"></i></a>`
                             }
 
                             return `

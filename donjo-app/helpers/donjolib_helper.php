@@ -91,7 +91,7 @@ function Rupiah($nil = 0): string
         $i++;
     }
     $rp = strrev($str2);
-    if ($rp == '') {
+    if ($rp === '') {
         return 'Rp. 0,00';
     }
     if ($rp <= 0) {
@@ -125,7 +125,7 @@ function Rupiah2($nil = 0): string
         $i++;
     }
     $rp = strrev($str2);
-    if ($rp == '') {
+    if ($rp === '') {
         return '-';
     }
     if ($rp <= 0) {
@@ -220,7 +220,7 @@ function selected($a, $b, $opt = 0): void
 
 function date_is_empty($tgl): bool
 {
-    return empty($tgl) || substr($tgl, 0, 10) == '0000-00-00';
+    return empty($tgl) || substr($tgl, 0, 10) === '0000-00-00';
 }
 
 function rev_tgl($tgl, $replace_with = '-')
@@ -269,9 +269,10 @@ function getBulan(int $bln)
  *
  * @return string[]
  */
-function tahun(int $awal = 2018, $asc = false): array
+function tahun(?int $awal = null, $asc = false): array
 {
     $akhir = date('Y');
+    $awal ??= $akhir;
     $tahun = [];
 
     for ($i = $akhir; $i >= $awal; $i--) {
@@ -374,7 +375,7 @@ function tgl_indo($tgl, $replace_with = '-', string $with_day = '')
     $tanggal = substr($tgl, 8, 2);
     $bulan   = getBulan((int) substr($tgl, 5, 2));
     $tahun   = substr($tgl, 0, 4);
-    if ($with_day != '') {
+    if ($with_day !== '') {
         $tanggal = $with_day . ', ' . date('j', strtotime($tgl));
     }
 
@@ -592,30 +593,40 @@ function to_word($number): string
 
     $unit = ['', 'ribu', 'juta', 'milyar', 'triliun', 'kuadriliun', 'kuintiliun', 'sekstiliun', 'septiliun', 'oktiliun', 'noniliun', 'desiliun', 'undesiliun', 'duodesiliun', 'tredesiliun', 'kuatuordesiliun'];
 
-    if ($number < 12) {
-        $words = ' ' . $arr_number[$number];
-    } elseif ($number < 20) {
-        $words = to_word($number - 10) . ' belas';
-    } elseif ($number < 100) {
-        $words = to_word(intdiv($number, 10)) . ' puluh' . to_word($number % 10);
-    } elseif ($number < 200) {
-        $words = ' seratus' . to_word($number - 100);
-    } elseif ($number < 1000) {
-        $words = to_word(intdiv($number, 100)) . ' ratus' . to_word($number % 100);
-    } elseif ($number >= 1000 && $number < 2000) {
-        $words = ' seribu' . to_word($number - 1000);
+    if (strpos($number, ',') === true) {
+        $parts       = explode(',', $number);
+        $intPart     = (int) $parts[0];
+        $decimalPart = (int) $parts[1];
+
+        $words = to_word($intPart) . ' koma ' . to_word($decimalPart);
     } else {
-        for ($i = count($unit) - 1; $i >= 0; $i--) {
-            $divider = 10 ** (3 * $i);
-            if ($number < $divider) {
-                continue;
+        $number = (int) str_replace('.', '', $number); // Ubah menjadi integer untuk memastikan hanya bilangan bulat yang diproses
+
+        if ($number < 12) {
+            $words = ' ' . $arr_number[$number];
+        } elseif ($number < 20) {
+            $words = to_word($number - 10) . ' belas';
+        } elseif ($number < 100) {
+            $words = to_word(intdiv($number, 10)) . ' puluh' . to_word($number % 10);
+        } elseif ($number < 200) {
+            $words = ' seratus' . to_word($number - 100);
+        } elseif ($number < 1000) {
+            $words = to_word(intdiv($number, 100)) . ' ratus' . to_word($number % 100);
+        } elseif ($number >= 1000 && $number < 2000) {
+            $words = ' seribu' . to_word($number - 1000);
+        } else {
+            for ($i = count($unit) - 1; $i >= 0; $i--) {
+                $divider = 10 ** (3 * $i);
+                if ($number < $divider) {
+                    continue;
+                }
+
+                $div = intdiv($number, $divider);
+                $mod = $number % $divider;
+
+                $words = to_word($div) . ' ' . $unit[$i] . to_word($mod);
+                break;
             }
-
-            $div = intdiv($number, $divider);
-            $mod = $number % $divider;
-
-            $words = to_word($div) . ' ' . $unit[$i] . to_word($mod);
-            break;
         }
     }
 
@@ -780,15 +791,17 @@ function delete_col(&$array, $offset): bool
 function get_pesan_opendk(): void
 {
     $ci = &get_instance();
-    if ((! $ci->db->table_exists('pesan') && ! $ci->db->table_exists('pesan_detail')) || empty($ci->setting->api_opendk_key)) {
+
+    if (! setting('sinkronisasi_opendk')) {
         return;
     }
-    $model_pesan        = new \App\Models\Pesan();
-    $model_detail_pesan = new \App\Models\PesanDetail();
+
+    $model_pesan        = new App\Models\Pesan();
+    $model_detail_pesan = new App\Models\PesanDetail();
     $id_terakhir        = $model_detail_pesan::latest('id')->first()->id;
 
     try {
-        $client   = new \GuzzleHttp\Client();
+        $client   = new GuzzleHttp\Client();
         $response = $client->post("{$ci->setting->api_opendk_server}/api/v1/pesan/getpesan", [
             'headers' => [
                 'X-Requested-With' => 'XMLHttpRequest',
@@ -835,7 +848,7 @@ if (! function_exists('opendk_api')) {
         $ci = &get_instance();
 
         try {
-            $client   = new \GuzzleHttp\Client();
+            $client   = new GuzzleHttp\Client();
             $response = $client->{$method}("{$ci->setting->api_opendk_server}{$path_url}", array_merge(
                 [
                     'headers' => [

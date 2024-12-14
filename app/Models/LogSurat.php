@@ -38,6 +38,7 @@
 namespace App\Models;
 
 use App\Traits\ConfigId;
+use App\Traits\ShortcutCache;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
@@ -47,6 +48,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 class LogSurat extends BaseModel
 {
     use ConfigId;
+    use ShortcutCache;
 
     public const KONSEP  = 0;
     public const CETAK   = 1;
@@ -165,11 +167,13 @@ class LogSurat extends BaseModel
         return str_replace(array_keys($array_replace), array_values($array_replace), $format_nomor_surat);
     }
 
-    public function getFileSuratAttribute()
+    public function getFileSuratAttribute(): ?string
     {
         if ($this->lampiran != null) {
             return FCPATH . LOKASI_ARSIP . pathinfo($this->nama_surat, PATHINFO_FILENAME);
         }
+
+        return null;
     }
 
     public function statusPeriksa($jabatanId, $idJabatanKades, $idJabatanSekdes): int
@@ -309,7 +313,7 @@ class LogSurat extends BaseModel
         $setting || $setting = setting('penomoran_surat');
 
         switch ($type) {
-            // no break
+                // no break
             case 'log_surat':
                 if ($setting == 1) {
                     $surat = LogSurat::whereNull('deleted_at')
