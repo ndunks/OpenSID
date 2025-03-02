@@ -43,15 +43,8 @@ use App\Models\Penduduk;
 
 class KodeIsianPenduduk
 {
-    private $idPenduduk;
-    private $prefix;
-    private $prefixJudul;
-
-    public function __construct($idPenduduk = null, $prefix = '', $prefixJudul = false)
+    public function __construct(private $idPenduduk = null, private $prefix = '', private $prefixJudul = false)
     {
-        $this->idPenduduk  = $idPenduduk;
-        $this->prefix      = $prefix;
-        $this->prefixJudul = $prefixJudul;
     }
 
     public static function get($idPenduduk = null, $prefix = '', $prefixJudul = false): array
@@ -67,7 +60,7 @@ class KodeIsianPenduduk
 
         // Data Umum
         if (! empty($this->prefix)) {
-            $ortu   = ' ' . ucwords($this->prefix);
+            $ortu   = ' ' . ucwords((string) $this->prefix);
             $prefix = '_' . $this->prefix;
         }
 
@@ -142,10 +135,9 @@ class KodeIsianPenduduk
                 'data'  => $penduduk->alamat_wilayah,
             ],
             [
-                'case_sentence' => true,
-                'judul'         => 'No KK' . $ortu,
-                'isian'         => 'no_kk' . $prefix,
-                'data'          => get_nokk($penduduk->keluarga->no_kk),
+                'judul' => 'Alamat Lengkap' . $ortu,
+                'isian' => 'alamat_lengkap' . $prefix,
+                'data'  => $penduduk->alamat_wilayah . ', ' . ucwords(setting('sebutan_desa') . ' ' . $config->nama_desa . ', ' . setting('sebutan_kecamatan') . ' ' . $config->nama_kecamatan . ', ' . setting('sebutan_kabupaten') . ' ' . $config->nama_kabupaten . ', Provinsi ' . $config->nama_propinsi),
             ],
             [
                 'judul' => 'Golongan Darah' . $ortu,
@@ -202,7 +194,7 @@ class KodeIsianPenduduk
             [
                 'judul' => 'Pendidikan Sedang' . $ortu,
                 'isian' => 'pendidikan_sedang' . $prefix,
-                'data'  => $penduduk->pendidikan->nama,
+                'data'  => $penduduk->pendidikan,
             ],
             [
                 'judul' => 'Pendidikan Dalam KK' . $ortu,
@@ -303,7 +295,7 @@ class KodeIsianPenduduk
                 [
                     'judul' => 'Status Perkawinan',
                     'isian' => 'status_kawin',
-                    'data'  => $penduduk->statusKawin->nama, // Cek ini
+                    'data'  => $penduduk->status_perkawinan, // Cek ini
                 ],
                 [
                     'judul' => 'Akta Perkawinan',
@@ -345,7 +337,7 @@ class KodeIsianPenduduk
                 [
                     'case_sentence' => true,
                     'judul'         => 'No KK',
-                    'isian'         => 'no_kk',
+                    'isian'         => 'No_kK',
                     'data'          => get_nokk($penduduk->keluarga->no_kk),
                 ],
                 [

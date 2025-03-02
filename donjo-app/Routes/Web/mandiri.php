@@ -38,15 +38,32 @@
 defined('BASEPATH') || exit('No direct script access allowed');
 
 // SITEMAN
-Route::group('layanan-mandiri', ['namespace' => 'fmandiri'], static function (): void {
-    Route::get('/', 'Anjungan@index')->name('layanan-mandiri.anjungan.index');
-    Route::get('/masuk', 'Masuk@index')->name('layanan-mandiri.masuk.index');
-    Route::post('/cek', 'Masuk@cek')->name('layanan-mandiri.masuk.cek');
-    Route::get('/lupa-pin', 'Masuk@lupa_pin')->name('layanan-mandiri.masuk.lupa_pin');
-    Route::post('/cek-pin', 'Masuk@cek_pin')->name('layanan-mandiri.masuk.cek_pin');
+Route::group('anjungan-mandiri', ['namespace' => 'fmandiri/anjungan'], static function (): void {
+    Route::get('/', 'Anjungan@index')->name('anjungan.index');
+    Route::get('/beranda', 'AnjunganBeranda@index')->name('anjungan.beranda.index');
+    Route::get('/surat/{id?}', 'AnjunganSurat@buat')->name('anjungan.surat');
+    Route::get('/surat/form/{id?}', 'AnjunganSurat@form')->name('anjungan.surat.form');
+    Route::post('/surat/kirim', 'AnjunganSurat@kirim')->name('anjungan.surat.kirim');
+    Route::get('/permohonan', 'AnjunganSurat@permohonan')->name('anjungan.permohonan');
+});
 
-    Route::get('/masuk-ektp', 'Masuk_ektp@index')->name('layanan-mandiri.masuk_ektp.index');
-    Route::post('/cek-ektp', 'Masuk_ektp@cek_ektp')->name('layanan-mandiri.masuk_ektp.cek_ektp');
+Route::group('layanan-mandiri', ['namespace' => 'fmandiri'], static function (): void {
+    Route::get('/', static function (): void {
+        redirect(route('anjungan.index'));
+    });
+    Route::get('/masuk', 'auth/AuthenticatedSessionController@create')->name('layanan-mandiri.masuk.index');
+    Route::post('/cek', 'auth/AuthenticatedSessionController@store')->name('layanan-mandiri.masuk.cek');
+    // Route::get('/lupa-pin', 'Masuk@lupa_pin')->name('layanan-mandiri.masuk.lupa_pin');
+    // Route::post('/cek-pin', 'Masuk@cek_pin')->name('layanan-mandiri.masuk.cek_pin');
+
+    Route::get('/lupa-pin', 'auth/PasswordResetLinkController@create')->name('layanan-mandiri.masuk.lupa_pin');
+    Route::post('/cek-pin', 'auth/PasswordResetLinkController@store')->name('layanan-mandiri.masuk.cek_pin');
+
+    Route::get('/masuk-ektp', 'auth/AuthenticatedSessionController@createEktp')->name('layanan-mandiri.masuk_ektp.index');
+    Route::post('/cek-ektp', 'auth/AuthenticatedSessionController@store')->name('layanan-mandiri.masuk_ektp.cek_ektp');
+
+    Route::get('reset-password/{token?}', 'auth/NewPasswordController@create')->name('password.reset');
+    Route::post('reset-password', 'auth/NewPasswordController@store')->name('password.store');
 
     Route::get('/beranda', 'Beranda@index')->name('layanan-mandiri.beranda.index');
     Route::get('/profil', 'Beranda@profil')->name('layanan-mandiri.beranda.profil');
@@ -54,46 +71,46 @@ Route::group('layanan-mandiri', ['namespace' => 'fmandiri'], static function ():
     Route::get('/cetak-kk', 'Beranda@cetak_kk')->name('layanan-mandiri.beranda.cetak_kk');
     Route::get('/ganti-pin', 'Beranda@ganti_pin')->name('layanan-mandiri.beranda.ganti_pin');
     Route::post('/proses-ganti-pin', 'Beranda@proses_ganti_pin')->name('layanan-mandiri.beranda.proses_ganti_pin');
-    Route::get('/keluar', 'Beranda@keluar')->name('layanan-mandiri.beranda.keluar');
+    Route::get('/keluar', 'auth/AuthenticatedSessionController@destroy')->name('layanan-mandiri.beranda.keluar');
     Route::get('/pendapat/{pilihan?}', 'Beranda@pendapat')->name('layanan-mandiri.beranda.pendapat');
 
     Route::get('/pesan-masuk/{id?}', 'Pesan@index')->name('layanan-mandiri.pesan.masuk')->param('id', 2);
     Route::get('/pesan-keluar/{id?}', 'Pesan@index')->name('layanan-mandiri.pesan.keluar')->param('id', 1);
 
     Route::group('pesan', static function (): void {
+        Route::get('/datatables/{kat?}', 'Pesan@datatables')->name('layanan-mandiri.pesan.datatables')->param('id', 1);
         Route::post('/kirim/{kat?}', 'Pesan@kirim')->name('layanan-mandiri.pesan.kirim');
         Route::get('/baca/{kat}/{id?}', 'Pesan@baca')->name('layanan-mandiri.pesan.baca');
         Route::get('/tulis/{id?}', 'Pesan@tulis')->name('layanan-mandiri.pesan.tulis')->param('id', 1);
         Route::post('/balas/{id?}', 'Pesan@tulis')->name('layanan-mandiri.pesan.balas')->param('id', 2);
     });
 
-    Route::post('proses-daftar', 'Daftar@proses_daftar')->name('layanan-mandiri.daftar.proses_daftar');
+    Route::post('proses-daftar', 'auth/RegisteredUserController@store')->name('layanan-mandiri.daftar.proses_daftar');
     Route::group('daftar', static function (): void {
-        Route::get('/', 'Daftar@index')->name('layanan-mandiri.daftar.index');
+        Route::get('/', 'auth/RegisteredUserController@create')->name('layanan-mandiri.daftar.index');
 
         Route::group('verifikasi', static function (): void {
-            Route::get('/', 'Daftar_verifikasi@index')->name('layanan-mandiri.daftar_verifikasi.index');
             Route::group('telegram', static function (): void {
-                Route::get('/', 'Daftar_verifikasi@telegram')->name('layanan-mandiri.daftar_verifikasi.telegram');
-                Route::post('/kirim-userid', 'Daftar_verifikasi@kirim_otp_telegram')->name('layanan-mandiri.daftar_verifikasi.kirim_otp_telegram');
-                Route::post('/kirim-otp', 'Daftar_verifikasi@verifikasi_telegram')->name('layanan-mandiri.daftar_verifikasi.verifikasi_telegram');
+                Route::get('/', 'auth/VerificationNotificationController@telegram')->name('layanan-mandiri.daftar.verifikasi.telegram');
+                Route::post('/kirim', 'auth/VerificationNotificationController@sendNotificationTelegram')->name('layanan-mandiri.daftar.verifikasi.telegram.kirim');
+                Route::get('/verify/{hash}', 'auth/VerificationNotificationController@verifyTelegram')->name('layanan-mandiri.daftar.verifikasi.telegram.verify');
             });
             Route::group('email', static function (): void {
-                Route::get('/', 'Daftar_verifikasi@email')->name('layanan-mandiri.daftar_verifikasi.email');
-                Route::post('/kirim-email', 'Daftar_verifikasi@kirim_otp_email')->name('layanan-mandiri.daftar_verifikasi.kirim_otp_email');
-                Route::post('/kirim-otp', 'Daftar_verifikasi@verifikasi_email')->name('layanan-mandiri.daftar_verifikasi.verifikasi_email');
+                Route::get('/', 'auth/VerificationNotificationController@email')->name('layanan-mandiri.daftar.verifikasi.email');
+                Route::post('/kirim', 'auth/VerificationNotificationController@sendNotificationEmail')->name('layanan-mandiri.daftar.verifikasi.email.kirim');
+                Route::get('/verify/{hash}', 'auth/VerificationNotificationController@verifyEmail')->name('layanan-mandiri.daftar.verifikasi.email.verify');
             });
         });
     });
 
-    Route::get('/permohonan-surat/{id?}', 'Surat@index')->name('layanan-mandiri.surat.index')->param('id', 1);
-    Route::get('/arsip-surat/{id?}', 'Surat@index')->name('layanan-mandiri.surat.index-arsip')->param('id', 2);
+    Route::get('/permohonan-surat', 'Surat@index')->name('layanan-mandiri.surat.index');
+    Route::get('/arsip-surat', 'Surat@arsip')->name('layanan-mandiri.surat.index-arsip');
 
     Route::group('surat', static function (): void {
         Route::get('/buat/{id?}', 'Surat@buat')->name('layanan-mandiri.surat.buat');
-        Route::post('/cek_syarat', 'Surat@cek_syarat')->name('layanan-mandiri.surat.cek_syarat');
+        Route::get('/cek_syarat', 'Surat@cek_syarat')->name('layanan-mandiri.surat.cek_syarat');
         Route::post('/form/{id?}', 'Surat@form')->name('layanan-mandiri.surat.form');
-        Route::post('/kirim', 'Surat@kirim')->name('layanan-mandiri.surat.kirim');
+        Route::post('/kirim/{id?}', 'Surat@kirim')->name('layanan-mandiri.surat.kirim');
         Route::get('/proses/{id?}', 'Surat@proses')->name('layanan-mandiri.surat.proses');
         Route::get('/cetak_no_antrian/{no_antrian}', 'Surat@cetak_no_antrian')->name('layanan-mandiri.surat.cetak_no_antrian');
         Route::get('/{id}', 'Surat@cetak')->name('layanan-mandiri.surat.cetak');
@@ -101,11 +118,13 @@ Route::group('layanan-mandiri', ['namespace' => 'fmandiri'], static function ():
 
     Route::group('bantuan', static function (): void {
         Route::get('/', 'Bantuan@index')->name('layanan-mandiri.bantuan.index');
+        Route::get('/datatables', 'Bantuan@datatables')->name('layanan-mandiri.bantuan.datatables');
         Route::get('/kartu_peserta/{aksi?}/{id_peserta?}', 'Bantuan@kartu_peserta')->name('layanan-mandiri.bantuan.kartu_peserta');
     });
 
     Route::group('dokumen', static function (): void {
         Route::get('/', 'Dokumen@index')->name('layanan-mandiri.dokumen.index');
+        Route::get('/datatables', 'Dokumen@datatables')->name('layanan-mandiri.dokumen.datatables');
         Route::get('/form/{id?}', 'Dokumen@form')->name('layanan-mandiri.dokumen.form');
         Route::post('/tambah', 'Dokumen@tambah')->name('layanan-mandiri.dokumen.tambah');
         Route::post('/ubah/{id?}', 'Dokumen@ubah')->name('layanan-mandiri.dokumen.ubah');
@@ -114,7 +133,18 @@ Route::group('layanan-mandiri', ['namespace' => 'fmandiri'], static function ():
     });
     Route::group('kehadiran', static function (): void {
         Route::get('/', 'Kehadiran_perangkat@index')->name('layanan-mandiri.kehadiran_perangkat.index');
+        Route::get('/datatables', 'Kehadiran_perangkat@datatables')->name('layanan-mandiri.kehadiran_perangkat.datatables');
         Route::match(['GET', 'POST'], '/lapor/{id}', 'Kehadiran_perangkat@lapor')->name('layanan-mandiri.kehadiran_perangkat.lapor');
+    });
+
+    Route::group('produk', static function (): void {
+        Route::get('/', 'Produk@index')->name('layanan-mandiri.produk.index');
+        Route::get('/datatables/{kat?}', 'Produk@datatables')->name('layanan-mandiri.produk.datatables');
+        Route::get('/form/{id?}', 'Produk@form')->name('layanan-mandiri.produk.form');
+        Route::post('/store', 'Produk@store')->name('layanan-mandiri.produk.store');
+        Route::post('/update/{id}', 'Produk@update')->name('layanan-mandiri.produk.update');
+        Route::get('/pengaturan', 'Produk@pengaturan')->name('layanan-mandiri.produk.pengaturan');
+        Route::post('/pengaturan-update', 'Produk@pengaturanUpdate')->name('layanan-mandiri.produk.pengaturan-update');
     });
 
     Route::group('lapak', static function (): void {

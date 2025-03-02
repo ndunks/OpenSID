@@ -39,11 +39,14 @@ use App\Models\Kelompok as KelompokModel;
 use App\Models\KelompokAnggota;
 use App\Models\KelompokMaster;
 use App\Models\Penduduk;
+use App\Traits\Upload;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Kelompok extends Admin_Controller
 {
+    use Upload;
+
     public $modul_ini            = 'kependudukan';
     public $sub_modul_ini        = 'kelompok';
     private array $_list_session = ['penerima_bantuan', 'sex', 'status_dasar'];
@@ -179,7 +182,7 @@ class Kelompok extends Admin_Controller
     public function dialog($aksi = 'cetak'): void
     {
         $data                = $this->modal_penandatangan();
-        $data['aksi']        = ucwords($aksi);
+        $data['aksi']        = ucwords((string) $aksi);
         $data['form_action'] = site_url("{$this->controller}/daftar/{$aksi}");
 
         view('admin.layouts.components.ttd_pamong', $data);
@@ -190,7 +193,7 @@ class Kelompok extends Admin_Controller
         $post                   = $this->input->post();
         $data['aksi']           = $aksi;
         $data['config']         = $this->header['desa'];
-        $data['tipe']           = ucwords($this->tipe);
+        $data['tipe']           = ucwords((string) $this->tipe);
         $data['pamong_ttd']     = $this->pamong_model->get_data($post['pamong_ttd']);
         $data['pamong_ketahui'] = $this->pamong_model->get_data($post['pamong_ketahui']);
         $data['main']           = $this->kelompok_model->list_data();
@@ -234,7 +237,7 @@ class Kelompok extends Admin_Controller
     {
         isCan('u');
 
-        $data        = $this->validate($this->input->post());
+        $data        = $this->validate($this->input->post(), $id);
         $getKelompok = KelompokModel::tipe($this->tipe)->where('id', '!=', $id)
             ->where(static function ($query) use ($id, $data): void {
                 $query->where('id', $id)->orWhere('kode', $data['kode']);
@@ -255,15 +258,28 @@ class Kelompok extends Admin_Controller
             $data['id_ketua'] = bilangan($request['id_ketua']);
         }
 
-        $data['id_master']  = bilangan($request['id_master']);
-        $data['nama']       = nama_terbatas($request['nama']);
-        $data['keterangan'] = htmlentities($request['keterangan']);
-        $data['kode']       = nomor_surat_keputusan($request['kode']);
-        $data['tipe']       = $this->tipe;
+        $data['id_master']       = bilangan($request['id_master']);
+        $data['nama']            = nama_terbatas($request['nama']);
+        $data['keterangan']      = htmlentities((string) $request['keterangan']);
+        $data['kode']            = nomor_surat_keputusan($request['kode']);
+        $data['no_sk_pendirian'] = nomor_surat_keputusan((string) $request['no_sk_pendirian']);
+        $data['tipe']            = $this->tipe;
 
         if (null === $id) {
-            $data['slug']      = unique_slug('kelompok', $data['nama']);
             $data['config_id'] = identitas('id');
+
+            // slug hanya dibuat pertama kali saat insert, lakukan pengecekan jika nama/slug dengan tipe yang sama sudah ada maka error.
+            if (KelompokModel::slugCheck($request['nama'], $this->tipe)) {
+                redirect_with('error', 'Slug sudah ada, coba gunakan nama yang lain.', route($this->tipe . '.form'));
+            }
+        }
+
+        if ($this->request['logo']) {
+            $config['upload_path']   = LOKASI_LOGO_DESA;
+            $config['allowed_types'] = 'jpg|jpeg|png|pdf';
+            $config['file_name']     = namafile($data['slug'] . ' - ' . time());
+
+            $data['logo'] = $this->upload('logo', $config);
         }
 
         return $data;

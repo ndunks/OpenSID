@@ -131,8 +131,11 @@ class Database_model extends MY_Model
             }
         }
 
-        // Migrasi dev
-        $this->jalankan_migrasi('migrasi_dev');
+        // Migrasi beta
+        $this->jalankan_migrasi('migrasi_beta');
+
+        // Migrasi revisi
+        $this->jalankan_migrasi('migrasi_rev');
 
         // Lengkapi folder desa
         folder_desa();
@@ -161,7 +164,7 @@ class Database_model extends MY_Model
     {
         // Paksa menjalankan migrasi kalau belum
         // Migrasi direkam di tabel migrasi
-        if (Migrasi::where('versi_database', '=', VERSI_DATABASE)->doesntExist()) {
+        if ($install && Migrasi::where('versi_database', '=', VERSI_DATABASE)->doesntExist()) {
             $this->migrasi_db_cri($install);
         }
     }

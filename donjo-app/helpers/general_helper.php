@@ -41,6 +41,7 @@ use App\Models\JamKerja;
 use App\Models\Kehadiran;
 use App\Models\Menu;
 use App\Models\Modul;
+use App\Models\SettingAplikasi;
 use App\Models\User;
 use App\Models\UserGrup;
 use Carbon\Carbon;
@@ -93,12 +94,12 @@ if (! function_exists('can')) {
             return true;
         }
 
-        $grupId = auth()->id_grup;
+        $grupId = ci_auth()->id_grup;
 
-        $data = cache()->remember('akses_grup_' . $grupId, 604800, static function () use ($grupId) {
+        $data = cache()->remember("akses_grup_{$grupId}", 604800, static function () use ($grupId) {
             $slugGrup = UserGrup::find($grupId)->slug;
-            if (in_array($grupId, UserGrup::getGrupSistem())) {
-                $grup = UserGrup::getAksesGrupBawaan()[$slugGrup];
+            if (in_array($grupId, UserGrup::getGrupIdAksesGrupBawaan())) {
+                $grup = UserGrup::getAksesGrupBawaan()[$slugGrup] ?? [];
 
                 if (count($grup) === 1 && array_keys($grup)[0] == '*') {
                     $grupAkses = Modul::when(! super_admin(), static function ($query) {
@@ -164,7 +165,7 @@ if (! function_exists('can')) {
             return false;
         }
 
-        if ($adminOnly && auth()->id != super_admin()) {
+        if ($adminOnly && ci_auth()->id != super_admin()) {
             return false;
         }
 
@@ -324,6 +325,9 @@ if (! function_exists('calculate_date_intervals')) {
         $endTime   = clone $reference;
 
         foreach ($date as $dateInterval) {
+            if (empty($dateInterval)) {
+                continue;
+            }
             $endTime = $endTime->add(DateInterval::createFromDateString(calculate_days($dateInterval) . 'days'));
         }
 
@@ -356,9 +360,12 @@ if (! function_exists('parsedown')) {
 if (! function_exists('SebutanDesa')) {
     function SebutanDesa($params = null)
     {
+        // Tidak bisa gunakan helper setting karena value belum di load
+        $setting = SettingAplikasi::whereIn('key', ['sebutan_desa', 'sebutan_pemerintah_desa', 'sebutan_dusun'])->pluck('value', 'key')->toArray();
+
         return str_replace(
             ['[Desa]', '[desa]', '[Pemerintah Desa]', '[dusun]'],
-            [ucwords(setting('sebutan_desa')), ucwords(setting('sebutan_desa')), ucwords(setting('sebutan_pemerintah_desa')), ucwords(setting('sebutan_dusun'))],
+            [ucwords($setting['sebutan_desa']), ucwords($setting['sebutan_desa']), ucwords($setting['sebutan_pemerintah_desa']), ucwords($setting['sebutan_dusun'])],
             $params
         );
     }
@@ -478,13 +485,13 @@ if (! function_exists('folder_desa')) {
     }
 }
 
-if (! function_exists('auth')) {
+if (! function_exists('ci_auth')) {
     /**
      * Ambil data user login
      *
      * @param mixed|null $params
      */
-    function auth($params = null)
+    function ci_auth($params = null)
     {
         $CI = &get_instance();
 
@@ -544,15 +551,7 @@ if (! function_exists('case_replace')) {
 
         $dari = str_replace('[', '\\[', $dari);
 
-        $result = preg_replace_callback('/(' . $dari . ')/i', $replacer, $str);
-
-        if (preg_match('/pendidikan/i', strtolower($dari))) {
-            $result = kasus_lain('pendidikan', $result);
-        } elseif (preg_match('/pekerjaan/i', strtolower($dari))) {
-            $result = kasus_lain('pekerjaan', $result);
-        }
-
-        return $result;
+        return preg_replace_callback('/(' . $dari . ')/i', $replacer, $str);
     }
 }
 
@@ -722,7 +721,7 @@ if (! function_exists('generatePengikutSuratKIS')) {
                                 <td style="border-color: #000000; border-style: solid; border-collapse: collapse; width:11%" nowrap>' . $data->jenisKelamin->nama . '</td>
                                 <td style="border-color: #000000; border-style: solid; border-collapse: collapse; width:11%" nowrap>' . $data->tempatlahir . ', ' . tgl_indo_out($data->tanggallahir) . '</td>
                                 <td style="border-color: #000000; border-style: solid; border-collapse: collapse; width:15%" nowrap>' . $data->pekerjaan->nama . '</td>
-                                <td style="border-color: #000000; border-style: solid; border-collapse: collapse; width:20%">' . $data->alamat_sekarang . '</td>
+                                <td style="border-color: #000000; border-style: solid; border-collapse: collapse; width:20%">' . $data->alamat_wilayah . '</td>
                             </tr>
                             ';
         }
@@ -993,7 +992,7 @@ if (! function_exists('admin_menu')) {
      */
     function admin_menu()
     {
-        $grupId = auth()->id_grup;
+        $grupId = ci_auth()->id_grup;
 
         return cache()->rememberForever("{$grupId}_admin_menu", static fn () => (new Modul())->tree($grupId)->toArray());
     }
@@ -1144,5 +1143,49 @@ if (! function_exists('emptyData')) {
         }
 
         return $data;
+    }
+}
+
+if (! function_exists('total_jumlah')) {
+    function total_jumlah($data, $column)
+    {
+        return array_reduce($data->toArray(), static fn ($carry, $item) => $carry + $item[$column], 0);
+    }
+}
+
+if (! function_exists('truncateText')) {
+    function truncateText($text, $maxLength)
+    {
+        if (strlen($text) > $maxLength) {
+            return substr($text, 0, $maxLength) . '...';
+        }
+
+        return $text;
+    }
+}
+
+// auth_mandiri
+if (! function_exists('auth_mandiri')) {
+    function auth_mandiri($params = null)
+    {
+        $CI = &get_instance();
+
+        if (null !== $params) {
+            return $CI->session->auth_mandiri->{$params};
+        }
+
+        return $CI->session->auth_mandiri;
+    }
+}
+
+// format_penomoran_surat
+if (! function_exists('format_penomoran_surat')) {
+    function format_penomoran_surat($isGlobal = false, $formatGlobal = '', $formatLocal = '')
+    {
+        if ($isGlobal == false && ! empty($formatLocal)) {
+            return $formatLocal;
+        }
+
+        return $formatGlobal;
     }
 }

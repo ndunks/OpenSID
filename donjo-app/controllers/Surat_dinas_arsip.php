@@ -57,7 +57,7 @@ class Surat_dinas_arsip extends Admin_Controller
     public $modul_ini     = 'surat-dinas';
     public $sub_modul_ini = 'arsip-surat-dinas';
     private $isAdmin;
-    private TinyMCE $tinymce;
+    private readonly TinyMCE $tinymce;
 
     public function __construct()
     {
@@ -114,14 +114,14 @@ class Surat_dinas_arsip extends Admin_Controller
         $this->show($data);
     }
 
-    private function show($dataView): void
+    private function show(array $dataView): void
     {
         if (setting('verifikasi_kades') || setting('verifikasi_sekdes')) {
             $data['operator'] = ($this->isAdmin->jabatan_id == kades()->id || $this->isAdmin->jabatan_id == sekdes()->id) ? false : true;
             $data['widgets']  = $this->widget();
         }
 
-        $data['user_admin']  = config_item('user_admin') == auth()->id;
+        $data['user_admin']  = config_item('user_admin') == ci_auth()->id;
         $data['title']       = 'Arsip Surat Dinas';
         $data['tahun_surat'] = LogSuratDinas::withOnly([])->selectRaw(DB::raw('YEAR(tanggal) as tahun'))->groupBy(DB::raw('YEAR(tanggal)'))->orderBy(DB::raw('YEAR(tanggal)'), 'desc')->get();
         $data['bulan_surat'] = [];
@@ -428,7 +428,7 @@ class Surat_dinas_arsip extends Admin_Controller
             LogTolak::create([
                 'keterangan'     => $alasan,
                 'id_surat_dinas' => $id,
-                'created_by'     => auth()->id,
+                'created_by'     => ci_auth()->id,
             ]);
 
             if ($log_surat->isi_surat != null) {

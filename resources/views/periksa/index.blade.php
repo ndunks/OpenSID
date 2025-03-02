@@ -54,7 +54,7 @@
                 </section>
 
                 <section class="content">
-                    @if (auth()->id != super_admin())
+                    @if (ci_auth()->id != super_admin())
                         <div class="callout callout-warning">
                             <h4>Info!</h4>
                             <p>Periksa database hanya diperbolehkan untuk Super Admin.</p>
@@ -825,6 +825,78 @@
                                                         </tr>
                                                     @endforeach
                                                 </table>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    @if (in_array('keluarga_kepala_ganda', $masalah))
+                                        <div class="panel panel-default">
+                                            <div class="panel-body">
+                                                <strong>Terdeteksi kepala keluarga berada pada lebih dari satu keluarga<br></strong>
+                                                <hr>
+                                                <table class="table">
+                                                    <tr>
+                                                        <th>Nama</th>
+                                                        <th>NIK</th>
+                                                        <th>No KK</th>
+                                                    </tr>
+                                                    @foreach ($keluarga_kepala_ganda as $item)
+                                                        <tr>
+                                                            <td>{{ $item['kepala_keluarga']['nama'] }}</td>
+                                                            <td>{{ $item['kepala_keluarga']['nik'] }}</td>
+                                                            <td>{{ $item['no_kk'] }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </table>
+                                                <p>Klik tombol Perbaiki untuk memperbaiki no_anggota ganda dengan (1) menambah id
+                                                    ke masing-masing no_anggota. Untuk melihat no_anggota yang diubah harap periksa
+                                                    berkas logs. <br><a
+                                                        href="#"
+                                                        data-href="{{ ci_route('periksa.perbaiki_sebagian', 'keluarga_kepala_ganda') }}"
+                                                        class="btn btn-sm btn-social btn-danger"
+                                                        role="button"
+                                                        title="Perbaiki masalah data"
+                                                        data-toggle="modal"
+                                                        data-target="#confirm-backup"
+                                                        data-body="Apakah sudah melakukan backup database/folder desa?"
+                                                    ><i class="fa fa fa-wrench"></i>Perbaiki Data</a>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    @if (in_array('nik_kepala_bukan_kepala_keluarga', $masalah))
+                                        <div class="panel panel-default">
+                                            <div class="panel-body">
+                                                <strong>Terdeteksi nik kepala pada keluarga bukan berstatus kepala keluarga<br></strong>
+                                                <hr>
+                                                <table class="table">
+                                                    <tr>
+                                                        <th>Nama</th>
+                                                        <th>NIK</th>
+                                                        <th>No KK</th>
+                                                    </tr>
+                                                    @foreach ($nik_kepala_bukan_kepala_keluarga as $penduduk)
+                                                        <tr>
+                                                            <td>{{ $penduduk['nama'] }}</td>
+                                                            <td>{{ $penduduk['nik'] }}</td>
+                                                            <td>{{ $penduduk['keluarga']['no_kk'] }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </table>
+                                                <p>Klik tombol Perbaiki untuk memperbaiki no_anggota ganda dengan (1) menambah id
+                                                    ke masing-masing no_anggota. Untuk melihat no_anggota yang diubah harap periksa
+                                                    berkas logs. <br><a
+                                                        href="#"
+                                                        data-href="{{ ci_route('periksa.perbaiki_sebagian', 'nik_kepala_bukan_kepala_keluarga') }}"
+                                                        class="btn btn-sm btn-social btn-danger"
+                                                        role="button"
+                                                        title="Perbaiki masalah data"
+                                                        data-toggle="modal"
+                                                        data-target="#confirm-backup"
+                                                        data-body="Apakah sudah melakukan backup database/folder desa?"
+                                                    ><i class="fa fa fa-wrench"></i>Perbaiki Data</a>
+                                                </p>
                                             </div>
                                         </div>
                                     @endif

@@ -36,6 +36,10 @@
  */
 
 use Illuminate\Container\Container;
+use Illuminate\Contracts\Auth\Factory as AuthFactory;
+use Illuminate\Contracts\Broadcasting\Factory as BroadcastFactory;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Support\Arr;
 
 if (! function_exists('app')) {
     /**
@@ -43,7 +47,7 @@ if (! function_exists('app')) {
      *
      * @param string|null $abstract
      *
-     * @return Illuminate\Contracts\Foundation\Application|mixed
+     * @return App\Services\Laravel
      */
     function app($abstract = null, array $parameters = [])
     {
@@ -53,11 +57,54 @@ if (! function_exists('app')) {
 
         $container->singleton('ci', static fn () => $ci);
 
+        // Set config setelah instance ci
+        $container['config']->set('mail.default', $ci?->setting?->email_protocol);
+        $container['config']->set("mail.mailers.{$ci?->setting?->email_protocol}.transport", $ci?->setting?->email_protocol);
+        $container['config']->set("mail.mailers.{$ci?->setting?->email_protocol}.url", $ci?->setting?->email_smtp_url);
+        $container['config']->set("mail.mailers.{$ci?->setting?->email_protocol}.host", $ci?->setting?->email_smtp_host);
+        $container['config']->set("mail.mailers.{$ci?->setting?->email_protocol}.port", $ci?->setting?->email_smtp_port);
+        $container['config']->set("mail.mailers.{$ci?->setting?->email_protocol}.encryption", $ci?->setting?->email_smtp_encryption ?? 'tls');
+        $container['config']->set("mail.mailers.{$ci?->setting?->email_protocol}.username", $ci?->setting?->email_smtp_user);
+        $container['config']->set("mail.mailers.{$ci?->setting?->email_protocol}.password", $ci?->setting?->email_smtp_pass);
+        $container['config']->set("mail.mailers.{$ci?->setting?->email_protocol}.timeout", $ci?->setting?->email_smtp_timeout);
+        $container['config']->set("mail.mailers.{$ci?->setting?->email_protocol}.local_domain", $ci?->setting?->email_smtp_domain);
+
+        $container['config']->set([
+            'captcha' => [
+                'secret'  => $ci?->setting?->google_recaptcha_secret_key,
+                'sitekey' => $ci?->setting?->google_recaptcha_site_key,
+                'options' => [],
+            ],
+            'services' => [
+                'telegram-bot-api' => [
+                    'token' => $ci?->setting?->telegram_token,
+                ],
+            ],
+        ]);
+
         if (null === $abstract) {
             return $container;
         }
 
         return $container->make($abstract, $parameters);
+    }
+}
+
+if (! function_exists('auth')) {
+    /**
+     * Get the available auth instance.
+     *
+     * @param string|null $guard
+     *
+     * @return AuthFactory|Illuminate\Contracts\Auth\Guard|Illuminate\Contracts\Auth\StatefulGuard
+     */
+    function auth($guard = null)
+    {
+        if (null === $guard) {
+            return app(AuthFactory::class);
+        }
+
+        return app(AuthFactory::class)->guard($guard);
     }
 }
 
@@ -68,6 +115,20 @@ if (! function_exists('base_path')) {
     function base_path(?string $path = ''): string
     {
         return app()->basePath() . ($path ? '/' . $path : $path);
+    }
+}
+
+if (! function_exists('broadcast')) {
+    /**
+     * Begin broadcasting an event.
+     *
+     * @param mixed|null $event
+     *
+     * @return Illuminate\Broadcasting\PendingBroadcast
+     */
+    function broadcast($event = null)
+    {
+        return app(BroadcastFactory::class)->event($event);
     }
 }
 
@@ -312,6 +373,73 @@ if (! function_exists('event')) {
     }
 }
 
+if (! function_exists('info')) {
+    /**
+     * Write some information to the log.
+     *
+     * @param string $message
+     * @param array  $context
+     *
+     * @return void
+     */
+    function info($message, $context = [])
+    {
+        return app('Psr\Log\LoggerInterface')->info($message, $context);
+    }
+}
+
+if (! function_exists('old')) {
+    /**
+     * Retrieve an old input item.
+     *
+     * @param string|null $key
+     * @param mixed       $default
+     *
+     * @return mixed
+     */
+    function old($key = null, $default = null)
+    {
+        return Arr::get(app('ci')->session->_old_input, $key, $default);
+    }
+}
+
+if (! function_exists('report')) {
+    /**
+     * Report an exception.
+     *
+     * @return void
+     */
+    function report(Throwable $exception)
+    {
+        app(ExceptionHandler::class)->report($exception);
+    }
+}
+
+if (! function_exists('request')) {
+    /**
+     * Get an instance of the current request or an input item from the request.
+     *
+     * @param array|string|null $key
+     * @param mixed             $default
+     *
+     * @return array|Illuminate\Http\Request|string
+     */
+    function request($key = null, $default = null)
+    {
+        if (null === $key) {
+            return app('request');
+        }
+
+        if (is_array($key)) {
+            return app('request')->only($key);
+        }
+
+        $value = app('request')->__get($key);
+
+        return null === $value ? value($default) : $value;
+    }
+}
+
 if (! function_exists('resource_path')) {
     /**
      * Get the path to the resources folder.
@@ -355,6 +483,76 @@ if (! function_exists('storage_path')) {
     function storage_path($path = '')
     {
         return app()->storagePath($path);
+    }
+}
+
+if (! function_exists('trans')) {
+    /**
+     * Translate the given message.
+     *
+     * @param string|null $id
+     * @param array       $replace
+     * @param string|null $locale
+     *
+     * @return array|Illuminate\Contracts\Translation\Translator|string|null
+     */
+    function trans($id = null, $replace = [], $locale = null)
+    {
+        if (null === $id) {
+            return app('translator');
+        }
+
+        return app('translator')->get($id, $replace, $locale);
+    }
+}
+
+if (! function_exists('__')) {
+    /**
+     * Translate the given message.
+     *
+     * @param string      $key
+     * @param array       $replace
+     * @param string|null $locale
+     *
+     * @return array|string|null
+     */
+    function __($key, $replace = [], $locale = null)
+    {
+        return app('translator')->get($key, $replace, $locale);
+    }
+}
+
+if (! function_exists('trans_choice')) {
+    /**
+     * Translates the given message based on a count.
+     *
+     * @param string              $id
+     * @param array|Countable|int $number
+     * @param string|null         $locale
+     *
+     * @return string
+     */
+    function trans_choice($id, $number, array $replace = [], $locale = null)
+    {
+        return app('translator')->choice($id, $number, $replace, $locale);
+    }
+}
+
+if (! function_exists('validator')) {
+    /**
+     * Create a new Validator instance.
+     *
+     * @return Illuminate\Validation\Validator
+     */
+    function validator(array $data = [], array $rules = [], array $messages = [], array $customAttributes = [])
+    {
+        $factory = app('validator');
+
+        if (func_num_args() === 0) {
+            return $factory;
+        }
+
+        return $factory->make($data, $rules, $messages, $customAttributes);
     }
 }
 

@@ -37,20 +37,29 @@
 
 namespace App\Models;
 
+use App\Enums\StatusEnum;
+use App\Services\Auth\Traits\Authorizable;
 use App\Traits\ConfigId;
 use App\Traits\ShortcutCache;
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Auth\MustVerifyEmail;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
+use Illuminate\Notifications\Notifiable;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-// class User extends Authenticatable implements JWTSubject
-class User extends BaseModel
+class User extends BaseModel implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract
 {
     use ConfigId;
     use ShortcutCache;
-
-    // use HasApiTokens;
-    // use HasFactory;
-    // use Notifiable;
+    use Authenticatable;
+    use Authorizable;
+    use CanResetPassword;
+    use MustVerifyEmail;
+    use Notifiable;
 
     protected $table = 'user';
 
@@ -100,6 +109,18 @@ class User extends BaseModel
         });
     }
 
+    /**
+     * Send the password reset notification.
+     *
+     * @param string $token
+     *
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new \App\Notifications\Admin\ResetPasswordNotification($token));
+    }
+
     public static function deleteFile($model, ?string $file, $deleting = false): void
     {
         if ($model->isDirty($file) || $deleting) {
@@ -147,15 +168,18 @@ class User extends BaseModel
     /**
      * Scope query untuk status pengguna
      *
-     * @param mixed $query
-     * @param mixed $status
-     *
      * @return Builder
      */
-    public function scopeStatus($query, $status = 1)
+    public function scopeStatus(mixed $query, mixed $status = 1)
     {
         if ($status == '') {
             return $query;
+        }
+
+        if ($status == StatusEnum::YA) {
+            $query->whereHas('userGrup', static function ($query): void {
+                    $query->status(StatusEnum::YA);
+            });
         }
 
         return $query->where('active', $status);
@@ -166,11 +190,9 @@ class User extends BaseModel
      *
      * Super admin tidak terikat dengan status (selalu aktif) dan hanya ada 1 untuk setiap desa
      *
-     * @param mixed $query
-     *
      * @return Builder
      */
-    public function scopeSuperAdmin($query)
+    public function scopeSuperAdmin(mixed $query)
     {
         return $query->where('id_grup', UserGrup::getGrupId(UserGrup::ADMINISTRATOR))->first();
     }

@@ -130,12 +130,12 @@ class Komentar extends Admin_Controller
         }
     }
 
-    private function validasi($post)
+    private function validasi(array $post)
     {
-        $data['owner']    = htmlentities($post['owner']);
+        $data['owner']    = htmlentities((string) $post['owner']);
         $data['no_hp']    = bilangan($post['no_hp']);
         $data['email']    = email($post['email']);
-        $data['komentar'] = htmlentities($post['komentar']);
+        $data['komentar'] = htmlentities((string) $post['komentar']);
         if (isset($post['status'])) {
             $data['status'] = bilangan($post['status']);
         }
@@ -179,8 +179,8 @@ class Komentar extends Admin_Controller
 
         $data = [
             'id_artikel' => $komentar->id_artikel,
-            'komentar'   => htmlentities($this->input->post('komentar')),
-            'owner'      => auth()->id,
+            'komentar'   => htmlentities((string) $this->input->post('komentar')),
+            'owner'      => ci_auth()->id,
             'status'     => '1',
             'parent_id'  => $komentar->id,
         ];

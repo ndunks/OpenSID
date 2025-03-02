@@ -37,16 +37,24 @@
 
 namespace App\Events;
 
+use Illuminate\Broadcasting\Channel;
+
 class ExampleEvent extends Event
 {
     /**
      * Create a new event instance.
      *
-     * @param mixed $message
-     *
      * @return void
      */
     public function __construct()
     {
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function broadcastOn(): Channel
+    {
+        return new Channel('channel');
     }
 }

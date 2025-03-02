@@ -157,7 +157,7 @@ class Surat_dinas extends Admin_Controller
             $data['klasifikasiSurat'] = KlasifikasiSurat::where('kode', $data['suratDinas']->kode_surat)->first();
         }
 
-        $data['margins']              = json_decode($data['suratDinas']->margin, null) ?? json_decode(setting('surat_dinas_margin'), true);
+        $data['margins']              = json_decode($data['suratDinas']->margin, null) ?? json_decode((string) setting('surat_dinas_margin'), true);
         $data['margin_global']        = $data['suratDinas']->margin_global ?? StatusEnum::YA;
         $data['orientations']         = SuratDinas::ORIENTATAIONS;
         $data['sizes']                = SuratDinas::SIZES;
@@ -291,7 +291,7 @@ class Surat_dinas extends Admin_Controller
         $invalid_tags = invalid_tags();
 
         foreach ($invalid_tags as $invalid_tag) {
-            if (strpos($template_desa, (string) $invalid_tag) !== false) {
+            if (str_contains((string) $template_desa, (string) $invalid_tag)) {
                 redirect_with('error', 'Template surat Tidak Valid', 'surat_master/form/' . $id);
             }
         }
@@ -496,7 +496,7 @@ class Surat_dinas extends Admin_Controller
         $ada_surat = $cek_surat->first() ?? show_404();
 
         if (super_admin() && $ada_surat) {
-            $list_data = file_get_contents('assets/import/template_surat_dinas_tinymce.json');
+            $list_data = file_get_contents(DEFAULT_LOKASI_IMPOR . 'template_surat_dinas_tinymce.json');
             $list_data = collect(json_decode($list_data, true))
                 ->where('url_surat', $url_surat)
                 ->map(static fn ($item) => collect($item)->except('id', 'config_id', 'url_surat', 'created_at', 'updated_at', 'created_by', 'updated_by', 'deleted_at', 'judul_surat', 'margin_cm_to_mm', 'url_surat_sistem', 'url_surat_desa')->toArray())
@@ -513,15 +513,16 @@ class Surat_dinas extends Admin_Controller
     public function pengaturan()
     {
         $this->set_hak_akses_rfm();
-        $data['font_option'] = SettingAplikasi::where('key', '=', 'font_surat')->first()->option;
-        $data['tte_demo']    = empty($this->setting->tte_api) || get_domain($this->setting->tte_api) === get_domain(APP_URL);
-        $data['kades']       = User::where('active', '=', 1)->whereHas('pamong', static fn ($query) => $query->where('jabatan_id', '=', kades()->id))->exists();
-        $data['sekdes']      = User::where('active', '=', 1)->whereHas('pamong', static fn ($query) => $query->where('jabatan_id', '=', sekdes()->id))->exists();
-        $data['aksi']        = ci_route('surat_dinas.update');
-        $data['formAksi']    = ci_route('surat_dinas.edit_pengaturan');
-        $margin              = setting('surat_dinas_margin');
-        $data['margins']     = json_decode($margin, null) ?? SuratDinas::MARGINS;
-        $data['alias']       = AliasKodeIsian::get();
+        $data['font_option']     = SettingAplikasi::where('key', '=', 'font_surat')->first()->option;
+        $data['penomoran_surat'] = SettingAplikasi::where('key', '=', 'penomoran_surat_dinas')->first();
+        $data['tte_demo']        = empty($this->setting->tte_api) || get_domain($this->setting->tte_api) === get_domain(APP_URL);
+        $data['kades']           = User::where('active', '=', 1)->whereHas('pamong', static fn ($query) => $query->where('jabatan_id', '=', kades()->id))->exists();
+        $data['sekdes']          = User::where('active', '=', 1)->whereHas('pamong', static fn ($query) => $query->where('jabatan_id', '=', sekdes()->id))->exists();
+        $data['aksi']            = ci_route('surat_dinas.update');
+        $data['formAksi']        = ci_route('surat_dinas.edit_pengaturan');
+        $margin                  = setting('surat_dinas_margin');
+        $data['margins']         = json_decode((string) $margin, null) ?? SuratDinas::MARGINS;
+        $data['alias']           = AliasKodeIsian::get();
 
         return view('admin.surat_dinas.pengaturan.pengaturan', $data);
     }
@@ -542,7 +543,7 @@ class Surat_dinas extends Admin_Controller
 
             foreach ($data['kodeisian_alias']['alias'] as $index => $alias) {
                 // observer gak jalan ketika menggunakan upsert
-                AliasKodeIsian::upsert(['updated_by' => auth()->id, 'config_id' => identitas('id'), 'judul' => $judulAlias[$index], 'alias' => $alias, 'content' => $contentAlias[$index]], ['config_id', 'judul']);
+                AliasKodeIsian::upsert(['updated_by' => ci_auth()->id, 'config_id' => identitas('id'), 'judul' => $judulAlias[$index], 'alias' => $alias, 'content' => $contentAlias[$index]], ['config_id', 'judul']);
             }
         } else {
             AliasKodeIsian::whereConfigId(identitas('id'))->delete();
@@ -553,14 +554,19 @@ class Surat_dinas extends Admin_Controller
 
     protected static function validasi_pengaturan($request)
     {
+        $footer = setting('tte') == '1' ? 'footer_surat_dinas_tte' : 'footer_surat_dinas';
+
         return [
             'tinggi_header_surat_dinas'  => (float) $request['tinggi_header_surat_dinas'],
             'header_surat_dinas'         => $request['header_surat_dinas'],
+            $footer                      => $request[$footer],
             'tinggi_footer_surat_dinas'  => (float) $request['tinggi_footer_surat_dinas'],
             'verifikasi_sekdes'          => (int) $request['verifikasi_sekdes'],
             'verifikasi_kades'           => ((int) $request['tte'] == StatusEnum::YA) ? StatusEnum::YA : (int) $request['verifikasi_kades'],
             'font_surat_dinas'           => alfanumerik_spasi($request['font_surat_dinas']),
             'format_nomor_surat_dinas'   => $request['format_nomor_surat_dinas'],
+            'penomoran_surat_dinas'      => $request['penomoran_surat_dinas'],
+            'panjang_nomor_surat_dinas'  => $request['panjang_nomor_surat_dinas'],
             'format_tanggal_surat_dinas' => $request['format_tanggal_surat_dinas'],
             'surat_dinas_margin'         => json_encode($request['surat_dinas_margin'], JSON_THROW_ON_ERROR),
             'kodeisian_alias'            => $request['alias_kodeisian'] ? ['judul' => $request['judul_kodeisian'], 'alias' => $request['alias_kodeisian'], 'content' => $request['content_kodeisian']] : null,
@@ -582,7 +588,7 @@ class Surat_dinas extends Admin_Controller
     public function salin_template($jenis = 'isi')
     {
         if ($this->input->is_ajax_request()) {
-            $template = $jenis == 'isi' ? $this->tinymce->getTemplateSuratDinas() : $this->tinymce->getTemplate();
+            $template = $jenis == 'isi' ? $this->tinymce->getTemplateSuratDinas() : $this->tinymce->getTemplateDinas();
 
             return json($template);
         }
@@ -596,7 +602,7 @@ class Surat_dinas extends Admin_Controller
         $request             = static::validate($this->request);
         $request['id_surat'] = $this->request['id_surat'] ?? null;
 
-        $isi_cetak = $this->tinymce->getPreview($request);
+        $isi_cetak = $this->tinymce->getPreview($request, '_dinas');
 
         // Ubah jadi format pdf
         $pages = $this->tinymce->generateMultiPage($isi_cetak);
@@ -604,7 +610,7 @@ class Surat_dinas extends Admin_Controller
         $isi_cetak = $this->tinymce->formatPdf($this->request['header'], $this->request['footer'], implode("<div style=\"page-break-after: always;\">\u{a0}</div>", $pages));
 
         if ($this->request['margin_global'] == 1) {
-            $margins = setting('surat_margin_cm_to_mm');
+            $margins = setting('surat_dinas_margin_cm_to_mm');
         } else {
             $margins = [
                 $this->request['kiri'] * 10,
@@ -713,13 +719,13 @@ class Surat_dinas extends Admin_Controller
 
     public function templateTinyMCE(): void
     {
-        $list_data = file_get_contents('assets/import/template_surat_dinas_tinymce.json');
+        $list_data = file_get_contents(DEFAULT_LOKASI_IMPOR . 'template_surat_dinas_tinymce.json');
 
         $proses = $this->prosesImport($this->formatImport($list_data));
 
         if ($proses) {
             $template = $this->getTemplate(SuratDinas::TINYMCE_SISTEM);
-            $result   = file_put_contents(FCPATH . 'assets/import/template_surat_dinas_tinymce.json', json_encode($template, JSON_PRETTY_PRINT));
+            $result   = file_put_contents(DEFAULT_LOKASI_IMPOR . 'template_surat_dinas_tinymce.json', json_encode($template, JSON_PRETTY_PRINT));
 
             if ($result) {
                 redirect_with('success', 'Berhasil Buat Ulang Template Surat TinyMCE Bawaan');
@@ -731,7 +737,7 @@ class Surat_dinas extends Admin_Controller
 
     private function formatImport($list_data = null)
     {
-        return collect(json_decode($list_data, true))
+        return collect(json_decode((string) $list_data, true))
             ->map(static fn ($item): array => [
                 'nama'                => $item['nama'],
                 'url_surat'           => $item['url_surat'],
@@ -757,9 +763,9 @@ class Surat_dinas extends Admin_Controller
                 'footer'              => $item['footer'],
                 'header'              => $item['header'],
                 'created_at'          => date('Y-m-d H:i:s'),
-                'creted_by'           => auth()->id,
+                'creted_by'           => ci_auth()->id,
                 'updated_at'          => date('Y-m-d H:i:s'),
-                'updated_by'          => auth()->id,
+                'updated_by'          => ci_auth()->id,
             ])
             ->toArray();
     }
@@ -783,5 +789,17 @@ class Surat_dinas extends Admin_Controller
         }
 
         return false;
+    }
+
+    public function bawaan(): void
+    {
+        $list_data = file_get_contents(DEFAULT_LOKASI_IMPOR . 'template_surat_dinas_tinymce.json');
+
+        $file_name = namafile('Template Surat Dinas') . '.json';
+
+        $this->output
+            ->set_header("Content-Disposition: attachment; filename={$file_name}")
+            ->set_content_type('application/json', 'utf-8')
+            ->set_output($list_data);
     }
 }

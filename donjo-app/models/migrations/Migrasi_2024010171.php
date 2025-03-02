@@ -91,16 +91,13 @@ class Migrasi_2024010171 extends MY_model
         if (! Schema::hasTable('pemilihan')) {
             Schema::create('pemilihan', static function (Blueprint $table) {
                 $table->uuid('uuid')->primary();
-                $table->integer('config_id');
+                $table->configId();
                 $table->string('judul', 100);
                 $table->date('tanggal');
                 $table->integer('status')->default(0);
                 $table->text('keterangan');
-                $table->timestamps();
-                $table->integer('created_by')->nullable();
-                $table->integer('updated_by')->nullable();
+                $table->timesWithUserstamps();
                 $table->unique(['uuid', 'config_id']);
-                $table->foreign('config_id')->references('id')->on('config')->onUpdate('cascade')->onDelete('cascade');
             });
         }
 
@@ -163,6 +160,11 @@ class Migrasi_2024010171 extends MY_model
             $hasil = $hasil && $this->tambahForeignKey('state_fk', 'analisis_periode', 'id_state', 'analisis_ref_state', 'id', true);
 
             // analisis_respon
+            if ($this->cek_primary_key('analisis_respon', ['id_indikator', 'id_parameter', 'id_subjek', 'id_periode'])) {
+                Schema::table('analisis_respon', static function (Blueprint $table) {
+                    $table->dropPrimary(['id_indikator', 'id_parameter', 'id_subjek', 'id_periode']);
+                });
+            }
             $hasil = $hasil && $this->tambahForeignKey('analisis_respon_indikator_fk', 'analisis_respon', 'id_indikator', 'analisis_indikator', 'id', true);
             $hasil = $hasil && $this->tambahForeignKey('analisis_respon_parameter_fk', 'analisis_respon', 'id_parameter', 'analisis_parameter', 'id', true);
             $hasil = $hasil && $this->tambahForeignKey('analisis_respon_subjek_fk', 'analisis_respon', 'id_subjek', 'analisis_parameter', 'id', true);
@@ -258,6 +260,11 @@ class Migrasi_2024010171 extends MY_model
             $hasil = $hasil && $this->tambahForeignKey('log_hapus_penduduk_pend_fk', 'log_hapus_penduduk', 'id_pend', 'tweb_penduduk', 'id', true);
 
             // tweb_penduduk_map
+            if ($this->cek_primary_key('tweb_penduduk_map', ['id'])) {
+                Schema::table('tweb_penduduk_map', static function (Blueprint $table) {
+                    $table->dropPrimary(['id']);
+                });
+            }
             $hasil = $hasil && $this->tambahForeignKey('tweb_penduduk_map_pend_fk', 'tweb_penduduk_map', 'id', 'tweb_penduduk', 'id', true);
 
             // log_keluarga

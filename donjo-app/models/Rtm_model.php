@@ -39,7 +39,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 use App\Enums\HubunganRTMEnum;
 use App\Models\Rtm;
-use OpenSpout\Reader\Common\Creator\ReaderEntityFactory;
+use OpenSpout\Reader\XLSX\Reader;
 
 class Rtm_model extends MY_Model
 {
@@ -134,7 +134,7 @@ class Rtm_model extends MY_Model
         $temp['id_rtm']     = Rtm::findOrFail($id)->no_kk;
         $temp['rtm_level']  = HubunganRTMEnum::ANGGOTA;
         $temp['updated_at'] = date('Y-m-d H:i:s');
-        $temp['updated_by'] = auth()->id;
+        $temp['updated_by'] = ci_auth()->id;
 
         if ($data) {
             $this->db->where_in('id', $data);
@@ -571,7 +571,7 @@ class Rtm_model extends MY_Model
 
         $this->upload->data();
 
-        $reader = ReaderEntityFactory::createXLSXReader();
+        $reader = new Reader();
         $reader->open($_FILES['userfile']['tmp_name']);
 
         $outp = true;

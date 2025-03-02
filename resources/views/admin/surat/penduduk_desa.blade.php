@@ -1,4 +1,4 @@
-<div class="penduduk_desa">
+<div class="penduduk_form penduduk_desa">
     <div class="form-group">
         <label for="nik" class="col-sm-3 control-label">NIK / Nama</label>
         <div class="col-sm-6 col-lg-4">
@@ -10,7 +10,7 @@
                 data-hubungan="{{ $surat->form_isian->$kategori->hubungan }}"
                 data-kategori="{{ $kategori }}"
                 data-url="{{ site_url('surat/list_penduduk_ajax') }}"
-                data-sumber_penduduk_berulang="{{ $surat->sumber_penduduk_berulang }}"
+                data-sumber_penduduk_berulang="{{ setting('sumber_penduduk_berulang_surat') ?? $surat->sumber_penduduk_berulang }}"
                 data-placeholder="-- Cari NIK / Tag ID Card / Nama Penduduk --"
                 onchange="loadDataPenduduk(this)"
             >

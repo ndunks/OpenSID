@@ -35,6 +35,8 @@
  *
  */
 
+use App\Models\Menu;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Web_Controller extends MY_Controller
@@ -53,6 +55,7 @@ class Web_Controller extends MY_Controller
         $theme              = theme_active();
         $this->theme        = str_replace('desa-', '', $theme->path);
         $this->theme_folder = str_replace($this->theme, '', $theme->path);
+        $this->theme        = str_replace($this->config->item('theme_path'), '', $this->theme);
 
         // Variabel untuk tema
         $this->set_template();
@@ -135,5 +138,10 @@ class Web_Controller extends MY_Controller
         $data['nip_kepala_desa']  = $this->header['nip_kepala_desa'];
 
         return view('layouts.maintenance', $data);
+    }
+
+    public function menu_aktif($link)
+    {
+        return Menu::active()->whereLink($link)->first()->exists();
     }
 }

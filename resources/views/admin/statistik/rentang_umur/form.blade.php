@@ -1,6 +1,4 @@
-<script src="{{ asset('js/jquery.validate.min.js') }}"></script>
-<script src="{{ asset('js/validasi.js') }}"></script>
-<script src="{{ asset('js/localization/messages_id.js') }}"></script>
+@include('admin.layouts.components.validasi_form')
 <form action="{{ $form_action }}" method="post" id="validasi">
     <div class='modal-body'>
         <div class="form-group">
@@ -61,8 +59,9 @@
         $('#validasi').submit(function(e) {
             var min = parseFloat($('#dari').val());
             var max = parseFloat($('#sampai').val());
+            const isSame = min === max;
 
-            if (min >= max) {
+            if (min >= max && !isSame) {
                 e.preventDefault();
             }
         });

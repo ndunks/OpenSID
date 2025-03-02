@@ -46,17 +46,19 @@ class AccessWilayahScope implements Scope
     /**
      * Apply the scope to a given Eloquent query builder.
      *
-     * @return void
+     * @return Builder
      */
     public function apply(Builder $builder, Model $model)
     {
-        $user         = auth();
+        $user         = ci_auth();
         $aksesWilayah = [];
         if ($user->batasi_wilayah) {
             $aksesWilayah = $user->akses_wilayah;
+            $namaTable    = $model->getTable();
+            $namaColumn   = $model->getWilayahColumn();
 
             // semua model yang menerapkan trait ConfigId dipastikan memiliki kolom config_id
-            return $builder->whereIn($model->getTable() . '.id_cluster', $aksesWilayah);
+            return $builder->whereIn($namaTable . '.' . $namaColumn, $aksesWilayah);
         }
 
         return $builder;

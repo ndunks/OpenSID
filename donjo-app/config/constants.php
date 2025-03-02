@@ -229,8 +229,30 @@ define('LATAR_LOGIN', 'desa/pengaturan/siteman/images/');
 define('LOKASI_FOTO_DTKS', 'desa/upload/dtks/');
 define('LOKASI_FONT_DESA', 'desa/upload/fonts/');
 define('LOKASI_ICON_SOSMED', 'desa/upload/sosmed/');
-define('FONT_SYSTEM_TINYMCE', ['Andale Mono', 'Arial', 'Arial Black', 'Bookman Old Style', 'Comic Sans MS', 'Courier New', 'Georgia', 'Helvetica', 'Impact', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana']);
+define('LOKASI_SINERGI_PROGRAM', 'desa/upload/widgets/');
+define('CONFIG_THEMES', 'desa/upload/themes/');
 
 // File
 define('LATAR_SITEMAN', 'desa/pengaturan/siteman/images/latar_login.jpg');
 define('LATAR_KEHADIRAN', 'desa/pengaturan/siteman/images/latar_login_mandiri.jpg');
+define('FONT_SYSTEM_TINYMCE', ['Andale Mono', 'Arial', 'Arial Black', 'Bookman Old Style', 'Comic Sans MS', 'Courier New', 'Georgia', 'Helvetica', 'Impact', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana']);
+
+// Info Sistem
+define('EKSTENSI_WAJIB', serialize([
+    'curl',
+    'fileinfo',
+    'gd',
+    'iconv',
+    'json',
+    'mbstring',
+    'mysqli',
+    'mysqlnd',
+    'tidy',
+    'zip',
+    'exif',
+]));
+define('minPhpVersion', '8.1.0');
+define('maxPhpVersion', '8.2.0');
+define('minMySqlVersion', '5.6.0');
+define('maxMySqlVersion', '8.0.0');
+define('minMariaDBVersion', '10.3.0');

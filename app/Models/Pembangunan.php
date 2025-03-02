@@ -82,11 +82,28 @@ class Pembangunan extends BaseModel
         'sumber_biaya_swadaya',
         'sumber_biaya_jumlah',
         'manfaat',
+        'waktu',
+        'satuan_waktu',
+        'sifat_proyek',
+    ];
+
+    /**
+     * The appends with the model.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'alamat',
     ];
 
     public function pembangunanDokumentasi()
     {
         return $this->hasMany(PembangunanDokumentasi::class, 'id_pembangunan');
+    }
+
+    public function getAlamatAttribute()
+    {
+        return $this->lokasi ?? $this->wilayah->dusun;
     }
 
     public function wilayah()

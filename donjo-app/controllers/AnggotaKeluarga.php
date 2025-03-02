@@ -68,6 +68,7 @@ class AnggotaKeluarga extends Admin_Controller
 {
     public $modul_ini     = 'kependudukan';
     public $sub_modul_ini = 'keluarga';
+    public $akses_modul   = 'keluarga';
 
     public function __construct()
     {
@@ -136,7 +137,7 @@ class AnggotaKeluarga extends Admin_Controller
         $data = $this->input->post();
         if ($data['kk_level'] == SHDKEnum::KEPALA_KELUARGA) {
             Penduduk::where(['id_kk' => $id, 'kk_level' => SHDKEnum::KEPALA_KELUARGA])->update(['kk_level' => SHDKEnum::LAINNYA]);
-            $keluarga->update(['nik_kepala' => $data['nik'], 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => auth()->id]);
+            $keluarga->update(['nik_kepala' => $data['nik'], 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => ci_auth()->id]);
         }
         Penduduk::where(['id' => $data['nik']])->update(['kk_level' => $data['kk_level'], 'id_kk' => $id]);
 
@@ -154,7 +155,7 @@ class AnggotaKeluarga extends Admin_Controller
         $data = $this->input->post();
         if ($data['kk_level'] == SHDKEnum::KEPALA_KELUARGA) {
             Penduduk::where(['id_kk' => $id_kk, 'kk_level' => SHDKEnum::KEPALA_KELUARGA])->update(['kk_level' => SHDKEnum::LAINNYA]);
-            $keluarga->update(['nik_kepala' => $id, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => auth()->id]);
+            $keluarga->update(['nik_kepala' => $id, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => ci_auth()->id]);
         }
         Penduduk::where(['id' => $id])->update(['kk_level' => $data['kk_level']]);
 

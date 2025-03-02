@@ -37,6 +37,7 @@
 
 use App\Libraries\Release;
 use App\Models\Shortcut;
+use App\Services\Pelanggan;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -44,7 +45,7 @@ class Beranda extends Admin_Controller
 {
     public $isAdmin;
     public $modul_ini           = 'beranda';
-    public $kategori_pengaturan = 'beranda';
+    public $kategori_pengaturan = 'Beranda';
 
     public function __construct()
     {
@@ -61,13 +62,13 @@ class Beranda extends Admin_Controller
             'rilis'           => $this->getUpdate(),
             'shortcut'        => Shortcut::querys()['data'],
             'saas'            => $this->saas->peringatan(),
-            'notif_langganan' => $this->pelanggan_model->status_langganan(),
+            'notif_langganan' => Pelanggan::status_langganan(),
         ];
 
         return view('admin.home.index', $data);
     }
 
-    private function getUpdate(): array
+    private function getUpdate()
     {
         $info = [];
 
@@ -88,7 +89,5 @@ class Beranda extends Admin_Controller
                 $info['update_available'] = false;
             }
         }
-
-        return $info;
     }
 }

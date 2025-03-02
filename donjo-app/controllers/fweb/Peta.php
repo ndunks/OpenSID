@@ -41,9 +41,7 @@ class Peta extends Web_Controller
 {
     public function index(): void
     {
-        if (! $this->web_menu_model->menu_aktif('peta')) {
-            show_404();
-        }
+        $cekMenu = $this->web_menu_model->menu_aktif('peta');
 
         $this->load->model(['wilayah_model', 'referensi_model', 'laporan_penduduk_model', 'plan_garis_model', 'plan_lokasi_model', 'data_persil_model', 'plan_area_model', 'pembangunan_model']);
 
@@ -64,10 +62,11 @@ class Peta extends Web_Controller
         $data['lokasi_pembangunan'] = $this->pembangunan_model->list_lokasi_pembangunan(1);
         $data['persil']             = $this->data_persil_model->list_data();
         $data['list_bantuan']       = collect(unserialize(STAT_BANTUAN))->toArray() + collect($this->program_bantuan_model->list_program(0))->pluck('nama', 'lap')->toArray();
-        $data['halaman_peta']       = 'web/halaman_statis/peta';
+        $data['halaman_peta']       = 'partials/peta/index';
+        $data['tampil']             = $cekMenu;
 
         $this->_get_common_data($data);
-        $this->set_template('layouts/peta_statis.tpl.php');
+        $this->set_template('layouts/full_content.tpl.php');
         theme_view($this->template, $data);
     }
 }

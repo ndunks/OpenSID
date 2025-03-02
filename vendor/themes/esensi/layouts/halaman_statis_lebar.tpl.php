@@ -13,6 +13,7 @@
 
   <div class="container mx-auto lg:px-5 px-3 flex flex-col lg:flex-row my-5 gap-3 lg:gap-5 justify-between text-gray-600">
     <main class="w-full space-y-1 bg-white rounded-lg px-4 py-2 lg:py-4 lg:px-5 shadow">
+      <?php if($tampil): ?>
       <?php if(IS_PREMIUM) : ?>
         <?php if(preg_match("/halaman_statis/i", $halaman_statis)) : ?>
           <?php $this->load->view($halaman_statis); ?>
@@ -28,12 +29,15 @@
               <?php $this->load->view($halaman_statis); ?>
           <?php endif; ?>
       <?php endif ?>
+      <?php else : ?>
+        <?php theme_view('partials/not_found'); ?>
+      <?php endif ?>
     </main>
   </div>
 
   <?php $this->load->view($folder_themes .'/commons/footer') ?>
   <?php $this->load->view($folder_themes . '/commons/source_js') ?>
-  <script src="<?= base_url("$this->theme_folder/$this->theme/assets/js/script.min.js?" . THEME_VERSION) ?>"></script>
+  <script src="<?= theme_asset("js/script.min.js?" . THEME_VERSION) ?>"></script>
 
 </body>
 </html>

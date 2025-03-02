@@ -42,6 +42,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 defined('BASEPATH') || exit('No direct script access allowed');
@@ -80,6 +81,7 @@ class Artikel extends BaseModel
         'tgl_upload',
         'judul',
         'headline',
+        'tampilan',
         'gambar1',
         'gambar2',
         'gambar3',
@@ -190,6 +192,11 @@ class Artikel extends BaseModel
         return $artikel;
     }
 
+    public function scopeSitemap($query)
+    {
+        return $query->select(DB::raw('artikel.*, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri'));
+    }
+
     /**
      * Define an inverse one-to-one or many relationship.
      *
@@ -285,7 +292,7 @@ class Artikel extends BaseModel
 
     public function bolehUbah(): bool
     {
-        return auth()->id == $this->id_user || auth()->id_grup != 4;
+        return ci_auth()->id == $this->id_user || ci_auth()->id_grup != 4;
     }
 
     public function getKategoriAttribute()

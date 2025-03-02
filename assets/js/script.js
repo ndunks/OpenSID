@@ -7,16 +7,16 @@ var file_ini = last_script.src;
 var base_url = file_ini.replace("assets/js/script.js", "");
 
 $(window).on("load", function() {
-    // Scroll ke menu aktif perlu dilakukan di onload sesudah semua loading halaman selesai
-    // Tidak bisa di document.ready
-    // preparing var for scroll via query selector
-    var activated_menu = $("li.treeview.active.menu-open")[0];
-    // autscroll to activated menu/sub menu
-    if (activated_menu) {
-        activated_menu.scrollIntoView({
-            behavior: "smooth"
-        });
+    // Fungsi untuk scroll elemen ke tampilan
+    function scrollToElement(element) {
+        if (element.length) {
+            element[0]?.scrollIntoView({ behavior: "smooth" });
+        }
     }
+
+    // Scroll ke menu aktif
+    scrollToElement($("li.treeview.active.menu-open"));
+    scrollToElement($("li.active"));
 });
 
 $(document).ready(function() {
@@ -37,13 +37,18 @@ $(document).ready(function() {
     });
 
     $(function() {
+        var formModal = $(".modal form");
+
         $(document).on("keydown", ":input:not(textarea):not(:submit)", function(event) {
-            if (event.key === "Enter" && !$("#validasi").valid()) {
-                event.preventDefault();
-                return false;
+            if (event.key === "Enter") {
+                if ((formModal.is(":visible") && !formModal.valid()) || !$("#validasi").valid()) {
+                    event.preventDefault();
+                    return false;
+                }
             }
         });
     });
+
 
     // Tombol reset semua
     $("button[type='reset']").on("click", function() {
@@ -430,7 +435,8 @@ function deleteAllBox(idForm, action) {
     $("#confirm-delete").modal("show");
     $("#ok-delete").click(function() {
         $("#" + idForm).attr("action", action);
-        addCsrfField($("#" + idForm)[0]);
+        // addCsrfField($("#" + idForm)[0]);
+        refreshFormCsrf();
         $("#" + idForm).submit();
     });
     return false;
@@ -477,6 +483,7 @@ function formAction(idForm, action, target = "") {
     if (target != "") {
         $("#" + idForm).attr("target", target);
     }
+    refreshFormCsrf();
     $("#" + idForm).attr("action", action);
     $("#" + idForm).submit();
 }

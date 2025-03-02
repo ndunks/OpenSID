@@ -39,8 +39,6 @@ namespace App\Libraries\TinyMCE;
 
 class KodeIsianPendudukLuar
 {
-    private $suratMatser;
-    private $inputForm;
     public static array $kodeIsian = [
         'nik',
         'nama',
@@ -55,6 +53,7 @@ class KodeIsianPendudukLuar
         'warga_negara',
         'alamat_jalan',
         'alamat',
+        'alamat_lengkap',
         'nama_dusun',
         'nama_rt',
         'nama_rw',
@@ -70,16 +69,16 @@ class KodeIsianPendudukLuar
         'dokumen_kitas',
         'nama_ayah',
         'nama_ibu',
+        'no_kk',
+        'kepala_kk',
 
         // kode isian lama
         'form_nama_non_warga',
         'form_nik_non_warga',
     ];
 
-    public function __construct($suratMatser, $inputForm)
+    public function __construct(private $suratMatser, private $inputForm)
     {
-        $this->suratMatser = $suratMatser;
-        $this->inputForm   = $inputForm;
     }
 
     public static function get($suratMatser, $inputForm)
@@ -121,6 +120,18 @@ class KodeIsianPendudukLuar
                 $tgl_lahir = $input['tanggallahir'];
             }
 
+            if ($item === 'tanggallahir') {
+                $value = formatTanggal($tgl_lahir);
+            }
+
+            if ($item === 'tempat_tgl_lahir') {
+                $value = $input['tempatlahir'] . '/' . formatTanggal($tgl_lahir);
+            }
+
+            if ($item === 'tanggalperkawinan') {
+                $value = formatTanggal($input['tanggalperkawinan']);
+            }
+
             if ($item === 'ttl') {
                 $value = $input['tempatlahir'] . '/' . formatTanggal($tgl_lahir);
             }
@@ -130,7 +141,11 @@ class KodeIsianPendudukLuar
             }
 
             if ($item === 'alamat') {
-                $value = $input['alamat_jalan'] . ' RT ' . $input['nama_rt'] . ' RW ' . $input['nama_rw'] . ' ' . ucwords(setting('sebutan_desa') . ' ' . $input['pend_desa'] . ', ' . setting('sebutan_kecamatan') . ' ' . $input['pend_kecamatan'] . ', ' . setting('sebutan_kabupaten') . ' ' . $input['pend_kabupaten'] . ', Provinsi ' . $input['pend_provinsi']);
+                $value = $input['alamat_jalan'];
+            }
+
+            if ($item === 'alamat_lengkap') {
+                $value = $input['alamat_jalan'] . ' RT ' . $input['nama_rt'] . ' / RW ' . $input['nama_rw'] . ' ' . ucwords(setting('sebutan_dusun') . ' ' . $input['nama_dusun'] . ', ' . setting('sebutan_desa') . ' ' . $input['pend_desa'] . ', ' . setting('sebutan_kecamatan') . ' ' . $input['pend_kecamatan'] . ', ' . setting('sebutan_kabupaten') . ' ' . $input['pend_kabupaten'] . ', Provinsi ' . $input['pend_provinsi']);
             }
 
             return ['[' . ucfirst(uclast($item . $prefix)) . ']' => $value];
@@ -163,6 +178,8 @@ class KodeIsianPendudukLuar
             'no_kitas'           => 'No. KITAS / KITAP',
             'nama_ayah'          => 'Nama Ayah',
             'nama_ibu'           => 'Nama Ibu',
+            'no_kk'              => 'No. KK',
+            'kepala_kk'          => 'Kepala Keluarga',
         ];
     }
 }

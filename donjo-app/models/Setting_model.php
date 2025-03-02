@@ -41,25 +41,6 @@ use App\Models\SettingAplikasi;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-define('EKSTENSI_WAJIB', serialize([
-    'curl',
-    'fileinfo',
-    'gd',
-    'iconv',
-    'json',
-    'mbstring',
-    'mysqli',
-    'mysqlnd',
-    'tidy',
-    'zip',
-    'exif',
-]));
-define('minPhpVersion', '7.4.0');
-define('maxPhpVersion', '8.2.0');
-define('minMySqlVersion', '5.6.0');
-define('maxMySqlVersion', '8.0.0');
-define('minMariaDBVersion', '10.3.0');
-
 class Setting_model extends MY_Model
 {
     public function init(): void
@@ -159,6 +140,15 @@ class Setting_model extends MY_Model
         // Konversi nilai margin global dari cm ke mm
         $margins                              = json_decode($this->setting->surat_margin, true);
         $this->setting->surat_margin_cm_to_mm = [
+            $margins['kiri'] * 10,
+            $margins['atas'] * 10,
+            $margins['kanan'] * 10,
+            $margins['bawah'] * 10,
+        ];
+
+        // Konversi nilai margin surat dinas global dari cm ke mm
+        $margins                                    = json_decode($this->setting->surat_dinas_margin, true);
+        $this->setting->surat_dinas_margin_cm_to_mm = [
             $margins['kiri'] * 10,
             $margins['atas'] * 10,
             $margins['kanan'] * 10,
