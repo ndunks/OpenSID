@@ -50,8 +50,8 @@
                 <div class="col-sm-2">
                     <select class="form-control input-sm select2" name="filter" id="filter">
                         <option value="">Pilih Status</option>
-                        <option value="1">Berlaku</option>
-                        <option value="2">Dicabut/Tidak Berlaku</option>
+                        <option value="1" @selected($active == 1)>Berlaku</option>
+                        <option value="2" @selected($active == 2)>Dicabut/Tidak Berlaku</option>
                     </select>
                 </div>
                 @if ($kat == 3)
@@ -99,8 +99,8 @@
                                         <th>No./Tgl Ditetapkan</th>
                                         <th>Uraian Singkat</th>
                                     @endif
-                                    <th nowrap>Aktif <i class='fa fa-sort fa-sm'></i></th>
-                                    <th nowrap>Dimuat Pada <i class='fa fa-sort fa-sm'></i></th>
+                                    <th nowrap>Aktif</th>
+                                    <th nowrap>Dimuat Pada</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -166,9 +166,9 @@
                         },
                     @elseif ($kat == 2) {
                             data: 'additional.tgl_keputusan',
-                            name: 'attr',
+                            name: 'attr->tgl_kep_kades',
                             searchable: true,
-                            orderable: false,
+                            orderable: true,
                         }, {
                             data: 'additional.uraian_singkat',
                             name: 'attr',
@@ -182,9 +182,9 @@
                             orderable: false,
                         }, {
                             data: 'additional.tgl_ditetapkan',
-                            name: 'attr',
+                            name: 'attr->tgl_ditetapkan',
                             searchable: true,
-                            orderable: false,
+                            orderable: true,
                         }, {
                             data: 'additional.uraian_singkat',
                             name: 'attr',
@@ -205,7 +205,13 @@
                     }
                 ],
                 order: [
-                    // [1, 'asc']
+                    @switch($kat)
+                        @case(2)[4, 'asc']
+                        @break
+
+                        @case(3)[5, 'asc']
+                        @break
+                    @endswitch
                 ],
             });
 
@@ -214,16 +220,26 @@
             var colFilter = 6;
             var colTahun = 4;
 
-            if (kategori == 3) {
-                colFilter = 7;
+            if (kategori == 3 || kategori == 2) {
+                if (kategori == 3) {
+                    colFilter = 7;
+                }
                 colTahun = 5;
             }
 
             $('#filter').change(function() {
+                if ($(this).attr("data-reset")) {
+                    return;
+                }
+
                 TableData.column(colFilter).search($(this).val()).draw()
             })
 
             $('#tahun').change(function() {
+                if ($(this).attr("data-reset")) {
+                    return;
+                }
+
                 if (kategori == 3) {
                     TableData.draw()
                 } else {
@@ -232,6 +248,10 @@
             })
 
             $('#jenis_peraturan').change(function() {
+                if ($(this).attr("data-reset")) {
+                    return;
+                }
+
                 TableData.column(4).search($(this).val()).draw()
             })
 
@@ -242,6 +262,9 @@
             if (ubah == 0) {
                 TableData.column(2).visible(false);
             }
+            @if ($active)
+                $('#filter').trigger('change')
+            @endif
         });
     </script>
 @endpush

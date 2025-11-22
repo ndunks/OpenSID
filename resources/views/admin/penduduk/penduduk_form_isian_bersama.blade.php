@@ -35,7 +35,7 @@
             <label for="nik">NIK <code id="tampil_nik" style="display: none;"> (Sementara) </code></label>
             <div class="input-group input-group-sm">
                 <span class="input-group-addon">
-                    <input type="checkbox" title="Centang jika belum memiliki NIK" id="nik_sementara" @checked($jenis_peristiwa == 1 || $cek_nik == 0)>
+                    <input type="checkbox" title="Centang jika belum memiliki NIK" id="nik_sementara">
                 </span>
                 <input
                     id="nik"
@@ -144,7 +144,7 @@
                         <div class="input-group-addon">
                             <i class="fa fa-calendar"></i>
                         </div>
-                        <input class="form-control input-sm pull-right" id="tanggal_cetak_ktp" name="tanggal_cetak_ktp" type="text" value="{{ $penduduk['tanggal_cetak_ktp'] ? date('d-m-Y', strtotime($penduduk['tanggal_cetak_ktp'])) : '' }} }}">
+                        <input class="form-control input-sm pull-right" id="tanggal_cetak_ktp" name="tanggal_cetak_ktp" type="text" value="{{ $penduduk['tanggal_cetak_ktp'] ? date('d-m-Y', strtotime($penduduk['tanggal_cetak_ktp'])) : '' }}">
                     </div>
                 </div>
             </div>
@@ -854,6 +854,17 @@
             ></input>
         </div>
     </div>
+    <div id="status_asuransi" class="col-sm-4">
+        <div class='form-group'>
+            <label>Status Kepersertaan Asuransi Kesehatan</label>
+            <select class="form-control input-sm" name="status_asuransi">
+                <option value="" @selected($penduduk['status_asuransi'] == null)>Pilih Kepersertaan Asuransi Kesehatan</option>
+                @foreach (\App\Enums\AktifEnum::all() as $key => $value)
+                    <option value="{{ $key }}" @selected(isset($penduduk['status_asuransi']) && $penduduk['status_asuransi'] == $key)>{{ strtoupper($value) }}</option>
+                @endforeach
+            </select>
+        </div>
+    </div>
     <div class="col-sm-12">
         <div class="row">
             <div class="col-sm-4">
@@ -958,8 +969,8 @@
             $("select[name='status_kawin']").change();
             $("select[name='id_asuransi']").change();
 
+            var cek_nik = '{{ $cek_nik }}';
             $('#nik_sementara').change(function() {
-                var cek_nik = '{{ $cek_nik }}';
                 var nik_sementara_berikut = '{{ $nik_sementara }}';
                 var nik_asli = '{{ $penduduk['nik'] }}';
                 if ($('#nik_sementara').prop('checked')) {
@@ -975,7 +986,10 @@
                 }
             });
 
-            $('#nik_sementara').change();
+            if (cek_nik == '0') {
+                $('#nik_sementara').prop('checked', true);
+                $('#nik_sementara').trigger('change');
+            }
 
             show_hide_penduduk_tidak_tetap($('#status_penduduk').val());
             show_hide_status_warga_negara($('#warganegara_id').val());
@@ -990,7 +1004,6 @@
                 } else {
                     $('#mainform #rw').closest('div').hide()
                 }
-                $('#mainform #rw').val('')
                 $('#mainform #rw').trigger('change')
             })
 
@@ -1003,7 +1016,6 @@
                 } else {
                     $('#mainform #id_cluster').closest('div').hide()
                 }
-                $('#mainform #id_cluster').val('')
                 $('#mainform #id_cluster').trigger('change')
             })
 
@@ -1039,6 +1051,7 @@
         function show_hide_asuransi(asuransi) {
             if (asuransi == '1' || asuransi == '') {
                 $('#asuransi_pilihan').hide();
+                $('#status_asuransi').hide();
             } else {
                 if (asuransi == '99') {
                     $('#label-no-asuransi').text('Nama/nomor Asuransi');
@@ -1047,6 +1060,7 @@
                 }
 
                 $('#asuransi_pilihan').show();
+                $('#status_asuransi').show();
             }
         }
 

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -45,6 +45,13 @@ class Anak extends BaseModel
 {
     use ConfigId;
 
+    public const NORMAL           = 1;
+    public const GIZI_KURANG      = 2;
+    public const GIZI_BURUK       = 3;
+    public const STUNTING         = 4;
+    public const TB_SANGAT_PENDEK = 2;
+    public const TB_PENDEK        = 3;
+
     /**
      * Static data status gizi anak
      *
@@ -52,22 +59,22 @@ class Anak extends BaseModel
      */
     public const STATUS_GIZI_ANAK = [
         [
-            'id'     => 1,
+            'id'     => self::NORMAL,
             'simbol' => 'N',
             'nama'   => 'Sehat / Normal (N)',
         ],
         [
-            'id'     => 2,
+            'id'     => self::GIZI_KURANG,
             'simbol' => 'GK',
             'nama'   => 'Gizi Kurang (GK)',
         ],
         [
-            'id'     => 3,
+            'id'     => self::GIZI_BURUK,
             'simbol' => 'GB',
             'nama'   => 'Gizi Buruk (GB)',
         ],
         [
-            'id'     => 4,
+            'id'     => self::STUNTING,
             'simbol' => 'S',
             'nama'   => 'Stunting (S)',
         ],
@@ -137,6 +144,11 @@ class Anak extends BaseModel
         return $this->belongsTo(KIA::class, 'kia_id');
     }
 
+    public function posyandu()
+    {
+        return $this->belongsTo(Posyandu::class, 'posyandu_id');
+    }
+
     public function scopeFilter($query, array $filters)
     {
         if (! empty($filters['bulan'])) {
@@ -152,5 +164,40 @@ class Anak extends BaseModel
         }
 
         return $query;
+    }
+
+    protected function scopeNormal($query)
+    {
+        return $query->where('status_gizi', self::NORMAL);
+    }
+
+    protected function scopeResikoStunting($query)
+    {
+        return $query->whereIn('status_gizi', [self::GIZI_BURUK, self::GIZI_KURANG]);
+    }
+
+    protected function scopeStunting($query)
+    {
+        return $query->where('status_gizi', self::STUNTING);
+    }
+
+    protected function scopeStuntingPendek($query)
+    {
+        return $query->stunting()->whereIn('status_tikar', [self::TB_PENDEK, self::TB_SANGAT_PENDEK]);
+    }
+
+    public function isNormal()
+    {
+        return $this->attributes['status_gizi'] == self::NORMAL;
+    }
+
+    public function isResikoStunting()
+    {
+        return in_array($this->attributes['status_gizi'], [self::GIZI_BURUK, self::GIZI_KURANG]);
+    }
+
+    public function isStunting()
+    {
+        return $this->attributes['status_gizi'] == self::STUNTING;
     }
 }

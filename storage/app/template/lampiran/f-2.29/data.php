@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,14 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Models\LogPenduduk;
+use App\Models\PendudukSaja;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -42,7 +45,7 @@ $individu['umur'] = str_pad($individu['umur'], 3, '0', STR_PAD_LEFT);
 // include data pelapor dan saksi
 include STORAGEPATH . 'app/template/lampiran/kode_pelapor_saksi.php';
 
-$ibu = $this->surat_model->surat_model->get_data_ibu($individu['id']);
+$ibu = (new PendudukSaja)->dataIbu($individu['id']);
 if ($ibu) {
     $input['nik_ibu']             = get_nik($ibu['nik']);
     $input['nama_ibu']            = $ibu['nama'];
@@ -64,7 +67,7 @@ if ($ibu) {
     $input['umur_ibu']        = str_pad($input['umur_ibu'], 3, '0', STR_PAD_LEFT);
 }
 
-$ayah = $this->surat_model->get_data_ayah($individu['id']);
+$ayah = (new PendudukSaja)->dataAyah($individu['id']);
 if ($ayah) {
     $input['nik_ayah']             = get_nik($ayah['nik']);
     $input['nama_ayah']            = $ayah['nama'];
@@ -89,7 +92,7 @@ if ($ayah) {
 $input['nik_kematian']      = get_nik($individu['nik']);
 $input['nama_kematian']     = $individu['nama'];
 $input['sex_id']            = $individu['sex_id'];
-$data_mati                  = $this->surat_model->get_data_mati($individu['id']);
+$data_mati                  = LogPenduduk::where('id_pend', $individu['id'])->where('kode_peristiwa', '2')->first();
 $input['tanggal_kematian']  = $data_mati->tgl_peristiwa;
 $input['jam_kematian']      = $data_mati->jam_mati;
 $input['sebab_kematian']    = $data_mati->sebab;

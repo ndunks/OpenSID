@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,16 +29,18 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Libraries\Paging;
 use OpenSpout\Reader\XLSX\Reader;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
+// TODO: dihapus setelah modul covid dihapus
 class Vaksin_covid_model extends MY_Model
 {
     protected $tabel_penduduk = 'penduduk_hidup';
@@ -49,14 +51,14 @@ class Vaksin_covid_model extends MY_Model
     public function __construct()
     {
         parent::__construct();
+        $this->load->library('upload');
         $this->load->model('referensi_model');
-        $this->load->library('MY_Upload', null, 'upload');
     }
 
     public function jenis_vaksin()
     {
         // Data awal
-        $awal = $this->referensi_model->list_ref(JENIS_VAKSIN);
+        $awal = unserialize(JENIS_VAKSIN);
 
         // Dari database
         $data = $this->config_id()
@@ -168,7 +170,7 @@ class Vaksin_covid_model extends MY_Model
 
     public function penduduk_sql(): void
     {
-        $sebutan_dusun = ucwords($this->setting->sebutan_dusun);
+        $sebutan_dusun = ucwords(setting('sebutan_dusun'));
         $this->db
             ->select('p.*, v.*, kk.no_kk, ck.rt, ck.rw, ck.dusun, s.nama as jenis_kelamin ')
             ->select("(DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(p.tanggallahir)), '%Y')+0) AS umur")
@@ -216,13 +218,14 @@ class Vaksin_covid_model extends MY_Model
     {
         $this->penduduk_sql();
         $jml_data = $this->db->get("{$this->tabel_penduduk} as p")->num_rows();
-        $this->load->library('paging');
+
+        $paging          = new Paging();
         $cfg['page']     = $p;
         $cfg['per_page'] = $this->session->per_page;
         $cfg['num_rows'] = $jml_data;
-        $this->paging->init($cfg);
+        $paging->init($cfg);
 
-        return $this->paging;
+        return $paging;
     }
 
     public function data_penduduk($id = null)
@@ -454,7 +457,7 @@ class Vaksin_covid_model extends MY_Model
                     $nik = (string) $cells[0];
 
                     if ($nik === '') {
-                        $pesan .= "Pesan Gagal : Baris {$nomor_baris} Kolom NIK Tidak Boleh Kosong.</br>";
+                        $pesan .= "Pesan Gagal : Baris {$nomor_baris} Kolom NIK tidak boleh kosong..</br>";
                         $gagal++;
                         $outp = false;
 
@@ -543,7 +546,7 @@ class Vaksin_covid_model extends MY_Model
                             continue;
                         }
                     } else {
-                        $pesan .= "Pesan Gagal : Baris {$nomor_baris} Data penduduk dengan NIK : {$nik} tidak ditemukan</br>";
+                        $pesan .= "Pesan Gagal: Baris {$nomor_baris} data penduduk dengan NIK: {$nik} tidak ditemukan.</br>";
                         $gagal++;
                         $outp = false;
                     }
@@ -581,10 +584,9 @@ class Vaksin_covid_model extends MY_Model
     protected function jenisVaksin(string $cells = '', $default = '')
     {
         if ($cells === '') {
-            $this->load->model('referensi_model');
 
             if (! $default) {
-                return $this->referensi_model->list_ref(JENIS_VAKSIN)[0];
+                return unserialize(JENIS_VAKSIN)[0];
             }
 
             return $default;

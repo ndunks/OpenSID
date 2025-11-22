@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,13 +29,14 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
 use App\Models\KlasifikasiSurat;
+use App\Models\LogSurat;
 use App\Models\SuratKeluar;
 
 defined('BASEPATH') || exit('No direct script access allowed');
@@ -51,7 +52,7 @@ class Surat_keluar extends Admin_Controller
         isCan('b');
         // Untuk bisa menggunakan helper force_download()
         $this->load->helper('download');
-        $this->load->model(['penomoran_surat_model']);
+        $this->load->library('upload', null, 'upload');
         $this->uploadConfig = [
             'upload_path'   => LOKASI_ARSIP,
             'allowed_types' => 'gif|jpg|jpeg|png|pdf',
@@ -131,7 +132,7 @@ class Surat_keluar extends Admin_Controller
             $data['form_action']  = site_url("surat_keluar/update/{$id}");
         } else {
             $data['action']                     = 'Tambah';
-            $last_surat                         = $this->penomoran_surat_model->get_surat_terakhir('surat_keluar');
+            $last_surat                         = LogSurat::suratTerakhir('surat_keluar');
             $data['surat_keluar']['nomor_urut'] = $last_surat['no_surat'] + 1;
             $data['form_action']                = site_url('surat_keluar/insert');
         }
@@ -318,26 +319,28 @@ class Surat_keluar extends Admin_Controller
     public function dialog($aksi = 'cetak')
     {
         $data['aksi']       = $aksi;
-        $data['tahun']      = SuratKeluar::tahun()->pluck('tahun');
         $data['formAction'] = ci_route('surat_keluar.cetak', $aksi);
 
-        return view('admin.surat_keluar.dialog', $data);
+        return view('admin.bumindes.umum.dialog', $data);
     }
 
     public function cetak($aksi = '')
     {
-        $query          = $this->sumberData();
-        $data           = $this->modal_penandatangan();
-        $data['aksi']   = $aksi;
-        $data['main']   = $query->get()->toArray();
-        $data['config'] = $this->header['desa'];
-        $data['tahun']  = $this->input->post('tahun');
-        if ($data['tahun']) {
-            $data['main'] = $query->whereYear('tanggal_surat', $data['tahun'])->get()->toArray();
-        }
+        $query = datatables($this->sumberData())
+            ->filter(function ($query) {
+                $query->when($this->input->post('id_cb'), static function ($query, $id) {
+                    $query->whereIn('id', $id);
+                });
+            });
+
+        $data              = $this->modal_penandatangan();
+        $data['aksi']      = $aksi;
+        $data['main']      = $query->prepareQuery()->results();
         $data['file']      = 'Surat Keluar';
         $data['isi']       = 'admin.surat_keluar.cetak';
         $data['letak_ttd'] = ['1', '1', '23'];
+        $data['tahun']     = $this->input->get('tahun') ?? null;
+        $data['tgl_cetak'] = $this->request['tgl_cetak'];
 
         return view('admin.layouts.components.format_cetak', $data);
     }
@@ -359,7 +362,7 @@ class Surat_keluar extends Admin_Controller
         if ($this->input->post('nomor_urut') == $this->input->post('nomor_urut_lama')) {
             $hasil = false;
         } else {
-            $hasil = $this->penomoran_surat_model->nomor_surat_duplikat('surat_keluar', $this->input->post('nomor_urut'));
+            $hasil = LogSurat::isDuplikat('surat_keluar', $this->input->post('nomor_urut'));
         }
         echo $hasil ? 'false' : 'true';
     }

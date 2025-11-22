@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>{{ $setting->login_title . ' ' . ucwords($setting->sebutan_desa) . ($header['nama_desa'] ? ' ' . $header['nama_desa'] : '') . get_dynamic_title_page_from_path() }}</title>
+    <title>{{ setting('login_title') . ' ' . ucwords(setting('sebutan_desa')) . ($header['nama_desa'] ? ' ' . $header['nama_desa'] : '') . get_dynamic_title_page_from_path() }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex">
     <link rel="stylesheet" href="{{ asset('css/login-style.css') }}" media="screen">
@@ -39,13 +39,13 @@
                                 @endif
                             </a>
                             <div class="login-footer-top">
-                                <h1>{{ ucwords($setting->sebutan_desa) }} {{ $header['nama_desa'] }}</h1>
+                                <h1>{{ ucwords(setting('sebutan_desa')) }} {{ $header['nama_desa'] }}</h1>
                                 <h3>
                                     <br />{{ $header['alamat_kantor'] }}<br />Kodepos {{ $header['kode_pos'] }}
-                                    <br />{{ ucwords($setting->sebutan_kecamatan) }} {{ $header['nama_kecamatan'] }}<br />{{ ucwords($setting->sebutan_kabupaten) }} {{ $header['nama_kabupaten'] }}
+                                    <br />{{ ucwords(setting('sebutan_kecamatan')) }} {{ $header['nama_kecamatan'] }}<br />{{ ucwords(setting('sebutan_kabupaten')) }} {{ $header['nama_kabupaten'] }}
                                 </h3>
                             </div>
-                            @if ($errors->any())
+                            @if ($errors?->any())
                                 <div class="alert alert-danger">
                                     @foreach ($errors->all() as $item)
                                         @if (str_contains($item, 'Terlalu banyak upaya masuk.'))
@@ -56,7 +56,7 @@
                                     @endforeach
                                 </div>
                             @endif
-                            @if ($notif = $ci->session->flashdata('notif'))
+                            @if ($notif = session('notif'))
                                 <div class="alert alert-danger">
                                     <p>{{ $notif }}</p>
                                 </div>

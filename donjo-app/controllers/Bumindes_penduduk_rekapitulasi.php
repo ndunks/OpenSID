@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,12 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Models\LaporanSinkronisasi;
 use App\Models\LogPenduduk;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
@@ -51,7 +52,6 @@ class Bumindes_penduduk_rekapitulasi extends Admin_Controller
     {
         parent::__construct();
         isCan('b');
-        $this->load->model(['pamong_model', 'penduduk_model', 'laporan_bulanan_model', 'laporan_sinkronisasi_model', 'wilayah_model']);
         $this->logpenduduk = new LogPenduduk();
     }
 
@@ -87,7 +87,7 @@ class Bumindes_penduduk_rekapitulasi extends Admin_Controller
             'bulan' => empty($this->input->get('bulan')) ? null : $this->input->get('bulan'),
         ];
 
-        return LogPenduduk::RekapitulasiList($filters)->get()->toArray();
+        return LogPenduduk::rekapitulasiList($filters)->get()->toArray();
     }
 
     public function dataProcess($rekap)
@@ -122,15 +122,15 @@ class Bumindes_penduduk_rekapitulasi extends Admin_Controller
 
     public function cetak($aksi = '')
     {
-        $paramDatatable        = json_decode((string) $this->input->post('params'), 1);
-        $_GET                  = $paramDatatable;
-        $rekap                 = $this->sumberData();
-        $data                  = $this->modal_penandatangan();
-        $data['aksi']          = $aksi;
-        $data['tahun']         = empty($_GET['tahun']) ? date('Y') : $_GET['tahun'];
-        $data['bulan']         = empty($_GET['bulan']) ? date('m') : $_GET['bulan'];
-        $data['main']          = $this->dataProcess($rekap);
-        $data['config']        = $this->header['desa'];
+        $paramDatatable = json_decode((string) $this->input->post('params'), 1);
+        $_GET           = $paramDatatable;
+        $rekap          = $this->sumberData();
+        $data           = $this->modal_penandatangan();
+        $data['aksi']   = $aksi;
+        $data['tahun']  = empty($_GET['tahun']) ? date('Y') : $_GET['tahun'];
+        $data['bulan']  = empty($_GET['bulan']) ? date('m') : $_GET['bulan'];
+        $data['main']   = $this->dataProcess($rekap);
+
         $data['tgl_cetak']     = $this->input->post('tgl_cetak');
         $data['tampil_jumlah'] = $this->input->post('tampil_jumlah');
         $data['file']          = 'Buku Rekapitulasi Jumlah Penduduk';
@@ -151,6 +151,7 @@ class Bumindes_penduduk_rekapitulasi extends Admin_Controller
         // $data['width']      = 400; // lebar dalam mm
         $data['ispdf'] = true;
         $laporan       = View::make('admin.layouts.components.format_cetak', $data)->render();
+
         buat_pdf($laporan, $file, null, 'L', [200, 400]); // perlu berikan dimensi eksplisit dalam mm
 
         $bulan = $this->session->filter_bulan ?? date('m');
@@ -161,8 +162,6 @@ class Bumindes_penduduk_rekapitulasi extends Admin_Controller
             'tahun'    => $tahun,
         ];
 
-        log_message('notice', 'Laporan Rekap Jumlah Penduduk ' . $bulan . ' ' . $tahun . ' telah dibuat.');
-
         $lap_sinkron = [
             'judul'     => 'Rekap Jumlah Penduduk',
             'semester'  => $bulan,
@@ -170,6 +169,12 @@ class Bumindes_penduduk_rekapitulasi extends Admin_Controller
             'nama_file' => $nama_file . '.pdf',
             'tipe'      => 'laporan_penduduk',
         ];
-        $this->laporan_sinkronisasi_model->insert_or_update($where, $lap_sinkron);
+        $laporan = LaporanSinkronisasi::where($where)->first();
+        if (! $laporan) {
+            $laporan = LaporanSinkronisasi::create($lap_sinkron);
+        } else {
+            $laporan->update($lap_sinkron);
+        }
+
     }
 }

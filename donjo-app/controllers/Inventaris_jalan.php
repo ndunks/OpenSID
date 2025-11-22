@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -45,12 +45,12 @@ class Inventaris_jalan extends Admin_Controller
 {
     public $modul_ini     = 'sekretariat';
     public $sub_modul_ini = 'inventaris';
+    public $akses_modul   = 'inventaris-jalan';
 
     public function __construct()
     {
         parent::__construct();
         isCan('b');
-        $this->load->model(['inventaris_jalan_model', 'pamong_model', 'aset_model']);
     }
 
     public function index(): void
@@ -63,7 +63,7 @@ class Inventaris_jalan extends Admin_Controller
     public function datatables()
     {
         if ($this->input->is_ajax_request()) {
-            $data = InventarisJalan::with('mutasi')->aktif();
+            $data = InventarisJalan::query()->with('mutasi');
 
             return datatables()->of($data)
                 ->addIndexColumn()
@@ -88,11 +88,6 @@ class Inventaris_jalan extends Admin_Controller
                 })
                 ->editColumn('kode_barang_register', static fn ($row): string => $row->kode_barang . '<br>' . $row->register)
                 ->editColumn('tanggal_dokument', static fn ($row): string => date('d M Y', strtotime($row->tanggal_dokument)))
-                ->editColumn('tanggal_mutasi', static function ($row) {
-                    if ($row->mutasi) {
-                        return date('d M Y', strtotime($row->mutasi->tahun_mutasi));
-                    }
-                })
                 ->editColumn('harga', static fn ($row): string => number_format($row->harga, 0, '.', '.'))
                 ->rawColumns(['aksi', 'kode_barang_register'])
                 ->make();
@@ -167,7 +162,7 @@ class Inventaris_jalan extends Admin_Controller
     public function validate($data)
     {
         return [
-            'nama_barang'      => $this->input->post('nama_barang'),
+            'nama_barang'      => explode('_', $this->input->post('nama_barang'))[0],
             'kode_barang'      => $this->input->post('kode_barang'),
             'register'         => $this->input->post('register'),
             'kondisi'          => $this->input->post('kondisi'),
@@ -198,10 +193,10 @@ class Inventaris_jalan extends Admin_Controller
 
     public function cetak($aksi = '')
     {
-        $data              = $this->modal_penandatangan();
-        $data['aksi']      = $aksi;
-        $data['tahun']     = $this->input->post('tahun');
-        $data['config']    = $this->header['desa'];
+        $data          = $this->modal_penandatangan();
+        $data['aksi']  = $aksi;
+        $data['tahun'] = $this->input->post('tahun');
+
         $data['isi']       = 'admin.inventaris.jalan.cetak';
         $data['letak_ttd'] = ['1', '2', '12'];
         $data['file']      = 'Jalan_Irigasi_Jaringan_';
@@ -210,15 +205,5 @@ class Inventaris_jalan extends Admin_Controller
         $data['print'] = InventarisJalan::aktif()->cetak($data['tahun'])->get();
 
         return view('admin.layouts.components.format_cetak', $data);
-    }
-
-    public function download($tahun, $penandatangan): void
-    {
-        $data['header'] = $this->header['desa'];
-        $data['total']  = $this->inventaris_jalan_model->sum_print($tahun);
-        $data['print']  = $this->inventaris_jalan_model->cetak($tahun);
-        $data['pamong'] = $this->pamong_model->get_data($penandatangan);
-
-        $this->load->view('inventaris/jalan/inventaris_excel', $data);
     }
 }

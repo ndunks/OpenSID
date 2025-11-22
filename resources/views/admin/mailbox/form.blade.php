@@ -5,13 +5,13 @@
 @section('title')
     <h1>
         Kotak Pesan
-        <small>{{ $pesan ? 'Ubah' : 'Tambah' }} Kotak Pesan </small>
+        <small>{{ $pesan ? 'Balas' : 'Tambah' }} Kotak Pesan </small>
     </h1>
 @endsection
 
 @section('breadcrumb')
     <li><a href="{{ ci_route('komentar') }}"> Daftar Kotak Pesan </a></li>
-    <li class="active">{{ $pesan ? 'Ubah' : 'Tambah' }} Kotak Pesan </li>
+    <li class="active">{{ $pesan ? 'Balas' : 'Tambah' }} Kotak Pesan </li>
 @endsection
 
 @section('content')
@@ -22,9 +22,9 @@
             <div class="col-md-12">
                 <div class="box box-info">
                     <div class="box-header with-border">
-                        <a href="{{ ci_route('mailbox') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Tambah Artikel">
-                            <i class="fa fa-arrow-circle-left "></i>Kembali ke Daftar Kotak Pesan
-                        </a>
+                        @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('mailbox'), 'label' => 'Daftar Kotak Pesan'])
+                        @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('mailbox/2'), 'label' => 'Daftar Kotak Keluar'])
+
                     </div>
                     <div class="box-body">
                         <div class="form-group">

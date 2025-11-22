@@ -28,9 +28,7 @@
                     Hapus</a>
             @endif
             @if ($parent)
-                <a href="{{ ci_route('menu') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
-                    <i class="fa fa-arrow-circle-left "></i>Kembali ke Daftar Menu
-                </a>
+                @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('menu'), 'label' => 'Daftar Menu'])
             @endif
         </div>
         @if ($subtitle)
@@ -43,7 +41,7 @@
                 <div class="col-sm-2">
                     <select id="status" class="form-control input-sm select2" name="status">
                         <option value="">Pilih Status</option>
-                        @foreach ($status as $key => $item)
+                        @foreach ($listStatus as $key => $item)
                             <option value="{{ $key }}">{{ $item }}</option>
                         @endforeach
                     </select>
@@ -78,6 +76,7 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+            var status = '{{ $status }}';
             var TableData = $('#tabeldata').DataTable({
                 responsive: true,
                 processing: true,
@@ -139,7 +138,7 @@
                 },
             });
 
-            $('#status').select2().val(1).trigger('change');
+            $('#status').select2().val(status).trigger('change');
 
             $('#status').change(function() {
                 TableData.draw();

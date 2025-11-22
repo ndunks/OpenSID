@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -42,6 +42,7 @@ use Exception;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Container\Container;
 use Illuminate\Support\Carbon;
+use NotificationChannels\Telegram\Telegram;
 
 class LoginAdminListener
 {
@@ -49,7 +50,7 @@ class LoginAdminListener
     {
     }
 
-    public function handle(Login $login)
+    public function handle(Login $login): void
     {
         if (! in_array($login->guard, ['admin', 'admin_periksa'])) {
             return;
@@ -85,12 +86,12 @@ class LoginAdminListener
 
         // TODO: gunakan laravel notification
         if (setting('telegram_notifikasi') && cek_koneksi_internet()) {
-            $this->app['ci']->load->library('Telegram/telegram');
-            $country = $logLogin->lainnya['country'] ?? ' tidak diketahui';
+            $telegram = new Telegram(setting('telegram_token'));
+            $country  = $logLogin->lainnya['country'] ?? ' tidak diketahui';
 
             if ($country != 'Indonesia') {
                 try {
-                    $this->app['ci']->telegram->sendMessage([
+                    $telegram->sendMessage([
                         'text' => <<<EOD
                                 Teridentifikasi login mencurigakan dari {$login->user->nama} dengan lokasi {$country}.
                             EOD,
@@ -103,7 +104,7 @@ class LoginAdminListener
             }
 
             try {
-                $this->app['ci']->telegram->sendMessage([
+                $telegram->sendMessage([
                     'text'       => sprintf('%s login Halaman Admin %s pada tanggal %s', $login->user->nama, APP_URL, tgl_indo2(date('Y-m-d H:i:s'))),
                     'parse_mode' => 'Markdown',
                     'chat_id'    => $this->app['ci']->setting->telegram_user_id,
@@ -114,7 +115,7 @@ class LoginAdminListener
         }
     }
 
-    private function setFmKey($key = null)
+    private function setFmKey($key = null): string
     {
         $fmHash = $key . date('Ymdhis');
         $salt   = random_int(100000, 999999);

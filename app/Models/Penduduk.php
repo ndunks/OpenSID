@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -40,11 +40,14 @@ namespace App\Models;
 use App\Enums\AgamaEnum;
 use App\Enums\CaraKBEnum;
 use App\Enums\JenisKelaminEnum;
+use App\Enums\PendidikanKKEnum;
 use App\Enums\PendidikanSedangEnum;
+use App\Enums\SakitMenahunEnum;
 use App\Enums\SasaranEnum;
 use App\Enums\SHDKEnum;
 use App\Enums\StatusDasarEnum;
 use App\Enums\StatusKawinEnum;
+use App\Enums\StatusKawinSpesifikEnum;
 use App\Enums\StatusPendudukEnum;
 use App\Scopes\AccessWilayahScope;
 use App\Traits\Author;
@@ -167,6 +170,7 @@ class Penduduk extends BaseModel
         'updated_by',
         'id_asuransi',
         'no_asuransi',
+        'status_asuransi',
         'email',
         'email_token',
         'email_tgl_kadaluarsa',
@@ -190,12 +194,15 @@ class Penduduk extends BaseModel
      */
     protected $appends = [
         'pendidikan',
+        'pendidikanKK',
         'usia',
         'alamat_wilayah',
+        'alamat_wilayah_kartu_keluarga',
         'nama_asuransi',
         'jml_anak',
         'lokasi',
         'status_perkawinan',
+        'sakit_menahun',
     ];
 
     /**
@@ -304,6 +311,16 @@ class Penduduk extends BaseModel
         return PendidikanSedangEnum::valueOf($this->pendidikan_sedang_id);
     }
 
+    public function getPendidikanKKAttribute()
+    {
+        return PendidikanKKEnum::valueOf($this->pendidikan_kk_id);
+    }
+
+    public function getSakitMenahunAttribute()
+    {
+        return SakitMenahunEnum::valueOf($this->sakit_menahun_id);
+    }
+
     /**
      * Define an inverse one-to-one or many relationship.
      *
@@ -352,16 +369,6 @@ class Penduduk extends BaseModel
     public function cacat()
     {
         return $this->belongsTo(Cacat::class, 'cacat_id')->withDefault();
-    }
-
-    /**
-     * Define an inverse one-to-one or many relationship.
-     *
-     * @return BelongsTo
-     */
-    public function sakitMenahun()
-    {
-        return $this->belongsTo(SakitMenahun::class, 'sakit_menahun_id')->withDefault();
     }
 
     /**
@@ -582,13 +589,24 @@ class Penduduk extends BaseModel
      */
     public function getStatusPerkawinanAttribute()
     {
-        return ! empty($this->status_kawin) && $this->status_kawin != StatusKawinEnum::KAWIN
-            ? $this->statusKawin->nama
-            : (
-                empty($this->akta_perkawinan) && empty($this->tanggalperkawinan)
-                    ? 'KAWIN BELUM TERCATAT'
-                    : 'KAWIN TERCATAT'
-            );
+        $status = match ($this->status_kawin) {
+            StatusKawinSpesifikEnum::KAWIN_TERCATAT => $this->isBelumTercatat($this->akta_perkawinan, $this->tanggalperkawinan)
+                    ? StatusKawinSpesifikEnum::KAWIN_BELUM_TERCATAT
+                    : StatusKawinSpesifikEnum::KAWIN_TERCATAT,
+
+            StatusKawinSpesifikEnum::CERAIHIDUP_TERCATAT => $this->isBelumTercatat($this->akta_perceraian, $this->tanggalperceraian)
+                    ? StatusKawinSpesifikEnum::CERAIHIDUP_BELUM_TERCATAT
+                    : StatusKawinSpesifikEnum::CERAIHIDUP_TERCATAT,
+
+            default => $this->status_kawin,
+        };
+
+        return StatusKawinSpesifikEnum::valueOf($status);
+    }
+
+    private function isBelumTercatat($akta, $tanggal): bool
+    {
+        return empty($akta) && empty($tanggal);
     }
 
     /**
@@ -647,6 +665,18 @@ class Penduduk extends BaseModel
     public function scopeStatusDasar($query, array $value)
     {
         return $query->whereIn('status_dasar', $value);
+    }
+
+    /**
+     * Scope query untuk mendapatkan penduduk hidup
+     *
+     * @param Builder $query
+     *
+     * @return Builder
+     */
+    public function scopeHidup($query, int $value)
+    {
+        return $query->where('status_dasar', $value);
     }
 
     /**
@@ -716,6 +746,15 @@ class Penduduk extends BaseModel
         return $this->alamat_sekarang . ' RT ' . $this->wilayah->rt . ' / RW ' . $this->wilayah->rw . ' ' . ucwords(setting('sebutan_dusun') . ' ' . $this->wilayah->dusun);
     }
 
+    public function getAlamatWilayahKartuKeluargaAttribute(): string
+    {
+        if ($this->id_kk != null) {
+            return $this->keluarga->alamat . ' ' . ucwords(setting('sebutan_dusun') . ' ' . $this->keluarga->wilayah->dusun);
+        }
+
+        return $this->alamat_sekarang . ' ' . ucwords(setting('sebutan_dusun') . ' ' . $this->wilayah->dusun);
+    }
+
     public function scopeKepalaKeluarga($query)
     {
         return $query->where(['kk_level' => SHDKEnum::KEPALA_KELUARGA]);
@@ -742,6 +781,11 @@ class Penduduk extends BaseModel
     public function isKepalaKeluarga()
     {
         return $this->attributes['kk_level'] == SHDKEnum::KEPALA_KELUARGA;
+    }
+
+    public function isAnak()
+    {
+        return $this->attributes['kk_level'] == SHDKEnum::ANAK;
     }
 
     public function formIndividu()
@@ -863,9 +907,24 @@ class Penduduk extends BaseModel
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    public function pamong(): HasOne
+    {
+        return $this->hasOne(Pamong::class, 'id_pend');
+    }
+
+    public function pamongUser(): HasOne
+    {
+        return $this->hasOne(Pamong::class, 'id_pend')->whereHas('user');
+    }
+
     public function bahasa()
     {
         return $this->belongsTo(Bahasa::class, 'bahasa_id');
+    }
+
+    public function logSurat(): HasMany
+    {
+        return $this->hasMany(LogSurat::class, 'id_pend');
     }
 
     /**
@@ -919,7 +978,7 @@ class Penduduk extends BaseModel
             'wilayah',
             'keluarga',
             'rtm',
-        ])->with(['map'])->selectRaw('*')->when($groupType, static function ($r) use ($groupType) {
+        ])->with(['map'])->hidup(StatusDasarEnum::HIDUP)->selectRaw('*')->when($groupType, static function ($r) use ($groupType) {
             if ($groupType == 'rtm') {
                 return $r->whereNotNull('id_rtm')->where('id_rtm', '!=', 0)->where(['rtm_level' => 1])->selectRaw(DB::raw('(SELECT COUNT(*) FROM tweb_penduduk p WHERE p.id_rtm != 0 and p.id_rtm = tweb_penduduk.id_rtm) as jumlah_anggota'));
             }
@@ -1076,6 +1135,8 @@ class Penduduk extends BaseModel
         $data['telepon']  = empty($data['telepon']) ? null : bilangan($data['telepon']);
         $data['email']    = empty($data['email']) ? null : email($data['email']);
         $data['telegram'] = empty($data['telegram']) ? null : bilangan($data['telegram']);
+
+        $data['status_asuransi'] = ($data['status_asuransi'] === '') ? null : $data['status_asuransi'];
 
         $valid = [];
         if (preg_match("/[^a-zA-Z '\\.,\\-]/", $data['nama'])) {
@@ -1333,7 +1394,7 @@ class Penduduk extends BaseModel
 
     public function getLokasiAttribute()
     {
-        if ($this->rtm != '[]' && $this->rtm != null) {
+        if ($this->rtm->nik_kepala != null) {
             $id = $this->rtm->nik_kepala;
         } elseif ($this->keluarga != '[]' && $this->keluarga != null) {
             $id = $this->keluarga->nik_kepala;

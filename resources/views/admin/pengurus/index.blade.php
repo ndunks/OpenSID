@@ -1,7 +1,7 @@
 <div class="box box-info">
     <div class="box-header with-border">
         @if (can('u'))
-            <a href="{{ ci_route('pengurus.form') }}" id="btn-add" class="btn btn-social btn-success btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-plus"></i> Tambah</a>
+            <a href="{{ ci_route('pengurus.form') }}" id="btn-add" class="btn btn-social btn-success btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Tambah"><i class="fa fa-plus"></i> Tambah</a>
             <div class="btn-group btn-group-vertical">
                 <a class="btn btn-social btn-info btn-sm" data-toggle="dropdown"><i class='fa fa-arrow-circle-down'></i> Aksi Data Terpilih</a>
                 <ul class="dropdown-menu" role="menu">
@@ -9,7 +9,7 @@
                         <li>
                             <a
                                 href="{{ ci_route('pengurus/atur_bagan') }}"
-                                title="Ubah Data"
+                                title="Atur"
                                 data-remote="false"
                                 data-toggle="modal"
                                 data-target="#modalBox"
@@ -33,7 +33,7 @@
                     <a
                         href="{{ ci_route('pengurus/dialog/cetak') }}"
                         class="btn btn-social btn-block btn-sm"
-                        title="Cetak Buku Pemerintah Desa"
+                        title="Cetak"
                         data-remote="false"
                         data-toggle="modal"
                         data-target="#modalBox"
@@ -44,7 +44,7 @@
                     <a
                         href="{{ ci_route('pengurus/dialog/unduh') }}"
                         class="btn btn-social btn-block btn-sm"
-                        title="Unduh Buku Pemerintah Desa"
+                        title="Unduh"
                         data-remote="false"
                         data-toggle="modal"
                         data-target="#modalBox"
@@ -101,7 +101,7 @@
                 <select id="status" class="form-control input-sm select2">
                     <option value="">Pilih Status</option>
                     @foreach ($status as $key => $item)
-                        <option @selected($key == 1) value="{{ $key }}">{{ $item }}</option>
+                        <option value="{{ $key }}">{{ $item }}</option>
                     @endforeach
                 </select>
             </div>
@@ -276,7 +276,7 @@
                 },
             });
 
-            $('#status').select2().val(1).trigger('change');
+            $('#status').select2().val({{ $default_status }}).trigger('change');
 
             $('#status').change(function() {
                 TableData.draw()

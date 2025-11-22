@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -108,6 +108,11 @@ class LogSurat extends BaseModel
         return $this->belongsTo(Penduduk::class, 'id_pend');
     }
 
+    public function pendudukSaja()
+    {
+        return $this->belongsTo(PendudukSaja::class, 'id_pend');
+    }
+
     public function pamong()
     {
         return $this->belongsTo(Pamong::class, 'id_pamong');
@@ -146,6 +151,11 @@ class LogSurat extends BaseModel
         return $query->where('status', $value);
     }
 
+    public function surat()
+    {
+        return $this->belongsTo(FormatSurat::class, 'id_format_surat');
+    }
+
     /**
      * Scope daftar arsip fisik layanan surat.
      *
@@ -177,7 +187,7 @@ class LogSurat extends BaseModel
             '[kode_desa]'    => identitas()->kode_desa,
         ];
 
-        return str_replace(array_keys($array_replace), array_values($array_replace), $format_nomor_surat);
+        return str_ireplace(array_keys($array_replace), array_values($array_replace), $format_nomor_surat);
     }
 
     public function getFileSuratAttribute(): ?string
@@ -257,6 +267,11 @@ class LogSurat extends BaseModel
         }
 
         return LOKASI_ARSIP . $berkas_lampiran;
+    }
+
+    public function arsipKeluar()
+    {
+        return $this->hasOne(SuratKeluar::class, 'arsip_id');
     }
 
     public function scopeMasuk($query, $isAdmin, array $listJabatan = [])
@@ -342,7 +357,8 @@ class LogSurat extends BaseModel
                         ->where('kode_surat', static function ($q) use ($url): void {
                             $q->select('kode_surat')
                                 ->from('tweb_surat_format')
-                                ->where('url_surat', $url);
+                                ->where('url_surat', $url)
+                                ->where('config_id', identitas('id'));
                         })
                         ->orderBy(DB::raw('CAST(no_surat as unsigned)'), 'desc')
                         ->first();
@@ -436,5 +452,53 @@ class LogSurat extends BaseModel
         $input = json_decode($this->attributes['input'] ?? null, true);
 
         return $input['keperluan'] ?? $input['keterangan'] ?? null;
+    }
+
+    public static function isDuplikat($type, $nomor_surat, $url = null)
+    {
+        $thn     = date('Y');
+        $setting = setting('penomoran_surat');
+        if ($setting == 3) {
+            // Nomor urut gabungan surat layanan, surat masuk dan surat keluar
+            $suratMasuk  = SuratMasuk::select(['nomor_urut'])->where(['nomor_urut' => $nomor_surat])->whereYear('tanggal_surat', $thn);
+            $suratKeluar = SuratKeluar::select(['nomor_urut'])->where(['nomor_urut' => $nomor_surat])->whereYear('tanggal_surat', $thn);
+            $logSurat    = LogSurat::selectRaw('no_surat as nomor_urut')->whereNull('deleted_at')->where(['no_surat' => $nomor_surat])->whereYear('tanggal', $thn);
+
+            $result = $logSurat->union($suratMasuk)->union($suratKeluar)->count();
+        } elseif ($setting == 1) {
+            $result = LogSurat::selectRaw('no_surat as nomor_urut')->whereNull('deleted_at')->where(['no_surat' => $nomor_surat])->whereYear('tanggal', $thn)->count();
+        } elseif ($setting == 4) {
+            $kodeSurat = FormatSurat::where('url_surat', $url)->first()->kode_surat;
+            $result    = LogSurat::selectRaw('no_surat as nomor_urut')->whereNull('deleted_at')
+                ->whereYear('tanggal', $thn)
+                ->whereNoSurat($nomor_surat)
+                ->rightJoin('tweb_surat_format', 'tweb_surat_format.id', '=', 'log_surat.id_format_surat')
+                ->where(static fn ($q) => $q->where('kode_surat', $kodeSurat))
+                ->count();
+        } else {
+            $result = LogSurat::selectRaw('no_surat as nomor_urut')->whereHas('surat', static fn ($q) => $q->where(['url_surat' => $url]))->whereNull('deleted_at')->where(['no_surat' => $nomor_surat])->whereYear('tanggal', $thn)->count();
+        }
+
+        return $result;
+    }
+
+    public static function buatQrCode($namaSurat, $logo)
+    {
+        $log_surat = self::select(['id', 'urls_id'])->where('nama_surat', $namaSurat)->first();
+
+        //redirect link tidak ke path aslinya dan encode ID surat
+        $urls = Urls::urlPendek($log_surat);
+
+        $qrCode = [
+            'isiqr'   => $urls['isiqr'],
+            'urls_id' => $urls['urls_id'],
+            'logoqr'  => gambar_desa($logo, false, true),
+            'sizeqr'  => 6,
+            'foreqr'  => '#000000',
+        ];
+
+        $qrCode['viewqr'] = qrcode_generate($qrCode);
+
+        return $qrCode;
     }
 }

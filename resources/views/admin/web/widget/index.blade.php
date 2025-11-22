@@ -27,7 +27,7 @@
                                 <i class="fa fa-plus"></i> Tambah
                             </a>
                         @endif
-                        @if (can('u'))
+                        @if (can('h'))
                             <a href="#confirm-delete" title="Hapus Data" onclick="deleteAllBox('mainform', '{{ ci_route('web_widget.delete_all') }}')"
                                 class="btn btn-social btn-danger btn-sm
                         visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block
@@ -44,8 +44,9 @@
                                             <div class="col-sm-2">
                                                 <select name="status" id="status" class="form-control input-sm select2">
                                                     <option value="">Semua</option>
-                                                    <option value="1">Aktif</option>
-                                                    <option value="2">Tidak Aktif</option>
+                                                    @foreach (\App\Enums\AktifEnum::all() as $key => $value)
+                                                        <option value="{{ $key }}">{{ $value }}</option>
+                                                    @endforeach
                                                 </select>
                                             </div>
                                         </div>
@@ -85,6 +86,8 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+            $('#status').val('1').trigger('change');
+
             var TableData = $('#tabeldata').DataTable({
                 responsive: true,
                 processing: true,

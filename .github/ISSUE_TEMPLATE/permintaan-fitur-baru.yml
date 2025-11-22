@@ -4,6 +4,15 @@ title: "Permintaan fitur: "
 labels: ['Fitur']
 
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Terima kasih sudah meluangkan waktu untuk membuat permintaan fitur.
+
+        Sebelum Anda memulai, pastikan tidak ada issue yang sama. Silakan mencari terlebih dahulu di issue yang sudah di [close](https://github.com/OpenSID/OpenSID/issues?q=is%3Aissue+is%3Aclosed) atau di [rilis umum yang akan datang](https://github.com/OpenSID/OpenSID/wiki/Rilis-Umum-Yang-Akan-Datang).
+        Permintaan fitur kita batasi untuk pengguna Premium, tetapi jika ada pengguna Umum ingin mengajukan permintaan fitur tetapi digunakan secara global/umum akan dipertimbangkan untuk dianalisis dan diterapkan di versi premium berikutnya.
+
+        
   - type: textarea
     id: kekurangan
     attributes:

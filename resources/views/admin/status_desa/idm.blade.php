@@ -5,6 +5,20 @@
         .radius {
             border-radius: 5px;
         }
+
+        .small-box {
+            border-radius: 5px;
+            padding-bottom: 27px;
+        }
+
+        .small-box .icon {
+            top: -5px;
+        }
+
+        .small-box:hover {
+            transform: scale(1.01);
+            transition: 0.3s;
+        }
     </style>
 @endpush
 
@@ -30,14 +44,14 @@
             <label for="tahun">IDM Tahun </label>
             <select class="form-control input-sm" name="tahun" onchange="$('#mainform').submit()">
                 <option value="" disabled>Pilih Tahun</option>
-                @foreach (tahun(2020) as $thn)
+                @foreach (tahun(\App\Models\SettingAplikasi::TAHUN_IDM_MIN) as $thn)
                     <option value="{{ $thn }}" @selected($tahun === $thn)>{{ $thn }}</option>
                 @endforeach
             </select>
             @if (can('u'))
-                <a class="btn btn-social btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" {!! cek_koneksi_internet() == false || $idm->error_msg === 'Periksa koneksi internet Anda.' ? 'disabled title="Perangkat tidak terhubung dengan jaringan"' : 'href="' . ci_route('status_desa.perbarui_idm', $tahun) . '"' !!}><i class="fa fa-refresh"></i>Perbarui</a>
+                <a class="btn btn-social btn-success btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Perbarui" {!! cek_koneksi_internet() == false || $idm->error_msg === 'Periksa koneksi internet Anda.' ? 'disabled title="Perangkat tidak terhubung dengan jaringan"' : 'href="' . ci_route('status_desa.perbarui_idm', $tahun) . '"' !!}><i class="fa fa-refresh"></i>Perbarui</a>
                 @if (empty($idm->error_msg))
-                    <a class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" href="{{ ci_route('status_desa.simpan', $tahun) }}"><i class="fa fa-check-circle"></i>Simpan</a>
+                    <a class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Simpan" href="{{ ci_route('status_desa.simpan', $tahun) }}"><i class="fa fa-check-circle"></i>Simpan</a>
                 @endif
             @endif
             </form>
@@ -111,12 +125,12 @@
                                                 <td>{{ $idm->IDENTITAS[0]->nama_kab_kota }}</td>
                                             </tr>
                                             <tr>
-                                                <td>{{ strtoupper($setting->sebutan_kecamatan) }}</td>
+                                                <td>{{ strtoupper(setting('sebutan_kecamatan')) }}</td>
                                                 <td> : </td>
                                                 <td>{{ $idm->IDENTITAS[0]->nama_kecamatan }}</td>
                                             </tr>
                                             <tr>
-                                                <td>{{ strtoupper($setting->sebutan_desa) }}</td>
+                                                <td>{{ strtoupper(setting('sebutan_desa')) }}</td>
                                                 <td> : </td>
                                                 <td>{{ $idm->IDENTITAS[0]->nama_desa }}</td>
                                             </tr>

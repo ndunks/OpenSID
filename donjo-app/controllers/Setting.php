@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,16 +29,23 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Models\Notifikasi;
+use App\Models\SettingAplikasi;
+use App\Repositories\SettingAplikasiRepository;
+use App\Traits\Upload;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Setting extends Admin_Controller
 {
+    use Upload;
+
     public $modul_ini     = 'pengaturan';
     public $sub_modul_ini = 'aplikasi';
 
@@ -46,8 +53,7 @@ class Setting extends Admin_Controller
     {
         parent::__construct();
         isCan('b');
-        $this->load->model('theme_model');
-        isCan('b');
+
     }
 
     public function index()
@@ -56,8 +62,8 @@ class Setting extends Admin_Controller
             'judul'               => 'Pengaturan Aplikasi',
             'pengaturan_kategori' => ['sistem', 'email', 'web_theme', 'readonly', 'web', 'mobile'],
             'atur_latar'          => true,
-            'latar_website'       => [$this->setting->latar_website, 'latar_website'],
-            'latar_siteman'       => [$this->setting->latar_login, 'latar_login'],
+            'latar_website'       => [setting('latar_website'), 'latar_website'],
+            'latar_siteman'       => [setting('latar_login'), 'latar_login'],
         ];
 
         return view('admin.pengaturan.index', $data);
@@ -68,14 +74,17 @@ class Setting extends Admin_Controller
         $foto       = $this->input->get('foto');
         $pengaturan = $this->input->get('pengaturan');
 
-        if ($pengaturan == 'latar_website') {
-            $default     = LOKASI_ASSET_FRONT_IMAGES;
-            $new_setting = $this->theme_model->lokasi_latar_website();
-        }
+        $paths = [
+            'latar_website'       => [(new App\Models\Theme())->lokasiLatarWebsite(), LOKASI_ASSET_FRONT_IMAGES],
+            'latar_login'         => [LATAR_LOGIN, LOKASI_ASSET_IMAGES],
+            'latar_login_mandiri' => [LATAR_LOGIN, LOKASI_ASSET_IMAGES],
+        ];
 
-        if ($pengaturan == 'latar_login' || $pengaturan == 'latar_login_mandiri') {
-            $default     = LOKASI_ASSET_IMAGES;
-            $new_setting = LATAR_LOGIN;
+        if (isset($paths[$pengaturan])) {
+            [$new_setting, $default] = $paths[$pengaturan];
+            if (! file_exists(FCPATH . $new_setting . $foto)) {
+                $foto = $pengaturan . '.jpg';
+            }
         }
 
         ambilBerkas($foto, $this->controller, null, $foto == $pengaturan . '.jpg' ? $default : $new_setting, $tampil = true);
@@ -85,8 +94,12 @@ class Setting extends Admin_Controller
     public function update(): void
     {
         isCan('u');
-
-        if ($hasil = $this->setting_model->update_setting($this->input->post())) {
+        $data = $this->input->post();
+        $this->uploadImgSetting($data);
+        $fixData                        = $this->input->post();
+        $fixData['latar_login_mandiri'] = $data['latar_login_mandiri'];
+        $hasil                          = (new SettingAplikasiRepository())->updateSetting($fixData);
+        if ($hasil) {
             status_sukses($hasil, false, 'Berhasil Ubah Data');
             set_session('success', 'Berhasil Ubah Data');
         } else {
@@ -102,7 +115,7 @@ class Setting extends Admin_Controller
         if ($this->input->post('notifikasi') != 1) {
             return;
         } // Hanya bila dipanggil dari form pengumuman
-        $this->setting_model->aktifkan_tracking();
-        $this->db->where('config_id', identitas('id'))->where('kode', 'tracking_off')->update('notifikasi', ['aktif' => 0]);
+        (SettingAplikasi::where('key', 'enable_track')->first())->update(['value' => 1]);
+        Notifikasi::where('kode', 'tracking_off')->update(['aktif' => 0]);
     }
 }

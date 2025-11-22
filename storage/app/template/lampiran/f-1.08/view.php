@@ -159,11 +159,7 @@
 			<td colspan=3>Kode Pos</td>
 			<?php for ($i = 0; $i < 5; $i++) : ?>
 				<td class="kotak satu">
-					<?php if (isset($config['kode_pos'][$i])) : ?>
-						<?= $config['kode_pos'][$i]; ?>
-					<?php else : ?>
-						&nbsp;
-					<?php endif; ?>
+					<?= str_split($config['kode_pos'])[$i] ?: '&nbsp;' ?>
 				</td>
 			<?php endfor; ?>
 			<td colspan=2>Telepon</td>
@@ -376,7 +372,7 @@
             $nomor = $i + 1;
             if ($i < count($input['id_pengikut_pindah'] ?? [])) :
                 $id       = trim($input['id_pengikut_pindah'][$i], "'");
-                $penduduk = $this->penduduk_model->get_penduduk($id, true); ?>
+                $penduduk = App\Models\PendudukSaja::find($id); ?>
 				<tr>
 					<td class="tengah"><?= $nomor; ?></td>
 					<?php for ($j = 0; $j < 16; $j++) : ?>
@@ -612,7 +608,7 @@
             $nomor = $i + 1;
             if ($i < count($input['id_pengikut_pindah'] ?? [])) :
                 $id       = trim($input['id_pengikut_pindah'][$i], "'");
-                $penduduk = $this->penduduk_model->get_penduduk($id, true); ?>
+                $penduduk = App\Models\PendudukSaja::find($id); ?>
 
 				<tr>
 					<td class="tengah"><?= $nomor; ?></td>

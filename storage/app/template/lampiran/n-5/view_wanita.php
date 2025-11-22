@@ -1,4 +1,4 @@
-<page orientation="portrait" format="210x330" style="font-size: 10pt">
+<page orientation="portrait" format="F4" style="font-size: 11pt">
 
     <!-- Judul Lampiran -->
     <table align="right">
@@ -30,7 +30,7 @@
     </table>
 
     <br>
-    <p class="title">SURAT IZIN ORANG TUA</p>
+    <p class="title-nikah">SURAT IZIN ORANG TUA</p>
 
     <p>Yang bertanda tangan di bawah ini :</p>
 
@@ -163,9 +163,9 @@
 
         <tr>
             <td colspan="1">&nbsp;</td>
-            <td colspan="20">2. Bin</td>
+            <td colspan="20">2. Binti</td>
             <td>: </td>
-            <td colspan="27">[Nama_dapw]</td>
+            <td colspan="27">[Form_binti_dcpW]</td>
         </tr>
 
         <tr>
@@ -308,7 +308,11 @@
     <td style="width: 2.75528%; height: 18px;"> </td>
     <td style="width: 70.6166%; text-align: center; height: 18px;"> </td>
     </tr>
+    <tr style="height: 18px;">
+    <td style="width: 26.6281%; text-align: center; height: 18px;">[qr_code]</td>
+    <td style="width: 2.75528%; height: 18px;"> </td>
+    <td style="width: 70.6166%; text-align: center; height: 18px;"> </td>
+    </tr>
     </tbody>
     </table>
-    <?= $qrcode ?? '' ?>
 </page>

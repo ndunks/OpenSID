@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -45,6 +45,7 @@ use App\Models\PermohonanSurat;
 use App\Models\SyaratSurat;
 use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
 use Mike42\Escpos\Printer;
+use NotificationChannels\Telegram\Telegram;
 
 class Surat extends Mandiri_Controller
 {
@@ -243,8 +244,6 @@ class Surat extends Mandiri_Controller
 
     public function kirim($id = ''): void
     {
-        $this->load->library('Telegram/telegram');
-
         $data_permohonan = $this->session->data_permohonan;
 
         $post = $this->input->post();
@@ -269,6 +268,7 @@ class Surat extends Mandiri_Controller
 
             if (setting('telegram_notifikasi') && cek_koneksi_internet()) {
                 try {
+                    $telegram = new Telegram(setting('telegram_token'));
                     // Data pesan telegram yang akan digantikan
                     $pesanTelegram = [
                         '[nama_penduduk]' => $this->is_login->nama,
@@ -280,10 +280,10 @@ class Surat extends Mandiri_Controller
 
                     $kirimPesan = setting('notifikasi_pengajuan_surat');
                     $kirimPesan = str_replace(array_keys($pesanTelegram), array_values($pesanTelegram), $kirimPesan);
-                    $this->telegram->sendMessage([
+                    $telegram->sendMessage([
                         'text'       => $kirimPesan,
                         'parse_mode' => 'Markdown',
-                        'chat_id'    => $this->setting->telegram_user_id,
+                        'chat_id'    => setting('telegram_user_id'),
                     ]);
                 } catch (Exception $e) {
                     log_message('error', $e->getMessage());

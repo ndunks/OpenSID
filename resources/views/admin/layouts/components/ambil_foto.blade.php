@@ -1,6 +1,6 @@
 <div class="box box-primary">
     <div class="box-body box-profile">
-        <img class="penduduk" id="foto" src="{{ AmbilFoto($foto, '', $id_sex) }}" alt="Foto Penduduk">
+        <img class="penduduk" id="foto" src="{{ AmbilFoto($foto, '', $id_sex, $lokasiFoto ?? LOKASI_USER_PICT) }}" alt="Foto Penduduk">
         <br />
         @if (isset($show_dimensi) && $show_dimensi)
             <div class="row" style="margin-bottom: 8px">
@@ -18,7 +18,7 @@
         @endif
 
         <div class="input-group input-group-sm text-center">
-            <input type="file" class="hidden" id="file" name="foto" accept=".jpg,.jpeg,.png">
+            <input type="file" class="hidden" id="file" name="foto" accept=".jpg,.jpeg,.png,.webp">
             <input type="text" class="hidden" id="file_path" name="foto">
             <input type="hidden" name="old_foto" id="old_foto" value="<?= $foto ?>">
             <span class="input-group-btn">

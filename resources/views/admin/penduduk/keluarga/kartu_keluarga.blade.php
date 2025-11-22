@@ -21,12 +21,10 @@
                     <div class="box-header with-border">
                         <a href="{{ ci_route('keluarga.cetak_kk', $id_kk) }}" class="btn btn-social bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" target="_blank"><i class="fa fa-print "></i> Cetak</a>
                         <a href="{{ ci_route('keluarga.doc_kk', $id_kk) }}" class="btn btn-social bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" target="_blank"><i class="fa fa-download"></i> Unduh</a>
-                        <a href="{{ ci_route('keluarga.anggota', $id_kk) }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Rincian Anggota Keluarga">
-                            <i class="fa fa-arrow-circle-left"></i>Kembali Ke Daftar Anggota Keluarga
-                        </a>
-                        <a href="{{ ci_route('keluarga') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Anggota Keluarga">
-                            <i class="fa fa-arrow-circle-left"></i>Kembali Ke Daftar Keluarga
-                        </a>
+                        @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('keluarga.anggota', $id_kk), 'label' => 'Daftar Anggota Keluarga'])
+
+                        @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('keluarga'), 'label' => 'Daftar Keluarga'])
+
                     </div>
                     <div class="box-header">
                         <h3 class="text-center"><strong>SALINAN KARTU KELUARGA</strong></h3>
@@ -38,7 +36,7 @@
                                 <div class="form-group">
                                     <label class="col-sm-3 control-label">ALAMAT</label>
                                     <div class="col-sm-8">
-                                        <p class="text-muted">: {{ strtoupper($kepala_kk['keluarga']['wilayah']['dusun']) }}</p>
+                                        <p class="text-muted">: {{ strtoupper($kepala_kk['alamat_wilayah_kartu_keluarga']) }}</p>
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -133,7 +131,7 @@
                                             <tr>
                                                 <th class="text-center">No</th>
                                                 <th class="text-center">Status Perkawinan</th>
-                                                <th class="text-center">Tanggal Perkawinan</th>
+                                                <th class="text-center">{{ \Illuminate\Support\Str::headerKawinCerai(collect($main['anggota'])->pluck('status_perkawinan')) }}</th>
                                                 <th class="text-center">Status Hubungan Dalam Keluarga</th>
                                                 <th class="text-center">Kewarganegaraan</th>
                                                 <th class="text-center">No. Paspor</th>
@@ -147,7 +145,7 @@
                                                 <tr>
                                                     <td class="text-center">{{ $key + 1 }}</td>
                                                     <td>{{ $data['status_perkawinan'] ?? '' }}</td>
-                                                    <td class="text-center">{{ tgl_indo_out($data['tanggalperkawinan']) }}</td>
+                                                    <td class="text-center">{{ str_contains($data['status_perkawinan'], 'KAWIN') ? tgl_indo_out($data['tanggalperkawinan']) : tgl_indo_out($data['tanggalperceraian']) }}</td>
                                                     <td>{{ App\Enums\SHDKEnum::valueOf($data['kk_level']) }}</td>
                                                     <td>{{ $data['warga_negara']['nama'] ?? '' }}</td>
                                                     <td>{{ $data['dokumen_pasport'] }}</td>

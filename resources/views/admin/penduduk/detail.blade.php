@@ -24,6 +24,7 @@
 @endpush
 
 @section('content')
+    @include('admin.layouts.components.notifikasi')
     <div class="box box-info">
         <div class="box-header">
             <a href="{{ ci_route('penduduk.dokumen', $penduduk->id) }}" class="btn btn-social btn-success btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Manajemen Dokumen Penduduk"><i class="fa fa-book"></i> Manajemen Dokumen</a>
@@ -49,9 +50,7 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ ci_route('penduduk.clear') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Penduduk">
-                <i class="fa fa-arrow-circle-left"></i>Kembali Ke Daftar Penduduk
-            </a>
+            @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('penduduk.clear'), 'label' => 'Daftar Penduduk'])
         </div>
         <div class="box-body">
             <div class="row">
@@ -167,7 +166,7 @@
                                         <tr>
                                             <td>Tempat / Tanggal Lahir</td>
                                             <td>:</td>
-                                            <td>{{ strtoupper($penduduk->tempatlahir) }} / {{ strtoupper($penduduk->tanggallahir->format('d-m-Y')) }}</td>
+                                            <td>{{ strtoupper($penduduk->tempatlahir) }} / {{ strtoupper($penduduk->tanggallahir?->format('d-m-Y')) }}</td>
                                         </tr>
                                         <tr>
                                             <td>Tempat Dilahirkan</td>
@@ -205,7 +204,7 @@
                                         <tr>
                                             <td>Pendidikan dalam KK</td>
                                             <td>:</td>
-                                            <td>{{ strtoupper($penduduk->pendidikanKK->nama) }}</td>
+                                            <td>{{ strtoupper($penduduk->pendidikanKK) }}</td>
                                         </tr>
                                         <tr>
                                             <td>Pendidikan sedang ditempuh</td>
@@ -328,7 +327,7 @@
                                             <tr>
                                                 <td>Tanggal perkawinan</td>
                                                 <td>:</td>
-                                                <td>{{ $penduduk->tanggalperkawinan ? date('d-m-Y', strtotime($penduduk->tanggalperkawinan)) : '' }}</td>
+                                                <td>{{ tgl_indo_out($penduduk->tanggalperkawinan) }}</td>
                                             </tr>
                                         @endif
                                         @if ($penduduk->status_kawin != 1 && $penduduk->status_kawin != 2)
@@ -340,7 +339,7 @@
                                             <tr>
                                                 <td>Tanggal perceraian</td>
                                                 <td>:</td>
-                                                <td>{{ strtoupper($penduduk->tanggalperceraian) }}</td>
+                                                <td>{{ tgl_indo_out($penduduk->tanggalperceraian) }}</td>
                                             </tr>
                                         @endif
                                         <tr>
@@ -359,7 +358,7 @@
                                         <tr>
                                             <td>Sakit Menahun</td>
                                             <td>:</td>
-                                            <td>{{ strtoupper($penduduk->sakitMenahun->nama) }}</td>
+                                            <td>{{ strtoupper($penduduk->sakit_menahun) }}</td>
                                         </tr>
                                         @if ($penduduk->status_kawin == App\Enums\StatusKawinEnum::KAWIN)
                                             <tr>
@@ -384,6 +383,11 @@
                                             <td>Nomor BPJS Ketenagakerjaan</td>
                                             <td>:</td>
                                             <td>{{ $penduduk->bpjs_ketenagakerjaan }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Status Kepersertaan Asuransi Kesehatan</td>
+                                            <td>:</td>
+                                            <td>{{ strtoupper(\App\Enums\AktifEnum::valueOf($penduduk->status_asuransi)) }}</td>
                                         </tr>
 
                                         <tr>

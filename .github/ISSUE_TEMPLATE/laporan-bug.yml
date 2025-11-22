@@ -9,11 +9,11 @@ body:
       value: |
         Terima kasih sudah meluangkan waktu untuk membuat laporan bug/error.
 
-        Sebelum Anda memulai, pastikan tidak ada issue yang sama. Silakan mencari terlebih dahulu di issue yang sudah di [close](https://github.com/OpenSID/OpenSID/issues?q=is%3Aissue+is%3Aclosed) atau di [rilis umum yang akan datang](https://github.com/OpenSID/OpenSID/wiki/Rilis-Umum-Yang-Akan-Datang).
-        Jika pada rilis umum yang akan datang sudah ditemukan bug yang dimaksud silahkan menuggu untuk diperbaiki dirilis berikutnya.
+        Sebelum Anda memulai, pastikan tidak ada issue yang sama. Silakan mencari terlebih dahulu di issue yang sudah di [close](https://github.com/OpenSID/OpenSID/issues?q=is%3Aissue+is%3Aclosed) atau di [rilis yang akan datang](https://github.com/OpenSID/OpenSID/wiki/Rilis-Umum-Yang-Akan-Datang).
+        
+        **Jika bug yang dimaksud sudah diperbaiki pada rilis yang akan datang silakan menunggu perbaikan tersebut dirilis. Laporan Bug hanya akan dikerjakan kalau error yang dilaporkan masih terjadi di versi Premium terbaru. Untuk memastikan itu, periksa error tersebut masih terjadi di https://berputar.opendesa.id.**
 
-        Harap tidak melaporkan masalah instal OpenSID. 
-        Masalah pada waktu install harap ditanyakan di https://www.facebook.com/groups/komunitasopendesa 
+        Harap tidak melaporkan masalah instal OpenSID atau pertanyaan penggunaan OpenSID. Masalah pada waktu install atau pertanyaan penggunaan OpenSID harap ditanyakan di https://www.facebook.com/groups/komunitasopendesa 
         atau di https://t.me/komunitasopensidstop, karena terkait sistem masing2 pengguna.
 
         ---
@@ -24,7 +24,7 @@ body:
       label: Jelaskan error yg dialami
       description: |
         Berikan keterangan yg jelas dan singkat mengenai error yg dialami. 
-        Pastikan error ini juga ditemukan di https://demosid.opendesa.id (untuk Rilis Umum) atau di https://berputar.opendesa.id (untuk Rilis Premium).
+        Pastikan error ini juga ditemukan di https://berputar.opendesa.id.
     validations:
       required: true
 
@@ -58,11 +58,31 @@ body:
         Lampirkan isi file di folder `logs` atau tangkapan error di console inspector browser.
     validations:
       required: true
-      
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Dampak bug pada layanan
+      description: |
+        Seberapa dampak bug ini pada layanan? 
+        - Kritis, sistem tidak dapat berjalan sama sekali
+        - Utama, fungsi utama terganggu
+        - Sedang, gangguan kecil, fungsi utama tetap jalan
+        - Ringan, masalah tampilan atau kosmetik
+      options:
+        - Ringan
+        - Sedang
+        - Utama
+        - Kritis  
+    validations:
+      required: true
+    
   - type: dropdown
     id: rilis-version
     attributes:
       label: Rilis Versi OpenSID
+      description: |
+        Error ini terjadi di OpenSID Umum atau Premium? 
       options:
         - Rilis Premium
         - Rilis Umum
@@ -75,7 +95,7 @@ body:
       label: Versi OpenSID
       description: |
         Error ini terjadi di rilis/versi berapa? 
-        Rilis umum (mis. v2306.0.0) atau premium (mis. v2306.0.0-premium)?
+        Rilis Umum (mis. v2306.0.0) atau Premium (mis. v2306.0.0-premium)?
     validations:
       required: true
 
@@ -90,6 +110,6 @@ body:
   - type: textarea
     attributes:
       label: Informasi tambahan
-      description: Penjelasan lain yg dapat membantu.
+      description: Penjelasan lain yg dapat membantu. Jika error ini hanya terjadi pada data desa anda, berikan akun Telegram anda supaya dapat dihubungi.
     validations:
       required: false

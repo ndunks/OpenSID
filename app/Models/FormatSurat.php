@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -361,6 +361,10 @@ class FormatSurat extends BaseModel
      */
     public function scopeKunci(mixed $query, mixed $value = self::KUNCI)
     {
+        if ($value == '') {
+            return $query;
+        }
+
         return $query->where('kunci', $value);
     }
 
@@ -425,7 +429,7 @@ class FormatSurat extends BaseModel
             '[kode_desa]'    => identitas()->kode_desa,
         ];
 
-        return str_replace(array_keys($array_replace), array_values($array_replace), $setting);
+        return str_ireplace(array_keys($array_replace), array_values($array_replace), $setting);
     }
 
     public static function substitusi_nomor_surat($nomor, &$buffer): void
@@ -460,5 +464,10 @@ class FormatSurat extends BaseModel
     public function isBawaan(): bool
     {
         return $this->jenis == self::TINYMCE_SISTEM;
+    }
+
+    protected function scopeSistem(Builder $query)
+    {
+        return $query->whereIn('jenis', self::SISTEM);
     }
 }

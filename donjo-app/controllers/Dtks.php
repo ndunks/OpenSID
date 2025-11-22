@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -50,7 +50,7 @@ use App\Services\DTKSRegsosEk2022k;
 use Illuminate\Support\Facades\DB;
 
 // TODO : jika ada perubahan versi DTKS terbaru, selain merubah data yg ada
-// silahkan buat kode untuk menghapus file pdf versi DTKS sebelumnya.
+// silakan buat kode untuk menghapus file pdf versi DTKS sebelumnya.
 // cek kode DTKSRegsosEk2022k::generateCetakPdf()
 
 class Dtks extends Admin_Controller
@@ -112,7 +112,7 @@ class Dtks extends Admin_Controller
 
     public function index()
     {
-        $data['rtm'] = Rtm::with([
+        $rtm = Rtm::with([
             'kepalaKeluarga' => static function ($builder): void {
                 $builder->select('id', 'nama', 'nik');
                 $builder->without([
@@ -129,11 +129,11 @@ class Dtks extends Admin_Controller
                     'wilayah',
                 ]);
             },
-        ])
-            ->where('terdaftar_dtks', 1)
-            ->get();
+        ])->where('terdaftar_dtks', 1)->get();
 
-        $this->syncDtksRtm($data['rtm']);
+        $this->syncDtksRtm($rtm);
+
+        $data['rtm'] = $rtm->filter(static fn ($value) => ! in_array($value->id, ModelDtks::pluck('id_rtm')->toArray()));
 
         return view('admin.dtks.index', $data);
     }
@@ -322,7 +322,7 @@ class Dtks extends Admin_Controller
                 return json(['message' => 'Proses Data', 'list' => $list_path], 200);
             }
             if ($this->input->is_ajax_request()) {
-                return json(['message' => 'Download', 'list' => $list_path], 200);
+                return json(['message' => 'Data Siap Diunduh', 'list' => $list_path], 200);
             }
 
             if ($list_path_to_zip->count() != 0) {

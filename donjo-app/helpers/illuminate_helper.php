@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -388,6 +388,24 @@ if (! function_exists('info')) {
     }
 }
 
+if (! function_exists('logger')) {
+    /**
+     * Log a debug message to the logs.
+     *
+     * @param string|null $message
+     *
+     * @return ($message is null ? \Illuminate\Log\LogManager : null)
+     */
+    function logger($message = null, array $context = [])
+    {
+        if (null === $message) {
+            return app('Psr\Log\LoggerInterface');
+        }
+
+        return app('Psr\Log\LoggerInterface')->debug($message, $context);
+    }
+}
+
 if (! function_exists('old')) {
     /**
      * Retrieve an old input item.
@@ -400,6 +418,46 @@ if (! function_exists('old')) {
     function old($key = null, $default = null)
     {
         return Arr::get(app('ci')->session->_old_input, $key, $default);
+    }
+}
+
+if (! function_exists('fake') && class_exists(Faker\Factory::class)) {
+    /**
+     * Get a faker instance.
+     *
+     * @param string|null $locale
+     *
+     * @return Faker\Generator
+     */
+    function fake($locale = null)
+    {
+        if (app()->bound('config')) {
+            $locale ??= app('config')->get('app.faker_locale');
+        }
+
+        $locale ??= 'en_US';
+
+        $abstract = Faker\Generator::class . ':' . $locale;
+
+        if (! app()->bound($abstract)) {
+            app()->singleton($abstract, static fn () => Faker\Factory::create($locale));
+        }
+
+        return app()->make($abstract);
+    }
+}
+
+if (! function_exists('public_path')) {
+    /**
+     * Get the path to the public folder.
+     *
+     * @param string $path
+     *
+     * @return string
+     */
+    function public_path($path = '')
+    {
+        return app()->basePath($path);
     }
 }
 
@@ -538,6 +596,28 @@ if (! function_exists('trans_choice')) {
     }
 }
 
+if (! function_exists('url')) {
+    /**
+     * Generate a url for the application.
+     *
+     * @param string    $path
+     * @param mixed     $parameters
+     * @param bool|null $secure
+     *
+     * @return Illuminate\Routing\UrlGenerator|string
+     */
+    function url($path = null, $parameters = [], $secure = null)
+    {
+        $factory = app('url');
+
+        if (func_num_args() === 0) {
+            return $factory;
+        }
+
+        return app('url')->to($path, $parameters, $secure);
+    }
+}
+
 if (! function_exists('validator')) {
     /**
      * Create a new Validator instance.
@@ -582,5 +662,33 @@ if (! function_exists('view')) {
         }
 
         echo $factory->make($view, $data, $mergeData);
+    }
+}
+
+// MODULES
+if (! function_exists('module_path')) {
+    function module_path($name, $path = '')
+    {
+        // $module = app('modules')->find($name);
+
+        // return $module->getPath() . ($path ? DIRECTORY_SEPARATOR . $path : $path);
+
+        return FCPATH . 'Modules' . DIRECTORY_SEPARATOR . $name . ($path ? DIRECTORY_SEPARATOR . $path : $path);
+    }
+}
+
+if (! function_exists('module_storage')) {
+    function module_storage($name, $path = '')
+    {
+        return app()->basePath() . '/Modules/' . $name . '/Storage' . ($path ? DIRECTORY_SEPARATOR . $path : $path);
+    }
+}
+
+if (! function_exists('module_asset')) {
+    function module_asset($name, $path)
+    {
+        $name = strtolower($name);
+
+        return base_url('module_asset/' . $name . '?file=' . $path . '&v=' . VERSION);
     }
 }

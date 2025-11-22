@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -147,13 +147,13 @@ class ArsipFisikSurat
     private function dataJenis(mixed $kategori): \Illuminate\Database\Query\Builder|\Illuminate\Database\Eloquent\Builder
     {
         return match ($kategori) {
-            'dokumen_desa'  => DokumenHidup::where('id_pend', 0)->whereNotNull('satuan'),
+            'dokumen_desa'  => DokumenHidup::whereNull('id_pend')->whereNotNull('satuan'),
             'surat_masuk'   => SuratMasuk::whereNotNull('berkas_scan'),
             'surat_keluar'  => SuratKeluar::whereNotNull('berkas_scan'),
-            'kependudukan'  => DokumenHidup::where('id_pend', '!=', 0)->whereNotNull('satuan'),
+            'kependudukan'  => DokumenHidup::whereNotNull('id_pend')->whereNotNull('satuan'),
             'layanan_surat' => LogSurat::where(static fn ($query) => $query->where('verifikasi_operator', 1)->orWhere('verifikasi_operator', null))
                 ->whereNull('deleted_at'),
-            default         => throw new Exception("Unknown category: {$kategori}"),
+            default => throw new Exception("Unknown category: {$kategori}"),
         };
     }
 }

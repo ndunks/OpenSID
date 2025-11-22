@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -141,30 +141,30 @@ class Laravel extends Container
      * @var array
      */
     public $availableBindings = [
-        'auth'                                                => 'registerAuthBindings',
-        'auth.driver'                                         => 'registerAuthBindings',
-        \Illuminate\Auth\AuthManager::class                   => 'registerAuthBindings',
-        \Illuminate\Contracts\Auth\Guard::class               => 'registerAuthBindings',
-        \Illuminate\Contracts\Auth\Access\Gate::class         => 'registerAuthBindings',
-        \Illuminate\Contracts\Broadcasting\Broadcaster::class => 'registerBroadcastingBindings',
-        \Illuminate\Contracts\Broadcasting\Factory::class     => 'registerBroadcastingBindings',
-        \Illuminate\Contracts\Bus\Dispatcher::class           => 'registerBusBindings',
-        'cache'                                               => 'registerCacheBindings',
-        'cache.store'                                         => 'registerCacheBindings',
-        \Illuminate\Contracts\Cache\Factory::class            => 'registerCacheBindings',
-        \Illuminate\Contracts\Cache\Repository::class         => 'registerCacheBindings',
-        'config'                                              => 'registerConfigBindings',
-        'composer'                                            => 'registerComposerBindings',
-        'db'                                                  => 'registerDatabaseBindings',
-        Dispatcher::class                                     => 'registerBusBindings',
-        'cache'                                               => 'registerCacheBindings',
-        'cache.store'                                         => 'registerCacheBindings',
-        \Illuminate\Contracts\Cache\Factory::class            => 'registerCacheBindings',
-        \Illuminate\Contracts\Cache\Repository::class         => 'registerCacheBindings',
-        'config'                                              => 'registerConfigBindings',
-        'composer'                                            => 'registerComposerBindings',
-        'cookie'                                              => 'registerCookieBindings',
-        'db'                                                  => 'registerDatabaseBindings',
+        'auth'                                        => 'registerAuthBindings',
+        'auth.driver'                                 => 'registerAuthBindings',
+        AuthManager::class                            => 'registerAuthBindings',
+        \Illuminate\Contracts\Auth\Guard::class       => 'registerAuthBindings',
+        Gate::class                                   => 'registerAuthBindings',
+        Broadcaster::class                            => 'registerBroadcastingBindings',
+        Factory::class                                => 'registerBroadcastingBindings',
+        Dispatcher::class                             => 'registerBusBindings',
+        'cache'                                       => 'registerCacheBindings',
+        'cache.store'                                 => 'registerCacheBindings',
+        \Illuminate\Contracts\Cache\Factory::class    => 'registerCacheBindings',
+        \Illuminate\Contracts\Cache\Repository::class => 'registerCacheBindings',
+        'config'                                      => 'registerConfigBindings',
+        'composer'                                    => 'registerComposerBindings',
+        'db'                                          => 'registerDatabaseBindings',
+        Dispatcher::class                             => 'registerBusBindings',
+        'cache'                                       => 'registerCacheBindings',
+        'cache.store'                                 => 'registerCacheBindings',
+        \Illuminate\Contracts\Cache\Factory::class    => 'registerCacheBindings',
+        \Illuminate\Contracts\Cache\Repository::class => 'registerCacheBindings',
+        'config'                                      => 'registerConfigBindings',
+        'composer'                                    => 'registerComposerBindings',
+        'cookie'                                      => 'registerCookieBindings',
+        'db'                                          => 'registerDatabaseBindings',
         // \Illuminate\Database\Eloquent\Factory::class => 'registerDatabaseBindings',
         'filesystem'                                       => 'registerFilesystemBindings',
         'filesystem.cloud'                                 => 'registerFilesystemBindings',
@@ -189,9 +189,11 @@ class Laravel extends Container
         'session'                                          => 'registerSessionBindings',
         'session.store'                                    => 'registerSessionBindings',
         'translator'                                       => 'registerTranslationBindings',
+        'url'                                              => 'registerUrlGeneratorBindings',
         'validator'                                        => 'registerValidatorBindings',
         \Illuminate\Contracts\Validation\Factory::class    => 'registerValidatorBindings',
         'view'                                             => 'registerViewBindings',
+        'view.engine.resolver'                             => 'registerViewBindings',
         \Illuminate\Contracts\View\Factory::class          => 'registerViewBindings',
     ];
 
@@ -634,7 +636,7 @@ class Laravel extends Container
     /**
      * Prepare the given request instance for use with the application.
      *
-     * @return \Illuminate\Http\Request
+     * @return Request
      */
     protected function prepareRequest(SymfonyRequest $request)
     {
@@ -664,6 +666,20 @@ class Laravel extends Container
      *
      * @return void
      */
+    protected function registerUrlGeneratorBindings()
+    {
+        $this->singleton('url', function () {
+            return tap(new \Illuminate\Routing\UrlGenerator($this), function ($urlGenerator) {
+                $urlGenerator->setKeyResolver(fn () => $this->make('config')->get('app.key'));
+            });
+        });
+    }
+
+    /**
+     * Register container bindings for the application.
+     *
+     * @return void
+     */
     protected function registerValidatorBindings()
     {
         $this->singleton('validator', function () {
@@ -681,6 +697,7 @@ class Laravel extends Container
     protected function registerViewBindings()
     {
         $this->singleton('view', fn () => $this->loadComponent('view', ViewServiceProvider::class, 'view'));
+        $this->singleton('view.engine.resolver', fn () => $this->loadComponent('view', ViewServiceProvider::class, 'view.engine.resolver'));
     }
 
     /**
@@ -974,7 +991,8 @@ class Laravel extends Container
         $this->loadedConfigurations    = [];
         $this->afterResolvingCallbacks = [];
 
-        static::$instance = null;
+        static::$instance          = null;
+        static::$aliasesRegistered = false;
     }
 
     /**
@@ -1089,6 +1107,7 @@ class Laravel extends Container
             \Illuminate\Contracts\Queue\Queue::class                => 'queue.connection',
             'request'                                               => Request::class,
             \Illuminate\Contracts\Translation\Translator::class     => 'translator',
+            \Illuminate\Routing\UrlGenerator::class                 => 'url',
             \Illuminate\Contracts\Validation\Factory::class         => 'validator',
             \Illuminate\Contracts\View\Factory::class               => 'view',
             \Illuminate\View\ViewFinderInterface::class             => 'view.finder',

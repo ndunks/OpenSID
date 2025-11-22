@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Models\Dokumen;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -46,10 +48,8 @@ class Dokumen_web extends Web_Controller
      */
     public function unduh_berkas($id_dokumen): void
     {
-        $this->load->model('web_dokumen_model');
-
         // Ambil nama berkas dari database
-        $berkas = $this->web_dokumen_model->get_nama_berkas($id_dokumen);
+        $berkas = (new Dokumen())->getNamaBerkas($id_dokumen);
         ambilBerkas($berkas, null, null, LOKASI_DOKUMEN);
     }
 
@@ -65,11 +65,16 @@ class Dokumen_web extends Web_Controller
 
     public function unduh($slug = null)
     {
-        $slug        = decrypt($slug);
-        $part        = explode('/', $slug);
-        $nama_file   = end($part);
-        $lokasi_file = str_replace($nama_file, '', $slug);
+        $slug     = decrypt($slug);
+        $part     = explode('/', $slug);
+        $fileName = end($part);
+        $filePath = str_replace($fileName, '', $slug);
 
-        return ambilBerkas($nama_file, null, null, $lokasi_file);
+        if (! file_exists($filePath . $fileName)) {
+            show_404();
+        }
+
+        // TODO : Gunakan return response()->download($filePath, $fileName);
+        return ambilBerkas($fileName, null, null, $filePath);
     }
 }

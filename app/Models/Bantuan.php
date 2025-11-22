@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,16 +37,19 @@
 
 namespace App\Models;
 
-use App\Traits\ConfigId;
+use App\Enums\AsalDanaEnum;
+use App\Traits\ConfigIdNull;
 use App\Traits\ShortcutCache;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Bantuan extends BaseModel
 {
     use ShortcutCache;
-    // use ConfigId;
+    use ConfigIdNull;
 
     /**
      * The table associated with the model.
@@ -70,13 +73,24 @@ class Bantuan extends BaseModel
     protected $guarded = [];
 
     /**
+     * {@inheritDoc}
+     */
+    protected $appends = ['status_masa_aktif'];
+
+    /**
      * The casts with the model.
      *
      * @var array
      */
     protected $casts = [
-        'status' => 'boolean',
+        'sdate' => 'date',
+        'edate' => 'date',
     ];
+
+    public function getStatusMasaAktifAttribute()
+    {
+        return $this->sdate?->isFuture() || $this->edate?->endOfDay()->isPast() ? 'Tidak Aktif' : 'Aktif';
+    }
 
     public function scopeGetProgram($query, $program_id = null)
     {
@@ -130,7 +144,7 @@ class Bantuan extends BaseModel
             $query->select(DB::raw("CONCAT('50',id) as lap"));
         }
 
-        return $query->select('id', 'nama', 'sasaran', 'ndesc', 'sdate', 'edate', 'status')->get()->toArray();
+        return $query->select('id', 'nama', 'sasaran', 'ndesc', 'sdate', 'edate')->get()->toArray();
     }
 
     public static function peserta_duplikat(array $program)
@@ -147,16 +161,12 @@ class Bantuan extends BaseModel
 
     public static function impor_program($program_id = null, $data_program = [], $ganti_program = 0)
     {
-        $sekarang      = $data_program['sdate'] ?? date('Y m d');
-        $data_tambahan = [
-            'status' => ($data_program['edate'] < $sekarang) ? 0 : 1,
-        ];
-
-        $data_program = array_merge($data_program, $data_tambahan);
-
         if ($ganti_program == 1 && $program_id != null) {
             self::findOrFail($program_id)->update($data_program);
         } else {
+            unset($data_program['id']);
+            $data_program['slug']     = Str::slug($data_program['nama']);
+            $data_program['asaldana'] = AsalDanaEnum::valueOf($data_program['asaldana']);
             self::create($data_program);
             $program_id = self::latest()->first()->id;
         }
@@ -266,7 +276,20 @@ class Bantuan extends BaseModel
      */
     public function scopeStatus($query, mixed $value = 1)
     {
-        return $query->where('status', $value);
+        $currentDate = Carbon::now()->toDateString(); // Hasil: 'YYYY-MM-DD'
+
+        return $query
+            ->when($value == 1, static function ($query) use ($currentDate) {
+                $query->whereDate('sdate', '<=', $currentDate)
+                    ->whereDate('edate', '>=', $currentDate);
+            })
+            ->when($value == 0, static function ($query) use ($currentDate) {
+                $query->where(static function ($query) use ($currentDate) {
+                    $query->whereDate('sdate', '>=', $currentDate)
+                        ->orWhereDate('edate', '<=', $currentDate);
+                });
+            });
+
     }
 
     /**
@@ -385,6 +408,7 @@ class Bantuan extends BaseModel
                 'umur' => umur($data->tanggallahir),
             ])->toArray();
         }
+
         return null;
     }
 
@@ -411,8 +435,6 @@ class Bantuan extends BaseModel
 
     public static function getProgramPeserta($slug): array
     {
-        // Untuk program bantuan, $slug berbentuk '50<program_id>'s
-        $slug    = preg_replace('/^50/', '', $slug);
         $program = self::get_program_data($slug);
         $peserta = self::get_data_peserta($program, $slug);
 
@@ -463,7 +485,7 @@ class Bantuan extends BaseModel
             ->get();
 
         if ($data) {
-            return collect($data)->filter(static fn ($item): bool => ! in_array($item->no_kk, $filter))->map(static fn($item): array => [
+            return collect($data)->filter(static fn ($item): bool => ! in_array($item->no_kk, $filter))->map(static fn ($item): array => [
                 'id'   => $item->nik,
                 'nik'  => $item->nik,
                 'nama' => strtoupper('KK[' . $item->no_kk . '] - [' . $item->kk_level . '] ' . $item->nama . ' [' . $item->nik . ']'),
@@ -489,7 +511,7 @@ class Bantuan extends BaseModel
             ->get();
 
         if ($data) {
-            return collect($data)->filter(static fn ($item): bool => ! in_array($item->no_kk, $filter))->map(static fn($item): array => [
+            return collect($data)->filter(static fn ($item): bool => ! in_array($item->no_kk, $filter))->map(static fn ($item): array => [
                 'id'   => $item->nik,
                 'nik'  => $item->nik,
                 'nama' => strtoupper($item->nama) . ' [' . $item->nik . ']',
@@ -516,7 +538,7 @@ class Bantuan extends BaseModel
             ->get();
 
         if ($data) {
-            return collect($data)->filter(static fn ($item): bool => ! in_array($item->id, $filter))->map(static fn($item): array => [
+            return collect($data)->filter(static fn ($item): bool => ! in_array($item->id, $filter))->map(static fn ($item): array => [
                 'id'   => $item->id,
                 'nik'  => $item->id,
                 'nama' => strtoupper($item->nama) . ' [' . $item->id . ']',
@@ -544,7 +566,7 @@ class Bantuan extends BaseModel
             ->get();
 
         if ($data) {
-            return collect($data)->filter(static fn ($item): bool => ! in_array($item->id, $filter))->map(static fn($item): array => [
+            return collect($data)->filter(static fn ($item): bool => ! in_array($item->id, $filter))->map(static fn ($item): array => [
                 'id'   => $item->id,
                 'nik'  => $item->nama_kelompok,
                 'nama' => strtoupper($item->nama) . ' [' . $item->nama_kelompok . ']',
@@ -557,7 +579,7 @@ class Bantuan extends BaseModel
 
     public static function get_program_data($slug)
     {
-        $hasil0 = self::where('id', $slug)->first()->toArray();
+        $hasil0 = self::where('id', $slug)->first()?->toArray() ?? show_404();
 
         switch ($hasil0['sasaran']) {
             case 1:
@@ -598,10 +620,10 @@ class Bantuan extends BaseModel
         $query = self::get_peserta_sql($slug, $hasil0['sasaran']);
 
         return match ($hasil0['sasaran']) {
-            1 => self::get_data_peserta_penduduk($query),
-            2 => self::get_data_peserta_kk($query),
-            3 => self::get_data_peserta_rumah_tangga($query),
-            4 => self::get_data_peserta_kelompok($query),
+            1       => self::get_data_peserta_penduduk($query),
+            2       => self::get_data_peserta_kk($query),
+            3       => self::get_data_peserta_rumah_tangga($query),
+            4       => self::get_data_peserta_kelompok($query),
             default => null,
         };
     }
@@ -716,7 +738,7 @@ class Bantuan extends BaseModel
         }
         $query->where('p.program_id', $slug);
 
-        return $query->get();
+        return $query->get() ?? [];
     }
 
     private static function get_data_peserta_penduduk($data)
@@ -793,7 +815,7 @@ class Bantuan extends BaseModel
         return [];
     }
 
-    private static function dusun(string $nama_dusun): string
+    private static function dusun(?string $nama_dusun = null): string
     {
         return (setting('sebutan_dusun') == '-') ? '' : ucwords(strtolower(setting('sebutan_dusun') . ' ' . $nama_dusun));
     }

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,6 +37,7 @@
 
 namespace App\Models;
 
+use App\Enums\SakitMenahunEnum;
 use App\Enums\SHDKEnum;
 use App\Enums\StatusKawinEnum;
 use App\Traits\ConfigId;
@@ -74,6 +75,7 @@ class PendudukHidup extends BaseModel
         'umur',
         'tanggalLahirId',
         'urlFoto',
+        'sakit_menahun',
     ];
 
     /**
@@ -206,16 +208,6 @@ class PendudukHidup extends BaseModel
      *
      * @return BelongsTo
      */
-    public function sakitMenahun()
-    {
-        return $this->belongsTo(SakitMenahun::class, 'sakit_menahun_id')->withDefault();
-    }
-
-    /**
-     * Define an inverse one-to-one or many relationship.
-     *
-     * @return BelongsTo
-     */
     public function kb()
     {
         return $this->belongsTo(KB::class, 'cara_kb_id')->withDefault();
@@ -326,8 +318,6 @@ class PendudukHidup extends BaseModel
 
     /**
      * Getter tempat dilahirkan attribute.
-     *
-     * @return string
      */
     public function getNamaTempatDilahirkanAttribute(): ?string
     {
@@ -343,8 +333,6 @@ class PendudukHidup extends BaseModel
 
     /**
      * Getter tempat dilahirkan attribute.
-     *
-     * @return string
      */
     public function getNamaJenisKelahiranAttribute(): ?string
     {
@@ -357,10 +345,13 @@ class PendudukHidup extends BaseModel
         };
     }
 
+    public function getSakitMenahunAttribute()
+    {
+        return SakitMenahunEnum::valueOf($this->sakit_menahun_id);
+    }
+
     /**
      * Getter tempat dilahirkan attribute.
-     *
-     * @return string
      */
     public function getNamaPenolongKelahiranAttribute(): ?string
     {
@@ -519,7 +510,6 @@ class PendudukHidup extends BaseModel
             'wargaNegara',
             'golonganDarah',
             'cacat',
-            'sakitMenahun',
             'kb',
             'statusKawin',
             'statusRekamKtp',

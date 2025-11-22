@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -44,7 +44,6 @@ class Inventaris_tanah_mutasi extends Admin_Controller
 {
     public $modul_ini     = 'sekretariat';
     public $sub_modul_ini = 'inventaris';
-    public $akses_modul   = 'inventaris';
 
     public function __construct()
     {
@@ -62,9 +61,7 @@ class Inventaris_tanah_mutasi extends Admin_Controller
     public function datatables()
     {
         if ($this->input->is_ajax_request()) {
-            $data = InventarisTanah::with('mutasi')->visible()->whereHas('mutasi', static function ($query): void {
-                $query->where('visible', 1);
-            })->get();
+            $data = InventarisTanah::query()->with('mutasi');
 
             return datatables()->of($data)
                 ->addIndexColumn()
@@ -159,7 +156,7 @@ class Inventaris_tanah_mutasi extends Admin_Controller
     public function delete($id): void
     {
         isCan('h');
-        if (MutasiInventarisTanah::findOrFail($id)->update(['visible' => 0])) {
+        if (MutasiInventarisTanah::findOrFail($id)->delete()) {
             redirect_with('success', 'Berhasil Hapus Data', 'inventaris_tanah_mutasi');
         }
         redirect_with('error', 'Gagal Hapus Data');

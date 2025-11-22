@@ -34,9 +34,7 @@
                     Hapus</a>
             @endif
             @if ($parent)
-                <a href="{{ ci_route('kategori') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
-                    <i class="fa fa-arrow-circle-left "></i>Kembali ke Daftar Kategori
-                </a>
+                @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('kategori'), 'label' => 'Daftar Kategori'])
             @endif
         </div>
         @if ($subtitle)
@@ -84,11 +82,18 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+            $('#status').val('1').trigger('change');
+
             var TableData = $('#tabeldata').DataTable({
                 responsive: true,
                 processing: true,
                 serverSide: true,
-                ajax: "{{ ci_route('kategori.datatables') }}?parent={{ $parent }}",
+                ajax: {
+                    url: "{{ ci_route('kategori.datatables') }}?parent={{ $parent }}",
+                    data: function(req) {
+                        req.status = $('#status').val();
+                    }
+                },
                 columns: [{
                         data: 'drag-handle',
                         class: 'padat',

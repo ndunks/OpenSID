@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -40,6 +40,7 @@ namespace App\Listeners;
 use Exception;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Container\Container;
+use NotificationChannels\Telegram\Telegram;
 
 class LockoutAdminListener
 {
@@ -47,7 +48,7 @@ class LockoutAdminListener
     {
     }
 
-    public function handle(Lockout $lockout)
+    public function handle(Lockout $lockout): void
     {
         if ($this->app['auth']->guard('admin')->name !== 'admin' || $this->app['auth']->guard('admin_periksa')->name !== 'admin_periksa') {
             return;
@@ -55,10 +56,10 @@ class LockoutAdminListener
 
         // TODO: gunakan laravel notification
         if (setting('telegram_notifikasi') && cek_koneksi_internet()) {
-            $this->app['ci']->load->library('Telegram/telegram');
+            $telegram = new Telegram(setting('telegram_token'));
 
             try {
-                $this->app['ci']->telegram->sendMessage([
+                $telegram->sendMessage([
                     'text' => <<<EOD
                             Percobaan login gagal sebanyak 3 kali dengan input nama pengguna {$lockout->request?->username} dan IP Address {$lockout->request->ip()}.
                         EOD,

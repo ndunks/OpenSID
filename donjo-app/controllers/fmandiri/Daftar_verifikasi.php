@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,24 +29,27 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Libraries\OTP\OtpManager;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Daftar_verifikasi extends Web_Controller
 {
+    private OtpManager $otp;
+
     public function __construct()
     {
         parent::__construct();
         mandiri_timeout();
         $this->session->daftar_verifikasi = true;
-        $this->load->model(['mandiri_model', 'theme_model']);
-        $this->load->library('OTP/OTP_manager', null, 'otp_library');
-        if (! $this->setting->tampilkan_pendaftaran) {
+        $this->otp                        = new OtpManager();
+        if (! setting('tampilkan_pendaftaran')) {
             redirect('layanan-mandiri/masuk');
         }
     }
@@ -69,9 +72,9 @@ class Daftar_verifikasi extends Web_Controller
 
         $data = [
             'header'                  => $this->header,
-            'latar_login_mandiri'     => $this->theme_model->latar_login_mandiri(),
-            'tgl_verifikasi_telegram' => $this->otp_library->driver('telegram')->cek_verifikasi_otp($this->session->is_verifikasi['id']),
-            'tgl_verifikasi_email'    => $this->otp_library->driver('email')->cek_verifikasi_otp($this->session->is_verifikasi['id']),
+            'latar_login_mandiri'     => (new App\Models\Theme())->latarLoginMandiri(),
+            'tgl_verifikasi_telegram' => $this->otp->driver('telegram')->cekVerifikasiOtp($this->session->is_verifikasi['id']),
+            'tgl_verifikasi_email'    => $this->otp->driver('email')->cekVerifikasiOtp($this->session->is_verifikasi['id']),
             'form_kirim_userid'       => site_url('layanan-mandiri/daftar/verifikasi/telegram/kirim-userid'),
             'form_kirim_email'        => site_url('layanan-mandiri/daftar/verifikasi/email/kirim-email'),
         ];
@@ -102,9 +105,9 @@ class Daftar_verifikasi extends Web_Controller
     {
         $data = [
             'header'                  => $this->header,
-            'latar_login_mandiri'     => $this->theme_model->latar_login_mandiri(),
-            'tgl_verifikasi_telegram' => $this->otp_library->driver('telegram')->cek_verifikasi_otp($this->session->is_verifikasi['id']),
-            'tgl_verifikasi_email'    => $this->otp_library->driver('email')->cek_verifikasi_otp($this->session->is_verifikasi['id']),
+            'latar_login_mandiri'     => (new App\Models\Theme())->latarLoginMandiri(),
+            'tgl_verifikasi_telegram' => $this->otp->driver('telegram')->cekVerifikasiOtp($this->session->is_verifikasi['id']),
+            'tgl_verifikasi_email'    => $this->otp->driver('email')->cekVerifikasiOtp($this->session->is_verifikasi['id']),
             'form_kirim_userid'       => site_url('layanan-mandiri/daftar/verifikasi/telegram/kirim-userid'),
             'form_kirim_otp'          => site_url('layanan-mandiri/daftar/verifikasi/telegram/kirim-otp'),
         ];
@@ -136,7 +139,7 @@ class Daftar_verifikasi extends Web_Controller
 
         $this->db->trans_begin();
 
-        if ($this->otp_library->driver('telegram')->cek_akun_terdaftar(['telegram' => $userID, 'id' => $id_pend])) {
+        if ($this->otp->driver('telegram')->cekAkunTerdaftar(['telegram' => $userID, 'id' => $id_pend])) {
             try {
                 // TODO: OpenKab - Perlu disesuaikan ulang setelah semua modul selesai
                 $this->db->where('id', $id_pend)->update('tweb_penduduk', [
@@ -145,7 +148,7 @@ class Daftar_verifikasi extends Web_Controller
                     'telegram_tgl_kadaluarsa' => date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . ' +5 minutes')),
                 ]);
 
-                $this->otp_library->driver('telegram')->kirim_otp($userID, $raw_token);
+                $this->otp->driver('telegram')->kirimOtp($userID, $raw_token);
 
                 $this->db->trans_commit();
             } catch (Exception $e) {
@@ -153,7 +156,7 @@ class Daftar_verifikasi extends Web_Controller
 
                 $this->session->set_flashdata('daftar_notif_telegram', [
                     'status' => -1,
-                    'pesan'  => 'Tidak berhasil mengirim OTP, silahkan mencoba kembali.',
+                    'pesan'  => 'Tidak berhasil mengirim OTP, silakan mencoba kembali.',
                 ]);
 
                 $this->db->trans_rollback();
@@ -163,7 +166,7 @@ class Daftar_verifikasi extends Web_Controller
 
             $this->session->set_flashdata('daftar_notif_telegram', [
                 'status' => 1,
-                'pesan'  => 'OTP telegram anda berhasil terkirim, silahkan cek telegram anda!',
+                'pesan'  => 'OTP telegram Anda berhasil terkirim, silakan cek telegram anda!',
             ]);
 
             $this->session->set_flashdata('kirim-otp-telegram', '#langkah3');
@@ -172,7 +175,7 @@ class Daftar_verifikasi extends Web_Controller
         } else {
             $this->session->set_flashdata('daftar_notif_telegram', [
                 'status' => -1,
-                'pesan'  => 'Akun Telegram yang Anda Masukkan tidak valid, <br/> Silahkan menggunakan akun lainnya',
+                'pesan'  => 'Akun Telegram yang Anda Masukkan tidak valid, <br/> Silakan menggunakan akun lainnya',
             ]);
             redirect('layanan-mandiri/daftar/verifikasi/telegram/#langkah-2');
         }
@@ -190,14 +193,14 @@ class Daftar_verifikasi extends Web_Controller
         // TODO: OpenKab - Perlu disesuaikan ulang setelah semua modul selesai
         $telegramID = $this->db->where('id', $user)->get('tweb_penduduk')->row()->telegram;
 
-        if ($this->otp_library->driver('telegram')->verifikasi_otp($otp, $user)) {
+        if ($this->otp->driver('telegram')->verifikasiOtp($otp, $user)) {
             $this->session->set_flashdata('daftar_notif_telegram', [
                 'status' => 1,
-                'pesan'  => 'Selamat, akun telegram anda berhasil terverifikasi.',
+                'pesan'  => 'Selamat, akun telegram Anda berhasil terverifikasi.',
             ]);
 
             try {
-                $this->otp_library->driver('telegram')->verifikasi_berhasil($telegramID, $nama);
+                $this->otp->driver('telegram')->verifikasiBerhasil($telegramID, $nama);
             } catch (Exception $e) {
                 log_message('error', $e);
             }
@@ -207,7 +210,7 @@ class Daftar_verifikasi extends Web_Controller
 
         $this->session->set_flashdata('daftar_notif_telegram', [
             'status' => -1,
-            'pesan'  => 'Tidak berhasil memverifikasi, Token tidak sesuai atau waktu Anda habis, silahkan mencoba kembali.',
+            'pesan'  => 'Tidak berhasil melakukan verifikasi, Token tidak sesuai atau waktu Anda habis, silakan mencoba kembali.',
         ]);
 
         redirect('layanan-mandiri/daftar/verifikasi/telegram/#langkah-2');
@@ -220,9 +223,9 @@ class Daftar_verifikasi extends Web_Controller
     {
         $data = [
             'header'                  => $this->header,
-            'latar_login_mandiri'     => $this->theme_model->latar_login_mandiri(),
-            'tgl_verifikasi_telegram' => $this->otp_library->driver('telegram')->cek_verifikasi_otp($this->session->is_verifikasi['id']),
-            'tgl_verifikasi_email'    => $this->otp_library->driver('email')->cek_verifikasi_otp($this->session->is_verifikasi['id']),
+            'latar_login_mandiri'     => (new App\Models\Theme())->latarLoginMandiri(),
+            'tgl_verifikasi_telegram' => $this->otp->driver('telegram')->cekVerifikasiOtp($this->session->is_verifikasi['id']),
+            'tgl_verifikasi_email'    => $this->otp->driver('email')->cekVerifikasiOtp($this->session->is_verifikasi['id']),
             'form_kirim_email'        => site_url('layanan-mandiri/daftar/verifikasi/email/kirim-email'),
             'form_kirim_otp_email'    => site_url('layanan-mandiri/daftar/verifikasi/email/kirim-otp'),
         ];
@@ -254,7 +257,7 @@ class Daftar_verifikasi extends Web_Controller
 
         $this->db->trans_begin();
 
-        if ($this->otp_library->driver('email')->cek_akun_terdaftar(['email' => $email, 'id' => $id_pend])) {
+        if ($this->otp->driver('email')->cekAkunTerdaftar(['email' => $email, 'id' => $id_pend])) {
             try {
                 // TODO: OpenKab - Perlu disesuaikan ulang setelah semua modul selesai
                 $this->db->where('id', $id_pend)->update('tweb_penduduk', [
@@ -263,7 +266,7 @@ class Daftar_verifikasi extends Web_Controller
                     'email_tgl_kadaluarsa' => date('Y-m-d H:i:s', strtotime(date('Y-m-d H:i:s') . ' +5 minutes')),
                 ]);
 
-                $this->otp_library->driver('email')->kirim_otp($email, $raw_token);
+                $this->otp->driver('email')->kirimOtp($email, $raw_token);
 
                 $this->db->trans_commit();
             } catch (Exception $e) {
@@ -271,7 +274,7 @@ class Daftar_verifikasi extends Web_Controller
 
                 $this->session->set_flashdata('daftar_notif_telegram', [
                     'status' => -1,
-                    'pesan'  => 'Tidak berhasil mengirim OTP, silahkan mencoba kembali.',
+                    'pesan'  => 'Tidak berhasil mengirim OTP, silakan mencoba kembali.',
                 ]);
 
                 $this->db->trans_rollback();
@@ -281,7 +284,7 @@ class Daftar_verifikasi extends Web_Controller
 
             $this->session->set_flashdata('daftar_notif_telegram', [
                 'status' => 1,
-                'pesan'  => 'OTP email anda berhasil terkirim, silahkan cek email anda!',
+                'pesan'  => 'OTP email Anda berhasil terkirim, silakan cek email anda!',
             ]);
 
             $this->session->set_flashdata('kirim-otp-email', '#langkah3');
@@ -290,7 +293,7 @@ class Daftar_verifikasi extends Web_Controller
         } else {
             $this->session->set_flashdata('daftar_notif_telegram', [
                 'status' => -1,
-                'pesan'  => 'Akun Email yang Anda Masukkan tidak valid, <br/> Silahkan menggunakan akun lainnya',
+                'pesan'  => 'Akun Email yang Anda Masukkan tidak valid, <br/> Silakan menggunakan akun lainnya',
             ]);
             redirect('layanan-mandiri/daftar/verifikasi/email/#langkah-2');
         }
@@ -308,14 +311,14 @@ class Daftar_verifikasi extends Web_Controller
         // TODO: OpenKab - Perlu disesuaikan ulang setelah semua modul selesai
         $email = $this->db->where('id', $user)->get('tweb_penduduk')->row()->email;
 
-        if ($this->otp_library->driver('email')->verifikasi_otp($otp, $user)) {
+        if ($this->otp->driver('email')->verifikasiOtp($otp, $user)) {
             $this->session->set_flashdata('daftar_notif_telegram', [
                 'status' => 1,
-                'pesan'  => 'Selamat, alamat email anda berhasil terverifikasi.',
+                'pesan'  => 'Selamat, alamat email Anda berhasil terverifikasi.',
             ]);
 
             try {
-                $this->otp_library->driver('email')->verifikasi_berhasil($email, $nama);
+                $this->otp->driver('email')->verifikasiBerhasil($email, $nama);
             } catch (Exception $e) {
                 log_message('error', $e);
             }
@@ -325,7 +328,7 @@ class Daftar_verifikasi extends Web_Controller
 
         $this->session->set_flashdata('daftar_notif_telegram', [
             'status' => -1,
-            'pesan'  => 'Tidak berhasil memverifikasi, Token tidak sesuai atau waktu Anda habis, silahkan mencoba kembali.',
+            'pesan'  => 'Tidak berhasil melakukan verifikasi, Token tidak sesuai atau waktu Anda habis, silakan mencoba kembali.',
         ]);
 
         redirect('layanan-mandiri/daftar/verifikasi/email/#langkah-2');

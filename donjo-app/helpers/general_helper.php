@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,23 +29,23 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
 use App\Models\Config;
-use App\Models\GrupAkses;
-use App\Models\JamKerja;
-use App\Models\Kehadiran;
+use App\Models\Komentar;
 use App\Models\Menu;
 use App\Models\Modul;
 use App\Models\SettingAplikasi;
 use App\Models\User;
-use App\Models\UserGrup;
+use App\Models\Widget;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 
 if (! function_exists('asset')) {
     function asset($uri = '', $default = true)
@@ -86,90 +86,11 @@ if (! function_exists('can')) {
      */
     function can($akses = null, $slugModul = null, $adminOnly = false, $demoOnly = false)
     {
-        if ($demoOnly && config_item('demo_mode')) {
-            return false;
-        }
-
-        if ($slugModul === Modul::DEFAULT_MODUL['beranda']['slug']) {
-            return true;
-        }
-
-        $grupId = ci_auth()->id_grup;
-
-        $data = cache()->remember("akses_grup_{$grupId}", 604800, static function () use ($grupId) {
-            $slugGrup = UserGrup::find($grupId)->slug;
-            if (in_array($grupId, UserGrup::getGrupIdAksesGrupBawaan())) {
-                $grup = UserGrup::getAksesGrupBawaan()[$slugGrup] ?? [];
-
-                if (count($grup) === 1 && array_keys($grup)[0] == '*') {
-                    $grupAkses = Modul::when(! super_admin(), static function ($query) {
-                            $query->isActive();
-                        })->get();
-                    $rbac = array_values($grup)[0];
-                } else {
-                    $grupAkses = Modul::whereIn('slug', array_keys($grup))->isActive()->get();
-                }
-
-                return $grupAkses->mapWithKeys(static function ($item) use ($grupId, $rbac, $grup) {
-                    $rbac ??= $grup[$item->slug];
-                    $rbac = $rbac === 0 ? 1 : $rbac;
-
-                    return [
-                        $item->slug => [
-                            'id_modul' => $item->id,
-                            // 'parent_slug' => Modul::find($item->parent)->slug ?? null,
-                            'id_grup' => $grupId,
-                            'akses'   => $rbac,
-                            'baca'    => $rbac >= 1,
-                            'ubah'    => $rbac >= 3,
-                            'hapus'   => $rbac >= 7,
-                        ],
-                    ];
-                })->toArray();
-            }
-            $grupAkses = GrupAkses::leftJoin('setting_modul as s1', 'grup_akses.id_modul', '=', 's1.id')
-                // ->leftJoin('setting_modul as s2', 's1.parent', '=', 's2.id')
-                ->where('id_grup', $grupId)
-                ->select('grup_akses.*', 's1.slug as slug')
-                // ->select('s2.slug as parent_slug')
-                ->get();
-
-            return $grupAkses->mapWithKeys(static fn ($item) => [
-                $item->slug => [
-                    'id_modul' => $item->id_modul,
-                    // 'parent_slug' => $item->parent_slug,
-                    'id_grup' => $item->id_grup,
-                    'akses'   => $item->akses,
-                    'baca'    => $item->akses >= 1,
-                    'ubah'    => $item->akses >= 3,
-                    'hapus'   => $item->akses >= 7,
-                ],
-            ])->toArray();
-        });
-
-        if (null === $akses) {
-            return $data;
-        }
-
         if (null === $slugModul) {
             $slugModul = ci()->akses_modul ?? (ci()->sub_modul_ini ?? ci()->modul_ini);
         }
 
-        $alias = [
-            'b' => 'baca',
-            'u' => 'ubah',
-            'h' => 'hapus',
-        ];
-
-        if (! array_key_exists($akses, $alias)) {
-            return false;
-        }
-
-        if ($adminOnly && ci_auth()->id != super_admin()) {
-            return false;
-        }
-
-        return $data[$slugModul][$alias[$akses]];
+        return Gate::allows("{$slugModul}:{$akses}", [$akses, $slugModul, $adminOnly, $demoOnly]);
     }
 }
 
@@ -191,6 +112,24 @@ if (! function_exists('isCan')) {
 
             redirect('beranda');
         } elseif (! can($akses, $slugModul, $adminOnly, $demoOnly)) {
+            set_session('error', $pesan);
+            session_error($pesan);
+
+            redirect(ci()->controller);
+        }
+    }
+}
+
+if (! function_exists('isMultiDB')) {
+    /**
+     * Cek apakah aplikasi menggunakan multi database
+     *
+     * @return void
+     */
+    function isMultiDB()
+    {
+        if (setting('multi_desa')) {
+            $pesan = 'Anda tidak memiliki akses untuk halaman tersebut!';
             set_session('error', $pesan);
             session_error($pesan);
 
@@ -224,7 +163,7 @@ if (! function_exists('redirect_with')) {
         }
 
         if (empty($to)) {
-            $to = ci()->controller;
+            $to = ci()->aliasController ?? ci()->controller;
         }
 
         return redirect($to);
@@ -252,40 +191,28 @@ if (! function_exists('ci_route')) {
     }
 }
 
-// setting('sebutan_desa');
 if (! function_exists('setting')) {
-    function setting($params = null)
+    /**
+     * Mengambil nilai dari pengaturan aplikasi.
+     *
+     * @param mixed|null $key
+     * @param mixed|null $value
+     *
+     * @return mixed|null
+     */
+    function setting($key = null, $value = null)
     {
         $getSetting = ci()->setting;
 
-        if ($params && ! empty($getSetting)) {
-            if (property_exists($getSetting, $params)) {
-                return $getSetting->{$params};
-            }
-
-            return null;
+        if ($key === null) {
+            return $getSetting;
         }
 
-        return $getSetting;
-    }
-}
-
-// identitas('nama_desa');
-if (! function_exists('identitas')) {
-    /**
-     * Get identitas desa.
-     *
-     * @return object|string
-     */
-    function identitas(?string $params = null)
-    {
-        $identitas = cache()->remember('identitas_desa', 604800, static fn () => Config::appKey()->first());
-
-        if ($params) {
-            return $identitas->{$params};
+        if ($value === null) {
+            return $getSetting->{$key} ?? null;
         }
 
-        return $identitas;
+        return $getSetting->{$key} = $value;
     }
 }
 
@@ -293,6 +220,8 @@ if (! function_exists('identitas')) {
 if (! function_exists('hapus_cache')) {
     function hapus_cache($params = null)
     {
+        ci()->load->driver('cache', ['adapter' => 'file', 'backup' => 'dummy']);
+
         if ($params) {
             return ci()->cache->hapus_cache_untuk_semua($params);
         }
@@ -360,11 +289,14 @@ if (! function_exists('parsedown')) {
 if (! function_exists('SebutanDesa')) {
     function SebutanDesa($params = null)
     {
+        $replaceWord = ['[Desa]', '[desa]', '[Pemerintah Desa]', '[dusun]'];
+        if (! Str::contains($params, $replaceWord)) return $params;
+
         // Tidak bisa gunakan helper setting karena value belum di load
         $setting = SettingAplikasi::whereIn('key', ['sebutan_desa', 'sebutan_pemerintah_desa', 'sebutan_dusun'])->pluck('value', 'key')->toArray();
 
         return str_replace(
-            ['[Desa]', '[desa]', '[Pemerintah Desa]', '[dusun]'],
+            $replaceWord,
             [ucwords($setting['sebutan_desa']), ucwords($setting['sebutan_desa']), ucwords($setting['sebutan_pemerintah_desa']), ucwords($setting['sebutan_dusun'])],
             $params
         );
@@ -407,8 +339,7 @@ if (! function_exists('akun_demo')) {
     {
         if (config_item('demo_mode') && in_array($id, array_keys(config_item('demo_akun')))) {
             if ($redirect) {
-                session_error(', tidak dapat mengubah / menghapus akun demo');
-                redirect($_SERVER['HTTP_REFERER']);
+                redirect_with('error', 'Tidak dapat mengubah / menghapus akun demo');
             }
 
             return true;
@@ -510,25 +441,6 @@ if (! function_exists('ci_db')) {
     }
 }
 
-if (! function_exists('cek_kehadiran')) {
-    /**
-     * Cek perangkat lupa absen
-     */
-    function cek_kehadiran(): void
-    {
-        if (! empty(setting('rentang_waktu_kehadiran')) || setting('rentang_waktu_kehadiran')) {
-            $cek_libur = JamKerja::libur()->first();
-            $cek_jam   = JamKerja::jamKerja()->first();
-            $kehadiran = Kehadiran::where('status_kehadiran', 'hadir')->where('jam_keluar', null)->get();
-            if ($kehadiran->count() > 0 && ($cek_jam != null || $cek_libur != null)) {
-                foreach ($kehadiran as $data) {
-                    Kehadiran::lupaAbsen($data->tanggal);
-                }
-            }
-        }
-    }
-}
-
 /**
  * Dipanggil untuk setiap kode isian ditemukan,
  * dan diganti dengan kata pengganti yang huruf besar/kecil mengikuti huruf kode isian.
@@ -544,47 +456,18 @@ if (! function_exists('case_replace')) {
     function case_replace($dari, $ke, $str)
     {
         $replacer = static function (array $matches) use ($ke) {
-            $matches = array_map(static fn ($match) => preg_replace('/[\\[\\]]/', '', $match), $matches);
+            // Remove brackets from the match
+            $matches = array_map(static fn ($match) => preg_replace('/[\[\]]/', '', $match), $matches);
 
+            // Apply case transformation
             return caseWord($matches[0], $ke);
         };
 
-        $dari = str_replace('[', '\\[', $dari);
+        // Escape brackets and forward slashes in the search pattern
+        $dari = str_replace(['[', ']', '/'], ['\\[', '\\]', '\\/'], $dari);
 
+        // Perform case-insensitive replacement with a callback
         return preg_replace_callback('/(' . $dari . ')/i', $replacer, $str);
-    }
-}
-
-if (! function_exists('kirim_versi_opensid')) {
-    function kirim_versi_opensid(): void
-    {
-        if (! config_item('demo_mode')) {
-            $ci = get_instance();
-            if (empty($ci->header['desa']['kode_desa'])) {
-                return;
-            }
-
-            $ci->load->driver('cache');
-
-            $versi = AmbilVersi();
-
-            if ($versi != $ci->cache->file->get('versi_app_cache')) {
-                try {
-                    $client = new GuzzleHttp\Client();
-                    $client->post(config_item('server_layanan') . '/api/v1/pelanggan/catat-versi', [
-                        'headers'     => ['X-Requested-With' => 'XMLHttpRequest'],
-                        'form_params' => [
-                            'kode_desa' => kode_wilayah($ci->header['desa']['kode_desa']),
-                            'versi'     => $versi,
-                        ],
-                    ])
-                        ->getBody();
-                    $ci->cache->file->save('versi_app_cache', $versi);
-                } catch (Exception $e) {
-                    log_message('error', $e);
-                }
-            }
-        }
     }
 }
 
@@ -953,6 +836,9 @@ if (! function_exists('geoip_info')) {
 }
 
 if (! function_exists('batal')) {
+    /**
+     * Generate a cancel/reset button.
+     */
     function batal(): string
     {
         return '<button type="reset" class="btn btn-social btn-danger btn-sm pull-left"><i class="fa fa-times"></i> Batal</button>';
@@ -978,7 +864,7 @@ if (! function_exists('sensorEmail')) {
 if (! function_exists('gis_simbols')) {
     function gis_simbols()
     {
-        $simbols = DB::table('gis_simbol')->get('simbol');
+        $simbols = DB::table('gis_simbol')->where('config_id', identitas('id'))->get('simbol');
 
         return $simbols->map(static fn ($item): array => (array) $item)->toArray();
     }
@@ -1187,5 +1073,90 @@ if (! function_exists('format_penomoran_surat')) {
         }
 
         return $formatGlobal;
+    }
+}
+
+/**
+ * Fungsi untuk menghapus folder beserta isinya
+ * Termasuk folder tersembunyi
+ *
+ * @param string $dirPath
+ *
+ * @return bool
+ */
+if (! function_exists('deleteDir')) {
+    function deleteDir($dirPath)
+    {
+        if (! is_dir($dirPath)) {
+            return false;
+        }
+
+        // Memastikan izin semua file dan folder diubah sehingga dapat dihapus
+        $items = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dirPath, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($items as $item) {
+            // Ubah izin file dan folder agar dapat dihapus
+            chmod($item->getRealPath(), 0777);
+
+            if ($item->isDir()) {
+                rmdir($item->getRealPath());
+            } else {
+                unlink($item->getRealPath());
+            }
+        }
+
+        // Hapus direktori utama setelah isi dihapus
+        rmdir($dirPath);
+
+        return true;
+    }
+}
+
+if (! function_exists('create_tree_file')) {
+    function create_tree_file($arr, string $baseDir)
+    {
+        if (! empty($arr)) {
+            $tmp = '<ul class="tree-folder">';
+
+            foreach ($arr as $i => $val) {
+                $iconPermission = '<i class="fa fa-times-circle-o fa-lg pull-right" style="color:red"></i>';
+                $liClass        = 'text-red';
+                $currentPath    = is_array($val) ? $i : $val;
+                $tmp .= '<li class="' . $liClass . '"  data-path="' . preg_replace('/\/+/', '/', $baseDir . DIRECTORY_SEPARATOR . $currentPath) . '">' . $currentPath . ' ' . $iconPermission;
+                $tmp .= create_tree_file($val, $baseDir . $i);
+                $tmp .= '</li>';
+            }
+
+            return $tmp . '</ul>';
+        }
+    }
+}
+
+if (! function_exists('getWidgetSetting')) {
+    /**
+     * Ambil setting widget
+     *
+     * @param int $namaWidget
+     * @param int $opsi       (optional)
+     */
+    function getWidgetSetting($namaWidget, $opsi = null)
+    {
+        return Widget::getSetting($namaWidget, $opsi);
+    }
+}
+
+if (! function_exists('bacaKomentar')) {
+    /**
+     * jumlah baca komentar pada artikel
+     *
+     * @param int $idArtikel
+     */
+    function bacaKomentar($idArtikel)
+    {
+        // return $this->db->query("SELECT * FROM komentar WHERE id_artikel = '".$data['id']."'");
+        return Komentar::jumlahBaca($idArtikel);
     }
 }

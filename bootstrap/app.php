@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -64,13 +64,13 @@ $app->withEloquent();
 */
 
 $app->singleton(
-    \Illuminate\Contracts\Debug\ExceptionHandler::class,
-    \App\Exceptions\Handler::class
+    Illuminate\Contracts\Debug\ExceptionHandler::class,
+    App\Exceptions\Handler::class
 );
 
 $app->singleton(
-    \Illuminate\Contracts\Console\Kernel::class,
-    \App\Console\Kernel::class
+    Illuminate\Contracts\Console\Kernel::class,
+    App\Console\Kernel::class
 );
 
 /*
@@ -86,6 +86,7 @@ $app->singleton(
 $app->configure('app');
 $app->configure('datatables');
 $app->configure('mail');
+$app->configure('user_agents');
 
 /*
 |--------------------------------------------------------------------------
@@ -98,23 +99,24 @@ $app->configure('mail');
 |
 */
 
-$app->register(\App\Providers\AppServiceProvider::class);
-$app->register(\App\Providers\AuthServiceProvider::class);
-$app->register(\App\Providers\CarbonServiceProvider::class);
-$app->register(\App\Providers\EventServiceProvider::class);
-$app->register(\App\Providers\DataTablesServiceProvider::class);
-$app->register(\App\Providers\NoCaptchaServiceProvider::class);
-$app->register(\App\Providers\TelegramNotificationServiceProvider::class);
-$app->register(\App\Providers\ZipStreamServiceProvider::class);
+$app->register(App\Providers\AppServiceProvider::class);
+$app->register(App\Providers\AuthServiceProvider::class);
+$app->register(App\Providers\CarbonServiceProvider::class);
+$app->register(App\Providers\EventServiceProvider::class);
+$app->register(App\Providers\DataTablesServiceProvider::class);
+$app->register(App\Providers\NoCaptchaServiceProvider::class);
+$app->register(App\Providers\TelegramNotificationServiceProvider::class);
+$app->register(App\Providers\ZipStreamServiceProvider::class);
 
-$app->register(\Cviebrock\EloquentSluggable\ServiceProvider::class);
-$app->register(\Illuminate\Auth\Passwords\PasswordResetServiceProvider::class);
-$app->register(\Illuminate\Mail\MailServiceProvider::class);
+$app->register(Cviebrock\EloquentSluggable\ServiceProvider::class);
+$app->register(Illuminate\Auth\Passwords\PasswordResetServiceProvider::class);
+$app->register(Illuminate\Mail\MailServiceProvider::class);
+$app->register(App\Providers\JsonApiPaginateServiceProvider::class);
 
-$app->alias('mail.manager', \Illuminate\Mail\MailManager::class);
-$app->alias('mail.manager', \Illuminate\Contracts\Mail\Factory::class);
-$app->alias('mailer', \Illuminate\Mail\Mailer::class);
-$app->alias('mailer', \Illuminate\Contracts\Mail\Mailer::class);
-$app->alias('mailer', \Illuminate\Contracts\Mail\MailQueue::class);
+$app->alias('mail.manager', Illuminate\Mail\MailManager::class);
+$app->alias('mail.manager', Illuminate\Contracts\Mail\Factory::class);
+$app->alias('mailer', Illuminate\Mail\Mailer::class);
+$app->alias('mailer', Illuminate\Contracts\Mail\Mailer::class);
+$app->alias('mailer', Illuminate\Contracts\Mail\MailQueue::class);
 
 return $app;

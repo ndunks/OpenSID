@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,11 +39,15 @@ use App\Models\Pamong;
 use App\Models\User;
 use App\Models\UserGrup;
 use App\Models\Wilayah;
+use App\Traits\UploadFotoUser;
+use Illuminate\Support\Facades\View;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
 class Man_user extends Admin_Controller
 {
+    use UploadFotoUser;
+
     public $modul_ini     = 'pengaturan';
     public $sub_modul_ini = 'pengguna';
     private int $tab_ini  = 10;
@@ -94,11 +98,10 @@ class Man_user extends Admin_Controller
                     }
                     if ($row->id != super_admin()) {
                         if (can('u')) {
-                            if ($row->active == '0') {
-                                $aksi .= '<a href="' . site_url("man_user/user_unlock/{$row->id}") . '" class="btn bg-navy btn-sm" title="Aktifkan Pengguna"><i class="fa fa-lock"></i></a> ';
-                            } elseif ($row->active == '1') {
-                                $aksi .= '<a href="' . site_url("man_user/user_lock/{$row->id}") . '" class="btn bg-navy btn-sm" title="Non Aktifkan Pengguna"><i class="fa fa-unlock"></i></a> ';
-                            }
+                            $aksi .= View::make('admin.layouts.components.tombol_aktifkan', [
+                                'url'    => $row->active == '0' ? site_url("man_user/user_unlock/{$row->id}") : site_url("man_user/user_lock/{$row->id}"),
+                                'active' => $row->active,
+                            ])->render();
                         }
                         if (can('h')) {
                             $aksi .= '<a href="#" data-href="' . site_url("man_user/delete/{$row->id}") . '" class="btn bg-maroon btn-sm" title="Hapus" data-toggle="modal" data-target="#confirm-delete"><i class="fa fa-trash-o"></i></a> ';
@@ -133,8 +136,10 @@ class Man_user extends Admin_Controller
             $data['action']      = 'Tambah';
         }
 
-        $data['wilayah']             = Wilayah::tree();
-        $data['user_group']          = UserGrup::status()->get(['id', 'nama']);
+        $data['wilayah']    = Wilayah::tree();
+        $data['user_group'] = UserGrup::status()->when(super_admin() == $id, static function ($query): void {
+                                            $query->where('slug', UserGrup::ADMINISTRATOR);
+                                        })->get(['id', 'nama']);
         $data['akses']               = (new UserGrup())->getGrupSistem();
         $data['pamong']              = Pamong::selectData()->aktif()->bukanPengguna($id)->get();
         $data['notifikasi_telegram'] = setting('telegram_notifikasi');
@@ -285,11 +290,11 @@ class Man_user extends Admin_Controller
             'email'          => empty($request['email']) ? null : htmlentities((string) $request['email']),
             'id_grup'        => $request['id_grup'] ?? null,
             'pamong_id'      => empty($request['pamong_id']) ? null : $request['pamong_id'],
-            'foto'           => isset($request['foto']) ? $this->user_model->urusFoto($id) : null,
+            'foto'           => isset($request['foto']) ? $this->urusFoto($id) : null,
             'notif_telegram' => (int) ($request['notif_telegram'] ?? 0),
             'id_telegram'    => (int) ($request['id_telegram'] ?? 0),
             'config_id'      => identitas('id'),
-            'batasi_wilayah' => (int) ($request['batasi_wilayah'] ?? 0),
+            'batasi_wilayah' => ! empty($request['akses_wilayah']) ? (int) $request['batasi_wilayah'] : 0,
             'akses_wilayah'  => $request['akses_wilayah'] ?? [],
         ];
 

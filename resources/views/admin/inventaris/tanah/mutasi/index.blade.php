@@ -3,63 +3,63 @@
 @include('admin.layouts.components.jquery_ui')
 
 @section('title')
-    <h1>
-        Daftar Mutasi Inventaris Tanah
-    </h1>
+<h1>
+    Daftar Mutasi Inventaris Tanah
+</h1>
 @endsection
 
 @push('css')
-    <style>
-        .table .btn {
-            margin-right: 2px;
-        }
-    </style>
+<style>
+    .table .btn {
+        margin-right: 2px;
+    }
+</style>
 @endpush
 
 @section('breadcrumb')
-    <li class="active">Daftar Mutasi Inventaris Tanah</li>
+<li class="active">Daftar Mutasi Inventaris Tanah</li>
 @endsection
 
 @section('content')
-    @include('admin.layouts.components.notifikasi')
+@include('admin.layouts.components.notifikasi')
 
-    <div class="row">
-        <div class="col-md-3">
-            @include('admin.inventaris.menu')
-        </div>
-        <div class="col-md-9">
-            <div class="box box-info">
-                <div class="box-body">
-                    <div class="table-responsive">
-                        <table id="tabel-data" class="table table-bordered dataTable table-hover">
-                            <thead class="bg-gray">
-                                <tr>
-                                    <th class="text-center">No</th>
-                                    <th class="text-center">Aksi</th>
-                                    <th class="text-center">Nama Barang</th>
-                                    <th class="text-center">Kode Barang / Nomor Registrasi</th>
-                                    <th class="text-center">Tahun Pengadaan</th>
-                                    <th class="text-center">Tanggal Mutasi</th>
-                                    <th class="text-center">Status Tanah</th>
-                                    <th class="text-center">Jenis Mutasi</th>
-                                    <th class="text-center" width="300px">Keterangan</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
-                    </div>
+<div class="row">
+    <div class="col-md-3">
+        @include('admin.inventaris.menu')
+    </div>
+    <div class="col-md-9">
+        <div class="box box-info">
+            <div class="box-body">
+                <div class="table-responsive">
+                    <table id="tabel-data" class="table table-bordered dataTable table-hover">
+                        <thead class="bg-gray">
+                            <tr>
+                                <th class="text-center">No</th>
+                                <th class="text-center">Aksi</th>
+                                <th class="text-center">Nama Barang</th>
+                                <th class="text-center">Kode Barang / Nomor Registrasi</th>
+                                <th class="text-center">Tahun Pengadaan</th>
+                                <th class="text-center">Tanggal Mutasi</th>
+                                <th class="text-center">Status Tanah</th>
+                                <th class="text-center">Jenis Mutasi</th>
+                                <th class="text-center" width="300px">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    @include('admin.layouts.components.konfirmasi_hapus')
+@include('admin.layouts.components.konfirmasi_hapus')
 @endsection
 
 @push('scripts')
-    <script>
-        $(document).ready(function() {
+<script>
+    $(document).ready(function() {
             var TableData = $('#tabel-data').DataTable({
                 responsive: true,
                 processing: true,
@@ -88,7 +88,7 @@
                     },
                     {
                         data: 'kode_barang_register',
-                        name: 'kode_barang_register',
+                        name: 'kode_barang',
                         searchable: true,
                         orderable: true
                     },
@@ -101,27 +101,36 @@
                     },
                     {
                         data: 'tanggal_mutasi',
-                        name: 'tanggal_mutasi',
+                        name: 'mutasi.tahun_mutasi',
                         empty: '-',
                         searchable: true,
                         orderable: true
                     },
                     {
-                        data: 'mutasi.status_mutasi',
+                        data: function(row) {
+                            return row.mutasi ? row.mutasi.status_mutasi : '-';
+                        },
                         name: 'mutasi.status_mutasi',
                         empty: '-',
                         searchable: true,
                         orderable: true
                     },
                     {
-                        data: 'mutasi.jenis_mutasi',
+                        data: function(row) {
+                            if(row.mutasi && row.mutasi.status_mutasi == 'Hapus') {
+                                return row.mutasi.jenis_mutasi;
+                            }
+                            return '-';
+                        },
                         name: 'mutasi.jenis_mutasi',
                         empty: '-',
                         searchable: true,
                         orderable: true
                     },
                     {
-                        data: 'mutasi.keterangan',
+                        data: function(row) {
+                            return row.mutasi ? row.mutasi.keterangan : '-';
+                        },
                         name: 'mutasi.keterangan',
                         empty: '-',
                         searchable: true,
@@ -129,7 +138,7 @@
                     }
                 ],
                 order: [
-                    [5, 'desc']
+                    [4, 'desc']
                 ],
                 createdRow: function(row, data, dataIndex) {
                     $(row).attr('data-id', data.id)
@@ -142,5 +151,5 @@
                 TableData.column(1).visible(false);
             }
         });
-    </script>
+</script>
 @endpush

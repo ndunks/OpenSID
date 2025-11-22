@@ -2,6 +2,16 @@
     <style>
         .small-box {
             border-radius: 5px;
+            padding-bottom: 27px;
+        }
+
+        .small-box .icon {
+            top: -5px;
+        }
+
+        .small-box:hover {
+            transform: scale(1.01);
+            transition: 0.3s;
         }
     </style>
 @endpush
@@ -10,7 +20,7 @@
     <div class="col-lg-3 col-sm-6 col-xs-12">
         <div class="small-box bg-aqua">
             <div class="inner">
-                <h3>{{ $bulanIniIbuHamil }}</h3>
+                <h3 id="bulan-ini-ibu-hamil">{{ $bulanIniIbuHamil }}</h3>
                 <p>Ibu Hamil Periksa Bulan ini</p>
             </div>
             <div class="icon">
@@ -22,7 +32,7 @@
     <div class="col-lg-3 col-sm-6 col-xs-12">
         <div class="small-box bg-green">
             <div class="inner">
-                <h3>{{ $bulanIniAnak }}</h3>
+                <h3 id="bulan-ini-anak">{{ $bulanIniAnak }}</h3>
                 <p>Anak Periksa Bulan ini</p>
             </div>
             <div class="icon">

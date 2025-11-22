@@ -3,10 +3,10 @@
         <tr>
             <td>
                 @if ($aksi != 'unduh')
-                    <img class="logo" src="{{ gambar_desa($config['logo']) }}" alt="logo-desa">
+                    <img class="logo" src="{{ gambar_desa($desa['logo']) }}" alt="logo-desa">
                 @endif
                 <h1 class="judul" align="center">
-                    PEMERINTAH {!! strtoupper(setting('sebutan_kabupaten') . ' ' . $config['nama_kabupaten'] . ' <br>' . setting('sebutan_kecamatan') . ' ' . $config['nama_kecamatan'] . ' <br>' . setting('sebutan_desa') . ' ' . $config['nama_desa']) !!}
+                    PEMERINTAH {!! strtoupper(setting('sebutan_kabupaten') . ' ' . $desa['nama_kabupaten'] . ' <br>' . setting('sebutan_kecamatan') . ' ' . $desa['nama_kecamatan'] . ' <br>' . setting('sebutan_desa') . ' ' . $desa['nama_desa']) !!}
                 </h1>
             </td>
         </tr>
@@ -34,12 +34,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($main as $key => $data)
+                        @foreach ($main as $data)
                             <tr>
-                                <td align="center">{{ $key + 1 }}</td>
+                                <td align="center">{{ $loop->iteration }}</td>
                                 <td>{{ $data['nama'] }}</td>
-                                <td>{{ $data['ketua'] }}</td>
-                                <td>{{ $data['master'] }}</td>
+                                <td>{{ $data['ketua']['nama'] }}</td>
+                                <td>{{ $data['kelompok_master']['kelompok'] }}</td>
                                 <td align="center">{{ $data['jml_anggota'] }}</td>
                             </tr>
                         @endforeach

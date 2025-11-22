@@ -4,12 +4,12 @@ desa/*
 # Abaikan file
 *.log
 log-*.php
-info.php
 **/.DS_Store
 sftp-config.json
 .php-cs-fixer.cache
 /.htaccess
 *.sql
+*.sql.gz
 mitra
 generate-route.php
 
@@ -23,12 +23,6 @@ version.json
 
 # obfuscator
 Obfuscator.php
-
-# Abaikan tema premium
-vendor/themes/denatra/
-vendor/themes/silir/
-vendor/themes/batuah/
-vendor/themes/denava/
 
 # Abaikan isian folder vendor
 vendor/codeigniter/framework/*
@@ -45,14 +39,15 @@ vendor/*/*/*.dist
 vendor/*/*/*.xml
 vendor/*/*/.gitignore
 vendor/*/*/LICENSE
-test/
-tests/
+vendor/*/*/tests/
+test
 doc/
 docs/
 example/
 examples/
 /tools/
 
+vendor/tinymce/*
 vendor/libreoffice/*
 vendor/mikey179/*
 .vscode/*
@@ -60,13 +55,68 @@ vendor/mikey179/*
 .cache-rector/*
 !.cache-rector/.gitkeep
 
-storage/framework
+storage/framework/cache/*
+storage/framework/views/*
+storage/framework/sessions/*
 storage/logs
+
+!storage/framework/cache/.gitkeep
+!storage/framework/views/.gitkeep
+!storage/framework/sessions/.gitkeep
 
 php.ini
 
+# Ignore all symlink folder
+/assets/modules/*
+/assets/themes/*
+
+# Ignore all files in Modules
 Modules/*
+/assets/modules/*
+
+# Do not ignore Anjungan folder and its contents
+!Modules/Anjungan/
+!Modules/Anjungan/**
+!Modules/Analisis/
+!Modules/Analisis/**
+!Modules/BukuTamu/
+!Modules/BukuTamu/**
+!Modules/Kehadiran/
+!Modules/Kehadiran/**
+!Modules/Lapak/
+!Modules/Lapak/**
+!Modules/Pelanggan/
+!Modules/Pelanggan/**
+
+# Do not ignore specific files
 !Modules/.gitkeep
 !Modules/.htaccess
 !Modules/index.html
+
+# Ignore PHPUnit result cache file
 .phpunit.result.cache
+
+# ignore favicon.ico
+/favicon.ico
+
+# Node.js dependencies
+node_modules/
+
+# Ignore Playwright storage
+tests/playwright/storage/*
+
+# Do not ignore Playwright storage contains
+!tests/playwright/storage/database/
+
+# Ignore Playwright test reports
+tests/playwright/test-results/
+tests/playwright/report/
+tests/playwright/blob-report/
+test-results/
+
+# Playwright cache directory (improves test performance)
+tests/playwright/.cache/
+
+# Environment configuration (store secrets locally, not in Git)
+tests/playwright/.env
+.e2e.env

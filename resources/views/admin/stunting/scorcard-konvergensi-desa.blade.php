@@ -119,7 +119,7 @@
                                     TOTAL ANAK USIA 0 – 23 BULAN </th>
                                 <th colspan="1" width="23%" class="text-center" style="vertical-align: middle;">HIJAU
                                     (NORMAL)</th>
-                                <th colspan="2" class="text-center" style="vertical-align: middle;">Kuning (Resiko
+                                <th colspan="2" class="text-center" style="vertical-align: middle;">Kuning (Risiko
                                     Stunting)</th>
                                 <th colspan="2" class="text-center" style="vertical-align: middle;">Merah Terindikasi
                                     Stunting</th>
@@ -195,7 +195,7 @@
                             </tr>
                             <tr>
                                 <th colspan="1" class="text-center" style="vertical-align: middle;">5</th>
-                                <td colspan="3" style="vertical-align: middle;">Ibu hamil dengan kondisi resiko tinggi
+                                <td colspan="3" style="vertical-align: middle;">Ibu hamil dengan kondisi risiko tinggi
                                     dan/atau Kekurangan Energi Kronis (KEK) mendapat kunjungan ke rumah oleh bidan Desa
                                     secara terpadu minimal 1 bulan sekali </td>
                                 <td colspan="2" class="text-center" style="vertical-align: middle;">
@@ -386,22 +386,22 @@
                             @php
                                 $JLD_IbuHamil = $ibu_hamil['tingkatKonvergensiDesa'] == null ? '0' : $ibu_hamil['tingkatKonvergensiDesa']['jumlah_diterima'];
                                 $JLD_Anak = $bulanan_anak['tingkatKonvergensiDesa'] == null ? '0' : $bulanan_anak['tingkatKonvergensiDesa']['jumlah_diterima'];
-                                
+
                                 $JYSD_IbuHamil = $ibu_hamil['tingkatKonvergensiDesa'] == null ? '0' : $ibu_hamil['tingkatKonvergensiDesa']['jumlah_seharusnya'];
                                 $JYSD_Anak = $bulanan_anak['tingkatKonvergensiDesa'] == null ? '0' : $bulanan_anak['tingkatKonvergensiDesa']['jumlah_seharusnya'];
-                                
+
                                 $PERSEN_IbuHamil = $ibu_hamil['tingkatKonvergensiDesa'] == null ? '0' : $ibu_hamil['tingkatKonvergensiDesa']['persen'];
                                 $PERSEN_Anak = $bulanan_anak['tingkatKonvergensiDesa'] == null ? '0' : $bulanan_anak['tingkatKonvergensiDesa']['persen'];
-                                
+
                                 $JLD_TOTAL = (int) $JLD_IbuHamil + (int) $JLD_Anak;
                                 $JYSD_TOTAL = (int) $JYSD_IbuHamil + (int) $JYSD_Anak;
-                                
+
                                 if ($JYSD_TOTAL != 0) {
                                     $KONV_TOTAL = number_format(($JLD_TOTAL / $JYSD_TOTAL) * 100, 2);
                                 } else {
                                     $KONV_TOTAL = number_format(0, 2);
                                 }
-                                
+
                             @endphp
                             <tr>
                                 <th colspan="1" class="text-center" style="vertical-align: middle;">1</th>

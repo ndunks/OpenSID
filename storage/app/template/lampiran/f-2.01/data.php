@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,48 +29,57 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Models\LogPenduduk;
+use App\Models\PendudukSaja;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
+$tampil_data_anak                           = false;
+$tampil_data_orang_tua                      = false;
+$tampil_data_pelapor                        = false;
+$tampil_data_saksi                          = false;
+$tampil_data_kematian                       = false;
+$tampil_data_subjek_akta_1                  = false;
+$tampil_data_subjek_akta_2                  = false;
+$tampil_data_lahir_mati                     = false;
+$tampil_data_perkawinan                     = false;
+$tampil_data_perceraian                     = false;
+$tampil_data_pengankatan_anak               = false;
+$tampil_data_pengakuan_anak                 = false;
+$tampil_data_pengesahan_anak                = false;
+$tampil_data_perubahan_nama                 = false;
+$tampil_data_perubahan_status_kewarganeraan = false;
+$tampil_data_perubahan_peristiwa_lain       = false;
+$tampil_data_perubahan_akta                 = false;
+$tampil_data_pelaporan_luar_nkri            = false;
+
 switch ($surat->url_surat) {
-    case 'surat-keterangan-kelahiran':
-        $format_f201                                = 1;
-        $tampil_data_anak                           = true;
-        $tampil_data_orang_tua                      = true;
-        $tampil_data_pelapor                        = true;
-        $tampil_data_saksi                          = true;
-        $tampil_data_kematian                       = true;
-        $tampil_data_subjek_akta_1                  = true;
-        $tampil_data_subjek_akta_2                  = true;
-        $tampil_data_lahir_mati                     = true;
-        $tampil_data_perkawinan                     = true;
-        $tampil_data_perceraian                     = true;
-        $tampil_data_pengankatan_anak               = true;
-        $tampil_data_pengakuan_anak                 = true;
-        $tampil_data_pengesahan_anak                = true;
-        $tampil_data_perubahan_nama                 = true;
-        $tampil_data_perubahan_status_kewarganeraan = true;
-        $tampil_data_perubahan_peristiwa_lain       = true;
-        $tampil_data_perubahan_akta                 = true;
-        $tampil_data_pelaporan_luar_nkri            = true;
+    case Illuminate\Support\Str::contains($surat->url_surat, 'surat-keterangan-kelahiran'):
+        $format_f201            = 1;
+        $tampil_data_anak       = true;
+        $tampil_data_orang_tua  = true;
+        $tampil_data_pelapor    = true;
+        $tampil_data_saksi      = true;
+        $tampil_data_lahir_mati = true;
         break;
 
-    case 'surat-keterangan-kematian':
+    case Illuminate\Support\Str::contains($surat->url_surat, 'surat-keterangan-kematian'):
         $format_f201           = 7;
         $tampil_data_kematian  = true;
         $tampil_data_orang_tua = true;
         $tampil_data_pelapor   = true;
         $tampil_data_saksi     = true;
-        break;
+    break;
 
-    default:
-        // code...
-        break;
+        default:
+    // code...
+    break;
 }
 
 // include data pelapor dan saksi
@@ -78,7 +87,7 @@ include STORAGEPATH . 'app/template/lampiran/kode_pelapor_saksi.php';
 
 $individu['umur'] = str_pad($individu['umur'], 3, '0', STR_PAD_LEFT);
 
-$ibu = $this->surat_model->surat_model->get_data_ibu($individu['id']);
+$ibu = (new PendudukSaja())->dataIbu($individu['id']);
 if ($ibu) {
     $input['nik_ibu']             = get_nik($ibu['nik']);
     $input['nama_ibu']            = $ibu['nama'];
@@ -100,7 +109,7 @@ if ($ibu) {
     $input['umur_ibu']        = str_pad($input['umur_ibu'], 3, '0', STR_PAD_LEFT);
 }
 
-$ayah = $this->surat_model->get_data_ayah($individu['id']);
+$ayah = (new PendudukSaja())->dataAyah($individu['id']);
 if ($ayah) {
     $input['nik_ayah']             = get_nik($ayah['nik']);
     $input['nama_ayah']            = $ayah['nama'];
@@ -125,7 +134,7 @@ if ($ayah) {
 // Karena data F-2.01 berisi berbagai jenis lampiran, sehingga yang dimaksud data utama belum sesuai
 $input['nik_kematian']      = get_nik($individu['nik']);
 $input['nama_kematian']     = $individu['nama'];
-$data_mati                  = $this->surat_model->get_data_mati($individu['id']);
+$data_mati                  = LogPenduduk::where('id_pend', $individu['id'])->where('kode_peristiwa', '2')->first();
 $input['tanggal_kematian']  = $data_mati->tgl_peristiwa;
 $input['jam_kematian']      = $data_mati->jam_mati;
 $input['sebab_kematian']    = $data_mati->sebab;

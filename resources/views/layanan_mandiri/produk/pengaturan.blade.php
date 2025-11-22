@@ -30,7 +30,8 @@
         @if ($verifikasi)
             <div class="box-body box-line">
                 <div class="form-group">
-                    <a href="{{ site_url('layanan-mandiri/produk') }}" class="btn bg-aqua btn-social"><i class="fa fa-arrow-circle-left "></i>Kembali ke Daftar Produk</a>
+                    @include('admin.layouts.components.tombol_kembali_layanan_mandiri', ['url' => site_url('layanan-mandiri/produk'), 'label' => 'Daftar Produk'])
+
                 </div>
             </div>
         @endif
@@ -117,12 +118,12 @@
 
             // WILAYAH DESA
             @if (!empty($desa['path']))
-                set_marker_desa(marker_desa, {!! json_encode($desa) !!}, "{{ ucwords($ci->setting->sebutan_desa) . ' ' . $desa['nama_desa'] }}", "{{ favico_desa() }}");
+                set_marker_desa(marker_desa, {!! json_encode($desa) !!}, "{{ ucwords(setting('sebutan_desa')) . ' ' . $desa['nama_desa'] }}", "{{ favico_desa() }}");
             @endif
 
             // WILAYAH DUSUN
             @if (!empty($dusun_gis))
-                set_marker_multi(marker_dusun, '{!! addslashes(json_encode($dusun_gis)) !!}', '#FFFF00', '{{ ucwords($ci->setting->sebutan_dusun) }}', 'dusun');
+                set_marker_multi(marker_dusun, '{!! addslashes(json_encode($dusun_gis)) !!}', '#FFFF00', '{{ ucwords(setting('sebutan_dusun')) }}', 'dusun');
             @endif
 
             // WILAYAH RW
@@ -137,7 +138,7 @@
 
             // 2. Menampilkan overlayLayers Peta Semua Wilayah
             @if (!empty($wil_atas['path']))
-                var overlayLayers = overlayWil(marker_desa, marker_dusun, marker_rw, marker_rt, "{{ ucwords($ci->setting->sebutan_desa) }}", "{{ ucwords($ci->setting->sebutan_dusun) }}");
+                var overlayLayers = overlayWil(marker_desa, marker_dusun, marker_rw, marker_rt, "{{ ucwords(setting('sebutan_desa')) }}", "{{ ucwords(setting('sebutan_dusun')) }}");
             @else
                 var overlayLayers = {};
             @endif

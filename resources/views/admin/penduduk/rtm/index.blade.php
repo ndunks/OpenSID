@@ -48,6 +48,7 @@
                 <ul class="dropdown-menu" role="menu">
                     <li>
                         <a
+                            id="cetak_id"
                             href="{{ ci_route('rtm.ajax_cetak.cetak') }}"
                             class="btn btn-social btn-block btn-sm"
                             title="Cetak Data"
@@ -60,6 +61,7 @@
                     </li>
                     <li>
                         <a
+                            id="unduh_id"
                             href="{{ ci_route('rtm.ajax_cetak.unduh') }}"
                             class="btn btn-social btn-block btn-sm"
                             title="Unduh Data"
@@ -109,6 +111,7 @@
                             <th nowrap>KEPALA RUMAH TANGGA</th>
                             <th nowrap>NIK</th>
                             <th nowrap>DTKS</th>
+                            <th nowrap>JUMLAH KK</th>
                             <th nowrap>JUMLAH ANGGOTA</th>
                             <th nowrap>ALAMAT</th>
                             <th nowrap>{{ strtoupper(setting('sebutan_dusun')) }}</th>
@@ -216,10 +219,18 @@
                         orderable: false
                     },
                     {
+                        data: 'jumlah_kk',
+                        name: 'jumlah_kk',
+                        searchable: false,
+                        orderable: false,
+                        className: 'text-center'
+                    },
+                    {
                         data: 'anggota_count',
                         name: 'anggota_count',
                         searchable: false,
-                        orderable: false
+                        orderable: false,
+                        className: 'text-center'
                     },
                     {
                         data: 'kepala_keluarga.alamat_wilayah',
@@ -237,7 +248,7 @@
                     },
                     {
                         data: 'kepala_keluarga.keluarga.wilayah.rw',
-                        name: 'tw',
+                        name: 'rw',
                         searchable: false,
                         orderable: false,
                         defaultContent: '-',

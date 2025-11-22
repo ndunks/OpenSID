@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -38,7 +38,7 @@
 $lang['imglib_source_image_required']   = 'Anda harus menentukan sumber gambar dalam preferensi Anda.';
 $lang['imglib_gd_required']             = 'Pustaka gambar GD diperlukan untuk fitur ini.';
 $lang['imglib_gd_required_for_props']   = 'Server Anda harus mendukung pustaka gambar GD untuk menentukan sifat gambar.';
-$lang['imglib_unsupported_imagecreate'] = 'Server anda tidak mendukung fungsi GD yang dibutuhkan untuk memproses jenis gambar.';
+$lang['imglib_unsupported_imagecreate'] = 'Server Anda tidak mendukung fungsi GD yang dibutuhkan untuk memproses jenis gambar.';
 $lang['imglib_gif_not_supported']       = 'Gambar GIF sering tidak didukung karena pembatasan perizinan. Anda mungkin harus menggunakan gambar JPG atau PNG.';
 $lang['imglib_jpg_not_supported']       = 'Gambar JPG tidak didukung.';
 $lang['imglib_png_not_supported']       = 'Gambar PNG tidak didukung.';

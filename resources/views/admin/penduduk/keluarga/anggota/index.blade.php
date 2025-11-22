@@ -1,6 +1,6 @@
 @extends('admin.layouts.index')
-
 @include('admin.layouts.components.asset_datatables')
+@include('admin.layouts.components.datetime_picker')
 @section('title')
     <h1>
         Daftar Anggota Keluarga
@@ -41,8 +41,8 @@
                 </div>
             @endif
             <a href="{{ ci_route('keluarga.kartu_keluarga', $kk) }}" class="btn btn-social bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-book"></i> Kartu Keluarga</a>
-            <a href="{{ ci_route('keluarga') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Keluarga"><i class="fa fa-arrow-circle-left "></i>Kembali Ke Daftar Keluarga
-            </a>
+            @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('keluarga'), 'label' => 'Daftar Keluarga'])
+
         </div>
         <div class="box-body">
             <h5><b>Rincian Keluarga</b></h5>
@@ -72,7 +72,7 @@
                             <td>
                                 @if ($program['programkerja'])
                                     @foreach ($program['programkerja'] as $item)
-                                        {!! anchor("peserta_bantuan/data_peserta/{$item['id']}", '<span class="label label-success">' . $item['bantuan']['nama'] . '</span>&nbsp;', 'target="_blank"') !!}
+                                        {!! anchor("peserta_bantuan/detail_clear/{$item['program_id']}", '<span class="label label-success">' . $item['bantuan']['nama'] . '</span>&nbsp;', 'target="_blank"') !!}
                                     @endforeach
                                 @else
                                     -
@@ -92,7 +92,9 @@
                             <thead class="bg-gray disabled color-palette">
                                 <tr>
                                     <th>No</th>
-                                    <th>Aksi</th>
+                                    @if (can('u'))
+                                        <th>Aksi</th>
+                                    @endif
                                     <th>NIK</th>
                                     <th>Nama</th>
                                     <th>Tanggal Lahir</th>
@@ -104,18 +106,31 @@
                                 @foreach ($main as $key => $data)
                                     <tr>
                                         <td class="padat">{{ $key + 1 }} </td>
-                                        <td class="aksi">
-                                            @if (can('u'))
-                                                <a href="{{ ci_route("penduduk.form.{$data['id']}") }}" class="btn bg-orange btn-sm" title="Ubah Biodata Penduduk"><i class="fa fa-edit"></i></a>
-                                                <a
-                                                    href="#"
-                                                    data-href="{{ ci_route('keluarga.delete_anggota.' . $kk, $data['id']) }}"
-                                                    class="btn bg-purple btn-sm"
-                                                    title="Pecah KK"
-                                                    data-toggle="modal"
-                                                    data-target="#confirm-status"
-                                                    data-body="Apakah Anda yakin ingin memecah Data Keluarga ini?"
-                                                ><i class="fa fa-cut"></i></a>
+                                        @if (can('u'))
+                                            <td class="aksi">
+                                                @if (can('b', 'penduduk'))
+                                                    <a href="{{ ci_route('penduduk.detail', $data['id']) }}" class="btn btn-primary btn-sm" title="Lihat Detail Biodata Penduduk"><i class="fa fa-user"></i></a>
+                                                @endif
+                                                @if (can('u', 'penduduk'))
+                                                    <a href="{{ ci_route("penduduk.form.{$data['id']}") }}" class="btn bg-orange btn-sm" title="Ubah Biodata Penduduk"><i class="fa fa-edit"></i></a>
+                                                @endif
+                                                @if (can('b', 'penduduk'))
+                                                    @include('admin.layouts.components.tombol_upload', ['url' => ci_route('penduduk.dokumen', $data['id']), 'tooltip' => 'Manajemen Dokumen'])
+                                                @endif
+                                                @if (can('u', 'penduduk') && data_lengkap())
+                                                    @include('admin.layouts.components.tombol_status_dasar', ['url' => ci_route('penduduk.edit_status_dasar', [$data['id'], 'keluarga.anggota', $kk])])
+                                                @endif
+                                                @if ($data['bisaPecahKK'])
+                                                    <a
+                                                        href="#"
+                                                        data-href="{{ ci_route('keluarga.delete_anggota.' . $kk, $data['id']) }}"
+                                                        class="btn bg-purple btn-sm"
+                                                        title="Pecah KK"
+                                                        data-toggle="modal"
+                                                        data-target="#confirm-status"
+                                                        data-body="Apakah Anda yakin ingin memecah Data Keluarga ini?"
+                                                    ><i class="fa fa-cut"></i></a>
+                                                @endif
                                                 @if ($kepala_kk['status_dasar'] == 1)
                                                     <a
                                                         href="{{ ci_route('keluarga.edit_anggota.' . $kk, $data['id']) }}"
@@ -127,16 +142,18 @@
                                                         class="btn bg-navy btn-sm"
                                                     ><i class='fa fa-link'></i></a>
                                                 @endif
-                                                <a
-                                                    href="#"
-                                                    data-href="{{ ci_route('keluarga.keluarkan_anggota.' . $kk, $data['id']) }}"
-                                                    class="btn bg-maroon btn-sm"
-                                                    title="Bukan anggota keluarga ini"
-                                                    data-toggle="modal"
-                                                    data-target="#confirm-status"
-                                                    data-body="Apakah yakin akan dikeluarkan dari keluarga ini?"
-                                                ><i class="fa fa-times"></i></a>
-                                            @endif
+                                                @if ($data['kk_level'] != 1)
+                                                    <a
+                                                        href="#"
+                                                        data-href="{{ ci_route('keluarga.keluarkan_anggota.' . $kk, $data['id']) }}"
+                                                        class="btn bg-maroon btn-sm"
+                                                        title="Bukan anggota keluarga ini"
+                                                        data-toggle="modal"
+                                                        data-target="#confirm-status"
+                                                        data-body="Apakah yakin akan dikeluarkan dari keluarga ini?"
+                                                    ><i class="fa fa-times"></i></a>
+                                                @endif
+                                        @endif
                                         </td>
                                         <td>{{ $data['nik'] }}</td>
                                         <td nowrap width="45%">{{ strtoupper($data['nama']) }}</td>

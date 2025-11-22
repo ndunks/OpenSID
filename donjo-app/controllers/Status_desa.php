@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -41,9 +41,8 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Status_desa extends Admin_Controller
 {
-    public $modul_ini           = 'info-desa';
-    public $sub_modul_ini       = 'status-desa';
-    public $kategori_pengaturan = 'Status SDGs';
+    public $modul_ini     = 'info-desa';
+    public $sub_modul_ini = 'status-desa';
 
     public function __construct()
     {
@@ -90,7 +89,7 @@ class Status_desa extends Admin_Controller
             } catch (Exception $e) {
                 log_message('error', $e->getMessage());
 
-                redirect_with('error', 'Tidak dapat mengambil data IDM.');
+                redirect_with('error', 'Tidak dapat mengambil data IDM, silakan coba lagi.');
             }
 
             if ($response?->getStatusCode() === 200 && ($response->getBody()->getContents() !== '' && $response->getBody()->getContents() !== '0')) {
@@ -100,10 +99,10 @@ class Status_desa extends Admin_Controller
                 redirect_with('success', 'Berhasil Perbarui Data');
             }
 
-            redirect_with('error', 'Tidak dapat mengambil data IDM.');
+            redirect_with('error', 'Tidak dapat mengambil data IDM, silakan coba lagi.');
         }
 
-        redirect_with('error', 'Tidak dapat mengambil data IDM.');
+        redirect_with('error', 'Tidak dapat mengambil data IDM, silakan coba lagi.');
     }
 
     public function simpan(int $tahun): void
@@ -119,8 +118,9 @@ class Status_desa extends Admin_Controller
         set_session('navigasi', 'sdgs');
 
         $data = [
-            'sdgs'      => sdgs(),
-            'kode_desa' => identitas('kode_desa'),
+            'sdgs'          => sdgs(),
+            'kode_desa'     => identitas('kode_desa'),
+            'kode_desa_bps' => identitas('kode_desa_bps'),
         ];
 
         return view('admin.status_desa.sdgs', $data);
@@ -129,10 +129,6 @@ class Status_desa extends Admin_Controller
     public function perbarui_bps()
     {
         if ($this->input->is_ajax_request()) {
-            $kode_bps = $this->request['kode_bps'];
-            SettingAplikasi::where('key', 'kode_desa_bps')->update(['value' => $kode_bps]);
-            (new SettingAplikasi())->flushQueryCache();
-
             return json([
                 'status' => true,
             ]);
@@ -149,7 +145,8 @@ class Status_desa extends Admin_Controller
         set_session('navigasi', 'sdgs');
 
         if (cek_koneksi_internet()) {
-            $kode_desa = setting('kode_desa_bps');
+
+            $kode_desa = identitas()->kode_desa_bps;
             $cache     = 'sdgs_' . $kode_desa . '.json';
 
             // Cek server Kemendes sebelum hapus cache
@@ -170,7 +167,7 @@ class Status_desa extends Admin_Controller
             }
         }
 
-        redirect_with('error', 'Tidak dapat mengambil data SDGS.');
+        redirect_with('error', 'Tidak dapat mengambil data SDGs, silakan coba lagi.');
     }
 
     public function navigasi($navigasi = 'idm'): void

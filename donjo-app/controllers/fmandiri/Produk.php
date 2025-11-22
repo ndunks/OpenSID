@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,18 +29,18 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
 use App\Enums\StatusEnum;
-use App\Models\Pelapak;
 use App\Models\Penduduk;
-use App\Models\Produk as ProdukModel;
-use App\Models\ProdukKategori;
 use App\Models\Wilayah;
+use Modules\Lapak\Models\Pelapak;
+use Modules\Lapak\Models\Produk as ProdukModel;
+use Modules\Lapak\Models\ProdukKategori;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -101,7 +101,7 @@ class Produk extends Mandiri_Controller
             if (! $data['verifikasi']) {
                 $data['notifikasi'] = [
                     'status' => 'warning',
-                    'pesan'  => 'Produk ini sedang dalam proses verifikasi. Silahkan tunggu beberapa saat.',
+                    'pesan'  => 'Produk ini sedang dalam proses verifikasi. Silakan tunggu beberapa saat.',
                 ];
             }
         } else {
@@ -165,7 +165,7 @@ class Produk extends Mandiri_Controller
             $pelapak    = null;
             $notifikasi = [
                 'status' => 'danger',
-                'pesan'  => 'Anda belum terdaftar sebagai pelapak. Silahkan daftar terlebih dahulu untuk menggunakan layanan ini.',
+                'pesan'  => 'Anda belum terdaftar sebagai pelapak. Silakan daftar terlebih dahulu untuk menggunakan layanan ini.',
             ];
             $aksi = 'Daftar';
         } else {
@@ -177,7 +177,7 @@ class Produk extends Mandiri_Controller
             if (! $verifikasi) {
                 $notifikasi = [
                     'status' => 'warning',
-                    'pesan'  => 'Pendaftaran anda sedang dalam proses verifikasi. Silahkan tunggu beberapa saat.',
+                    'pesan'  => 'Pendaftaran Anda sedang dalam proses verifikasi. Silakan tunggu beberapa saat.',
                 ];
             }
         }

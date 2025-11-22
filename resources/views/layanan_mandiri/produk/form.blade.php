@@ -13,7 +13,8 @@
         </div>
         <div class="box-body box-line">
             <div class="form-group">
-                <a href="{{ site_url('layanan-mandiri/produk') }}" class="btn bg-aqua btn-social"><i class="fa fa-arrow-circle-left"></i>Kembali ke Daftar Produk</a>
+                @include('admin.layouts.components.tombol_kembali_layanan_mandiri', ['url' => site_url('layanan-mandiri/produk'), 'label' => 'Daftar Produk'])
+
             </div>
         </div>
         <div class="box-body box-line">
@@ -153,7 +154,7 @@
                         <?php $foto = json_decode($produk->foto, null); ?>
                         <div class="row">
                             @php
-                                $banyak_foto = $ci->setting->banyak_foto_tiap_produk ?? 3;
+                                $banyak_foto = setting('banyak_foto_tiap_produk') ?? 3;
                                 $col = 12 / $banyak_foto;
                             @endphp
 

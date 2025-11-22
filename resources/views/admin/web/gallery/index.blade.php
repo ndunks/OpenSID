@@ -27,9 +27,7 @@
                     Hapus</a>
             @endif
             @if ($parent)
-                <a href="{{ ci_route('gallery') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
-                    <i class="fa fa-arrow-circle-left "></i>Kembali ke Daftar Album
-                </a>
+                @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('gallery'), 'label' => 'Daftar Album'])
             @endif
         </div>
         @if ($subtitle)
@@ -78,6 +76,8 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+            $('#status').val(1).trigger('change');
+
             var parent = '{{ $parent }}';
             var TableData = $('#tabeldata').DataTable({
                 responsive: true,
@@ -86,7 +86,13 @@
                 order: [
                     [7, 'asc']
                 ],
-                ajax: "{{ ci_route('gallery.datatables') }}?parent={{ $parent }}",
+                ajax: {
+                    url: "{{ ci_route('gallery.datatables') }}",
+                    data: function(req) {
+                        req.parent = parent;
+                        req.status = $('#status').val();
+                    }
+                },
                 columns: [{
                         data: 'drag-handle',
                         class: 'padat',

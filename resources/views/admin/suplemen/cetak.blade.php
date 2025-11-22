@@ -43,17 +43,16 @@ defined('BASEPATH') || exit('No direct script access allowed');
  */
 
 ?>
-
 <table>
     <tbody>
         <tr>
             <td>
                 @if ($aksi != 'unduh')
-                    <img class="logo" src="{{ gambar_desa($config['logo']) }}" alt="logo-desa">
+                    <img class="logo" src="{{ gambar_desa($desa['logo']) }}" alt="logo-desa">
                 @endif
                 <h1 class="judul">
-                    PEMERINTAH {!! strtoupper(setting('sebutan_kabupaten') . ' ' . $config['nama_kabupaten'] . ' <br>' . setting('sebutan_kecamatan') . ' ' . $config['nama_kecamatan'] . ' <br>' . setting('sebutan_desa') . ' ' . $config['nama_desa']) !!}
-                    <h1>
+                    PEMERINTAH {!! strtoupper(setting('sebutan_kabupaten') . ' ' . $desa['nama_kabupaten'] . ' <br>' . setting('sebutan_kecamatan') . ' ' . $desa['nama_kecamatan'] . ' <br>' . setting('sebutan_desa') . ' ' . $desa['nama_desa']) !!}
+                </h1>
             </td>
         </tr>
         <tr>
@@ -89,6 +88,20 @@ defined('BASEPATH') || exit('No direct script access allowed');
                             <th>Jenis Kelamin</th>
                             <th>Alamat</th>
                             <th>Keterangan</th>
+
+                            @foreach ($terdata as $item)
+                                @php
+                                    // Memastikan data_form_isian ada dan berbentuk array
+                                    $dataForm = is_array($item['data_form_isian']) ? $item['data_form_isian'] : json_decode($item['data_form_isian'], true);
+                                @endphp
+
+                                @if (is_array($dataForm) && !empty($dataForm) && $dataForm !== 'null')
+                                    @foreach ($dataForm as $key => $value)
+                                        <th>{{ str_replace('_', ' ', ucfirst($key)) }}</th> <!-- Menampilkan key sebagai header -->
+                                    @endforeach
+                                    @break
+                                @endif
+                            @endforeach
                         </tr>
                     </thead>
                     <tbody>
@@ -103,6 +116,19 @@ defined('BASEPATH') || exit('No direct script access allowed');
                                 <td>{{ App\Enums\JenisKelaminEnum::valueOf($item['sex']) }}</td>
                                 <td>{{ 'RT/RW ' . $item['rt'] . '/' . $item['rw'] . ' - ' . strtoupper($item['dusun']) }}</td>
                                 <td>{{ $item['keterangan'] }}</td>
+
+                                @php
+                                    // Cek jika data_form_isian sudah berupa array
+                                    $dataForm = is_array($item['data_form_isian']) ? $item['data_form_isian'] : json_decode($item['data_form_isian'], true);
+                                @endphp
+
+                                @if (is_array($dataForm) && !empty($dataForm) && $dataForm !== 'null')
+                                    @foreach ($dataForm as $value)
+                                        <td>{{ $value }}</td> <!-- Menampilkan value berdasarkan header yang sudah ada -->
+                                    @endforeach
+                                @else
+                                    <td colspan="1"></td> <!-- Kolom kosong jika dataForm kosong atau error -->
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>

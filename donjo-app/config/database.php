@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -125,8 +125,8 @@ $db['default']['pconnect']     = false;
 $db['default']['db_debug']     = true;
 $db['default']['cache_on']     = false;
 $db['default']['cachedir']     = '';
-$db['default']['char_set']     = 'utf8';
-$db['default']['dbcollat']     = 'utf8_general_ci';
+$db['default']['char_set']     = 'utf8mb4';
+$db['default']['dbcollat']     = 'utf8mb4_general_ci';
 $db['default']['swap_pre']     = '';
 $db['default']['autoinit']     = false;
 $db['default']['encrypt']      = false;
@@ -137,7 +137,7 @@ $db['default']['save_queries'] = true;
 // Ganti pegaturan basisdata sesuai yg ada pada file desa/config/database.php
 include LOKASI_CONFIG_DESA . 'database.php';
 
-// diletakkan dibawah, karena encrypter diload dalam eloquent.php
+// diletakkan di bawah, karena encrypter diload dalam eloquent.php
 if (strlen($db['default']['password']) > 80) {
     $db['default']['password'] = Container::getInstance()->make('encrypter')->decrypt($db['default']['password']);
 }

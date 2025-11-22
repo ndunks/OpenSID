@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -45,6 +45,7 @@ class Inventaris_peralatan extends Admin_Controller
 {
     public $modul_ini     = 'sekretariat';
     public $sub_modul_ini = 'inventaris';
+    public $akses_modul   = 'inventaris-peralatan';
 
     public function __construct()
     {
@@ -94,7 +95,7 @@ class Inventaris_peralatan extends Admin_Controller
 
     private function sumberData()
     {
-        return InventarisPeralatan::visible();
+        return InventarisPeralatan::query();
     }
 
     public function form($id = '', $view = false)
@@ -153,7 +154,7 @@ class Inventaris_peralatan extends Admin_Controller
     {
         isCan('h');
 
-        if (InventarisPeralatan::findOrFail($id)->update(['visible' => 0])) {
+        if (InventarisPeralatan::findOrFail($id)->delete()) {
             redirect_with('success', 'Berhasil Hapus Data');
         }
 
@@ -162,7 +163,7 @@ class Inventaris_peralatan extends Admin_Controller
 
     private function validate(array $data): array
     {
-        $data['nama_barang']     = strip_tags((string) $data['nama_barang_save']);
+        $data['nama_barang']     = explode('_', $data['nama_barang'])[0];
         $data['kode_barang']     = strip_tags((string) $data['kode_barang']);
         $data['register']        = strip_tags((string) $data['register']);
         $data['merk']            = strip_tags((string) $data['merk']);
@@ -197,7 +198,6 @@ class Inventaris_peralatan extends Admin_Controller
         $data           = $this->modal_penandatangan();
         $data['aksi']   = $aksi;
         $data['main']   = $query->get();
-        $data['config'] = $this->header['desa'];
         $data['pamong'] = Pamong::selectData()->where(['pamong_id' => $this->input->post('pamong')])->first()->toArray();
         if ($tahun = $this->input->post('tahun')) {
             $data['main'] = $query->where('tahun_pengadaan', $tahun)->get();

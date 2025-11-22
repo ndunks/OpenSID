@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -45,12 +45,12 @@ class Inventaris_asset extends Admin_Controller
 {
     public $modul_ini     = 'sekretariat';
     public $sub_modul_ini = 'inventaris';
+    public $akses_modul   = 'inventaris-asset';
 
     public function __construct()
     {
         parent::__construct();
         isCan('b');
-        $this->load->model(['pamong_model', 'aset_model']);
     }
 
     public function index(): void
@@ -63,7 +63,7 @@ class Inventaris_asset extends Admin_Controller
     public function datatables()
     {
         if ($this->input->is_ajax_request()) {
-            $data = InventarisAsset::with('mutasi')->aktif();
+            $data = InventarisAsset::query()->with('mutasi');
 
             return datatables()->of($data)
                 ->addIndexColumn()
@@ -103,8 +103,7 @@ class Inventaris_asset extends Admin_Controller
             $data['action']      = $view ? 'Rincian' : 'Ubah';
             $data['form_action'] = ci_route('inventaris_asset.update', $id);
             $data['main']        = InventarisAsset::findOrFail($id);
-            // dd($data['main']);
-            $data['view_mark'] = $view ? 1 : 0;
+            $data['view_mark']   = $view ? 1 : 0;
         } else {
             $data['action']      = 'Tambah';
             $data['form_action'] = ci_route('inventaris_asset.create');
@@ -200,10 +199,10 @@ class Inventaris_asset extends Admin_Controller
 
     public function cetak($aksi = '')
     {
-        $data              = $this->modal_penandatangan();
-        $data['aksi']      = $aksi;
-        $data['tahun']     = $this->input->post('tahun');
-        $data['config']    = $this->header['desa'];
+        $data          = $this->modal_penandatangan();
+        $data['aksi']  = $aksi;
+        $data['tahun'] = $this->input->post('tahun');
+
         $data['isi']       = 'admin.inventaris.asset.cetak';
         $data['letak_ttd'] = ['1', '2', '12'];
         $data['file']      = 'Asset_Lainnya_';
@@ -212,15 +211,5 @@ class Inventaris_asset extends Admin_Controller
         $data['print'] = InventarisAsset::aktif()->cetak($data['tahun'])->get();
 
         return view('admin.layouts.components.format_cetak', $data);
-    }
-
-    public function download($tahun, $penandatangan): void
-    {
-        $data['header'] = $this->header['desa'];
-        $data['total']  = $this->inventaris_jalan_model->sum_print($tahun);
-        $data['print']  = $this->inventaris_jalan_model->cetak($tahun);
-        $data['pamong'] = $this->pamong_model->get_data($penandatangan);
-
-        $this->load->view('inventaris/jalan/inventaris_excel', $data);
     }
 }

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -56,9 +56,7 @@ class AuthenticatedSessionController extends Web_Controller
     {
         parent::__construct();
 
-        $this->load->model(['mandiri_model', 'theme_model']);
-
-        if ($this->setting->layanan_mandiri == 0) {
+        if (setting('layanan_mandiri') == 0) {
             show_404();
         }
     }
@@ -72,7 +70,7 @@ class AuthenticatedSessionController extends Web_Controller
         $token      = $this->input->get('token_layanan', true);
 
         // TODO: apa masih digunakan untuk autentikasi dengan mac address?
-        if (($macAddress && $token == $this->setting->layanan_opendesa_token) || Auth::guard($this->guard)->check()) {
+        if (($macAddress && $token == setting('layanan_opendesa_token')) || Auth::guard($this->guard)->check()) {
             $this->session->mac_address = $macAddress;
 
             return redirect('layanan-mandiri/beranda');
@@ -80,7 +78,7 @@ class AuthenticatedSessionController extends Web_Controller
 
         return view('layanan_mandiri.auth.login', [
             'header'              => $this->header,
-            'latar_login_mandiri' => $this->theme_model->latar_login_mandiri(),
+            'latar_login_mandiri' => (new App\Models\Theme())->latarLoginMandiri(),
             'cek_anjungan'        => $this->cek_anjungan,
             'form_action'         => site_url('layanan-mandiri/cek'),
         ]);
@@ -94,7 +92,7 @@ class AuthenticatedSessionController extends Web_Controller
         $macAddress = $this->input->get('mac_address', true);
         $token      = $this->input->get('token_layanan', true);
 
-        if (($macAddress && $token == $this->setting->layanan_opendesa_token) || Auth::guard($this->guard)->check()) {
+        if (($macAddress && $token == setting('layanan_opendesa_token')) || Auth::guard($this->guard)->check()) {
             $this->session->mac_address = $macAddress;
 
             return redirect('layanan-mandiri/beranda');
@@ -102,7 +100,7 @@ class AuthenticatedSessionController extends Web_Controller
 
         return view('layanan_mandiri.auth.login-ektp', [
             'header'              => $this->header,
-            'latar_login_mandiri' => $this->theme_model->latar_login_mandiri(),
+            'latar_login_mandiri' => (new App\Models\Theme())->latarLoginMandiri(),
             'cek_anjungan'        => $this->cek_anjungan,
             'form_action'         => site_url('layanan-mandiri/cek-ektp'),
         ]);
@@ -131,7 +129,10 @@ class AuthenticatedSessionController extends Web_Controller
 
         $this->session->sess_regenerate();
 
-        return redirect(route('layanan-mandiri.beranda.index'));
+        if ($this->session->is_anjungan) {
+            redirect(route('anjungan.beranda.index'));
+        }
+        redirect(route('layanan-mandiri.beranda.index'));
     }
 
     public function destroy()

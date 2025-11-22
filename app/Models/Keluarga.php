@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -46,6 +46,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Facades\DB;
+use Modules\Analisis\Models\AnalisisRespon;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -93,7 +94,7 @@ class Keluarga extends BaseModel
      */
     public function kepalaKeluarga()
     {
-        return $this->hasOne(Penduduk::class, 'id', 'nik_kepala')->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
+        return $this->hasOne(Penduduk::class, 'id_kk')->kepalaKeluarga();
     }
 
     /**
@@ -216,10 +217,10 @@ class Keluarga extends BaseModel
         if ($this->kepalaKeluarga && $this->kepalaKeluarga->status_dasar != StatusDasarEnum::HIDUP) {
             return false;
         }
-        if ($this->bantuan->count() > 0) {
+        if ($this->kepalaKeluarga && $this->bantuan->count() > 0) {
             return false;
         }
-        if ($this->suplemen->count() > 0) {
+        if ($this->kepalaKeluarga && $this->suplemen->count() > 0) {
             return false;
         }
 
@@ -476,7 +477,7 @@ class Keluarga extends BaseModel
                     $judul = KelasSosial::find($nomor)->toArray();
                     break;
 
-                case 'bantuan_keluarga':
+                default:
                     $judul = Bantuan::find($nomor)->toArray();
                     break;
             }
@@ -544,6 +545,7 @@ class Keluarga extends BaseModel
                 $anggota->update($data);
                 $log = [
                     'id_pend'        => $anggota->id,
+                    'config_id'      => identitas('id'),
                     'kode_peristiwa' => 6,
                     'tgl_peristiwa'  => date('Y-m-d H:i:s'),
                 ];

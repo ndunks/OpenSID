@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,15 +29,14 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
-use App\Enums\StatusEnum;
+use App\Enums\AktifEnum;
 use App\Models\Widget;
-use Illuminate\Support\Str;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -52,11 +51,9 @@ class Web_widget extends Admin_Controller
         isCan('b');
         // Jika offline_mode dalam level yang menyembunyikan website,
         // tidak perlu menampilkan halaman website
-        if ($this->setting->offline_mode >= 2) {
+        if (setting('offline_mode') >= 2) {
             redirect('beranda');
         }
-
-        $this->load->model(['web_widget_model']);
     }
 
     public function index()
@@ -69,7 +66,11 @@ class Web_widget extends Admin_Controller
         if ($this->input->is_ajax_request()) {
             $status = $this->input->get('status') ?? null;
 
-            return datatables()->of(Widget::orderBy('urut')->when($status, static fn ($q) => $q->where('enabled', $status)))
+            $query = Widget::orderBy('urut')
+                ->when($status == AktifEnum::AKTIF, static fn ($q) => $q->where('enabled', AktifEnum::AKTIF))
+                ->when($status == AktifEnum::TIDAK_AKTIF, static fn ($q) => $q->where('enabled', AktifEnum::TIDAK_AKTIF));
+
+            return datatables()->of($query)
                 ->addColumn('drag-handle', static fn (): string => '<i class="fa fa-sort-alpha-desc"></i>')
                 ->addColumn('ceklist', static function ($row) {
                     if (can('h')) {
@@ -87,7 +88,7 @@ class Web_widget extends Admin_Controller
                         $aksi .= '<a href="' . ci_route($row->form_admin) . '" class="btn btn-info btn-sm"  title="Form Admin"><i class="fa fa-sliders"></i></a> ';
                     }
                     if (can('u')) {
-                        if ($row->enabled == StatusEnum::YA) {
+                        if ($row->enabled == AktifEnum::AKTIF) {
                             $aksi .= '<a href="' . ci_route('web_widget.lock') . '/' . $row->id . '" class="btn bg-navy btn-sm" title="Nonaktifkan"><i class="fa fa-unlock"></i></a> ';
                         } else {
                             $aksi .= '<a href="' . ci_route('web_widget.lock') . '/' . $row->id . '" class="btn bg-navy btn-sm" title="Aktifkan"><i class="fa fa-lock"></i></a> ';
@@ -107,14 +108,8 @@ class Web_widget extends Admin_Controller
 
                     return ['style' => $style];
                 })
-                ->editColumn('isi', static function ($row): string {
-                    if ($row->jenis_widget == Widget::WIDGET_DINAMIS) {
-                        return Str::limit($row->isi, 200, '...');
-                    }
-
-                    return $row->isi;
-                })
-                ->addColumn('jenis_widget', static fn ($row): string => $row->jenis_widget == '1' ? 'Sistem' : ($row->jenis_widget == '2' ? 'Statis' : 'Dinamis'))
+                ->editColumn('isi', static fn ($row): string => $row->isi)
+                ->addColumn('jenis_widget', static fn ($row): string => $row->jenis_widget == '1' ? 'Sistem' : 'Statis')
                 ->rawColumns(['drag-handle', 'ceklist', 'aksi', 'jenis_widget'])
                 ->make();
         }
@@ -153,7 +148,7 @@ class Web_widget extends Admin_Controller
 
     public function admin($widget)
     {
-        $data['form_action'] = site_url('web_widget/update_setting/' . $widget);
+        $data['form_action'] = ci_route('web_widget.update_setting', $widget);
         $data['settings']    = Widget::getSetting($widget);
         if ($widget == 'aparatur_desa') {
             $data['pemerintah'] = ucwords((string) setting('sebutan_pemerintah_desa'));
@@ -163,8 +158,6 @@ class Web_widget extends Admin_Controller
         if ($widget == 'sinergi_program') {
             redirect($widget);
         }
-
-        $this->render('widgets/admin_' . $widget, $data);
     }
 
     public function update_setting($widget): void
@@ -173,7 +166,10 @@ class Web_widget extends Admin_Controller
 
         $this->cek_tidy();
         $setting = $this->input->post('setting');
-        $this->web_widget_model->update_setting($widget, $setting);
+        // Simpan semua setting di kolom setting sebagai json
+        $setting = json_encode($setting, JSON_THROW_ON_ERROR);
+        $data    = ['setting' => $setting];
+        Widget::where('isi', $widget)->update($data);
 
         redirect("{$this->controller}/admin/{$widget}");
     }
@@ -195,7 +191,7 @@ class Web_widget extends Admin_Controller
     {
         // Inisialisasi library 'upload'
         $CI = &get_instance();
-        $CI->load->library('MY_Upload', null, 'upload');
+        $CI->load->library('upload');
         $uploadConfig = [
             'upload_path'   => LOKASI_GAMBAR_WIDGET,
             'allowed_types' => 'jpg|jpeg|png|gif',
@@ -287,7 +283,7 @@ class Web_widget extends Admin_Controller
     private function cek_tidy(): void
     {
         if (! in_array('tidy', get_loaded_extensions())) {
-            $pesan = '<br/>Ektensi <code>tidy</code> tidak aktif. Silahkan cek <a href="' . site_url('info_sistem') . '"><b>Pengaturan > Info Sistem > Kebutuhan Sistem.</a></b>';
+            $pesan = '<br/>Ektensi <code>tidy</code> tidak aktif. Silakan cek <a href="' . ci_route('info_sistem') . '"><b>Pengaturan > Info Sistem > Kebutuhan Sistem.</a></b>';
 
             redirect_with('error', $pesan);
         }
@@ -296,32 +292,10 @@ class Web_widget extends Admin_Controller
     private function validasi(array $post, int $id = 0)
     {
         $data['judul']        = judul($post['judul']);
-        $data['jenis_widget'] = (int) $post['jenis_widget'];
+        $data['jenis_widget'] = Widget::WIDGET_STATIS;
         $data['foto']         = $this->upload_gambar('foto', $id);
-        if ($data['jenis_widget'] == 2) {
-            $data['isi'] = bersihkan_xss($post['isi-statis']);
-        } elseif ($data['jenis_widget'] == 3) {
-            $data['isi'] = $post['isi-dinamis'];
-            $data['isi'] = $this->bersihkan_html(bersihkan_xss($data['isi']));
-        }
+        $data['isi']          = $post['isi-statis'];
 
         return $data;
-    }
-
-    private function bersihkan_html($isi): string
-    {
-        // Konfigurasi tidy
-        $config = [
-            'indent'         => true,
-            'output-xhtml'   => true,
-            'show-body-only' => true,
-            'clean'          => true,
-            'coerce-endtags' => true,
-        ];
-        $tidy = new tidy();
-        $tidy->parseString($isi, $config, 'utf8');
-        $tidy->cleanRepair();
-
-        return tidy_get_output($tidy);
     }
 }

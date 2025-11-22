@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,17 +29,20 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Libraries\Checker;
+
 define('FOTO_DEFAULT_PRIA', base_url('assets/images/pengguna/kuser.png'));
 define('FOTO_DEFAULT_WANITA', base_url('assets/images/pengguna/wuser.png'));
 
 define('MIME_TYPE_SIMBOL', serialize([
-    'image/png',  'image/x-png',
+    'image/png',
+    'image/x-png',
 ]));
 
 define('EXT_SIMBOL', serialize([
@@ -63,26 +66,48 @@ define('MIME_TYPE_DOKUMEN', serialize([
 ]));
 
 define('EXT_DOKUMEN', serialize([
-    '.pdf', '.ppt', '.pptx', '.pps', '.ppsx',
-    '.doc', '.docx', '.rtf', '.xls', '.xlsx',
+    '.pdf',
+    '.ppt',
+    '.pptx',
+    '.pps',
+    '.ppsx',
+    '.doc',
+    '.docx',
+    '.rtf',
+    '.xls',
+    '.xlsx',
 ]));
 
 define('MIME_TYPE_GAMBAR', serialize([
-    'image/jpeg', 'image/pjpeg',
-    'image/png',  'image/x-png',
+    'image/jpeg',
+    'image/pjpeg',
+    'image/png',
+    'image/x-png',
+    'image/gif',
+    'image/webp',
 ]));
 
 define('EXT_GAMBAR', serialize([
-    '.jpg', '.jpeg', '.png',
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.gif',
+    '.webp',
 ]));
 
 define('MIME_TYPE_ARSIP', serialize([
-    'application/rar', 'application/x-rar', 'application/x-rar-compressed', 'application/octet-stream',
-    'application/zip', 'application/x-zip', 'application/x-zip-compressed',
+    'application/rar',
+    'application/x-rar',
+    'application/x-rar-compressed',
+    'application/octet-stream',
+    'application/zip',
+    'application/x-zip',
+    'application/x-zip-compressed',
 ]));
 
 define('EXT_ARSIP', serialize([
-    '.zip', '.rar',
+    '.zip',
+    '.rar',
 ]));
 
 /**
@@ -121,16 +146,16 @@ function tambahSuffixUniqueKeNamaFile($namaFile, $urlEncode = true, $delimiter =
 /**
  * Ambil foto profil berdasarkan parameter
  */
-function AmbilFoto(?string $foto, string $ukuran = 'kecil_', ?string $sex = '1'): string
+function AmbilFoto(?string $foto, string $ukuran = 'kecil_', ?string $sex = '1', string $lokasi = LOKASI_USER_PICT): string
 {
     $sex       = $sex ?: '1';
     $file_foto = Foto_Default($foto, $sex);
 
     if ($foto == $file_foto) {
         $ukuran    = ($ukuran == 'kecil_') ? 'kecil_' : '';
-        $file_foto = base_url(LOKASI_USER_PICT . $ukuran . $foto);
+        $file_foto = base_url($lokasi . $ukuran . $foto);
 
-        if (! file_exists(FCPATH . LOKASI_USER_PICT . $ukuran . $foto)) {
+        if (! file_exists(FCPATH . $lokasi . $ukuran . $foto)) {
             $file_foto = Foto_Default(null, $sex);
         }
     }
@@ -170,12 +195,12 @@ function UploadGambarWidget(string $nama_file, string $lokasi_file, ?string $old
 /**
  * Unggah foto
  */
-function UploadFoto(?string $fupload_name, ?string $old_foto, string $dimensi = '200x200'): bool
+function UploadFoto(?string $fupload_name, ?string $old_foto, string $dimensi = '200x200', string $lokasi = LOKASI_USER_PICT): bool
 {
     $ci                      = &get_instance();
-    $config['upload_path']   = LOKASI_USER_PICT;
+    $config['upload_path']   = $lokasi;
     $config['allowed_types'] = 'jpg|png|jpeg';
-    $ci->load->library('MY_Upload', null, 'upload');
+    $ci->load->library('upload');
     $ci->upload->initialize($config);
 
     if (! $ci->upload->do_upload('foto')) {
@@ -186,10 +211,11 @@ function UploadFoto(?string $fupload_name, ?string $old_foto, string $dimensi = 
     $uploadedImage = $ci->upload->data();
     if ($old_foto != '') {
         // Hapus old_foto
-        unlink(LOKASI_USER_PICT . $old_foto);
+        unlink($lokasi . $old_foto);
     }
+
     $dimensi = generateDimensi($dimensi);
-    ResizeGambar($uploadedImage['full_path'], LOKASI_USER_PICT . $fupload_name, ['width' => $dimensi['width'], 'height' => $dimensi['height']]);
+    ResizeGambar($uploadedImage['full_path'], $lokasi . $fupload_name, ['width' => $dimensi['width'], 'height' => $dimensi['height']]);
 
     unlink($uploadedImage['full_path']);
 
@@ -395,7 +421,7 @@ function HapusArtikel(?string $gambar): bool
 function UploadPeta(string $fupload_name, string $lokasi, $old_foto = null)
 {
     $ci = &get_instance();
-    $ci->load->library('MY_Upload', null, 'upload');
+    $ci->load->library('upload');
     $ci->upload->initialize([
         'upload_path'   => $lokasi,
         'allowed_types' => 'gif|jpg|png|jpeg',
@@ -571,35 +597,48 @@ function UploadResizeImage($lokasi, array $dimensi, $jenis_upload, string $fuplo
     $height     = imagesy($image);
     $new_width  = $dimensi['width'];
     $new_height = $dimensi['height'];
-    if ($width > $new_width && $height > $new_height) {
-        $ratio_orig = $width / $height;
-        $dst_width  = $new_width;
-        $dst_height = $new_height;
-        if ($new_width / $new_height > $ratio_orig) {
-            $dst_width = $new_height * $ratio_orig;
-        } else {
-            $dst_height = $new_width / $ratio_orig;
-        }
 
-        $image_p = imagecreatetruecolor($new_width, $new_height);
-        if ($is_png) {
-            // http://stackoverflow.com/questions/279236/how-do-i-resize-pngs-with-transparency-in-php
-            imagealphablending($image_p, false);
-            imagesavealpha($image_p, true);
-        }
-        imagecopyresampled($image_p, $image, 0, 0, 0, 0, $dst_width, $dst_height, $width, $height);
-        if ($is_png) {
-            imagepng($image_p, $filepath_out, 5);
-        } else {
-            imagejpeg($image_p, $filepath_out);
-        }
-        imagedestroy($image_p);
-        imagedestroy($image);
+    // Hitung rasio gambar asli dan gambar baru
+    $ratio_orig = $width / $height;
+    $ratio_new  = $new_width / $new_height;
+
+    // Letterbox: Sesuaikan ukuran thumbnail tanpa memotong gambar
+    if ($ratio_new > $ratio_orig) {
+        $dst_height = $new_height;
+        $dst_width  = $new_height * $ratio_orig;
     } else {
-        // Ukuran file tidak perlu di-resize
-        copy($filepath_in, $filepath_out);
-        imagedestroy($image);
+        $dst_width  = $new_width;
+        $dst_height = $new_width / $ratio_orig;
     }
+
+    $image_p = imagecreatetruecolor($new_width, $new_height);
+
+    // Jika gambar PNG, atur transparansi
+    if ($is_png) {
+        imagealphablending($image_p, false);
+        imagesavealpha($image_p, true);
+        $transparency = imagecolorallocatealpha($image_p, 255, 255, 255, 127);
+        imagefill($image_p, 0, 0, $transparency);
+    } else {
+        // Background warna putih untuk JPEG
+        $white = imagecolorallocate($image_p, 255, 255, 255);
+        imagefill($image_p, 0, 0, $white);
+    }
+
+    // Posisikan gambar yang di-resize ke tengah thumbnail (letterbox)
+    $x_pos = ($new_width - $dst_width) / 2;
+    $y_pos = ($new_height - $dst_height) / 2;
+
+    imagecopyresampled($image_p, $image, $x_pos, $y_pos, 0, 0, $dst_width, $dst_height, $width, $height);
+
+    if ($is_png) {
+        imagepng($image_p, $filepath_out, 5);
+    } else {
+        imagejpeg($image_p, $filepath_out);
+    }
+
+    imagedestroy($image_p);
+    imagedestroy($image);
 
     return true;
 }
@@ -777,7 +816,7 @@ function qrcode_generate(array $qrcode = [], $base64 = false): string
     return $filename;
 }
 
-function upload_foto_penduduk(?string $nama_file = '', ?string $dimensi = '')
+function upload_foto_penduduk(?string $nama_file = '', ?string $dimensi = '', string $lokasi = LOKASI_USER_PICT)
 {
     $foto     = $_POST['foto'];
     $old_foto = $_POST['old_foto'];
@@ -788,7 +827,8 @@ function upload_foto_penduduk(?string $nama_file = '', ?string $dimensi = '')
 
     if ($_FILES['foto']['tmp_name']) {
         $nama_file .= get_extension($_FILES['foto']['name']);
-        UploadFoto($nama_file, $old_foto, $dimensi);
+        $nama_file = (new Checker(get_app_key(), $nama_file))->encrypt();
+        UploadFoto($nama_file, $old_foto, $dimensi, $lokasi);
     } elseif ($foto) {
         $nama_file .= '.png';
         $foto = str_replace('data:image/png;base64,', '', $foto);
@@ -796,12 +836,12 @@ function upload_foto_penduduk(?string $nama_file = '', ?string $dimensi = '')
 
         if (isset($old_foto)) {
             // Hapus old_foto
-            unlink(LOKASI_USER_PICT . $old_foto);
-            unlink(LOKASI_USER_PICT . 'kecil_' . $old_foto);
+            unlink($lokasi . $old_foto);
+            unlink($lokasi . 'kecil_' . $old_foto);
         }
-
-        file_put_contents(LOKASI_USER_PICT . $nama_file, $foto);
-        file_put_contents(LOKASI_USER_PICT . 'kecil_' . $nama_file, $foto);
+        $nama_file = (new Checker(get_app_key(), $nama_file))->encrypt();
+        file_put_contents($lokasi . $nama_file, $foto);
+        file_put_contents($lokasi . 'kecil_' . $nama_file, $foto);
     } else {
         $nama_file = null;
     }
@@ -814,6 +854,10 @@ function to_base64($file): string
     $type = pathinfo($file, PATHINFO_EXTENSION);
     $data = file_get_contents($file);
 
+    if ($type === 'pdf') {
+        return 'data:application/pdf;base64,' . base64_encode($data);
+    }
+
     return 'data:image/' . $type . ';base64,' . base64_encode($data);
 }
 
@@ -825,7 +869,7 @@ function home_noimage(): string
 function unggah_file(array $config = [], $old_file = null)
 {
     $ci = &get_instance();
-    $ci->load->library('MY_Upload', null, 'upload');
+    $ci->load->library('upload');
     $ci->upload->initialize($config);
 
     if (! $ci->upload->do_upload('file')) {

@@ -39,6 +39,7 @@
                             <th>JUDUL</th>
                             <th class="padat">GAMBAR</th>
                             <th class="padat">STATUS</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody id="dragable">
@@ -101,9 +102,18 @@
                         searchable: false,
                         orderable: true,
                         class: 'padat'
-                    }
+                    },
+                    {
+                        data: 'urut',
+                        name: 'urut',
+                        searchable: false,
+                        orderable: true,
+                        visible: false
+                    },
                 ],
-                aaSorting: [],
+                order: [
+                    [7, 'asc']
+                ],
                 createdRow: function(row, data, dataIndex) {
                     $(row).attr('data-id', data.uuid);
                     $(row).addClass('dragable-handle');
@@ -112,10 +122,12 @@
 
             if (hapus == 0) {
                 TableData.column(0).visible(false);
+                TableData.column(1).visible(false);
             }
 
             if (ubah == 0) {
-                TableData.column(2).visible(false);
+                TableData.column(1).visible(false);
+                TableData.column(3).visible(false);
             }
 
             // harus diletakkan didalam blok ini, jika tidak maka object TableData tidak dikenal

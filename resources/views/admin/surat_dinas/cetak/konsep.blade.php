@@ -17,32 +17,60 @@
 @section('content')
     @include('admin.layouts.components.notifikasi')
 
-    <div class="box box-info">
+    <div class="box">
         {!! form_open(null, 'id="validasi"') !!}
-        <div class="box-body">
-            <input type="hidden" id="id_surat" value="{{ $id_surat }}">
-            <div class="form-group">
-                <textarea name="isi_surat" data-filemanager='<?= json_encode(['external_filemanager_path'=> base_url('assets/kelola_file/'), 'filemanager_title' => 'Responsive Filemanager', 'filemanager_access_key' => $session->fm_key]) ?>' data-salintemplate="isi" class="form-control input-sm editor required">{{ $isi_surat }}</textarea>
+        <div class="nav-tabs-custom">
+            <!-- Tabs navigation -->
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#{{ $surat->url_surat }}" data-toggle="tab">{{ $surat->judul_surat }}</a></li>
+                @foreach ($lampiran as $key => $tab)
+                    <li><a href="#{{ $loop->index }}" data-toggle="tab">{{ $key }}</a></li>
+                @endforeach
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane active" id="{{ $surat->url_surat }}">
+                    <div class="box-body">
+                        <input type="hidden" id="id_surat" value="{{ $id_surat }}">
+                        <div class="form-group">
+                            <textarea id="editor" name="isi_surat" data-filemanager='<?= json_encode(['external_filemanager_path'=> base_url('rfm/'), 'filemanager_title' => 'Responsive Filemanager', 'filemanager_access_key' => $session->fm_key]) ?>' data-salintemplate="isi" class="form-control input-sm editor required">{{ $isi_surat }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                @foreach ($lampiran as $kode => $isiLampiran)
+                    <div class="tab-pane" id="{{ $loop->index }}">
+                        <div class="box-body">
+                            <div class="form-group">
+                                <textarea name="isi_lampiran[]" data-filemanager='<?= json_encode(['external_filemanager_path'=> base_url('rfm/'), 'filemanager_title' => 'Responsive Filemanager', 'filemanager_access_key' => $session->fm_key]) ?>' 
+                                        data-salintemplate="isi" 
+                                        class="form-control input-sm lampiran required">
+                                    {{ $isiLampiran }}
+                                </textarea>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
             </div>
         </div>
         <div class="box-footer text-center">
-            <a href="{{ ci_route('surat_dinas_cetak') }}" id="back" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
-                <i class="fa fa-arrow-circle-left"></i>Kembali ke Daftar Surat
-            </a>
+            @include('admin.layouts.components.tombol_kembali', ['url' => site_url('surat_dinas_cetak/form/' . old('url_surat')), 'label' => 'Format Surat', 'id' => 'back'])
+
             @if ($tolak != '-1')
                 <a onclick="formAction('validasi', '{{ $aksi_konsep }}')" id="konsep" class="btn btn-social btn-warning btn-sm"><i class="fa fa-file-code-o"></i>
                     Konsep</a>
             @endif
             <button type="button" id="preview-pdf" class="btn btn-social btn-vk btn-success btn-sm"><i class="fa fa-eye"></i>Tinjau PDF</button>
+            <button type="button" id="ubah-surat" title="Ubah Surat" data-toggle="modal" data-target="#modal-ubah-surat" class="btn btn-social btn-success btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
+                <i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Ubah Surat
+            </button>
             @if ($tolak != '-1')
                 <a href="{{ ci_route('surat_dinas_arsip.masuk') }}" id="next" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block hide">
                     ke Permohonan Surat<i class="fa fa-arrow-circle-right"></i>
-                @else
-                    <a href="{{ ci_route('surat_dinas_arsip.ditolak') }}" id="next" style="display:none" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
-                        Ke Daftar Surat Ditolak <i class="fa fa-arrow-circle-right"></i>
+                </a>
+            @else
+                <a href="{{ ci_route('surat_dinas_arsip.ditolak') }}" id="next" style="display:none" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
+                    Ke Daftar Surat Ditolak <i class="fa fa-arrow-circle-right"></i>
+                </a>
             @endif
-
-            </a>
         </div>
         </form>
     </div>

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -69,6 +69,8 @@ $config = [
         LOKASI_SINERGI_PROGRAM     => [0775, 'htaccess1'],
         'desa/upload/thumbs/'      => [0775, 'htaccess1'],
         LOKASI_USER_PICT           => [0775, 'htaccess1'],
+        LOKASI_FOTO_KELOMPOK       => [0775, 'htaccess1'],
+        LOKASI_FOTO_LEMBAGA        => [0775, 'htaccess1'],
         LOKASI_VAKSIN              => [0775, 'htaccess1'],
         LOKASI_GAMBAR_WIDGET       => [0775, 'htaccess1'],
         LOKASI_FOTO_DTKS           => [0775, 'htaccess1'],
@@ -77,14 +79,14 @@ $config = [
     ],
 
     'lainnya' => [
-        'storage/framework/'         => [0775, 'htaccess3'],
-        'storage/framework/views/'   => [0775, 'htaccess3'],
-        'storage/framework/cache/'   => [0775, 'htaccess3'],
-        'storage/logs/'              => [0775, 'htaccess3'],
-        'backup_inkremental/'        => [0775, 'htaccess3'],
-        'assets/'                    => [0755, 'htaccess3'],
-        'assets/kelola_file/'        => [0755, 'htaccess4'],
-        'assets/kelola_file/config/' => [0755, 'htaccess4'],
+        'storage/framework/'       => [0775, 'htaccess3'],
+        'storage/framework/views/' => [0775, 'htaccess3'],
+        'storage/framework/cache/' => [0775, 'htaccess3'],
+        'storage/logs/'            => [0775, 'htaccess3'],
+        'backup_inkremental/'      => [0775, 'htaccess3'],
+        'assets/'                  => [0755, 'htaccess3'],
+        'rfm/'                     => [0755, 'htaccess4'],
+        'rfm/config/'              => [0755, 'htaccess4'],
     ],
 
     'config' => <<<'EOS'
@@ -125,13 +127,21 @@ $config = [
         $db['default']['password'] = '';
         $db['default']['port']     = 3306;
         $db['default']['database'] = 'premium';
-        $db['default']['dbcollat'] = 'utf8_general_ci';
+        $db['default']['dbcollat'] = 'utf8mb4_general_ci';
 
         /*
         | Untuk setting koneksi database 'Strict Mode'
         | Sesuaikan dengan ketentuan hosting
         */
         $db['default']['stricton'] = TRUE;
+
+        /*
+        | Konfigurasi options digunakan untuk menyisipkan opsi tambahan
+        | saat mengatur koneksi ke database.
+        */
+        $db['default']['options'] = [
+            // PDO::ATTR_EMULATE_PREPARES => true,
+        ];
         EOS,
 
     'index_html' => <<<'EOS'

@@ -49,14 +49,18 @@
                     <i class="fa fa-gear"></i> Pengaturan
                 </a>
             @endif
-
-            @if (ENVIRONMENT === 'development')
-                <a href="{{ ci_route('surat_dinas.templateTinyMCE') }}" title="Buat Template" class="btn btn-social bg-blue btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-code-fork"></i> Buat Template</a></a>
-            @endif
         </div>
         {!! form_open(null, 'id="mainform" name="mainform"') !!}
         <div class="box-body">
             <div class="row mepet">
+                <div class="col-sm-2">
+                    <select class="form-control input-sm select2" id="status" name="status">
+                        <option value="">Pilih Status</option>
+                        <option value="0" selected>Aktif</option>
+                        <option value="1">Tidak Aktif</option>
+                        {{-- Aktif = Kunci 0, Tidak Aktif = Kunci 1 --}}
+                    </select>
+                </div>
                 <div class="col-sm-3">
                     <select class="form-control input-sm select2" id="jenis" name="jenis">
                         <option value="">Pilih Surat</option>
@@ -87,6 +91,7 @@
 
     @include('admin.layouts.components.konfirmasi_hapus')
     @include('admin.surat_dinas.pengaturan.impor')
+    @include('admin.layouts.components.restore_surat')
 @endsection
 @push('scripts')
     <script>
@@ -98,6 +103,7 @@
                 ajax: {
                     url: "{{ ci_route('surat_dinas.datatables') }}",
                     data: function(d) {
+                        d.status = $('#status').val();
                         d.jenis = $('#jenis').val();
                     }
                 },
@@ -159,6 +165,10 @@
                 TableData.column(2).visible(false);
                 TableData.column(7).visible(false);
             }
+
+            $('#status').on('select2:select', function(e) {
+                TableData.draw();
+            });
 
             $('#jenis').on('select2:select', function(e) {
                 TableData.draw();

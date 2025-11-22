@@ -112,10 +112,12 @@ class Html5QrcodeScanner {
 
         // Add wrapper to failure callback
         this.qrCodeErrorCallback = error => {
-            $this.__setStatus("Scanning");
+            $this.__setStatus("Memindai");
             if (qrCodeErrorCallback) {
                 qrCodeErrorCallback(error);
             }
+
+            this.onScanFailure(error);
         }
 
         const container = document.getElementById(this.elementId);
@@ -205,7 +207,7 @@ class Html5QrcodeScanner {
         dashboard.appendChild(header);
 
         const titleSpan = document.createElement("span");
-        titleSpan.innerHTML = "OpenSID QRCode Scanner";
+        titleSpan.innerHTML = "QR Code Scanner";
         header.appendChild(titleSpan);
 
         const statusSpan = document.createElement("span");
@@ -275,7 +277,7 @@ class Html5QrcodeScanner {
             }).catch(error => {
                 requestPermissionButton.disabled = false;
                 $this.__setStatus("IDLE");
-                $this.__setHeaderMessage(error, Html5QrcodeScanner.STATUS_WARNING);
+                $this.__setHeaderMessage($this.translateError(error), Html5QrcodeScanner.STATUS_WARNING);
             });
         });
         requestPermissionContainer.appendChild(requestPermissionButton);
@@ -293,29 +295,40 @@ class Html5QrcodeScanner {
         fileScanInput.id = this.__getFileScanInputId();
         fileScanInput.accept = "image/*";
         fileScanInput.type = "file";
-        fileScanInput.style.width = "200px";
-        fileScanInput.disabled
-            = this.currentScanType == Html5QrcodeScanner.SCAN_TYPE_CAMERA;
-        const fileScanLabel = document.createElement("span");
-        fileScanLabel.innerHTML = "&nbsp; Select Image";
+        fileScanInput.style.display = "none";
+
+        // Buat tombol label dengan class Bootstrap dan ikon Font Awesome
+        const fileScanLabel = document.createElement("label");
+        fileScanLabel.setAttribute("for", fileScanInput.id);
+        fileScanLabel.className = "btn btn-social btn-primary btn-sm";
+        fileScanLabel.innerHTML = `<i class="fa fa-upload"></i> Pilih Gambar`;
+
+        // Tambahkan elemen ke dalam DOM
         fileBasedScanRegion.appendChild(fileScanInput);
         fileBasedScanRegion.appendChild(fileScanLabel);
-        fileScanInput.addEventListener('change', e => {
+
+        fileScanInput.addEventListener("change", (e) => {
             if ($this.currentScanType !== Html5QrcodeScanner.SCAN_TYPE_FILE) {
                 return;
             }
             if (e.target.files.length == 0) {
                 return;
             }
+
             const file = e.target.files[0];
-            $this.html5Qrcode.scanFile(file, true)
-                .then(qrCode => {
+
+            $this.html5Qrcode
+                .scanFile(file, true)
+                .then((qrCode) => {
                     $this.__resetHeaderMessage();
                     $this.qrCodeSuccessCallback(qrCode);
                 })
-                .catch(error => {
+                .catch((error) => {
                     $this.__setStatus("ERROR", Html5QrcodeScanner.STATUS_WARNING);
-                    $this.__setHeaderMessage(error, Html5QrcodeScanner.STATUS_WARNING);
+                    $this.__setHeaderMessage(
+                        error,
+                        Html5QrcodeScanner.STATUS_WARNING,
+                    );
                     $this.qrCodeErrorCallback(error);
                 });
         });
@@ -328,8 +341,7 @@ class Html5QrcodeScanner {
         scpCameraScanRegion.style.textAlign = "center";
 
         const cameraSelectionContainer = document.createElement("span");
-        cameraSelectionContainer.innerHTML
-            = `Select Camera (${cameras.length}) &nbsp;`;
+        cameraSelectionContainer.innerHTML = `Pilih Kamera (${cameras.length}) &nbsp;`;
         cameraSelectionContainer.style.marginRight = "10px";
 
         const cameraSelectionSelect = document.createElement("select");
@@ -348,11 +360,11 @@ class Html5QrcodeScanner {
 
         const cameraActionContainer = document.createElement("span");
         const cameraActionStartButton = document.createElement("button");
-        cameraActionStartButton.innerHTML = "Start Scanning";
+        cameraActionStartButton.innerHTML = "Mulai Memindai";
         cameraActionContainer.appendChild(cameraActionStartButton);
 
         const cameraActionStopButton = document.createElement("button");
-        cameraActionStopButton.innerHTML = "Stop Scanning";
+        cameraActionStopButton.innerHTML = "Berhenti Memindai";
         cameraActionStopButton.style.display = "none";
         cameraActionStopButton.disabled = true;
         cameraActionContainer.appendChild(cameraActionStopButton);
@@ -424,6 +436,7 @@ class Html5QrcodeScanner {
         const switchContainer = document.createElement("div");
         switchContainer.style.textAlign = "center";
         const swithToFileBasedLink = document.createElement("button");
+        swithToFileBasedLink.style.marginTop = "8px";
         swithToFileBasedLink.className = this.currentScanType == Html5QrcodeScanner.SCAN_TYPE_CAMERA
             ? WARNA_IF_CAMERA_SCAN_SELECTED : WARNA_IF_FILE_SCAN_SELECTED;
         swithToFileBasedLink.innerHTML = this.currentScanType == Html5QrcodeScanner.SCAN_TYPE_CAMERA
@@ -559,25 +572,29 @@ class Html5QrcodeScanner {
     }
 
     __insertFileScanImageToScanRegion() {
-        const $this = this;
-        const qrCodeScanRegion = document.getElementById(
-            this.__getScanRegionId());
+    const $this = this;
+    const qrCodeScanRegion = document.getElementById(this.__getScanRegionId());
 
-        if (this.fileScanImage) {
-            qrCodeScanRegion.innerHTML = "<br>";
-            qrCodeScanRegion.appendChild(this.fileScanImage);
-            return;
-        }
-
-        this.fileScanImage = new Image;
-        this.fileScanImage.onload = _ => {
-            qrCodeScanRegion.innerHTML = "<br>";
-            qrCodeScanRegion.appendChild($this.fileScanImage);
-        }
-        this.fileScanImage.width = 64;
-        this.fileScanImage.style.opacity = 0.3;
-        this.fileScanImage.src = Html5QrcodeScanner.ASSET_FILE_SCAN;
+    if (this.fileScanImage) {
+        qrCodeScanRegion.innerHTML = "<br>";
+        qrCodeScanRegion.style.display = "flex";
+        qrCodeScanRegion.style.justifyContent = "center";
+        qrCodeScanRegion.appendChild(this.fileScanImage);
+        return;
     }
+
+    this.fileScanImage = new Image();
+    this.fileScanImage.onload = _ => {
+        qrCodeScanRegion.innerHTML = "<br>";
+        qrCodeScanRegion.style.display = "flex";
+        qrCodeScanRegion.style.justifyContent = "center";
+        qrCodeScanRegion.appendChild($this.fileScanImage);
+    };
+    this.fileScanImage.width = 64;
+    this.fileScanImage.style.opacity = 0.3;
+    this.fileScanImage.src = Html5QrcodeScanner.ASSET_FILE_SCAN;
+}
+
 
     __clearScanRegion() {
         const qrCodeScanRegion = document.getElementById(
@@ -645,4 +662,34 @@ class Html5QrcodeScanner {
         return document.getElementById(this.__getDashboardSectionSwapLinkId());
     }
     //#endregion
+
+    translateError(error) {
+        if(error.includes("NotAllowedError")) {
+            return "Izin ditolak : Anda perlu memberikan akses kamera untuk memindai QR Code.";
+        }
+        if(error.includes("NotFoundError")) {
+            return "Terjadi kesalahan : Kamera tidak ditemukan";
+        }
+        return "Terjadi kesalahan : Kamera tidak dapat dibaca";
+    }
+
+    onScanFailure(error) {
+        let customMessage = "Kode QR tidak terbaca, pastikan kode terlihat jelas.";
+    
+        if (error.includes("Couldn't find enough finder patterns")) {
+            customMessage = "Kode QR tidak terdeteksi, pastikan kode terlihat jelas.";
+        } else if (error.includes("No MultiFormat Readers were able to detect the code")) {
+            customMessage = "Gagal membaca kode QR, pastikan kode tidak buram atau rusak.";
+        } else if (error.includes("FormatException")) {
+            customMessage = "Format kode QR tidak valid, coba gunakan kode lain.";
+        } else if (error.includes("ChecksumException")) {
+            customMessage = "Kode QR rusak atau tidak lengkap, coba pindai kode yang lain.";
+        } else if (error.includes("NotFoundException")) {
+            customMessage = "Tidak ada kode QR yang ditemukan, pastikan kode terlihat sepenuhnya di kamera.";
+        } else if (error.includes("Barcode not detected")) {
+            customMessage = "Tidak ada kode QR yang terdeteksi, pastikan kamera mengarah ke kode dengan baik.";
+        }
+        
+        document.getElementById("qr-reader__header_message").innerText = customMessage;
+    }
 }

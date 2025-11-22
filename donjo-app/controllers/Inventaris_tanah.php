@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -45,12 +45,12 @@ class Inventaris_tanah extends Admin_Controller
 {
     public $modul_ini     = 'sekretariat';
     public $sub_modul_ini = 'inventaris';
+    public $akses_modul   = 'inventaris-tanah';
 
     public function __construct()
     {
         parent::__construct();
         isCan('b');
-        $this->load->model(['inventaris_tanah_model', 'pamong_model', 'aset_model']);
     }
 
     public function index()
@@ -95,7 +95,7 @@ class Inventaris_tanah extends Admin_Controller
 
     private function sumberData()
     {
-        return InventarisTanah::visible();
+        return InventarisTanah::query();
     }
 
     public function form($id = '', $view = false)
@@ -105,7 +105,7 @@ class Inventaris_tanah extends Admin_Controller
         if ($id) {
             $data['action']      = $view ? 'Rincian' : 'Ubah';
             $data['form_action'] = ci_route('inventaris_tanah.update', $id);
-            $data['main']        = InventarisTanah::findOrFail($id);
+            $data['main']        = InventarisTanah::with('mutasi')->findOrFail($id);
             $data['view_mark']   = $view ? 1 : 0;
             $data['kd_reg']      = InventarisTanah::select('register')->get();
         } else {
@@ -154,7 +154,7 @@ class Inventaris_tanah extends Admin_Controller
     {
         isCan('h');
 
-        if (InventarisTanah::findOrFail($id)->update(['visible' => 0])) {
+        if (InventarisTanah::findOrFail($id)->delete()) {
             redirect_with('success', 'Berhasil Hapus Data');
         }
 
@@ -197,7 +197,6 @@ class Inventaris_tanah extends Admin_Controller
         $data           = $this->modal_penandatangan();
         $data['aksi']   = $aksi;
         $data['main']   = $query->orderBy('tahun_pengadaan', 'asc')->get();
-        $data['config'] = $this->header['desa'];
         $data['pamong'] = Pamong::selectData()->where(['pamong_id' => $this->input->post('pamong')])->first()->toArray();
         if ($tahun = $this->input->post('tahun')) {
             $data['main'] = $query->where('tahun_pengadaan', $tahun)->get();

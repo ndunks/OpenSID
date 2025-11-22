@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Libraries\Paging;
 
 define('TUJUAN_MUDIK', serialize([
     'Liburan'            => '1',
@@ -46,6 +48,7 @@ $h_plus_array                     = [];
 $h_plus_array['-- Semua Data --'] = '99';
 define('H_PLUS', serialize($h_plus_array));
 
+// TODO : dihapus setelah modul covid dihapus
 class Covid19_model extends MY_Model
 {
     public function __construct()
@@ -185,14 +188,14 @@ class Covid19_model extends MY_Model
 
         // paging
         if ($this->session->has_userdata('per_page') && $this->session->userdata('per_page') > 0) {
-            $this->load->library('paging');
+            $paging = new Paging();
 
             $cfg['page']     = $page;
             $cfg['per_page'] = $this->session->userdata('per_page');
             $cfg['num_rows'] = $this->get_pemudik()->num_rows();
 
-            $this->paging->init($cfg);
-            $retval['paging'] = $this->paging;
+            $paging->init($cfg);
+            $retval['paging'] = $paging;
         }
         // paging end
 
@@ -239,7 +242,7 @@ class Covid19_model extends MY_Model
 
     private function sterilkan($post)
     {
-        $tujuan_mudik = $this->referensi_model->list_ref_flip(TUJUAN_MUDIK);
+        $tujuan_mudik = unserialize_flip(TUJUAN_MUDIK);
 
         $data = [
             'pantau'            => (int) $post['pantau'],
@@ -319,14 +322,14 @@ class Covid19_model extends MY_Model
 
         // paging
         if ($this->session->has_userdata('per_page') && $this->session->userdata('per_page') > 0) {
-            $this->load->library('paging');
+            $paging = new Paging();
 
             $cfg['page']     = $page;
             $cfg['per_page'] = $this->session->userdata('per_page');
             $cfg['num_rows'] = $this->get_pantau_pemudik($filter_tgl, $filter_nik)->num_rows();
 
-            $this->paging->init($cfg);
-            $retval['paging'] = $this->paging;
+            $paging->init($cfg);
+            $retval['paging'] = $paging;
         }
         // paging end
 

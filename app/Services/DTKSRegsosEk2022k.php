@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,6 +39,7 @@ namespace App\Services;
 
 use App\Enums\Dtks\DtksEnum;
 use App\Enums\Dtks\Regsosek2022kEnum;
+use App\Enums\SakitMenahunEnum;
 use App\Enums\SasaranEnum;
 use App\Models\Bantuan;
 use App\Models\BantuanPeserta;
@@ -50,9 +51,9 @@ use App\Models\KIA;
 use App\Models\Pendidikan;
 use App\Models\Penduduk;
 use App\Models\PendudukHubungan;
-use App\Models\SakitMenahun;
 use App\Models\SettingAplikasi;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -115,6 +116,9 @@ class DTKSRegsosEk2022k
             $model_class = get_class($model);
         } elseif ($model instanceof Builder) {
             $model_class = get_class($model->getModel());
+        } elseif (is_array($model)) {
+            return collect($model);
+            // return $model;
         } else {
             $model_class = $model;
         }
@@ -161,9 +165,9 @@ class DTKSRegsosEk2022k
 
     public function impor()
     {
-        $data = [];
-
-        return view('admin.dtks.2.impor', $data);
+        return view('admin.dtks.2.impor', [
+            'formatImpor' => ci_route('unduh', encrypt(DEFAULT_LOKASI_IMPOR . 'format-impor-dtks-regsosek2022k.xlsx')),
+        ]);
     }
 
     /**
@@ -279,7 +283,7 @@ class DTKSRegsosEk2022k
             $new_anggota                = $ids_anggota->diff($ids_existing_dtks_anggotas);
             // buat sync baru
             if ($new_anggota->count() > 0) {
-                $daftar_sakit_menahun = $this->cacheTemporaryModelGet(SakitMenahun::class);
+                $daftar_sakit_menahun = $this->cacheTemporaryModelGet(SakitMenahunEnum::all());
                 $daftar_pendidikan    = $this->cacheTemporaryModelGet(Pendidikan::class);
 
                 foreach ($dtks->anggota_keluarga_in_rtm[$dtks->id_keluarga]->whereIn('id', $new_anggota) as $agt) {
@@ -331,7 +335,7 @@ class DTKSRegsosEk2022k
             // digunakan untuk membantu memilih pekerjaan dan pendidikan
             $item->pekerjaan_saat_ini     = $tmp_anggota->pekerjaan->nama;
             $item->pendidikan_saat_ini    = $tmp_anggota->pendidikan;
-            $item->pendidikan_kk_saat_ini = $tmp_anggota->pendidikanKK->nama;
+            $item->pendidikan_kk_saat_ini = $tmp_anggota->pendidikanKK;
 
             if ($tmp_anggota->usia >= 5) {
                 // jika sedang sekolah, resync
@@ -340,7 +344,7 @@ class DTKSRegsosEk2022k
                     $daftar_pendidikan = $this->cacheTemporaryModelGet(new Pendidikan());
                     $this->syncPendidikan($item, $tmp_anggota, $daftar_pendidikan);
                 }
-                $daftar_sakit_menahun = $this->cacheTemporaryModelGet(SakitMenahun::class);
+                $daftar_sakit_menahun = $this->cacheTemporaryModelGet(SakitMenahunEnum::all());
                 $this->syncKesehatan($item, $tmp_anggota, $daftar_sakit_menahun);
             }
 
@@ -417,7 +421,7 @@ class DTKSRegsosEk2022k
         $data['dtks'] = $this->generateDefaultDtks($dtks);
 
         try {
-            $kode_desa_bps = getKodeDesaFromTrackSID()['bps_kemendagri_desa']['kode_desa_bps'];
+            $kode_desa_bps = identitas()->kode_desa_bps;
 
             if (! $dtks->kode_provinsi || ! $dtks->kode_kabupaten || ! $dtks->kode_kecamatan || ! $dtks->kode_desa) {
                 //  I. Keterangan Tempat
@@ -499,7 +503,8 @@ class DTKSRegsosEk2022k
                 // get the HTML using output buffer
                 ob_start();
 
-                include FCPATH . config_item('views_blade')[0] . '/admin/dtks/2/cetak.php';
+                include resource_path('views/admin/dtks/2/cetak.php');
+
                 $content = ob_get_clean();
 
                 $html2pdf = new Html2Pdf();
@@ -840,7 +845,7 @@ class DTKSRegsosEk2022k
         ]);
 
         try {
-            $kode_desa_bps = getKodeDesaFromTrackSID()['bps_kemendagri_desa']['kode_desa_bps'];
+            $kode_desa_bps = identitas()->kode_desa_bps;
 
             //  I. Keterangan Tempat
             $dtks->kode_provinsi  = $kode_desa_bps ? substr($kode_desa_bps, 0, 2) : ''; // 101
@@ -865,7 +870,7 @@ class DTKSRegsosEk2022k
         $this->saveRelatedAttribute($dtks);
 
         $ref_eloquent_collection['hubungan_dengan_kk'] = $this->cacheTemporaryModelGet(PendudukHubungan::class);
-        $daftar_sakit_menahun                          = $this->cacheTemporaryModelGet(SakitMenahun::class);
+        $daftar_sakit_menahun                          = $this->cacheTemporaryModelGet(SakitMenahunEnum::all());
         $daftar_pendidikan                             = $this->cacheTemporaryModelGet(Pendidikan::class);
         $ref_eloquent_collection['kia']                = KIA::whereIn('ibu_id', $dtks->rtm->anggota->pluck('id'))
             ->orWhereIn('anak_id', $dtks->rtm->anggota->pluck('id'))->get();
@@ -932,7 +937,7 @@ class DTKSRegsosEk2022k
         // contoh = saveBagian2
         $method = Str::camel('save_' . $request['tipe_save']);
         if (! method_exists($this, $method)) {
-            return ['content' => ['message' => 'Proses simpan pada bagian ini tidak ditemukan, silahkan hubungi developer'], 'header_code' => 404];
+            return ['content' => ['message' => 'Proses simpan pada bagian ini tidak ditemukan, silakan hubungi developer'], 'header_code' => 404];
         }
 
         try {
@@ -942,9 +947,9 @@ class DTKSRegsosEk2022k
 
             return $this->{$method}($dtks, $request);
         } catch (Throwable $th) {
-            log_message('error', $th);
+            logger()->error($th);
 
-            return ['content' => ['message' => 'Terjadi Error, silahkan hubungi developer'], 'header_code' => 500];
+            return ['content' => ['message' => 'Terjadi Error, silakan hubungi developer'], 'header_code' => 500];
         }
     }
 
@@ -964,7 +969,7 @@ class DTKSRegsosEk2022k
 
         $method = Str::camel('remove_' . $request['tipe_remove']);
         if (! method_exists($this, $method)) {
-            return ['content' => ['message' => 'Proses remove pada bagian ini tidak ditemukan, silahkan hubungi developper'], 'header_code' => 404];
+            return ['content' => ['message' => 'Proses remove pada bagian ini tidak ditemukan, silakan hubungi developper'], 'header_code' => 404];
         }
 
         return $this->{$method}($dtks, $request);
@@ -1061,7 +1066,7 @@ class DTKSRegsosEk2022k
         $message = [];
 
         foreach ($request['input']['2'] as $key => $input) {
-            if (in_array($key, ['201', '203']) && $input != '' && validate_date($input)) {
+            if (in_array($key, ['201', '203']) && $input != '' && validate_date($input, 'DD-MM-YYYY')) {
                 $message[] = "No.{$key}: Tanggal tidak sesuai ";
             }
             if (in_array($key, ['202', '204', 'responden']) && $input != '' && cekNama($input)) {
@@ -1098,10 +1103,10 @@ class DTKSRegsosEk2022k
         }
 
         // validasi ada di perulangan diatas
-        $dtks->tanggal_pendataan           = $this->null_or_value($request['input']['2']['201']);
+        $dtks->tanggal_pendataan           = $this->parseTanggal($request['input']['2']['201']);
         $dtks->nama_ppl                    = $this->null_or_value($request['input']['2']['202']);
         $dtks->kode_ppl                    = $this->null_or_value($request['input']['2']['202a']);
-        $dtks->tanggal_pemeriksaan         = $this->null_or_value($request['input']['2']['203']);
+        $dtks->tanggal_pemeriksaan         = $this->parseTanggal($request['input']['2']['203']);
         $dtks->nama_pml                    = $this->null_or_value($request['input']['2']['204']);
         $dtks->kode_pml                    = $this->null_or_value($request['input']['2']['204a']);
         $dtks->nama_responden              = $this->null_or_value($request['input']['2']['responden']);
@@ -1140,7 +1145,10 @@ class DTKSRegsosEk2022k
             if (array_key_exists($input, Regsosek2022kEnum::pilihanBagian3()["{$key}"])) {
                 continue;
             }
-            $message[] = "No {$key}: Pilihan tidak ditemukan";
+            if ($input == '') {
+                continue;
+            }
+            $message[] = "No {$key}: {$input} Pilihan tidak ditemukan";
         }
 
         if ($message !== []) {
@@ -1366,6 +1374,8 @@ class DTKSRegsosEk2022k
             'id_rtm'     => $dtks->rtm->id,
         ]);
 
+        $lampiran['foto_kecil'] = site_url() . LOKASI_FOTO_DTKS . 'kecil_' . $nama_file;
+
         // simpan
         $dtks->lampiran()->attach($lampiran->id);
 
@@ -1436,13 +1446,11 @@ class DTKSRegsosEk2022k
      */
     protected function saveBagian4Pendidikan(Dtks $dtks, array $request): array
     {
-        $message = [];
+        $message        = [];
+        $pilihanBagian4 = Regsosek2022kEnum::pilihanBagian4(); // Avoid repeated function calls
 
         foreach ($request['pilihan']['4'] as $key => $input) {
-            if ($input != '' && ! array_key_exists($input, Regsosek2022kEnum::pilihanBagian4()["{$key}"])) {
-                $message[] = "No {$key}: Pilihan tidak ditemukan";
-            }
-            if (array_key_exists($input, Regsosek2022kEnum::pilihanBagian4()["{$key}"])) {
+            if ($input === '' || array_key_exists($input, $pilihanBagian4["{$key}"])) {
                 continue;
             }
             $message[] = "No {$key}: Pilihan tidak ditemukan";
@@ -1644,6 +1652,9 @@ class DTKSRegsosEk2022k
                 $message[] = "No {$key}: Pilihan tidak ditemukan";
             }
             if (array_key_exists($input, Regsosek2022kEnum::pilihanBagian4()["{$key}"])) {
+                continue;
+            }
+            if ($input == '') {
                 continue;
             }
             $message[] = "No {$key}: Pilihan tidak ditemukan";
@@ -1888,7 +1899,7 @@ class DTKSRegsosEk2022k
         return ['content' => ['message' => 'Berhasil disimpan'], 'header_code' => 200];
     }
 
-    public function syncKetDemografi(DtksAnggota $dtks_anggota, $agt, Penduduk $kepala_keluarga, array $ref_eloquent_collection): DtksAnggota
+    public function syncKetDemografi(DtksAnggota $dtks_anggota, $agt, ?Penduduk $kepala_keluarga, array $ref_eloquent_collection): DtksAnggota
     {
         // $dtks_anggota->nama  = $agt->nama; // 402
         // $dtks_anggota->nik   = $agt->nik; // 403
@@ -1902,7 +1913,7 @@ class DTKSRegsosEk2022k
         // $dtks_anggota->kd_stat_perkawinan    = $agt->status_kawin; // 408
         // jika anggota satu kk dengan kepala rumah tangga, hubungan dengan krt = hubungan dengan kk
         // jika bukan satu kk, maka hubungannya jadi lainnya, biar diatur sendiri oleh user
-        if ($agt->id_kk == $kepala_keluarga->id_kk) {
+        if ($agt->id_kk == ($kepala_keluarga ? $kepala_keluarga->id_kk : null)) {
             $hubungan_dengan_kk              = $ref_eloquent_collection['hubungan_dengan_kk']->where('id', $agt->kk_level)->pluck('nama')->first();
             $dtks_anggota->kd_hubungan_dg_kk = $this->getIndexPilihanWithDefault(Regsosek2022kEnum::pilihanBagian4()['409'], $hubungan_dengan_kk);
         } else {
@@ -2014,7 +2025,7 @@ class DTKSRegsosEk2022k
         return $dtks_anggota;
     }
 
-    public function syncKesehatan(DtksAnggota $dtks_anggota, $agt, Collection $daftar_sakit_menahun): DtksAnggota
+    public function syncKesehatan(DtksAnggota $dtks_anggota, $agt, $daftar_sakit_menahun): DtksAnggota
     {
         // $dtks_anggota->kd_gizi_seimbang     = ; // 427
         $usia_dinamis = $agt->umur; // attribute
@@ -2046,14 +2057,14 @@ class DTKSRegsosEk2022k
             $dtks_anggota->kd_penyakit_kronis_menahun = 4; // 430 | 04. Asma
         } else {
             // bandingkan kemudian set ke lainnya jika tidak ditemukan
-            $sakit_menahun                            = $daftar_sakit_menahun->where('id', $agt->sakit_menahun_id)->pluck('nama')->first();
+            $sakit_menahun                            = SakitMenahunEnum::valueOf($agt->sakit_menahun_id);
             $dtks_anggota->kd_penyakit_kronis_menahun = $this->getIndexPilihanWithDefault(Regsosek2022kEnum::pilihanBagian4()['430'], $sakit_menahun); // 430
         }
 
         return $dtks_anggota;
     }
 
-    public function syncProgramPerlindunganSosial(DtksAnggota $dtks_anggota, $agt, Penduduk $kepala_keluarga, $ref_eloquent_collection): DtksAnggota
+    public function syncProgramPerlindunganSosial(DtksAnggota $dtks_anggota, $agt, ?Penduduk $kepala_keluarga, $ref_eloquent_collection): DtksAnggota
     {
         $pengaturan_programs = DtksPengaturanProgram::where('versi_kuisioner', '2')
             ->where('target_table', 'dtks_anggota');
@@ -2228,6 +2239,19 @@ class DTKSRegsosEk2022k
         }
 
         return $value;
+    }
+
+    protected function parseTanggal($value)
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('d-m-Y', $value)->format('Y-m-d');
+        } catch (Exception $e) {
+            return null;
+        }
     }
 
     /**

@@ -1,3 +1,32 @@
+$(".file-browser").click(function () {
+  $(this).closest(".input-group").find(".file-input").click();
+});
+
+$(".file-path").click(function () {
+  $(this).closest(".input-group").find(".file-browser").click();
+});
+
+$(".file-input").change(function () {
+  var inputGroup = $(this).closest(".input-group");
+  var filePath = $(this).val().split("\\").pop();
+  inputGroup.find(".file-path").val(filePath);
+
+  var preview = $(this).closest(".preview-img");
+  var imgPreview = preview.find("img");
+
+  previewImage(this, imgPreview);
+});
+
+function previewImage(input, target) {
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      target.attr("src", e.target.result);
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
 // Notifikasi
 window.setTimeout(function () {
   $("#notifikasi")
@@ -18,10 +47,10 @@ if (
 // notifikasi swetalert
 function _error(pesan) {
   Swal.fire({
-    title: 'Gagal!',
+    title: "Gagal!",
     html: pesan,
-    icon: 'error',
-    confirmButtonText: 'OK',
+    icon: "error",
+    confirmButtonText: "OK",
     timer: 5000,
   });
 }
@@ -29,7 +58,7 @@ function _error(pesan) {
 $(".sidebar-toggle").on("click", function () {
   localStorage.setItem(
     "sidebar",
-    $("#sidebar_collapse").hasClass("sidebar-collapse")
+    $("#sidebar_collapse").hasClass("sidebar-collapse"),
   );
 });
 
@@ -50,7 +79,7 @@ function checkAllHeader(name = "id_cb[]") {
 function checkAllBody(
   id = "#checkall",
   tabel = "#tabeldata",
-  name = "id_cb[]"
+  name = "id_cb[]",
 ) {
   $("table").on("click", id, function () {
     if ($(this).is(":checked")) {
@@ -82,7 +111,7 @@ function enableHapusTerpilih(name = "id_cb[]") {
 
 /*
  * Fixes the search menu on mobile
- * Todo: hapus fungsi dibawah ini jika melakukan upgrade adminlte ke >= 4.2.1
+ * Todo: hapus fungsi di bawah ini jika melakukan upgrade adminlte ke >= 4.2.1
  */
 +(function ($) {
   "use strict";
@@ -142,9 +171,9 @@ function enableHapusTerpilih(name = "id_cb[]") {
             function () {
               this.fix();
               this.fixSidebar();
-            }.bind(this)
+            }.bind(this),
           );
-        }.bind(this)
+        }.bind(this),
       );
 
       this.bindedResize = true;
@@ -155,7 +184,7 @@ function enableHapusTerpilih(name = "id_cb[]") {
       function () {
         this.fix();
         this.fixSidebar();
-      }.bind(this)
+      }.bind(this),
     );
 
     $(Selector.sidebarMenu).on(
@@ -163,7 +192,7 @@ function enableHapusTerpilih(name = "id_cb[]") {
       function () {
         this.fix();
         this.fixSidebar();
-      }.bind(this)
+      }.bind(this),
     );
   };
 
@@ -171,7 +200,7 @@ function enableHapusTerpilih(name = "id_cb[]") {
     // Remove overflow from .wrapper if layout-boxed exists
     $(Selector.layoutBoxed + " > " + Selector.wrapper).css(
       "overflow",
-      "hidden"
+      "hidden",
     );
 
     // Get window height and the wrapper height
@@ -201,7 +230,7 @@ function enableHapusTerpilih(name = "id_cb[]") {
         if ($controlSidebar.height() > postSetHeight)
           $(Selector.contentWrapper).css(
             "min-height",
-            $controlSidebar.height()
+            $controlSidebar.height(),
           );
       }
     }
@@ -244,7 +273,7 @@ function enableHapusTerpilih(name = "id_cb[]") {
           {},
           Default,
           $this.data(),
-          typeof option === "object" && option
+          typeof option === "object" && option,
         );
         $this.data(DataKey, (data = new Layout(options)));
       }

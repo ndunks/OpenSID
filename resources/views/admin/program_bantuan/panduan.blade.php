@@ -14,8 +14,7 @@
         <div class="col-md-12">
             <div class="box box-info">
                 <div class="box-header with-border">
-                    <a href="{{ site_url('program_bantuan') }}" class="btn btn-social btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Program Bantuan"><i class="fa fa-arrow-circle-o-left"></i> Kembali
-                        Ke Daftar Program Bantuan</a>
+                    @include('admin.layouts.components.tombol_kembali', ['url' => site_url('program_bantuan'), 'label' => 'Daftar Program Bantuan'])
                 </div>
                 <div class="box-body">
                     <h4>Keterangan</h4>
@@ -29,7 +28,7 @@
                     <ul>
                         <li>Kolom <strong>Sasaran Program</strong>
                             <p>Pilihlah salah satu dari sasaran program, apakah pribadi/perorangan, keluarga/kk,
-                                Rumah Tangga, ataupu Organisasi/kelompok warga</p>
+                                Rumah Tangga, ataupun Organisasi/kelompok warga</p>
                         </li>
                         <li>Kolom <strong>Nama Program</strong>
                             <p>Nama program wajib diisi</p>

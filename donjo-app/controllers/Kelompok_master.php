@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -76,7 +76,8 @@ class Kelompok_master extends Admin_Controller
 
                     return $aksi;
                 })
-                ->rawColumns(['ceklist', 'aksi'])
+                ->editColumn('deskripsi', static fn ($row): string => html_entity_decode($row->deskripsi))
+                ->rawColumns(['ceklist', 'aksi', 'kelompok', 'deskripsi'])
                 ->make();
         }
 
@@ -139,22 +140,25 @@ class Kelompok_master extends Admin_Controller
 
     protected function delete_kelompok($id = '')
     {
-        $result = KelompokMaster::tipe($this->tipe)
-            ->doesntHave('kelompok')
-            ->find($id);
+        $master = KelompokMaster::withCount('kelompok')->tipe($this->tipe)->find($id);
 
-        if (! $result) {
-            redirect_with('error', "Tidak dapat ditemukan / Tidak dapat dihapus karena masih terdapat data {$this->tipe}");
+        if (! $master) {
+            redirect_with('error', 'Tidak ditemukan');
         }
 
-        $result->delete();
+        if ($master->kelompok_count) {
+            $linkKelompok = '<a href="' . ci_route($this->tipe) . '?default_status_dasar=0&default_kelompok=' . $master->id . '">Periksa data</a>';
+            redirect_with('error', "Tidak dapat dihapus karena masih terdapat data {$this->tipe}. <strong>{$linkKelompok}</strong>");
+        }
+
+        $master->delete();
     }
 
     protected function validate($request = []): array
     {
         return [
             'config_id' => identitas('id'),
-            'kelompok'  => nama_terbatas($request['kelompok']),
+            'kelompok'  => judul($request['kelompok']),
             'deskripsi' => htmlentities((string) $request['deskripsi']),
             'tipe'      => $this->tipe,
         ];

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -90,7 +90,6 @@ class Area extends BaseModel
     public function getFotoKecilAttribute(): ?string
     {
         $foto = LOKASI_FOTO_AREA . 'kecil_' . $this->attributes['foto'];
-
         if (file_exists(FCPATH . $foto)) {
             return $foto;
         }
@@ -104,7 +103,6 @@ class Area extends BaseModel
     public function getFotoSedangAttribute(): ?string
     {
         $foto = LOKASI_FOTO_AREA . 'sedang_' . $this->attributes['foto'];
-
         if (file_exists(FCPATH . $foto)) {
             return $foto;
         }
@@ -118,11 +116,16 @@ class Area extends BaseModel
     public function getFotoAreaAttribute(): ?string
     {
         if ($kecil = $this->getFotoKecilAttribute()) {
-            return to_base64($kecil);
+            return base_url($kecil);
         }
 
         if ($sedang = $this->getFotoSedangAttribute()) {
-            return to_base64($sedang);
+            return base_url($sedang);
+        }
+
+        $foto = LOKASI_FOTO_AREA . $this->attributes['foto'];
+        if (file_exists(FCPATH . $foto)) {
+            return base_url($foto);
         }
 
         return null;
@@ -159,6 +162,19 @@ class Area extends BaseModel
         })->toArray();
     }
 
+    public static function areaMap()
+    {
+        return self::with(['polygon' => static fn ($q) => $q->select(['id', 'nama', 'parrent', 'simbol', 'color'])->with(['parent' => static fn ($r) => $r->select(['id', 'nama', 'parrent', 'simbol', 'color'])]),
+        ])->get()->map(function ($item) {
+            $item->jenis    = $item->polygon->parent->nama ?? '';
+            $item->kategori = $item->polygon->nama ?? '';
+            $item->simbol   = $item->polygon->simbol ?? '';
+            $item->color    = $item->polygon->color ?? '';
+
+            return $item;
+        })->toArray();
+    }
+
     /**
      * The "booted" method of the model.
      */
@@ -178,8 +194,12 @@ class Area extends BaseModel
     public static function deleteFile($model, ?string $file, $deleting = false): void
     {
         if ($model->isDirty($file) || $deleting) {
-            $fotoSedang = LOKASI_FOTO_AREA . 'sedang_' . $model->getOriginal($file);
-            $fotoKecil  = LOKASI_FOTO_AREA . 'kecil_' . $model->getOriginal($file);
+            $fotoOriginal = LOKASI_FOTO_AREA . $model->getOriginal($file);
+            $fotoSedang   = LOKASI_FOTO_AREA . 'sedang_' . $model->getOriginal($file);
+            $fotoKecil    = LOKASI_FOTO_AREA . 'kecil_' . $model->getOriginal($file);
+            if (file_exists($fotoOriginal)) {
+                unlink($fotoOriginal);
+            }
             if (file_exists($fotoSedang)) {
                 unlink($fotoSedang);
             }

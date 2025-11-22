@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,13 +29,15 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
 use App\Models\User;
+use App\Rules\CaptchaRule;
+use App\Rules\SecretCodeRule;
 use App\Services\Auth\Traits\LoginRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -44,25 +46,22 @@ class AuthenticatedSessionController extends MY_Controller
 {
     use LoginRequest;
 
-    /**
-     * Attempt to get the guard.
-     */
     protected $guard = 'admin';
 
     public function __construct()
     {
         parent::__construct();
 
-        $this->latar_login = default_file(LATAR_LOGIN . $this->setting->latar_login, DEFAULT_LATAR_SITEMAN);
+        $this->latar_login = default_file(LATAR_LOGIN . setting('latar_login'), DEFAULT_LATAR_SITEMAN);
         $this->header      = collect(identitas())->toArray();
+
+        view()->share('list_setting', $this->list_setting);
     }
 
-    /**
-     * Display the login view.
-     */
     public function create()
     {
-        // Kalau sehabis periksa data, paksa harus login lagi
+        $this->handleCaptchaSession();
+
         if (auth('admin_periksa')->check()) {
             auth('admin')->logout();
             auth('admin_periksa')->logout();
@@ -79,12 +78,8 @@ class AuthenticatedSessionController extends MY_Controller
         ]);
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
     public function store()
     {
-        // Check demo mode
         $isDemoMode      = config_item('demo_mode');
         $demoUser        = config_item('demo_user');
         $requestUsername = request('username');
@@ -93,7 +88,6 @@ class AuthenticatedSessionController extends MY_Controller
         if ($isDemoMode && $requestUsername == $demoUser['username'] && $requestPassword == $demoUser['password']) {
             $this->validated(request(), $this->rules());
 
-            // Log in as the first admin user
             $user = User::superAdmin()->first();
             Auth::guard($this->guard)->login($user);
         } else {
@@ -102,9 +96,7 @@ class AuthenticatedSessionController extends MY_Controller
 
         $this->session->sess_regenerate();
 
-        // Validate password conditions
         if (! $this->syaratSandi($requestPassword) && ! ($isDemoMode || ENVIRONMENT === 'development')) {
-            // Password doesn't meet the criteria except in demo mode or development environment
             $this->session->force_change_password = true;
 
             return redirect('pengguna#sandi');
@@ -113,9 +105,6 @@ class AuthenticatedSessionController extends MY_Controller
         return redirect($this->session->intended ?? 'main');
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
     public function destroy()
     {
         Auth::guard($this->guard)->logout();
@@ -125,7 +114,13 @@ class AuthenticatedSessionController extends MY_Controller
         return redirect('siteman');
     }
 
-    //Harus 8 sampai 20 karakter dan sekurangnya berisi satu angka dan satu huruf besar dan satu huruf kecil dan satu karakter khusus
+    public function matikanCaptcha()
+    {
+        $this->session->set_userdata('recaptcha', true);
+
+        return json('Captcha dinonaktifkan');
+    }
+
     protected function syaratSandi($password)
     {
         return (bool) (preg_match('/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,20}$/', $password));
@@ -133,26 +128,43 @@ class AuthenticatedSessionController extends MY_Controller
 
     protected function rules()
     {
-        $captcha = [];
-
-        if ($this->setting->google_recaptcha) {
-            $captcha = [
-                'g-recaptcha-response' => 'required|captcha',
-            ];
-        }
-
-        return [
+        $secretCode = request('secret_code');
+        $rules      = [
             'username' => ['required', 'string'],
             'password' => ['required', 'string'],
-            ...$captcha,
         ];
+
+        if (! config_item('demo_mode') && $this->shouldUseCaptcha()) {
+            $rules['g-recaptcha-response'] = ['required', 'captcha'];
+            $this->session->unset_userdata('recaptcha');
+        } elseif (! config_item('demo_mode')) {
+            $rules['captcha_code'] = ['required', new CaptchaRule()];
+        }
+
+        if ($secretCode) {
+            $username             = request('username');
+            $passwordDatabase     = User::where('username', $username)->first()->password ?? '';
+            $rules['secret_code'] = ['required', 'string', 'min:10', new SecretCodeRule($passwordDatabase)];
+            unset($rules['g-recaptcha-response'], $rules['captcha_code']);
+        }
+
+        return $rules;
     }
 
-    /**
-     * Get the rate limiting throttle key for the request.
-     */
     protected function throttleKey()
     {
         return Str::transliterate(Str::lower(request('username')) . '|' . request()->ip());
+    }
+
+    private function handleCaptchaSession()
+    {
+        if ($this->session->userdata('recaptcha')) {
+            setting('google_recaptcha', 0);
+        }
+    }
+
+    private function shouldUseCaptcha()
+    {
+        return setting('google_recaptcha') && ! $this->session->userdata('recaptcha');
     }
 }

@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -76,6 +76,10 @@ class SuplemenTerdata extends BaseModel
      */
     protected $with = ['suplemen', 'penduduk'];
 
+    protected $casts = [
+        'data_form_isian' => 'array',
+    ];
+
     public function suplemen()
     {
         return $this->belongsTo(Suplemen::class, 'id_suplemen');
@@ -83,19 +87,19 @@ class SuplemenTerdata extends BaseModel
 
     public function penduduk()
     {
-        return $this->belongsTo(Penduduk::class, 'id_terdata');
+        return $this->belongsTo(Penduduk::class, 'penduduk_id');
     }
 
     public function keluarga()
     {
-        return $this->belongsTo(Keluarga::class, 'id_terdata');
+        return $this->belongsTo(Keluarga::class, 'keluarga_id');
     }
 
     public function scopeAnggota($query, $sasaran, $suplemen): ?array
     {
         switch ($sasaran) {
             case SuplemenTerdata::PENDUDUK:
-                $query->join('tweb_penduduk', 'tweb_penduduk.id', '=', 'suplemen_terdata.id_terdata', 'left')
+                $query->join('tweb_penduduk', 'tweb_penduduk.id', '=', 'suplemen_terdata.penduduk_id', 'left')
                     ->join('tweb_keluarga', 'tweb_keluarga.id', '=', 'tweb_penduduk.id_kk', 'left')
                     ->selectRaw('no_kk as terdata_info')
                     ->selectRaw('nik as terdata_plus')
@@ -103,7 +107,7 @@ class SuplemenTerdata extends BaseModel
                 break;
 
             case SuplemenTerdata::KELUARGA:
-                $query->join('tweb_keluarga', 'tweb_keluarga.id', '=', 'suplemen_terdata.id_terdata', 'left')
+                $query->join('tweb_keluarga', 'tweb_keluarga.id', '=', 'suplemen_terdata.keluarga_id', 'left')
                     ->join('tweb_penduduk', 'tweb_penduduk.id', '=', 'tweb_keluarga.nik_kepala', 'left')
                     ->selectRaw('nik as terdata_info')
                     ->selectRaw('no_kk as terdata_plus')
@@ -141,5 +145,15 @@ class SuplemenTerdata extends BaseModel
         }
 
         return $query;
+    }
+
+    public function scopeSasaranPenduduk($query)
+    {
+        return $query->where('sasaran', self::PENDUDUK);
+    }
+
+    public function scopeSasaranKeluarga($query)
+    {
+        return $query->where('sasaran', self::KELUARGA);
     }
 }

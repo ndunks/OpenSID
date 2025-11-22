@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -95,6 +95,7 @@ class Keluarga extends Admin_Controller
         $data = [
             'status'          => StatusDasarKKEnum::all(),
             'jenis_kelamin'   => JenisKelaminEnum::all(),
+            'disableFilter'   => in_array($this->uri->segment(2), ['statistik']),
             'wilayah'         => Wilayah::treeAccess(),
             'judul_statistik' => $this->judulStatistik,
             'filterColumn'    => $this->filterColumn,
@@ -145,7 +146,7 @@ class Keluarga extends Admin_Controller
                     if ($canUpdate) {
                         if ($row->kepalaKeluarga->status_dasar == StatusDasarEnum::HIDUP) {
                             $aksi .= '<a href="' . ci_route('keluarga.edit_nokk', $row->id) . '" title="Ubah Data" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Ubah Data KK" class="btn bg-orange btn-sm"><i class="fa fa-edit"></i></a> ';
-                            $aksi .= ' <a href="' . ci_route('penduduk.ajax_penduduk_maps.' . $row->kepalaKeluarga->id, 0) . '" class="btn btn-success btn-sm" title="Lokasi Tempat Tinggal"><i class="fa fa-map-marker"></i></a>';
+                            $aksi .= ' <a href="' . ci_route('penduduk.ajax_penduduk_maps.' . $row->kepalaKeluarga->id, 0) . '" class="btn btn-success btn-sm" title="Lokasi Tempat Tinggal"><i class="fa fa-map-marker"></i></a> ';
                         } else {
                             if ($row->anggota->count() > 0) {
                                 $aksi .= '<a href="' . ci_route('keluarga.form_pecah_semua', $row->id) . '" title="Pecah semua anggota ke keluarga baru" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Pecah menjadi keluarga baru" class="btn bg-purple btn-sm"><i class="fa fa-cut"></i></a> ';
@@ -214,9 +215,10 @@ class Keluarga extends Admin_Controller
                         return $r->where('status_dasar', '!=', 1);
 
                     case 3:
-                        return $r->where(static fn ($s) => $s->whereNull('status_dasar')->orwhere('kk_level', '!=', SHDKEnum::KEPALA_KELUARGA) );
+                        return $r->where(static fn ($s) => $s->whereNull('status_dasar')->orwhere('kk_level', '!=', SHDKEnum::KEPALA_KELUARGA));
                 }
-            }))->when($status == 3, static fn ($q) => $q->orWhereNull('nik_kepala'))
+            }))
+            ->when($status == 3, static fn ($q) => $q->orWhereNull('nik_kepala'))
             ->when($sex, static fn ($q) => $q->whereHas('kepalaKeluarga', static fn ($r) => $r->whereSex($sex)))
             ->when($idCluster, static fn ($q) => $q->whereHas('kepalaKeluarga.keluarga', static fn ($r) => $r->whereIn('id_cluster', $idCluster)))
             ->when($kumpulanKK, static fn ($q) => $q->whereIn('no_kk', $kumpulanKK))
@@ -318,7 +320,7 @@ class Keluarga extends Admin_Controller
         $data['cek_nik']            = 1;
         $data['cek_nokk']           = 1;
         $data['nokk_sementara']     = KeluargaModel::formatNomerKKSementara();
-        $data['status_penduduk']    = StatusPendudukEnum::all();
+        $data['status_penduduk']    = [StatusPendudukEnum::TETAP => StatusPendudukEnum::valueOf(StatusPendudukEnum::TETAP)];
         $data['jenis_peristiwa']    = LogPenduduk::BARU_PINDAH_MASUK;
         $data['controller']         = 'keluarga';
         $originalInput              = session('old_input');
@@ -468,15 +470,15 @@ class Keluarga extends Admin_Controller
         }
 
         // Pindah dusun/rw/rt anggota keluarga kalau berubah
-        if ($data['id_cluster'] != $keluarga->id_cluster) {
-            $keluarga->anggota()->update(['id_cluster' => $data['id_cluster']]);
-            $keluarga->anggota->each(static function ($item) {
-                $item->log()->create([
-                    'kode_peristiwa' => LogPenduduk::TIDAK_TETAP_PERGI, // kode 6
-                    'tgl_peristiwa'  => date('d-m-y'),
-                ]);
-            });
-        }
+        // if ($data['id_cluster'] != $keluarga->id_cluster) {
+        //     $keluarga->anggota()->update(['id_cluster' => $data['id_cluster']]);
+        //     $keluarga->anggota->each(static function ($item) {
+        //         $item->log()->create([
+        //             'kode_peristiwa' => LogPenduduk::TIDAK_TETAP_PERGI, // kode 6
+        //             'tgl_peristiwa'  => date('d-m-y'),
+        //         ]);
+        //     });
+        // }
 
         $data['tgl_cetak_kk'] = empty($data['tgl_cetak_kk']) ? null : date('Y-m-d H:i:s', strtotime($data['tgl_cetak_kk']));
         if (empty($data['kelas_sosial'])) {
@@ -486,7 +488,7 @@ class Keluarga extends Admin_Controller
         $data['updated_by'] = ci_auth()->id;
         $keluarga->update($data);
 
-        redirect($this->controller);
+        redirect_with('success', 'Keluarga berhasil diubah');
     }
 
     public function delete($id = 0): void
@@ -503,7 +505,7 @@ class Keluarga extends Admin_Controller
         }
         $keluarga->delete();
 
-        redirect(ci_route('keluarga'));
+        redirect_with('success', 'Keluarga berhasil dihapus');
     }
 
     public function delete_all(): void
@@ -567,7 +569,6 @@ class Keluarga extends Admin_Controller
         $data['id_kk']       = $id;
         $keluarga            = KeluargaModel::with(['anggota' => static fn ($q) => $q->orderBy('kk_level'), 'kepalaKeluarga'])->find($id);
         $data['main']        = $keluarga->toArray();
-        $data['desa']        = $this->header['desa'];
         $data['kepala_kk']   = $keluarga->kepalaKeluarga ? $keluarga->kepalaKeluarga->toArray() : null;
         $data['form_action'] = ci_route('keluarga.print');
 
@@ -601,6 +602,19 @@ class Keluarga extends Admin_Controller
 
     public function statistik($tipe = '0', $nomor = 0, $sex = null): void
     {
+        $bantuan = Bantuan::whereSlug($tipe)->first();
+        if (! $bantuan) {
+            if (is_string($nomor)) {
+                $bantuan = Bantuan::whereSlug($nomor)->first();
+            }
+        }
+
+        $nama = $bantuan->nama ?? '-';
+        if (! in_array($nomor, [BELUM_MENGISI, TOTAL, JUMLAH]) && $bantuan) {
+            $nomor = $bantuan->id;
+        }
+        $kategori = $nama . ' : ';
+
         switch (true) {
             case $tipe == 'kelas_sosial':
                 $kategori = 'KLASIFIKASI SOSIAL : ';
@@ -613,22 +627,15 @@ class Keluarga extends Admin_Controller
                 $kategori = 'PENERIMA BANTUAN (KELUARGA) : ';
                 break;
 
-            case $tipe > 50:
-                $program_id = preg_replace('/^50/', '', $tipe);
-                $nama       = Bantuan::find($program_id)->nama ?? '-';
-
-                if (! in_array($nomor, [BELUM_MENGISI, TOTAL])) {
-                    $this->defaultStatus = null;
-                    $nomor               = $program_id;
-                }
-                $kategori = $nama . ' : ';
-                $tipe     = 'bantuan_keluarga';
+            default:
+                $kategori = 'PENERIMA BANTUAN (KELUARGA) : ';
                 break;
         }
         $judul = (new KeluargaModel())->judulStatistik($tipe, $nomor, $sex);
         if ($judul['nama']) {
             $this->judulStatistik = $kategori . $judul['nama'];
         }
+
         $this->filterColumn    = ['sex' => $sex];
         $this->statistikFilter = ['sex' => $sex, 'value' => $nomor, 'tipe' => $tipe];
         $this->index();

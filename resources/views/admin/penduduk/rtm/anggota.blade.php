@@ -33,9 +33,8 @@
                     ></i> Hapus</a>
             @endif
             <a href="{{ ci_route('rtm.kartu_rtm', $kk) }}" class="btn btn-social bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-book"></i> Kartu Rumah Tangga</a>
-            <a href="{{ ci_route('rtm') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Daftar Rumah Tangga">
-                <i class="fa fa-arrow-circle-left "></i>Kembali ke Daftar Rumah Tangga
-            </a>
+            @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('rtm'), 'label' => 'Daftar Rumah Tangga'])
+
         </div>
         <div class="box-body">
             <h5><b>Rincian Keluarga</b></h5>
@@ -56,6 +55,16 @@
                             <td>Alamat</td>
                             <td>:</td>
                             <td>{{ $kepala_kk['alamat_wilayah'] }}</td>
+                        </tr>
+                        <tr>
+                            <td>Jumlah KK</td>
+                            <td>:</td>
+                            <td>{{ $kepala_kk['jumlah_kk'] }} </td>
+                        </tr>
+                        <tr>
+                            <td>Jumlah Anggota</td>
+                            <td>:</td>
+                            <td>{{ count($main) }} </td>
                         </tr>
                         <tr>
                             <td>BDT</td>
@@ -118,7 +127,7 @@
                                         @if (can('u'))
                                             <td class="aksi">
                                                 @if (can('u'))
-                                                    <a href="{{ ci_route("penduduk.form.1.{$kk}", $data['id']) }}" class="btn bg-orange btn-sm" title="Ubah Biodata Penduduk"><i class="fa fa-edit"></i></a>
+                                                    <a href="{{ ci_route("penduduk.form.{$data['id']}") }}" class="btn bg-orange btn-sm" title="Ubah Biodata Penduduk"><i class="fa fa-edit"></i></a>
                                                     <a
                                                         href="{{ ci_route("rtm.edit_anggota.{$kk}", $data['id']) }}"
                                                         data-remote="false"

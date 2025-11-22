@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,15 +29,15 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Imports\KlasifikasiSuratImports;
 use App\Models\Config;
 use Illuminate\Support\Facades\DB;
-use App\Imports\KlasifikasiSuratImports;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -56,7 +56,7 @@ class Data_awal_seeder extends CI_Model
         // Error menggunakan Illuminate untuk alter database ini
         // DB::statement("ALTER DATABASE {$db} CHARACTER SET utf8 COLLATE utf8_general_ci;");
         $this->db->query(
-            "ALTER DATABASE `{$db}` CHARACTER SET utf8 COLLATE {$this->db->dbcollat};"
+            "ALTER DATABASE `{$db}` CHARACTER SET {$this->db->char_set} COLLATE {$this->db->dbcollat};"
         );
 
         $this->load->helper('directory');
@@ -823,23 +823,6 @@ class Data_awal_seeder extends CI_Model
             ['id' => 2, 'nama' => 'Anggota'],
         ]);
 
-        DB::table('tweb_sakit_menahun')->insert([
-            ['id' => 1, 'nama' => 'JANTUNG'],
-            ['id' => 2, 'nama' => 'LEVER'],
-            ['id' => 3, 'nama' => 'PARU-PARU'],
-            ['id' => 4, 'nama' => 'KANKER'],
-            ['id' => 5, 'nama' => 'STROKE'],
-            ['id' => 6, 'nama' => 'DIABETES MELITUS'],
-            ['id' => 7, 'nama' => 'GINJAL'],
-            ['id' => 8, 'nama' => 'MALARIA'],
-            ['id' => 9, 'nama' => 'LEPRA/KUSTA'],
-            ['id' => 10, 'nama' => 'HIV/AIDS'],
-            ['id' => 11, 'nama' => 'GILA/STRESS'],
-            ['id' => 12, 'nama' => 'TBC'],
-            ['id' => 13, 'nama' => 'ASTHMA'],
-            ['id' => 14, 'nama' => 'TIDAK ADA/TIDAK SAKIT'],
-        ]);
-
         DB::table('tweb_status_dasar')->insert([
             ['id' => 1, 'nama' => 'HIDUP'],
             ['id' => 2, 'nama' => 'MATI'],
@@ -1534,11 +1517,9 @@ class Data_awal_seeder extends CI_Model
 
         $this->load->model('seeders/dataAwal/Twebaset', 'twebaset');
         $this->load->model('seeders/dataAwal/KeuanganManualRefKegiatan', 'keuanganRefKegiatan');
-        $this->load->model('seeders/dataAwal/PendudukSuku', 'pendudukSuku');
         DB::table('tweb_aset')->insert($this->twebaset->getData());
         DB::table('keuangan_manual_ref_kegiatan')->insert($this->keuanganRefKegiatan->getData());
         $this->impor_klasifikasi();
-        DB::table('ref_penduduk_suku')->insert($this->pendudukSuku->getData());
         // DB::table('tweb_format_surat')->insert(); ikut data awal
     }
 

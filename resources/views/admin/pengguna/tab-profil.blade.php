@@ -7,7 +7,7 @@
         </div>
         <div class="form-group">
             <label for="email">Email</label>
-            <input class="form-control input-sm" name="email" type="email" value="{{ ci_auth()->email }}" />
+            <input class="form-control input-sm email" name="email" type="email" value="{{ ci_auth()->email }}" />
         </div>
         <div class="form-group">
             <label for="nama_lengkap">Nama Lengkap</label>
@@ -40,7 +40,7 @@
             </div>
             <div class="form-group {{ $userData->notif_telegram ? '' : 'hide' }}">
                 <label for="id_telegram">User ID Telegram</label>
-                <input class="form-control input-sm bilangan" type="text" id="id_telegram" name="id_telegram" value="{{ ci_auth()->id_telegram }}" {{ jecho(setting('telegram_token') == null, true, 'disabled') }} />
+                <input class="form-control input-sm bilangan" type="text" id="id_telegram" name="id_telegram" value="{{ ci_auth()->id_telegram }}" {{ jecho($list_setting->firstWhere('key', 'telegram_token')?->value == null, true, 'disabled') }} />
             </div>
         @endif
     </div>

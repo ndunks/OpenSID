@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,12 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Libraries\Database;
 use App\Models\Config;
 
 defined('BASEPATH') || exit('No direct script access allowed');
@@ -99,14 +100,13 @@ class Seeder extends CI_Model
         // Database perlu dibuka ulang supaya cachenya berfungsi benar setelah diubah
         $this->db->close();
         $this->load->database();
-        $this->load->model('database_model');
         $this->isi_config();
         // Migrasi::latest('id')->first()->delete();
         // Tetap jalankan Data awal
         $this->load->model('migrations/data_awal', 'data_awal');
         $this->data_awal->up();
 
-        $this->database_model->cek_migrasi(true);
+        (new Database())->checkMigration(true);
         session_destroy();
         log_message('notice', 'Selesai memasang data awal');
     }

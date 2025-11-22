@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,16 +29,18 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
+use App\Models\PendudukSaja;
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
 if ($input['id_pend_pelapor']) {
-    $pelapor                        = $this->surat_model->get_data_surat($input['id_pend_pelapor']);
+    $pelapor                        = (new PendudukSaja())->dataSurat($input['id_pend_pelapor']);
     $input['nik_pelapor']           = get_nik($pelapor['nik']);
     $input['nama_pelapor']          = $pelapor['nama'];
     $input['tanggal_lahir_pelapor'] = $pelapor['tanggallahir'];
@@ -80,7 +82,7 @@ if ($input['id_pend_pelapor']) {
 }
 
 if ($input['id_pend_saksi_i']) {
-    $saksi1                        = $this->surat_model->get_data_surat($input['id_pend_saksi_i']);
+    $saksi1                        = (new PendudukSaja())->dataSurat($input['id_pend_saksi_i']);
     $input['nik_saksi1']           = get_nik($saksi1['nik']);
     $input['nama_saksi1']          = $saksi1['nama'];
     $input['tanggal_lahir_saksi1'] = $saksi1['tanggallahir'];
@@ -122,7 +124,7 @@ if ($input['id_pend_saksi_i']) {
 }
 
 if ($input['id_pend_saksi_ii']) {
-    $saksi2                        = $this->surat_model->get_data_surat($input['id_pend_saksi_ii']);
+    $saksi2                        = (new PendudukSaja())->dataSurat($input['id_pend_saksi_ii']);
     $input['nik_saksi2']           = get_nik($saksi2['nik']);
     $input['nama_saksi2']          = $saksi2['nama'];
     $input['tanggal_lahir_saksi2'] = $saksi2['tanggallahir'];

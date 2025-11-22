@@ -125,25 +125,34 @@
                     type: 'GET',
                     contentType: 'application/json',
                     headers: {
-                        'Authorization': 'Bearer {{ $token_layanan }}'
+                        'Authorization': 'Bearer {{ $token_layanan }}',
+                        'Accept': 'application/json'
+                    },
+                    error: function(response) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Memuat Data',
+                            text: response.responseJSON.message
+                        })
                     },
                     success: function(response) {
                         const data = response.data
                         for (let i in data) {
                             templateTmp = templateCard
                             disabledPaket = ''
-                            buttonInstall = `<button type="submit" ${disabledPaket} name="pasang" value="${data[i].name}___${data[i].url}" class="btn btn-primary">Pasang</button>`
+                            buttonInstall = `<button type="submit" ${disabledPaket} name="pasang" value="${data[i].name}___${data[i].url}___${data[i].version}" class="btn btn-primary">Pasang</button>`
                             if (paketTerpasang[data[i].name] !== undefined) {
                                 versionCheck = compareVersions(data[i].version, paketTerpasang[data[i].name].version)
                                 if (versionCheck > 0) {
                                     buttonInstall = `<button type="submit" ${disabledPaket} name="pasang" value="${data[i].name}___${data[i].url}___${data[i].version}" class="btn btn-primary">Tingkatkan Versi</button>`
                                 } else {
                                     disabledPaket = 'disabled'
-                                    buttonInstall = `<button type="button" ${disabledPaket} name="pasang" value="${data[i].name}___${data[i].url}" class="btn btn-primary">Pasang</button>`
+                                    buttonInstall = `<button type="button" ${disabledPaket} name="pasang" value="${data[i].name}___${data[i].url}___${data[i].version}" class="btn btn-primary">Pasang</button>`
                                 }
                             }
 
                             templateTmp = templateTmp.replace('__name__', data[i].name)
+                            templateTmp = templateTmp.replace('__version__', data[i].version)
                             templateTmp = templateTmp.replace('__description__', data[i].description)
                             templateTmp = templateTmp.replace('__button__', buttonInstall)
                             templateTmp = templateTmp.replace('__thumbnail__', data[i].thumbnail)

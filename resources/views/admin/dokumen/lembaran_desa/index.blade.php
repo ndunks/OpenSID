@@ -53,8 +53,8 @@
                                     <th>Jenis Peraturan</th>
                                     <th>No./Tgl Ditetapkan</th>
                                     <th>Uraian Singkat</th>
-                                    <th nowrap>Aktif <i class='fa fa-sort fa-sm'></i></th>
-                                    <th nowrap>Dimuat Pada <i class='fa fa-sort fa-sm'></i></th>
+                                    <th nowrap>Aktif</th>
+                                    <th nowrap>Dimuat Pada</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -136,6 +136,11 @@
             $('#jenis_peraturan').change(function() {
                 TableData.column(4).search($(this).val()).draw()
             })
+
+            @if ($status)
+                $('#filter').val({{ $status }})
+                $('#filter').trigger('change')
+            @endif
 
             if (ubah == 0) {
                 TableData.column(1).visible(false);

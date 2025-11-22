@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -281,7 +281,7 @@ class Regsosek2022kEnum
                 '1' => '1. SHM atas Nama Anggota Keluarga',
                 '2' => '2. SHM bukan a.n Anggota Keluarga dengan perjanjian pemanfaatan tertulis',
                 '3' => '3. SHM bukan a.n Anggota Keluarga tanpa perjanjian pemanfaatan tertulis',
-                '4' => '4. Sertfikat selain SHM (SHGB, SHSRS)',
+                '4' => '4. Sertifikat selain SHM (SHGB, SHSRS)',
                 '5' => '5. Surat bukti lainnya (Girik, Letter C, dll)',
                 '6' => '6. Tidak Punya',
             ],
@@ -608,7 +608,7 @@ class Regsosek2022kEnum
                 '13' => '13. Kolesterol',
                 '14' => '14. Sirosis Hati',
                 '15' => '15. Thalasemia',
-                '16' => '16. Leukimia',
+                '16' => '16. Leukemia',
                 '17' => '17. Alzheimer',
                 '18' => '18. Lainnya',
             ],

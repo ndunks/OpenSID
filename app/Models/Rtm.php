@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -71,13 +71,22 @@ class Rtm extends BaseModel
     protected $guarded = [];
 
     /**
+     * The appends with the model.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'jumlah_kk',
+    ];
+
+    /**
      * Define a one-to-one relationship.
      *
      * @return \Illuminate\Database\Eloquent\Relations\hasOne
      */
     public function kepalaKeluarga()
     {
-        return $this->hasOne(Penduduk::class, 'id', 'nik_kepala')->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
+        return $this->hasOne(Penduduk::class, 'id', 'nik_kepala');
     }
 
     /**
@@ -87,7 +96,7 @@ class Rtm extends BaseModel
      */
     public function anggota()
     {
-        return $this->hasMany(Penduduk::class, 'id_rtm', 'no_kk')->status()->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
+        return $this->hasMany(Penduduk::class, 'id_rtm', 'no_kk')->status();
     }
 
     /**
@@ -152,7 +161,7 @@ class Rtm extends BaseModel
 
         $kolom_id = $is_no_kk ? 'r.no_kk' : 'r.id';
 
-        $data = DB::table('tweb_rtm as r')
+        $data = (array) DB::table('tweb_rtm as r')
             ->select([
                 'u.id',
                 'u.nik',
@@ -180,13 +189,19 @@ class Rtm extends BaseModel
             ->leftJoin('tweb_penduduk_warganegara as f', 'u.warganegara_id', '=', 'f.id')
             ->leftJoin('tweb_penduduk_agama as a', 'u.agama_id', '=', 'a.id')
             ->leftJoin('tweb_wil_clusterdesa as wil', 'wil.id', '=', 'u.id_cluster')
+            ->where('r.config_id', identitas('id'))
             ->where($kolom_id, $id)
-            ->first()->toArray();
+            ->first();
 
         if ($data) {
             $data['alamat_wilayah'] = Penduduk::get_alamat_wilayah($data['id']);
         }
 
         return $data ?? null;
+    }
+
+    public function getJumlahKkAttribute()
+    {
+        return $this->anggota()->distinct('id_kk')->count('id_kk');
     }
 }

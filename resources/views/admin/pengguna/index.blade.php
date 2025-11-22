@@ -61,7 +61,7 @@
                                 </form>
                                 <br />
                             @endif
-                            @if ($userData->telegram_verified_at === null && setting('telegram_token') != null && !empty($userData->id_telegram))
+                            @if ($userData->telegram_verified_at === null && $list_setting->firstWhere('key', 'telegram_token')?->value != null && !empty($userData->id_telegram))
                                 <button type="button" id="verif_telegram" class="btn btn-sm btn-warning btn-block btn-mb-5"><i class="fa fa-share-square"></i>
                                     Verifikasi Telegram</button>
                                 <br />
@@ -105,7 +105,7 @@
                 });
                 $.ajax({
                         url: '{{ ci_route('pengguna.kirim_otp_telegram') }}',
-                        type: 'Post',
+                        type: 'get',
                         data: {
                             'sidcsrf': getCsrfToken(),
                             'id_telegram': $('#id_telegram').val()

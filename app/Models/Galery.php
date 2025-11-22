@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -160,5 +160,26 @@ class Galery extends BaseModel
         // } catch (Exception $e) {
         //     Log::error($e);
         // }
+    }
+
+    public function scopeDaftar($query)
+    {
+        return $query->selectRaw('id, nama as judul, gambar')
+            ->where('parrent', static fn ($q) => $q->select('id')->from('gambar_gallery')->where('slider', 1)->limit(1)->where('tipe', 1)->where('config_id', identitas('id')))
+            ->where('enabled', 1)
+            ->where('config_id', identitas('id'))
+            ->orderBy('urut', 'ASC');
+    }
+
+    public static function widget()
+    {
+        $jumlah = setting('jumlah_album_galeri') ?: 4;
+        $urut   = setting('urutan_gambar_galeri') ?: 'acak';
+
+        return self::where('enabled', 1)
+            ->where('parrent', 0)
+            ->when($urut === 'acak', static fn ($query) => $query->inRandomOrder(), static fn ($query) => $query->orderBy('urut', $urut))
+            ->limit($jumlah)
+            ->get();
     }
 }

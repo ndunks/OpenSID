@@ -1,4 +1,4 @@
-<page orientation="portrait" format="210x330" style="font-size: 10pt">
+<page orientation="portrait" format="F4" style="font-size: 11pt">
 
     <!-- Judul Lampiran -->
     <table align="right">
@@ -54,10 +54,10 @@
         </tr>
     </table>
 
-    <p style="margin: 0; text-align: center;" class="title"><u>SURAT KETERANGAN KEMATIAN</u></p>
+    <p style="margin: 0; text-align: center;" class="title-nikah"><u>SURAT KETERANGAN KEMATIAN</u></p>
     <p style="margin: 0; text-align: center;">Nomor : [FOrmat_nomor_surat]</p>
 
-    <p>Yang bertanda tangan dibawah ini menjelaskan dengan sesungguhnya bahwa : </p>
+    <p>Yang bertanda tangan di bawah ini menjelaskan dengan sesungguhnya bahwa : </p>
     <table id="kop" class="disdukcapil">
         <col span="48" style="width: 2.0833%;">
         <tr>
@@ -157,7 +157,7 @@
 
         <tr>
             <td colspan="1">&nbsp;</td>
-            <td colspan="20">2. Bin/Binti</td>
+            <td colspan="20">2. Bin</td>
             <td>&nbsp;</td>
             <td colspan="27">[Form_biN]</td>
         </tr>

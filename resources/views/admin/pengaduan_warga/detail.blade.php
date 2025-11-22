@@ -17,7 +17,7 @@
 
     <div class="box box-info">
         <div class="box-header with-border">
-            <a href="{{ ci_route('pengaduan_admin') }}" class="btn btn-social btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-arrow-circle-left"></i> Kembali Ke Daftar Pengaduan</a>
+            @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('pengaduan_admin'), 'label' => 'Daftar Pengaduan'])
         </div>
         <div class="box-body">
             <ul class="timeline timeline-inverse">
@@ -77,7 +77,7 @@
                             <div class="timeline-item">
                                 <span class="time"><i class="fa fa-clock-o"></i> {{ $item->created_at->format('H:i') }}</span>
 
-                                <h3 class="timeline-header"><a href="#">{{ $item->nama }}</a> Menanggapi</h3>
+                                <h3 class="timeline-header"><span class="text-primary text-bold">{{ $item->nama }} </span> Menanggapi</h3>
 
                                 <div class="timeline-body">
                                     {{ $item->isi }}

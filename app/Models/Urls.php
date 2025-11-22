@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -65,4 +65,25 @@ class Urls extends BaseModel
      * @var array
      */
     protected $guarded = [];
+
+    public static function urlPendek($log_surat = [])
+    {
+        $url  = ci_route("c1.{$log_surat['id']}");
+        $data = [
+            'url'     => (string) $url,
+            'alias'   => (string) self::random_code(6),
+            'created' => date('Y-m-d H:i:s'),
+        ];
+        $url = self::create($data);
+
+        return [
+            'isiqr'   => site_url('v/' . $url->alias),
+            'urls_id' => $url->id,
+        ];
+    }
+
+    public static function random_code($length)
+    {
+        return substr(base_convert(sha1(uniqid(random_int(0, mt_getrandmax()))), 16, 36), 0, $length);
+    }
 }

@@ -16,7 +16,7 @@
 
     <div class="box box-info">
         <div class="box-header with-border">
-            <a href="{{ ci_route('penduduk') }}" class="btn btn-social btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali Ke Data Penduduk"><i class="fa fa-arrow-circle-o-left"></i> Kembali Ke Data Penduduk</a>
+            @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('penduduk'), 'label' => 'Data Penduduk'])
         </div>
         <div class="box-body">
             {!! form_open($form_action, 'class="form-horizontal" id="impor" enctype="multipart/form-data"') !!}
@@ -61,8 +61,7 @@
                                 <li>Data yang dibutuhkan untuk Impor dengan memenuhi urutan format dan aturan data pada tautan
                                     di bawah ini :
                                     <div class="timeline-footer col-sm-12">
-                                        <a href="{{ asset('import/FormatImporExcel.xlsm') }}" class="btn btn-social btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block margin" wrap><i class="fa fa-download"></i> Aturan dan Contoh Format Data</a>
-                                        <a href="{{ asset('import/contoh_penduduk.xlsx') }}" class="btn btn-social btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block margin" wrap><i class="fa fa-download"></i> Contoh Data Penduduk Ekspor</a>
+                                        <a href="{{ $formatImpor }}" class="btn btn-social btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block margin" wrap><i class="fa fa-download"></i> Aturan dan Contoh Format Data</a>
                                     </div>
                                 </li>
                             </ol>
@@ -73,7 +72,7 @@
                         pada waktu membuka berkas tersebut.
                     </p>
                     <p>
-                    <p>Batas maksimal pengunggahan berkas <strong>{{ max_upload() }} MB.</strong></p>
+                    <p>Batas maksimal pengunggahan berkas <strong>{{ max_upload(true) }}</strong></p>
                     <p>Proses ini akan membutuhkan waktu beberapa menit, menyesuaikan dengan spesifikasi komputer server SID
                         dan sambungan internet yang tersedia.
                     </p>
@@ -183,7 +182,7 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         // ubah nilai csrf, karena nilainya berubah
-                        $('input[name=sidcsrf]').val(getCsrfToken())
+                        refreshFormCsrf();
                         document.getElementById('impor').submit();
                         $('#loading').modal('show');
                     }

@@ -91,7 +91,7 @@
                         <tr>
                             <td>Tempat / Tanggal Lahir</td>
                             <td>:</td>
-                            <td>{{ strtoupper($penduduk->tempatlahir) }} / {{ strtoupper($penduduk->tanggallahir->format('d-m-Y')) }}</td>
+                            <td>{{ strtoupper($penduduk->tempatlahir) }} / {{ strtoupper($penduduk->tanggallahir?->format('d-m-Y')) }}</td>
                         </tr>
                         <tr>
                             <td>Tempat Dilahirkan</td>
@@ -129,7 +129,7 @@
                         <tr>
                             <td>Pendidikan dalam KK</td>
                             <td>:</td>
-                            <td>{{ strtoupper($penduduk->pendidikanKK->nama) }}</td>
+                            <td>{{ strtoupper($penduduk->pendidikanKK) }}</td>
                         </tr>
                         <tr>
                             <td>Pendidikan sedang ditempuh</td>
@@ -278,7 +278,7 @@
                         <tr>
                             <td>Sakit Menahun</td>
                             <td>:</td>
-                            <td>{{ strtoupper($penduduk->sakitMenahun->nama) }}</td>
+                            <td>{{ strtoupper($penduduk->sakit_menahun) }}</td>
                         </tr>
                         @if ($penduduk->status_kawin == App\Enums\StatusKawinEnum::KAWIN)
                             <tr>

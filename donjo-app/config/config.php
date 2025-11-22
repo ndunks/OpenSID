@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -302,7 +302,7 @@ $config['log_path'] = STORAGEPATH . '/logs/';
 | File log pattern.
 |
 */
-$config['clv_log_file_pattern'] = 'log-*.php';
+$config['clv_log_file_pattern'] = 'opensid-*.log';
 
 /*
 |--------------------------------------------------------------------------
@@ -316,7 +316,8 @@ $config['clv_log_file_pattern'] = 'log-*.php';
 | Note: Leaving it blank will default to 'php'.
 |
 */
-$config['log_file_extension'] = '';
+$config['log_file_extension'] = 'log';
+$config['log_file_prefix']    = 'opensid-';
 
 /*
 |--------------------------------------------------------------------------
@@ -522,7 +523,7 @@ $config['csrf_token_name']   = 'sidcsrf';
 $config['csrf_cookie_name']  = 'sidcsrf';
 $config['csrf_expire']       = 7200;
 $config['csrf_regenerate']   = true;
-$config['csrf_exclude_uris'] = ['api.*+', 'external_api.*+', 'internal_api.*+'];
+$config['csrf_exclude_uris'] = ['api.*+', 'external_api.*+', 'internal_api.*+', 'playwright.*+'];
 
 /*
 |--------------------------------------------------------------------------
@@ -666,29 +667,11 @@ $config['api_sdgs'] = 'https://sid.kemendesa.go.id/sdgs/searching/score-sdgs?loc
 
 /*
 |--------------------------------------------------------------------------
-| API Hari Libur
-|--------------------------------------------------------------------------
-|
-*/
-$config['api_hari_libur'] = 'https://raw.githubusercontent.com/guangrei/APIHariLibur_V2/main/holidays.json';
-
-/*
-|--------------------------------------------------------------------------
 | API Google Recaptcha
 |--------------------------------------------------------------------------
 |
 */
 $config['api_google_recaptcha'] = 'https://google.com/recaptcha/api/';
-
-/*
-|--------------------------------------------------------------------------
-| Path View Blade
-|--------------------------------------------------------------------------
-|
-*/
-$config['views_blade'] = [
-    RESOURCESPATH . 'views/',
-];
 
 /*
 |--------------------------------------------------------------------------

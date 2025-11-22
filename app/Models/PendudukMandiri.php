@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -322,14 +322,14 @@ class PendudukMandiri extends BaseModel implements AuthenticatableContract, Auth
             case $pin_lama != $pin:
                 $respon = [
                     'status' => -1, // Notif gagal
-                    'pesan'  => 'PIN gagal diganti, <b>PIN Lama</b> yang anda masukkan tidak sesuai',
+                    'pesan'  => 'PIN gagal diganti, <b>PIN Lama</b> yang Anda masukkan tidak sesuai',
                 ];
                 break;
 
             case $pin_baru2 == $pin:
                 $respon = [
                     'status' => -1, // Notif gagal
-                    'pesan'  => '<b>PIN</b> gagal diganti, Silahkan ganti <b>PIN Lama</b> anda dengan <b>PIN Baru</b> ',
+                    'pesan'  => '<b>PIN</b> gagal diganti, Silakan ganti <b>PIN Lama</b> Anda dengan <b>PIN Baru</b> ',
                 ];
                 break;
 
@@ -343,7 +343,7 @@ class PendudukMandiri extends BaseModel implements AuthenticatableContract, Auth
                 } else {
                     $respon = [
                         'status' => -1, // Notif gagal
-                        'pesan'  => '<b>PIN Baru</b> gagal dikirim ke Telegram, silahkan hubungi operator',
+                        'pesan'  => '<b>PIN Baru</b> gagal dikirim ke Telegram, silakan hubungi operator',
                     ];
                 }
                 break;
@@ -358,7 +358,7 @@ class PendudukMandiri extends BaseModel implements AuthenticatableContract, Auth
                 } else {
                     $respon = [
                         'status' => -1, // Notif gagal
-                        'pesan'  => '<b>PIN Baru</b> gagal dikirim ke Email, silahkan hubungi operator',
+                        'pesan'  => '<b>PIN Baru</b> gagal dikirim ke Email, silakan hubungi operator',
                     ];
                 }
                 break;
@@ -369,7 +369,7 @@ class PendudukMandiri extends BaseModel implements AuthenticatableContract, Auth
                 $respon = [
                     'status' => 1, // Notif berhasil
                     'aksi'   => site_url('layanan-mandiri/keluar'),
-                    'pesan'  => 'PIN berhasil diganti, silahkan masuk kembali dengan Kode PIN : ' . $ganti['pin_baru2'],
+                    'pesan'  => 'PIN berhasil diganti, silakan masuk kembali dengan Kode PIN : ' . $ganti['pin_baru2'],
                 ];
                 break;
         }

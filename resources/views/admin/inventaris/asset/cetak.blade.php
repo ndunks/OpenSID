@@ -4,7 +4,7 @@
             <td>
                 <h3 class="text-center">
                     KARTU INVENTARIS BARANG (KIB) <br>
-                    F. ASET TETAP LAINNYA
+                    E. ASET TETAP LAINNYA
                 </h3>
             </td>
         </tr>
@@ -13,15 +13,15 @@
                 <table style="width: 200px;">
                     <tr>
                         <td>{{ strtoupper(setting('sebutan_desa')) }}</td>
-                        <td>: {{ strtoupper($config['nama_desa']) }}</td>
+                        <td>: {{ strtoupper($desa['nama_desa']) }}</td>
                     </tr>
                     <tr>
                         <td>{{ strtoupper(setting('sebutan_kecamatan')) }}</td>
-                        <td>: {{ strtoupper($config['nama_kecamatan']) }}</td>
+                        <td>: {{ strtoupper($desa['nama_kecamatan']) }}</td>
                     </tr>
                     <tr>
                         <td>{{ strtoupper(setting('sebutan_kabupaten')) }}</td>
-                        <td>: {{ strtoupper($config['nama_kabupaten']) }}</td>
+                        <td>: {{ strtoupper($desa['nama_kabupaten']) }}</td>
                     </tr>
                 </table>
             </td>

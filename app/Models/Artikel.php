@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,6 +37,7 @@
 
 namespace App\Models;
 
+use App\Libraries\UserAgent;
 use App\Traits\ConfigId;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -145,6 +146,18 @@ class Artikel extends BaseModel
     }
 
     /**
+     * Scope a query to only enable article.
+     *
+     * @param Builder $query
+     *
+     * @return Builder
+     */
+    public function scopeActive($query)
+    {
+        return $query->enable()->where('tgl_upload', '<', date('Y-m-d H:i:s'));
+    }
+
+    /**
      * Scope a query to only headline article.
      *
      * @param Builder $query
@@ -154,6 +167,22 @@ class Artikel extends BaseModel
     public function scopeHeadline($query)
     {
         return $query->where('headline', static::HEADLINE);
+    }
+
+    /**
+     * Scope untuk menampilkan tipe artikel dari pengaturan.
+     * Artikel yang ditampilkan adalah artikel yang memiliki tipe yang sama dengan pengaturan dan artikel dinamis.
+     *
+     * @param Builder $query
+     *
+     * @return Builder
+     */
+    public function scopeArtikelStatis($query)
+    {
+        $statis = json_decode(setting('artikel_statis'), true);
+        $tipe   = array_merge(['dinamis'], $statis ?? []);
+
+        return $query->whereIn('tipe', $tipe);
     }
 
     public function scopeStatis($query)
@@ -287,7 +316,7 @@ class Artikel extends BaseModel
      */
     public function getUrlSlugAttribute(): string
     {
-        return site_url('artikel/' . Carbon::parse($this->tgl_upload)->format('Y/m/d') . '/' . $this->slug);
+        return site_url('artikel/' . Carbon::parse($this->tgl_upload)->format('Y/m/d') . '/' . $this->getRawOriginal('slug'));
     }
 
     public function bolehUbah(): bool
@@ -331,5 +360,100 @@ class Artikel extends BaseModel
                 unlink($sedang);
             }
         }
+    }
+
+    public static function read($url, $thn = null, $bln = null, $hr = null): void
+    {
+        $agent = new UserAgent();
+
+        $artikel = self::select('id')
+            ->berdasarkan($thn, $bln, $hr, $url)->where(static function ($q) use ($url) {
+                $q->where('slug', $url)->orWhere('id', $url);
+            })->first();
+        $id = $artikel->id;
+        //membatasi hit hanya satu kali dalam setiap session
+        if (in_array($id, $_SESSION['artikel'] ?? []) || $agent->is_robot() || crawler()) {
+            return;
+        }
+        $artikel->increment('hit');
+        $artikel->save();
+        $_SESSION['artikel'][] = $id;
+    }
+
+    public function scopeBerdasarkan($query, $thn, $bln, $hr, $url)
+    {
+        $tglUpload = implode('-', [$thn, $bln, $hr]);
+        $query     = $query->whereDate('tgl_upload', $tglUpload);
+        if (is_numeric($url)) {
+            $query->where('id', $url);
+        } else {
+            $query->where('slug', $url);
+        }
+
+        return $query;
+    }
+
+    public function scopeKategori($query, $id)
+    {
+        $tableKategori = (new Kategori())->getTable();
+
+        return $query->whereIn('id_kategori', static fn ($q) => $q->select('id')->from($tableKategori)->where(static fn ($r) => $r->where('id', $id)->orWhere('slug', $id)));
+    }
+
+    public function scopeCari($query, $cari)
+    {
+        return $query->where('judul', 'like', "%{$cari}%")->orWhere('isi', 'like', "%{$cari}%");
+    }
+
+    // Jika $gambar_utama, hanya tampilkan gambar utama masing2 artikel terbaru
+    public function scopeSlideShow($query, $gambarUtama = false)
+    {
+        return $query->selectRaw('id, judul, gambar, slug, YEAR(tgl_upload) as thn, MONTH(tgl_upload) as bln, DAY(tgl_upload) as hri')
+            ->where(static fn ($q) => $q->when($gambarUtama == false, static fn ($q) => $q->orWhere('gambar1', '!=', '')->orWhere('gambar2', '!=', '')->orWhere('gambar3', '!=', '')->inRandomOrder()->limit(10))->orWhere('gambar', '!=', ''))
+            ->when($gambarUtama, static fn ($q) => $q->orderBy('tgl_upload', 'desc')->limit(10))
+            ->where('enabled', 1)->where('slider', 1)
+            ->where('tgl_upload', '<', date('Y-m-d H:i:s'));
+    }
+
+    // Ambil gambar slider besar tergantung dari settingnya.
+    public static function slideGambar($sumber, $limit = 10)
+    {
+        $slider_gambar = [];
+
+        switch ($sumber) {
+            case '1':
+                // 10 gambar utama semua artikel terbaru
+                $slider_gambar['gambar'] = self::selectRaw('id, judul, gambar, slug, YEAR(tgl_upload) as thn, MONTH(tgl_upload) as bln, DAY(tgl_upload) as hri')
+                    ->where('enabled', 1)
+                    ->where('gambar', '!=', '')
+                    ->where('tgl_upload', '<', date('Y-m-d H:i:s'))
+                    ->orderBy('tgl_upload', 'desc')
+                    ->limit($limit)
+                    ->get()
+                    ->toArray();
+                $slider_gambar['lokasi'] = LOKASI_FOTO_ARTIKEL;
+                break;
+
+            case '2':
+                // 10 gambar utama artikel terbaru yang masuk ke slider atas
+                $slider_gambar['gambar'] = self::slideShow(true)->get()->toArray();
+                $slider_gambar['lokasi'] = LOKASI_FOTO_ARTIKEL;
+                break;
+
+            case '3':
+                // 10 gambar dari galeri yang masuk ke slider besar
+                $slider_gambar['gambar'] = Galery::daftar()->get()->toArray();
+                $slider_gambar['lokasi'] = LOKASI_GALERI;
+                break;
+
+            default:
+                // code...
+                break;
+        }
+
+        $slider_gambar['sumber'] = $sumber;
+        $slider_gambar['gambar'] = array_slice($slider_gambar['gambar'] ?? [], 0, $limit);
+
+        return $slider_gambar;
     }
 }

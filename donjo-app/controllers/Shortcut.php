@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,13 +29,12 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
-use App\Models\Modul;
 use App\Models\Shortcut as ShortcutModel;
 
 defined('BASEPATH') || exit('No direct script access allowed');
@@ -113,11 +112,10 @@ class Shortcut extends Admin_Controller
             $form_action = ci_route('shortcut.insert');
             $shortcut    = null;
         }
-        $icons  = ShortcutModel::listIcon();
-        $moduls = Modul::where('slug', '!=', 'home')->where('hidden', '!=', 2)->get()->pluck('modul', 'slug')->toArray();
-        $querys = ShortcutModel::querys()['mapping'];
+        $icons   = ShortcutModel::listIcon();
+        $modules = ShortcutModel::querys()['modules'];
 
-        return view('admin.shortcut.form', ['action' => $action, 'form_action' => $form_action, 'shortcut' => $shortcut, 'icons' => $icons, 'moduls' => $moduls, 'querys' => $querys]);
+        return view('admin.shortcut.form', ['action' => $action, 'form_action' => $form_action, 'shortcut' => $shortcut, 'icons' => $icons, 'moduls' => $moduls, 'modules' => $modules]);
     }
 
     public function insert(): void
@@ -158,9 +156,11 @@ class Shortcut extends Admin_Controller
     {
         isCan('h');
 
-        foreach ($this->request['id_cb'] as $id) {
-            $this->delete($id);
+        if (ShortcutModel::destroy($this->request['id_cb'])) {
+            redirect_with('success', 'Berhasil Hapus Data');
         }
+
+        redirect_with('error', 'Gagal Hapus Data');
     }
 
     public function lock($id = 0): void
@@ -189,14 +189,11 @@ class Shortcut extends Admin_Controller
     protected static function validate($request = [])
     {
         return [
-            'judul'       => $request['judul'],
-            'akses'       => $request['akses'],
-            'link'        => $request['link'],
-            'jenis_query' => $request['jenis_query'] ?? 0,
-            'raw_query'   => $request['jenis_query'] == 1 ? $request['query_manual'] : $request['query_otomatis'],
-            'icon'        => $request['icon'],
-            'warna'       => $request['warna'] ?? '#00c0ef',
-            'status'      => $request['status'] ?? 0,
+            'judul'     => $request['judul'],
+            'raw_query' => $request['raw_query'],
+            'icon'      => $request['icon'],
+            'warna'     => $request['warna'] ?? '#00c0ef',
+            'status'    => $request['status'] ?? 0,
         ];
     }
 }

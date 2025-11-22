@@ -30,9 +30,7 @@
                             Hapus</a>
                     @endif
                     @if ($parent_jenis)
-                        <a href="{{ ci_route('garis.index') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block">
-                            <i class="fa fa-arrow-circle-left "></i>Kembali ke Pengaturan Garis
-                        </a>
+                        @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('garis.index'), 'label' => 'Pengaturan Garis'])
                     @endif
                 </div>
                 <div class="box-body">
@@ -40,8 +38,8 @@
                         <div class="col-sm-2">
                             <select id="status" class="form-control input-sm select2">
                                 <option value="">Pilih Status</option>
-                                @foreach ($status as $key => $item)
-                                    <option value="{{ $key }}">{{ $item }}</option>
+                                @foreach (\App\Enums\AktifEnum::all() as $key => $value)
+                                    <option value="{{ $key }}">{{ $value }}</option>
                                 @endforeach
                             </select>
                         </div>

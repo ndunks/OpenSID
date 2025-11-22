@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -49,8 +49,8 @@ class SettingAplikasi extends BaseModel
     use ConfigId;
     use QueryCacheable;
 
-    public const WARNA_TEMA              = '#eab308';
-    public const RENTANG_WAKTU_KEHADIRAN = 10;
+    public const WARNA_TEMA    = '#eab308';
+    public const TAHUN_IDM_MIN = 2021;
 
     /**
      * Invalidate the cache automatically
@@ -91,9 +91,14 @@ class SettingAplikasi extends BaseModel
      */
     protected $fillable = [
         'config_id',
+        'judul',
         'key',
         'value',
+        'keterangan',
+        'jenis',
+        'option',
         'attribute',
+        'kategori',
     ];
 
     protected $guarded = ['id'];
@@ -108,6 +113,30 @@ class SettingAplikasi extends BaseModel
     ];
 
     /**
+     * Key yang sensitif dan tidak boleh ditampilkan ketika di panggil di view.
+     */
+    public static array $sensitiveKeys = [
+        'api_opendk_server',
+        'api_opendk_key',
+        'api_gform_id_script',
+        'api_gform_credential',
+        'api_gform_redirect_uri',
+        'layanan_opendesa_token',
+        'telegram_token',
+        'telegram_user_id',
+        'tte_api',
+        'tte_username',
+        'tte_password',
+        'email_protocol',
+        'email_smtp_host',
+        'email_smtp_user',
+        'email_smtp_pass',
+        'email_smtp_port',
+        'google_recaptcha_site_key',
+        'google_recaptcha_secret_key',
+    ];
+
+    /**
      * The attributes that should be cast.
      *
      * @var array
@@ -115,15 +144,6 @@ class SettingAplikasi extends BaseModel
     protected $casts = [
         'option' => 'json',
     ];
-
-    // public function getValueAttribute()
-    // {
-    //     if ($this->attributes['key'] == 'web_theme') {
-    //         return config_item('web_theme');
-    //     }
-
-    //     return $this->attributes['value'];
-    // }
 
     public function getOptionAttribute()
     {
@@ -147,5 +167,48 @@ class SettingAplikasi extends BaseModel
         }
 
         return $this->attributes['value'];
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        cache()->forget('setting_aplikasi');
+
+        static::updating(static function ($model) {
+            if (is_string($model->value)) {
+                static::deleteFile($model, $model->value);
+            }
+        });
+
+        static::deleting(static function ($model) {
+            if (is_string($model->value)) {
+                static::deleteFile($model, $model->value, true);
+            }
+        });
+    }
+
+    public static function deleteFile($model, ?string $file, $deleting = false): void
+    {
+        if ($model->isDirty() || $deleting) {
+            if ($model->key == 'latar_website') {
+                $lokasi = 'desa/pengaturan/images/';
+            }
+
+            if ($model->key == 'latar_login') {
+                $lokasi = LATAR_LOGIN;
+            }
+
+            if ($model->key == 'latar_login_mandiri') {
+                $lokasi = LATAR_LOGIN;
+            }
+
+            if ($model->key == 'latar_kehadiran') {
+                $lokasi = LATAR_LOGIN;
+            }
+            if (file_exists($lokasi)) {
+                unlink($lokasi . setting($model->key));
+            }
+        }
     }
 }

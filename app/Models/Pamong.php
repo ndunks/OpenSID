@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,7 +39,11 @@ namespace App\Models;
 
 use App\Enums\StatusEnum;
 use App\Traits\ConfigId;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
+use Modules\Kehadiran\Models\Kehadiran;
+use Modules\Kehadiran\Models\KehadiranPengaduan;
+use Rennokki\QueryCache\Traits\QueryCacheable;
 use Spatie\EloquentSortable\SortableTrait;
 
 defined('BASEPATH') || exit('No direct script access allowed');
@@ -48,6 +52,7 @@ class Pamong extends BaseModel
 {
     use ConfigId;
     use SortableTrait;
+    use QueryCacheable;
 
     public const LOCK   = 1;
     public const UNLOCK = 2;
@@ -115,22 +120,25 @@ class Pamong extends BaseModel
 
     public function getFotoStaffAttribute()
     {
-
         // jika foto ada, ambil foto pengurus
         if (empty($this->foto) || ! file_exists(LOKASI_USER_PICT . $this->foto)) {
             // menggunakan ternari operator jika pengurus adalah penduduk ambil foto penduduk jika tidak maka null
             return $this->penduduk()->exists() ? $this->penduduk->foto : null;
         }
 
-            // Jika foto pengurus ada, ambil foto pengurus
-            return $this->foto;
-
+        // Jika foto pengurus ada, ambil foto pengurus
+        return $this->foto;
     }
 
     // TODO: OpenKab - Sementara di disable dulu observer pada relasi ini
     public function penduduk()
     {
         return $this->hasOne(Penduduk::class, 'id', 'id_pend')->withoutGlobalScope(\App\Scopes\ConfigIdScope::class);
+    }
+
+    public function user()
+    {
+        return $this->hasOne(User::class, 'pamong_id', 'pamong_id');
     }
 
     /**
@@ -445,5 +453,36 @@ class Pamong extends BaseModel
                 unlink($sedang);
             }
         }
+    }
+
+    public static function listAparaturDesa()
+    {
+        $data_query = self::aktif()->urut()->get()->toArray();
+
+        $result = collect($data_query)->map(static function (array $item): array {
+            $kehadiran = Kehadiran::where('pamong_id', $item['pamong_id'])
+                ->where('tanggal', Carbon::now()->format('Y-m-d'))
+                ->orderBy('id', 'DESC')->first();
+
+            $nama = $item['pamong_nama'];
+            $sex  = $item['id_pend'] ? $item['penduduk']['sex'] : $item['pamong_sex'];
+
+            return [
+                'pamong_id'        => $item['pamong_id'],
+                'jabatan'          => $item['status_pejabat'] == StatusEnum::YA ? setting('sebutan_pj_kepala_desa') . ' ' . $item['jabatan']['nama'] : $item['jabatan']['nama'],
+                'pamong_niap'      => $item['pamong_niap'],
+                'gelar_depan'      => $item['gelar_depan'],
+                'gelar_belakang'   => $item['gelar_belakang'],
+                'kehadiran'        => $item['kehadiran'],
+                'media_sosial'     => json_encode($item['media_sosial']),
+                'foto'             => AmbilFoto($item['foto_staff'], '', ($item['pamong_sex'] ?? $item['penduduk->sex'])),
+                'id_sex'           => $sex,
+                'nama'             => $nama,
+                'status_kehadiran' => $kehadiran ? $kehadiran->status_kehadiran : null,
+                'tanggal'          => $kehadiran ? $kehadiran->tanggal : null,
+            ];
+        })->toArray();
+
+        return ['daftar_perangkat' => $result];
     }
 }

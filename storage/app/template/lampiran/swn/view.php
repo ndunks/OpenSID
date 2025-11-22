@@ -4,7 +4,7 @@
     <?php include FCPATH . '/assets/css/lampiran-surat.css'; ?>
 </style>
 
-<page orientation="portrait" format="210x330" style="font-size: 10pt">
+<page orientation="portrait" format="F4" style="font-size: 11pt">
 
     <!-- Judul Lampiran -->
     <table align="right">
@@ -56,7 +56,7 @@
     </table>
 
     <br>
-    <p class="title">SURAT KETERANGAN WALI NIKAH</p>
+    <p class="title-nikah">SURAT KETERANGAN WALI NIKAH</p>
     <table align="center">
         <tr>
             <td><span>Nomor : [FOrmat_nomor_surat]</span></td>
@@ -64,7 +64,7 @@
     </table>
 
 
-    <p>Yang bertanda tangan dibawah ini, [SeButan_kepala_desa] [SeButan_desa] [NAma_desa], Kecamatan [NAma_kecamatan], Kabupaten [NAma_kabupaten], menerangkan dengan sesungguhnya bahwa :</p>
+    <p>Yang bertanda tangan di bawah ini, [SeButan_kepala_desa] [SeButan_desa] [NAma_desa], Kecamatan [NAma_kecamatan], Kabupaten [NAma_kabupaten], menerangkan dengan sesungguhnya bahwa :</p>
     <table id="kop" class="disdukcapil">
         <col span="48" style="width: 2.0833%;">
         <tr>

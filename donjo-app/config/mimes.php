@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -77,7 +77,7 @@ return [
     'dxr'   => 'application/x-director',
     'dvi'   => 'application/x-dvi',
     'gtar'  => 'application/x-gtar',
-    'gz'    => 'application/x-gzip',
+    'gz'    => ['application/x-gzip', 'application/gzip'],
     'gzip'  => 'application/x-gzip',
     'php'   => ['application/x-httpd-php', 'application/php', 'application/x-php', 'text/php', 'text/x-php', 'application/x-httpd-php-source'],
     'php4'  => 'application/x-httpd-php',
@@ -122,6 +122,7 @@ return [
     'mj2'   => ['image/jp2', 'video/mj2', 'image/jpx', 'image/jpm'],
     'mjp2'  => ['image/jp2', 'video/mj2', 'image/jpx', 'image/jpm'],
     'png'   => ['image/png', 'image/x-png'],
+    'webp'  => 'image/webp',
     'tiff'  => 'image/tiff',
     'tif'   => 'image/tiff',
     'heic'  => 'image/heic',

@@ -30,7 +30,15 @@
                     type: 'GET',
                     contentType: 'application/json',
                     headers: {
-                        'Authorization': 'Bearer {{ $token_layanan }}'
+                        'Authorization': 'Bearer {{ $token_layanan }}',
+                        'Accept': 'application/json'
+                    },
+                    error: function(response) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Memuat Data',
+                            text: response.responseJSON.message
+                        })
                     },
                     success: function(response) {
                         const data = response.data
@@ -40,6 +48,7 @@
                             buttonInstall = `<button type="button" name="pasang" value="${data[i].name}" class="btn btn-danger">Hapus</button>`
 
                             templateTmp = templateTmp.replace('__name__', data[i].name)
+                            templateTmp = templateTmp.replace('__version__', data[i].version)
                             templateTmp = templateTmp.replace('__description__', data[i].description)
                             templateTmp = templateTmp.replace('__button__', buttonInstall)
                             templateTmp = templateTmp.replace('__thumbnail__', data[i].thumbnail)
@@ -53,7 +62,7 @@
                             e.preventDefault();
 
                             Swal.fire({
-                                title: 'Apakah anda sudah melakukan backup database dan folder desa ?',
+                                title: 'Apakah Anda sudah melakukan backup database dan folder desa ?',
                                 showDenyButton: true,
                                 confirmButtonText: 'Sudah',
                                 denyButtonText: `Belum`,

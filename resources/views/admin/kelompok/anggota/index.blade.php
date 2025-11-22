@@ -15,7 +15,7 @@
 @endsection
 
 @section('breadcrumb')
-    <li><a href="{{ site_url($controller) }}"> Daftar {{ $tipe }}</a></li>
+    <li><a href="{{ site_url(str_replace('_anggota', '', $controller)) }}"> Daftar {{ $tipe }}</a></li>
     <li class="active">
         {{ ucwords($kelompok['nama']) }}
     </li>
@@ -66,10 +66,7 @@
                     {{ ucwords($kelompok['nama']) }}"
                     ><i class="fa fa-download"></i> Unduh
                     </a>
-                    <a href="{{ site_url(strtolower($tipe)) }}" class="btn btn-social btn-info btn-sm visible-xs-block
-                    visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-arrow-circle-left "></i> Kembali Ke Daftar
-                        {{ $tipe }}
-                    </a>
+                    @include('admin.layouts.components.tombol_kembali', ['url' => site_url(strtolower($tipe)), 'label' => 'Daftar ' . $tipe])
                 </div>
                 <div class="box-body">
                     <h5><b>Rincian {{ $tipe }}</b></h5>

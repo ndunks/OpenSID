@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,26 +29,26 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
 use App\Enums\StatusEnum;
-use App\Models\Kehadiran;
 use App\Models\Pamong;
 use Carbon\Carbon;
+use Modules\Kehadiran\Models\Kehadiran;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
+// TODO: dihapus setelah modul covid dihapus, lapak dan pelanggan kerjasama dipindahkan
 class Pamong_model extends MY_Model
 {
     public function __construct()
     {
         parent::__construct();
         require_once APPPATH . '/models/Urut_model.php';
-        $this->load->model(['referensi_model']);
     }
 
     public function list_data($offset = 0, $limit = 500)
@@ -173,7 +173,7 @@ class Pamong_model extends MY_Model
             if (! empty($data['pamong_nip']) && $data['pamong_nip'] != '-') {
                 $data['sebutan_pamong_niap_nip'] = 'NIP: ';
             } elseif (! empty($data['pamong_niap']) && $data['pamong_niap'] != '-') {
-                $data['sebutan_pamong_niap_nip'] = $this->setting->sebutan_nip_desa . ': ';
+                $data['sebutan_pamong_niap_nip'] = setting('sebutan_nip_desa') . ': ';
             } else {
                 $data['sebutan_pamong_niap_nip'] = '';
             }

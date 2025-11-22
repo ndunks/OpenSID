@@ -22,9 +22,7 @@
             <div class="col-md-12">
                 <div class="box box-info">
                     <div class="box-header with-border">
-                        <a href="{{ site_url('komentar') }}" class="btn btn-social btn-info btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Tambah Artikel">
-                            <i class="fa fa-arrow-circle-left "></i>Kembali ke Daftar Komentar
-                        </a>
+                        @include('admin.layouts.components.tombol_kembali', ['url' => ci_route('komentar'), 'label' => 'Daftar Komentar'])
                     </div>
                     <div class="box-body">
                         <div class="form-group">
@@ -62,7 +60,7 @@
                                         class="form-check-input"
                                         type="radio"
                                         value="1"
-                                        @selected($komentar['status'] == '1' || $komentar['status'] == null)
+                                        @checked($komentar['status'] == '1' || $komentar['status'] == null)
                                         autocomplete="off"
                                     > Aktif
                                 </label>
@@ -74,7 +72,7 @@
                                         class="form-check-input"
                                         type="radio"
                                         value="2"
-                                        @selected($komentar['status'] == '2')
+                                        @checked($komentar['status'] == '2')
                                         autocomplete="off"
                                     > Tidak Aktif
                                 </label>

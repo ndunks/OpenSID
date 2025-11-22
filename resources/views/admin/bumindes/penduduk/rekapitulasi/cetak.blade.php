@@ -3,14 +3,14 @@
         <tr>
             <td>
                 @if ($aksi == 'cetak')
-                    <img class="logo" src="{{ gambar_desa($config['logo']) }}" alt="logo-desa">
+                    <img class="logo" src="{{ gambar_desa($desa['logo']) }}" alt="logo-desa">
                 @elseif ($aksi == 'pdf')
                     <div style="text-align: center;">
-                        <img class="logo" src="{{ gambar_desa($config['logo'], false, $file = true) }}" alt="logo-desa">
+                        <img class="logo" src="{{ gambar_desa($desa['logo'], false, $file = true) }}" alt="logo-desa">
                     </div>
                 @endif
                 <h1 class="judul">
-                    PEMERINTAH {!! strtoupper(setting('sebutan_kabupaten') . ' ' . $config['nama_kabupaten'] . ' <br>' . setting('sebutan_kecamatan') . ' ' . $config['nama_kecamatan'] . ' <br>' . setting('sebutan_desa') . ' ' . $config['nama_desa']) !!}
+                    PEMERINTAH {!! strtoupper(setting('sebutan_kabupaten') . ' ' . $desa['nama_kabupaten'] . ' <br>' . setting('sebutan_kecamatan') . ' ' . $desa['nama_kecamatan'] . ' <br>' . setting('sebutan_desa') . ' ' . $desa['nama_desa']) !!}
                 </h1>
             </td>
         </tr>
@@ -174,7 +174,7 @@
                                     if ($tampil_jumlah) {
                                         $data['JLH_JIWA_1'] = $data['KK_JLH'] + $data['KK_ANG_KEL'];
                                         $data['JLH_JIWA_2'] = $data['KK_AKHIR_JML'] + $data['KK_AKHIR_ANG_KEL'];
-                                    
+
                                         $totals['WNA_L_AWAL'] += (int) $data['WNA_L_AWAL'];
                                         $totals['WNA_P_AWAL'] += (int) $data['WNA_P_AWAL'];
                                         $totals['WNI_L_AWAL'] += (int) $data['WNI_L_AWAL'];

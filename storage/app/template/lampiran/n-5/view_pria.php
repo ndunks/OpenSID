@@ -1,4 +1,4 @@
-<page orientation="portrait" format="210x330" style="font-size: 10pt">
+<page orientation="portrait" format="F4" style="font-size: 11pt">
 
     <!-- Judul Lampiran -->
     <table align="right">
@@ -30,7 +30,7 @@
     </table>
 
     <br>
-    <p class="title">SURAT IZIN ORANG TUA</p>
+    <p class="title-nikah">SURAT IZIN ORANG TUA</p>
 
     <p>Yang bertanda tangan di bawah ini :</p>
 
@@ -104,7 +104,7 @@
             <td colspan="1">&nbsp;</td>
             <td colspan="20">2. Binti</td>
             <td>: </td>
-            <td colspan="27">[Form_bin_dapP]</td>
+            <td colspan="27">[Form_binti_dipP]</td>
         </tr>
 
         <tr>
@@ -158,56 +158,56 @@
             <td colspan="1">&nbsp;</td>
             <td colspan="20">1. Nama lengkap dan alias</td>
             <td>: </td>
-            <td colspan="27"><strong>[NAma_dcpw]</strong></td>
+            <td colspan="27"><strong>[NAma]</strong></td>
         </tr>
 
         <tr>
             <td colspan="1">&nbsp;</td>
             <td colspan="20">2. Bin</td>
             <td>: </td>
-            <td colspan="27">[Nama_dapw]</td>
+            <td colspan="27">[Form_biN]</td>
         </tr>
 
         <tr>
             <td colspan="1">&nbsp;</td>
             <td colspan="20">3. Nomor Induk Kependudukan</td>
             <td>: </td>
-            <td colspan="27">[NiK_dcpw]</td>
+            <td colspan="27">[NiK]</td>
         </tr>
 
         <tr>
             <td colspan="1">&nbsp;</td>
             <td colspan="20">4. Tempat dan tanggal lahir</td>
             <td>: </td>
-            <td colspan="27">[TtL_dcpw]</td>
+            <td colspan="27">[TtL]</td>
         </tr>
 
         <tr>
             <td colspan="1">&nbsp;</td>
             <td colspan="20">5. Kewarganegaraan</td>
             <td>: </td>
-            <td colspan="27">[WArga_negara_dcpw]</td>
+            <td colspan="27">[WArga_negara]</td>
         </tr>
 
         <tr>
             <td colspan="1">&nbsp;</td>
             <td colspan="20">6. Agama</td>
             <td>: </td>
-            <td colspan="27">[AgAma_dcpw]</td>
+            <td colspan="27">[AgAma]</td>
         </tr>
 
         <tr>
             <td colspan="1">&nbsp;</td>
             <td colspan="20">7. Pekerjaan</td>
             <td>: </td>
-            <td colspan="27">[PeKerjaan_dcpw]</td>
+            <td colspan="27">[PeKerjaan]</td>
         </tr>
 
         <tr>
             <td colspan="1">&nbsp;</td>
             <td colspan="20">8. Alamat</td>
             <td>: </td>
-            <td colspan="27">[Alamat_dcpW]</td>
+            <td colspan="27">[AlamaT]</td>
         </tr>
 
         <!-- data calon pasangan  -->
@@ -280,7 +280,7 @@
 
 
     <!-- Penandatangan -->
-    <br><br><br>
+    <br><br>
     <table style="border-collapse: collapse; width: 100%; height: 144px;" border="0">
     <tbody>
     <tr style="height: 18px;">
@@ -308,7 +308,11 @@
     <td style="width: 2.75528%; height: 18px;"> </td>
     <td style="width: 70.6166%; text-align: center; height: 18px;"> </td>
     </tr>
+    <tr style="height: 18px;">
+    <td style="width: 26.6281%; text-align: center; height: 18px;">[qr_code]</td>
+    <td style="width: 2.75528%; height: 18px;"> </td>
+    <td style="width: 70.6166%; text-align: center; height: 18px;"> </td>
+    </tr>
     </tbody>
     </table>
-    <?= $qrcode ?? '' ?>
 </page>

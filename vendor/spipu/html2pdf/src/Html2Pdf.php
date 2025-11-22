@@ -7,7 +7,7 @@
  *
  * @package   Html2pdf
  * @author    Laurent MINGUET <webmaster@html2pdf.fr>
- * @copyright 2023 Laurent MINGUET
+ * @copyright 2025 Laurent MINGUET
  */
 
 namespace Spipu\Html2Pdf;
@@ -23,6 +23,8 @@ use Spipu\Html2Pdf\Parsing\HtmlLexer;
 use Spipu\Html2Pdf\Parsing\Node;
 use Spipu\Html2Pdf\Parsing\TagParser;
 use Spipu\Html2Pdf\Parsing\TextParser;
+use Spipu\Html2Pdf\Security\Security;
+use Spipu\Html2Pdf\Security\SecurityInterface;
 use Spipu\Html2Pdf\Tag\TagInterface;
 use Spipu\Html2Pdf\Debug\DebugInterface;
 use Spipu\Html2Pdf\Debug\Debug;
@@ -69,6 +71,11 @@ class Html2Pdf
      */
     private $svgDrawer;
 
+    /**
+     * @var SecurityInterface
+     */
+    private $security;
+
     protected $_langue           = 'fr';        // locale of the messages
     protected $_orientation      = 'P';         // page orientation : Portrait ou Landscape
     protected $_format           = 'A4';        // page format : A4, A3, ...
@@ -76,7 +83,7 @@ class Html2Pdf
     protected $_unicode          = true;        // means that the input text is unicode (default = true)
 
     /**
-     * @var bool
+     * @var false|int
      */
     protected $_pdfa;
 
@@ -169,9 +176,9 @@ class Html2Pdf
      * @param mixed   $format      The format used for pages, same as TCPDF
      * @param string  $lang        Lang : fr, en, it...
      * @param boolean $unicode     TRUE means that the input text is unicode (default = true)
-     * @param String  $encoding    charset encoding; default is UTF-8
+     * @param string  $encoding    charset encoding; default is UTF-8
      * @param array   $margins     Default margins (left, top, right, bottom)
-     * @param boolean $pdfa        If TRUE set the document to PDF/A mode.
+     * @param false|int $pdfa        If TRUE set the document to PDF/A mode.
      *
      * @return Html2Pdf
      */
@@ -199,13 +206,18 @@ class Html2Pdf
         // load the Locale
         Locale::load($this->_langue);
 
-        // create the  myPdf object
+        $this->security = new Security();
         $this->pdf = new MyPdf($orientation, 'mm', $format, $unicode, $encoding, false, $pdfa);
 
-        // init the CSS parsing object
         $this->cssConverter = new CssConverter();
         $textParser = new TextParser($encoding);
-        $this->parsingCss = new Parsing\Css($this->pdf, new TagParser($textParser), $this->cssConverter);
+
+        $this->parsingCss = new Parsing\Css(
+            $this->pdf,
+            new TagParser($textParser),
+            $this->cssConverter,
+            $this->security
+        );
         $this->parsingCss->fontSet();
         $this->_defList = array();
 
@@ -246,8 +258,8 @@ class Html2Pdf
     {
         return array(
             'major'     => 5,
-            'minor'     => 2,
-            'revision'  => 8
+            'minor'     => 3,
+            'revision'  => 1,
         );
     }
 
@@ -273,6 +285,19 @@ class Html2Pdf
         $this->parsingHtml = clone $this->parsingHtml;
         $this->parsingCss = clone $this->parsingCss;
         $this->parsingCss->setPdfParent($this->pdf);
+    }
+
+    /**
+     * Use a specific security interface
+     * @param SecurityInterface $security
+     * @return $this
+     */
+    public function setSecurityService(SecurityInterface $security): self
+    {
+        $this->security = $security;
+        $this->parsingCss->setSecurityService($security);
+
+        return $this;
     }
 
     /**
@@ -381,11 +406,11 @@ class Html2Pdf
     /**
      * set the debug mode to On
      *
-     * @param DebugInterface $debugObject
+     * @param DebugInterface|null $debugObject
      *
      * @return Html2Pdf $this
      */
-    public function setModeDebug(DebugInterface $debugObject = null)
+    public function setModeDebug(?DebugInterface $debugObject = null)
     {
         if (is_null($debugObject)) {
             $this->debug = new Debug();
@@ -578,7 +603,7 @@ class Html2Pdf
 
         // call the output of TCPDF
         $output = $this->pdf->Output($name, $dest);
-        
+
         // close the pdf and clean up
         $this->clean();
 
@@ -1509,14 +1534,14 @@ class Html2Pdf
     protected function _drawImage($src, $subLi = false)
     {
         // get the size of the image
-        // WARNING : if URL, "allow_url_fopen" must turned to "on" in php.ini
+        // WARNING : if URL, "allow_url_fopen" must turn to "on" in php.ini
 
         if (strpos($src,'data:') === 0) {
             $src = base64_decode( preg_replace('#^data:image/[^;]+;base64,#', '', $src) );
             $infos = @getimagesizefromstring($src);
             $src = "@{$src}";
         } else {
-            $this->parsingCss->checkValidPath($src);
+            $this->security->checkValidPath((string) $src);
             $infos = @getimagesize($src);
         }
 
@@ -5806,13 +5831,15 @@ class Html2Pdf
         }
 
         // set certificate file
-        $certificate = $param['src'];
+        $certificate = (string) $param['src'];
+        $this->security->checkValidPath($certificate);
         if(!file_exists($certificate)) {
             return true;
         }
 
         // Set private key
-        $privkey = $param['privkey'];
+        $privkey = (string) $param['privkey'];
+        $this->security->checkValidPath($privkey);
         if(strlen($privkey)==0 || !file_exists($privkey)) {
             $privkey = $certificate;
         }

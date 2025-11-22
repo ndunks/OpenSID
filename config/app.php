@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,14 +29,15 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
 defined('BASEPATH') || exit('No direct script access allowed');
 
-$key = file_exists(DESAPATH. 'app_key')
+$key = file_exists(DESAPATH . 'app_key')
     ? file_get_contents(DESAPATH . 'app_key')
     : 'base64:rN3vXWFRHDKFP2sMySe9f4gna7WulisoXTqn7Yo4Ye8=';
 
@@ -115,6 +116,19 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Faker Locale
+    |--------------------------------------------------------------------------
+    |
+    | This locale will be used by the Faker PHP library when generating fake
+    | data for your database seeds. For example, this will be used to get
+    | localized telephone numbers, street address information and more.
+    |
+    */
+
+    'faker_locale' => 'id_ID',
+
     'key' => $key,
 
     'cipher' => 'AES-256-CBC',
@@ -128,4 +142,14 @@ return [
         ],
     ],
 
+    'panduan' => [
+        'instalasi' => 'https://panduan.opendesa.id/id/opensid/instalasi',
+    ],
+
+    'log' => [
+        'log_path'             => STORAGEPATH . 'logs/',
+        'clv_log_file_pattern' => 'opensid-*.log',
+        'log_file_extension'   => 'log',
+        'log_file_prefix'      => 'opensid-',
+    ],
 ];

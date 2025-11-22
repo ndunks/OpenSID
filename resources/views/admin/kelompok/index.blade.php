@@ -33,31 +33,43 @@
                             ></i> Hapus
                         </a>
                     @endif
-                    <a href="{{ site_url("{$ci->controller}/dialog/cetak") }}" class="btn btn-social bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Cetak"><i
-                            class="fa fa-print "
-                        ></i> Cetak</a>
-                    <a href="{{ site_url("{$ci->controller}/dialog/unduh") }}" class="btn btn-social bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" data-remote="false" data-toggle="modal" data-target="#modalBox" data-title="Unduh"><i
-                            class="fa fa-download"
-                        ></i> Unduh</a>
+                    <a
+                        href="{{ site_url("{$ci->controller}/dialog/cetak") }}"
+                        class="btn btn-social bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"
+                        data-remote="false"
+                        data-toggle="modal"
+                        data-target="#modalBox"
+                        data-title="Cetak"
+                        title="Cetak"
+                    ><i class="fa fa-print "></i> Cetak</a>
+                    <a
+                        href="{{ site_url("{$ci->controller}/dialog/unduh") }}"
+                        class="btn btn-social bg-navy btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"
+                        data-remote="false"
+                        data-toggle="modal"
+                        data-target="#modalBox"
+                        data-title="Unduh"
+                        title="Unduh"
+                    ><i class="fa fa-download"></i> Unduh</a>
                     <a href="{{ site_url("{$ci->controller}_master") }}" class="btn btn-social bg-orange btn-sm btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kategori">
                         <i class="fa fa fa-list"></i>Kategori
                     </a>
-                    <a href="{{ site_url("{$ci->controller}/clear") }}" class="btn btn-social bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block"><i class="fa fa-refresh"></i>Bersihkan</a>
+                    <a href="{{ site_url("{$ci->controller}/clear") }}" class="btn btn-social bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Bersihkan"><i class="fa fa-refresh"></i>Bersihkan</a>
                 </div>
                 <div class="box-body">
                     <div class="row mepet">
                         <div class="col-sm-2">
                             <select id="status_dasar" class="form-control input-sm select2" name="status_dasar">
-                                <option value="">Pilih Status</option>
-                                <option value="1" selected>Aktif</option>
-                                <option value="2">Tidak Aktif</option>
+                                <option value="0" @selected($default_status_dasar == 0)>Pilih Status</option>
+                                <option value="1" @selected($default_status_dasar == 1)>Aktif</option>
+                                <option value="2" @selected($default_status_dasar == 2)>Tidak Aktif</option>
                             </select>
                         </div>
                         <div class="col-sm-3">
                             <select id="filter" class="form-control input-sm select2" name="filter">
                                 <option value="">Pilih Kategori {{ $tipe }}</option>
                                 @foreach ($list_master as $data)
-                                    <option value="{{ $data->id }}">{{ $data->kelompok }}</option>
+                                    <option @selected($default_kelompok == $data->id) value="{{ $data->id }}">{{ $data->kelompok }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -136,6 +148,7 @@
                         data: 'ketua.nama',
                         name: 'ketua.nama',
                         class: 'padat',
+                        defaultContent: '',
                         searchable: true,
                         orderable: true
                     },

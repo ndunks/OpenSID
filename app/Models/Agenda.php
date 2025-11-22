@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2024 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2025 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -67,6 +67,29 @@ class Agenda extends BaseModel
     ];
 
     protected $casts = [
-        'tgl_agenda' => 'datetime:d-m-Y H:i:s',
+        'tgl_agenda' => 'datetime:Y-m-d H:i:s',
     ];
+
+    public static function scopeShow($query, $type = '')
+    {
+        switch ($type) {
+            case 'yad':
+                $query->whereRaw('DATE(agenda.tgl_agenda) > CURDATE()')
+                    ->orderBy('agenda.tgl_agenda');
+                break;
+
+            case 'lama':
+                $query->whereRaw('DATE(agenda.tgl_agenda) < CURDATE()');
+                break;
+
+            default:
+                $query->whereRaw('DATE(agenda.tgl_agenda) = CURDATE()');
+                break;
+        }
+
+        return $query->selectRaw('a.*, agenda.*, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri')
+            ->leftJoin('artikel as a', 'a.id', '=', 'agenda.id_artikel')
+            ->where('a.enabled', 1)
+            ->where('a.tipe', AGENDA);
+    }
 }

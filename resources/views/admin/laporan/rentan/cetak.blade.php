@@ -15,7 +15,7 @@
                 <tbody>
                     <tr align="center">
                         <td width="100%">
-                            <h3>PEMERINTAH KABUPATEN/KOTA {{ strtoupper($config['nama_kabupaten']) }}</h3>
+                            <h3>PEMERINTAH KABUPATEN/KOTA {{ strtoupper($desa['nama_kabupaten']) }}</h3>
                         </td>
                     </tr>
                     <tr align="center">
@@ -31,14 +31,14 @@
                     <tr>
                         <td>{{ ucwords(setting('sebutan_desa')) }}/Kelurahan</td>
                         <td width="3%">:</td>
-                        <td width="38.5%">{{ $config['nama_desa'] }}</h4>
+                        <td width="38.5%">{{ $desa['nama_desa'] }}</h4>
                         </td>
                         <td></td>
                     </tr>
                     <tr>
                         <td>{{ ucwords(setting('sebutan_kecamatan')) }}</td>
                         <td width="3%">:</td>
-                        <td width="38.5%">{{ $config['nama_kecamatan'] }}</td>
+                        <td width="38.5%">{{ $desa['nama_kecamatan'] }}</td>
                         <td></td>
                     </tr>
                     <tr>
@@ -81,12 +81,12 @@
                     <tr>
                         <th align="center">L</th>
                         <th align="center">P</th>
-                        <th align="center">Dibawah 1 Tahun</th>
+                        <th align="center">Di bawah 1 Tahun</th>
                         <th align="center">1-5 Tahun</th>
                         <th align="center">6-12 Tahun</th>
                         <th align="center">13-15 Tahun</th>
                         <th align="center">16-18 Tahun</th>
-                        <th align="center">Diatas 60 Tahun</th>
+                        <th align="center">Di atas 60 Tahun</th>
                         <th align="center">Cacat Fisik</th>
                         <th align="center">Cacat Netra/ Buta</th>
                         <th align="center">Cacat Rungu/ Wicara</th>
@@ -157,7 +157,7 @@
                                     @foreach ($jenis_cacat as $kode_cacat => $value)
                                         @php
                                             $cacat = $main['cacat'][$rt->id][$kode_cacat]['total'] ?? 0;
-                                            
+
                                             if ($kode_cacat == App\Enums\CacatEnum::TIDAK_CACAT) {
                                                 $cacat = $totalPenduduk - $totalBarisCacat;
                                             } else {
